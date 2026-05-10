@@ -97,10 +97,20 @@ class HeadlessPlugin(private val activity: android.app.Activity) : Plugin(activi
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = false
 
         override fun onPageFinished(view: WebView, url: String) {
-          Log.d(TAG, "onPageFinished $url")
-          view.postDelayed({
-            view.evaluateJavascript(initScript, null)
-          }, 500)
+            Log.d(TAG, "onPageFinished $url")
+
+            val cookieManager = android.webkit.CookieManager.getInstance()
+            val nativeCookies = cookieManager.getCookie(url) ?: ""
+            val nativeCookiesJson = org.json.JSONObject.quote(nativeCookies)
+
+            val cookieInjection = "window.__nativeCookies = $nativeCookiesJson;"
+
+            view.postDelayed({
+                // inject native cookies first, then run the init script
+                view.evaluateJavascript(cookieInjection) {
+                    view.evaluateJavascript(initScript, null)
+                }
+            }, 500)
         }
 
         override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {

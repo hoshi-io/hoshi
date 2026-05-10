@@ -115,6 +115,11 @@ const result = await headless.fetch("https://example.com/app", {
 
     timeoutMs: 20000
 });
+
+const cookies = result.cookies;
+
+// find a specific one
+const session = result.cookies.find(c => c.name === "session_id")?.value;
 ```
 
 ## `state`

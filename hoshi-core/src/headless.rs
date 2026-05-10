@@ -71,10 +71,6 @@ pub struct HeadlessResponse {
 pub struct Cookie {
     pub name:      String,
     pub value:     String,
-    pub domain:    String,
-    pub path:      String,
-    pub secure:    bool,
-    pub http_only: bool,
 }
 
 #[async_trait]

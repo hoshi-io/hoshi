@@ -16,10 +16,7 @@ use crate::headless::headless_plugin::{CreatePayload, HeadlessPluginExt};
 use tokio::sync::oneshot;
 
 use hoshi_core::error::{CoreError, CoreResult};
-use hoshi_core::headless::{
-    BlockedResource, CapturedRequest, HeadlessBrowser,
-    HeadlessOptions, HeadlessResponse, WaitFor,
-};
+use hoshi_core::headless::{BlockedResource, CapturedRequest, Cookie, HeadlessBrowser, HeadlessOptions, HeadlessResponse, WaitFor};
 
 const DEFAULT_TIMEOUT_MS: u64 = 15_000;
 
@@ -36,6 +33,7 @@ struct HeadlessDonePayload {
     html:     String,
     result:   Option<serde_json::Value>,
     captured: Vec<CapturedRequest>,
+    cookies: String
 }
 
 pub struct TauriHeadless<R: Runtime> {
@@ -138,11 +136,26 @@ impl<R: Runtime + 'static> TauriHeadless<R> {
         match tokio::time::timeout(Duration::from_millis(timeout_ms), rx).await {
             Ok(Ok(Ok(p))) => {
                 debug!(url = %p.url, "Headless fetch completed successfully on desktop");
+
+                let cookies = app
+                    .get_webview_window(&label)
+                    .and_then(|w| {
+                        w.cookies_for_url((&p.url).parse().unwrap()).ok()
+                    })
+                    .map(|tauri_cookies| {
+                        tauri_cookies.iter().map(|c| Cookie {
+                            name:  c.name().to_string(),
+                            value: c.value().to_string(),
+                        }).collect::<Vec<_>>()
+                    })
+                    .unwrap_or_else(|| parse_cookies(&p.cookies));
+
                 Ok(HeadlessResponse {
                     url: p.url, status: 200, html: p.html,
-                    result: p.result, captured: p.captured, cookies: vec![],
+                    result: p.result, captured: p.captured,
+                    cookies,
                 })
-            },
+            }
             Ok(Ok(Err(e))) => Err(e),
             Ok(Err(_))     => {
                 error!("Headless response channel dropped prematurely");
@@ -218,9 +231,25 @@ impl<R: Runtime + 'static> TauriHeadless<R> {
             html:     payload.html,
             result:   payload.result,
             captured: payload.captured,
-            cookies:  vec![],
+            cookies: parse_cookies(&payload.cookies),
         })
     }
+}
+
+fn parse_cookies(cookie_str: &str) -> Vec<Cookie> {
+    cookie_str
+        .split(';')
+        .filter_map(|pair| {
+            let mut parts = pair.trim().splitn(2, '=');
+            let name  = parts.next()?.trim().to_string();
+            if name.is_empty() { return None; }
+            let value = parts.next().unwrap_or("").trim().to_string();
+            Some(Cookie {
+                name,
+                value,
+            })
+        })
+        .collect()
 }
 
 #[cfg(not(mobile))]
@@ -328,6 +357,7 @@ fn build_init_script(label: &str, options: &HeadlessOptions) -> String {
             html:     document.documentElement.outerHTML,
             result:   userResult,
             captured: __captured,
+            cookies:  document.cookie
         }};
         const jsonPayload = JSON.stringify(payload);
 
