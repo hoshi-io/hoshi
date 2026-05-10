@@ -10,6 +10,8 @@ Improving the overall look and feel of the app with small qol changes, cleaner l
 
 Making the player and readers more reliable and easier to use. This includes improving navigation, fixing cases where the player can freeze or get stuck, and adding better gesture and keyboard controls.
 
+## Mpv support
+
 ## Better Tracker Features
 
 Expanding features around lists and trackers to make managing and following your media easier and more useful.

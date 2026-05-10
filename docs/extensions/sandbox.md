@@ -134,9 +134,65 @@ state.update("counters", (c) => {
 }, { views: 0 });
 ```
 
+## `crypto`
+
+Built-in cryptographic utilities. No imports needed.
+
+### Hashing
+
+Input is a raw string, output is a lowercase hex string.
+
+```js
+crypto.md5("hello")             // "5d41402abc4b2a76b9719d911017c592"
+crypto.sha1("hello")            // "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d"
+crypto.sha256("hello")          // "2cf24db..."
+crypto.sha512("hello")          // "9b71d224..."
+```
+
+### HMAC
+
+Key must be a hex string. Data is a raw string. Returns hex.
+
+```js
+const key = crypto.hex.fromString("my-secret");
+crypto.hmac.sha256(key, "message")
+crypto.hmac.sha1(key, "message")
+crypto.hmac.sha512(key, "message")
+```
+### AES
+
+All inputs and outputs are hex strings. Key length determines AES-128 or AES-256 automatically.
+
+```js
+const key  = crypto.hex.fromString("1234567890abcdef");  // 16 bytes → AES-128
+const data = crypto.hex.fromString("hello world!!!!!");  // must be block-aligned or padded automaticallyconst encrypted = crypto.aes.encrypt(key, data, { iv: crypto.hex.fromString("0000000000000000") });
+const decrypted = crypto.aes.decrypt(key, encrypted, { iv: crypto.hex.fromString("0000000000000000") });crypto.hex.toString(decrypted)  // "hello world!!!!!"
+```
+
+Options:
+
+| Option | Values | Default |
+| ------ | ------ | ------- |
+| `iv`   | hex string | 16 zero bytes |
+| `mode` | `"cbc"` | `"cbc"` |
+
+### Hex helpers
+
+Convert between strings, hex, and base64.
+
+```js
+crypto.hex.fromString("hello")   // "68656c6c6f"
+crypto.hex.toString("68656c6c6f") // "hello"
+crypto.hex.fromBase64("aGVsbG8=") // "68656c6c6f"
+crypto.hex.toBase64("68656c6c6f") // "aGVsbG8="
+```
+
+:::warning Hex in, hex out
+AES and HMAC operate on bytes, not strings. Always convert your strings to hex first using `crypto.hex.fromString()` before passing them in.
+:::
+
 ## What's not available
 
-- No `localStorage`, `indexedDB`, or any storage
 - No `WebSocket` or `XMLHttpRequest`
 - No Node.js built-ins (`fs`, `path`, `require`, etc.)
 - No access to the host machine or filesystem

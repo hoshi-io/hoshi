@@ -437,6 +437,105 @@ fn register_native_apis(
         )?;
     }
 
+    globals.set("__native_crypto_hash", Function::new(ctx.clone(),
+      |algo: String, data: String| -> rquickjs::Result<String> {
+          use sha2::{Sha256, Sha512, Digest};
+          use sha1::Sha1;
+          use md5::Md5;
+          let b = data.as_bytes();
+          let out = match algo.as_str() {
+              "md5"    => { let mut h = Md5::new();    h.update(b); hex::encode(h.finalize()) }
+              "sha1"   => { let mut h = Sha1::new();   h.update(b); hex::encode(h.finalize()) }
+              "sha256" => { let mut h = Sha256::new(); h.update(b); hex::encode(h.finalize()) }
+              "sha512" => { let mut h = Sha512::new(); h.update(b); hex::encode(h.finalize()) }
+              _        => return Ok(error_json(format!("unknown hash algo: {}", algo))),
+          };
+          Ok(out)
+      },
+    )?)?;
+
+    globals.set("__native_crypto_hmac", Function::new(ctx.clone(),
+      |algo: String, key_hex: String, data: String| -> rquickjs::Result<String> {
+          use hmac::{Hmac, Mac};
+          use sha2::{Sha256, Sha512};
+          use sha1::Sha1;
+          let key = match hex::decode(&key_hex) {
+              Ok(k) => k,
+              Err(e) => return Ok(error_json(format!("hmac: bad key hex: {}", e))),
+          };
+          let out = match algo.as_str() {
+              "sha1" => {
+                  let mut m = Hmac::<Sha1>::new_from_slice(&key).map_err(|e| rquickjs::Error::Unknown)?;
+                  m.update(data.as_bytes()); hex::encode(m.finalize().into_bytes())
+              }
+              "sha256" => {
+                  let mut m = Hmac::<Sha256>::new_from_slice(&key).map_err(|_| rquickjs::Error::Unknown)?;
+                  m.update(data.as_bytes()); hex::encode(m.finalize().into_bytes())
+              }
+              "sha512" => {
+                  let mut m = Hmac::<Sha512>::new_from_slice(&key).map_err(|_| rquickjs::Error::Unknown)?;
+                  m.update(data.as_bytes()); hex::encode(m.finalize().into_bytes())
+              }
+              _ => return Ok(error_json(format!("unknown hmac algo: {}", algo))),
+          };
+          Ok(out)
+      },
+    )?)?;
+
+    globals.set("__native_crypto_aes", Function::new(ctx.clone(),
+     |op: String, key_hex: String, data_hex: String,
+      iv_hex: Option<String>, mode: String| -> rquickjs::Result<String> {
+         use aes::cipher::{block_padding::Pkcs7, BlockEncryptMut, BlockDecryptMut, KeyIvInit};
+         use cbc::{Encryptor, Decryptor};
+         use aes::{Aes128, Aes256};
+
+         let key = match hex::decode(&key_hex) {
+             Ok(k) => k, Err(e) => return Ok(error_json(format!("aes: bad key hex: {}", e))),
+         };
+         let data = match hex::decode(&data_hex) {
+             Ok(d) => d, Err(e) => return Ok(error_json(format!("aes: bad data hex: {}", e))),
+         };
+         let iv = match iv_hex.as_deref().map(hex::decode) {
+             Some(Err(e)) => return Ok(error_json(format!("aes: bad iv hex: {}", e))),
+             Some(Ok(v)) => v,
+             None => vec![0u8; 16],
+         };
+
+         let result = match (key.len(), mode.as_str(), op.as_str()) {
+             (16, "cbc", "encrypt") => {
+                 let enc = match Encryptor::<Aes128>::new_from_slices(&key, &iv) {
+                     Ok(e) => e, Err(e) => return Ok(error_json(e.to_string())),
+                 };
+                 hex::encode(enc.encrypt_padded_vec_mut::<Pkcs7>(&data))
+             }
+             (16, "cbc", "decrypt") => {
+                 let dec = match Decryptor::<Aes128>::new_from_slices(&key, &iv) {
+                     Ok(d) => d, Err(e) => return Ok(error_json(e.to_string())),
+                 };
+                 match dec.decrypt_padded_vec_mut::<Pkcs7>(&data) {
+                     Ok(d) => hex::encode(d), Err(e) => return Ok(error_json(e.to_string())),
+                 }
+             }
+             (32, "cbc", "encrypt") => {
+                 let enc = match Encryptor::<Aes256>::new_from_slices(&key, &iv) {
+                     Ok(e) => e, Err(e) => return Ok(error_json(e.to_string())),
+                 };
+                 hex::encode(enc.encrypt_padded_vec_mut::<Pkcs7>(&data))
+             }
+             (32, "cbc", "decrypt") => {
+                 let dec = match Decryptor::<Aes256>::new_from_slices(&key, &iv) {
+                     Ok(d) => d, Err(e) => return Ok(error_json(e.to_string())),
+                 };
+                 match dec.decrypt_padded_vec_mut::<Pkcs7>(&data) {
+                     Ok(d) => hex::encode(d), Err(e) => return Ok(error_json(e.to_string())),
+                 }
+             }
+             (kl, _, _) => return Ok(error_json(format!("unsupported key length {}b or mode {}", kl * 8, mode))),
+         };
+         Ok(result)
+     },
+    )?)?;
+
     Ok(())
 }
 

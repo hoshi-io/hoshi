@@ -11,6 +11,58 @@ globalThis.console = {
     debug: function(...args) { __native_log("[DEBUG] " + console._fmt(args)); },
 };
 
+globalThis.crypto = {
+    md5:    (data) => __native_crypto_hash("md5",    data),
+    sha1:   (data) => __native_crypto_hash("sha1",   data),
+    sha256: (data) => __native_crypto_hash("sha256", data),
+    sha512: (data) => __native_crypto_hash("sha512", data),
+
+    hmac: {
+        sha1:   (keyHex, data) => {
+            const r = __native_crypto_hmac("sha1",   keyHex, data);
+            if (r && typeof r === "object" && r.error) throw new Error(r.error);
+            return r;
+        },
+        sha256: (keyHex, data) => {
+            const r = __native_crypto_hmac("sha256", keyHex, data);
+            if (r && typeof r === "object" && r.error) throw new Error(r.error);
+            return r;
+        },
+        sha512: (keyHex, data) => {
+            const r = __native_crypto_hmac("sha512", keyHex, data);
+            if (r && typeof r === "object" && r.error) throw new Error(r.error);
+            return r;
+        },
+    },
+
+    aes: {
+        encrypt: (keyHex, dataHex, opts = {}) => {
+            const r = __native_crypto_aes(
+                "encrypt", keyHex, dataHex,
+                opts.iv ?? null, opts.mode ?? "cbc"
+            );
+            if (r && typeof r === "object" && r.error) throw new Error(r.error);
+            return r;
+        },
+        decrypt: (keyHex, dataHex, opts = {}) => {
+            const r = __native_crypto_aes(
+                "decrypt", keyHex, dataHex,
+                opts.iv ?? null, opts.mode ?? "cbc"
+            );
+            if (r && typeof r === "object" && r.error) throw new Error(r.error);
+            return r;
+        },
+    },
+
+    hex: {
+        fromString: (str) => Array.from(str).map(c =>
+            c.charCodeAt(0).toString(16).padStart(2, "0")).join(""),
+        toString:   (hex) => hex.match(/.{2}/g)
+            .map(b => String.fromCharCode(parseInt(b, 16))).join(""),
+        fromBase64: (b64) => crypto.hex.fromString(atob(b64)),
+        toBase64:   (hex) => btoa(crypto.hex.toString(hex)),
+    },
+};
 globalThis.fetch = async function(url, options) {
     if (typeof url !== "string" || url.length === 0) {
         throw new TypeError("fetch: url must be a non-empty string");
