@@ -75,6 +75,7 @@ pub(crate) async fn execute_in_quickjs(
 
     let (json_str, updated_state_json) = tokio::task::spawn_blocking({
         let req_tx = req_tx.clone();
+        let extension_id = extension_id.clone();
         move || {
             let rt = tokio::runtime::Builder::new_current_thread()
                 .enable_all()
@@ -85,7 +86,7 @@ pub(crate) async fn execute_in_quickjs(
                 })?;
             tokio::task::LocalSet::new().block_on(
                 &rt,
-                run_quickjs_local(full_script, headless_available, req_tx, state_json),
+                run_quickjs_local(full_script, headless_available, req_tx, state_json, extension_id),
             )
         }
     })
@@ -98,7 +99,6 @@ pub(crate) async fn execute_in_quickjs(
     drop(req_tx);
     let _ = headless_thread.join();
 
-    // Write any state mutations produced during the sandbox call back into the shared store.
     if let Ok(new_state) =
         serde_json::from_str::<HashMap<String, Value>>(&updated_state_json)
     {
@@ -124,6 +124,7 @@ async fn run_quickjs_local(
     headless_available: bool,
     req_tx: std::sync::mpsc::SyncSender<HeadlessRequest>,
     state_json: String,
+    extension_id: String,
 ) -> CoreResult<(String, String)> {
     unsafe {
         let locale = std::ffi::CString::new("C").unwrap();
@@ -149,9 +150,8 @@ async fn run_quickjs_local(
     ));
 
     let state_map_for_output = Arc::clone(&state_map);
-
     let result: Result<String, String> = async_with!(ctx => |ctx| {
-        register_native_apis(&ctx, headless_available, req_tx, Arc::clone(&state_map))
+        register_native_apis(&ctx, headless_available, req_tx, Arc::clone(&state_map), extension_id)
             .catch(&ctx)
             .map_err(|e| e.to_string())?;
 
@@ -247,14 +247,18 @@ fn register_native_apis(
     headless_available: bool,
     req_tx: Arc<std::sync::mpsc::SyncSender<HeadlessRequest>>,
     state_map: Arc<Mutex<HashMap<String, Value>>>,
+    extension_id: String,
 ) -> rquickjs::Result<()> {
     let globals = ctx.globals();
 
     globals.set(
         "__native_log",
-        Function::new(ctx.clone(), |msg: String| {
-            debug!(target: "sandbox_js", "{}", msg);
-            Ok::<(), rquickjs::Error>(())
+        Function::new(ctx.clone(), {
+            let extension_id = extension_id.clone();
+            move |msg: String| {
+                debug!(target: "sandbox_js", extension = %extension_id, "{}", msg);
+                Ok::<(), rquickjs::Error>(())
+            }
         })?,
     )?;
 
