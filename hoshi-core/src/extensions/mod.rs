@@ -1,5 +1,6 @@
 mod sandbox;
 pub mod types;
+pub mod tachiyomi_loader;
 
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -10,7 +11,7 @@ use tokio::fs;
 use tracing::{debug, error, info, instrument, warn};
 use types::{Extension, ExtensionManifest, ExtensionType, SettingDefinition};
 
-pub type ExtensionStateStore = Arc<Mutex<HashMap<String, HashMap<String, serde_json::Value>>>>;
+pub type ExtensionStateStore = Arc<Mutex<HashMap<String, HashMap<String, Value>>>>;
 
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::types::{Chapter, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, Page};
@@ -22,13 +23,15 @@ const BASE: &str  = include_str!("base/Base.js");
 const ANIME: &str = include_str!("base/Anime.js");
 const MANGA: &str = include_str!("base/Manga.js");
 const NOVEL: &str = include_str!("base/Novel.js");
+const TACHIYOMI: &str = include_str!("compatibility/tachiyomi.js");
+const LNREADER: &str = include_str!("compatibility/lnreader.js");
+
 const SANDBOX_BOOTSTRAP: &str = include_str!("sandbox_bootstrap.js");
 
 pub struct ExtensionManager {
     extensions: HashMap<String, Extension>,
     extensions_dir: PathBuf,
     headless: HeadlessHandle,
-    /// Volatile per-extension state. Lives only for the lifetime of this process.
     extension_state: ExtensionStateStore,
 }
 

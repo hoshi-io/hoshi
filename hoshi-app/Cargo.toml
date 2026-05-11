@@ -33,6 +33,7 @@ futures = "0.3.32"
 serde = { version = "1.0.228", features = ["derive"] }
 async-trait = "0.1.89"
 url = "2.5.8"
+
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tauri-plugin-store = "2"
 tauri-plugin-single-instance = "2.4.0"
