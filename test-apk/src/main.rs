@@ -48,7 +48,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let final_js = resolver::resolve(&translated.js, &extracted);
+    let final_js = resolver::resolve::resolve(&translated.js, &extracted);
 
     let out_path = "/tmp/test_apk_out.js";
     std::fs::write(out_path, &final_js)?;
