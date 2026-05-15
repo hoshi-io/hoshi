@@ -5,6 +5,7 @@ use hoshi_core::extensions::tachiyomi_loader::{
     extract_dex, inspect_apk_reader, walk_source,
 };
 use hoshi_core::extensions::tachiyomi_loader::translator::{self, resolver};
+use hoshi_core::extensions::tachiyomi_loader::translator::resolver::pool::Pool;
 
 const DEFAULT_URL: &str =
     "https://github.com/keiyoushi/extensions/raw/refs/heads/repo/apk/tachiyomi-all.mitaku-v1.4.4.apk";
@@ -33,13 +34,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     eprintln!("[3/4] Extracting + walking DEX ...");
     let mut zip = ZipArchive::new(Cursor::new(&bytes))?;
     let extracted = extract_dex(&mut zip, &meta)?;
-
+    let pool = Pool::build(&extracted.dex_files);
 
     let walked = walk_source(&extracted, &meta)?;
 
     // ── 4. Translate + resolve ────────────────────────────────────────────────
     eprintln!("[4/4] Translating ...");
-    let translated = translator::translate(&walked, &meta)?;
+    let translated = translator::translate(&walked, &meta, &pool)?;
 
     if translated.has_warnings() {
         eprintln!("      {} warning(s):", translated.warnings.len());
@@ -48,7 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let final_js = resolver::resolve::resolve(&translated.js, &extracted);
+    let final_js = resolver::resolve::resolve(&translated.js, &pool);
 
     let out_path = "/tmp/test_apk_out.js";
     std::fs::write(out_path, &final_js)?;
