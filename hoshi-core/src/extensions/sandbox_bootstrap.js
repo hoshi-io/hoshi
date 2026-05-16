@@ -52,6 +52,19 @@ globalThis.crypto = {
             if (r && typeof r === "object" && r.error) throw new Error(r.error);
             return r;
         },
+
+        gcm: {
+            encrypt: (keyHex, dataHex, opts = {}) => {
+                const r = __native_crypto_aes("encrypt", keyHex, dataHex, opts.iv ?? null, "gcm");
+                if (r && typeof r === "object" && r.error) throw new Error(r.error);
+                return r;
+            },
+            decrypt: (keyHex, dataHex, opts = {}) => {
+                const r = __native_crypto_aes("decrypt", keyHex, dataHex, opts.iv ?? null, "gcm");
+                if (r && typeof r === "object" && r.error) throw new Error(r.error);
+                return r;
+            },
+        },
     },
 
     hex: {
@@ -71,11 +84,17 @@ globalThis.fetch = async function(url, options) {
     options = options || {};
 
     const method      = (options.method || "GET").toUpperCase();
-    const headersObj  = options.headers || {};
+    let body = "";
+    let headersObj = options.headers || {};
+
+    if (options.body instanceof FormData) {
+        body = options.body.__serialize();
+        headersObj["Content-Type"] = "application/x-www-form-urlencoded";
+    } else if (options.body !== undefined && options.body !== null) {
+        body = String(options.body);
+    }
+
     const headersJson = JSON.stringify(headersObj);
-    const body = (options.body !== undefined && options.body !== null)
-        ? String(options.body)
-        : "";
 
     const rawJson = __native_fetch(url, method, headersJson, body);
     const raw     = JSON.parse(rawJson);
@@ -257,10 +276,15 @@ if (typeof globalThis.File === "undefined") {
 
 if (typeof globalThis.FormData === "undefined") {
     globalThis.FormData = class FormData {
-        constructor() { this._data = {}; }
-        append(k, v) { this._data[k] = v; }
-        get(k)       { return this._data[k] || null; }
-        has(k)       { return k in this._data; }
+        constructor() { this._entries = []; }
+        append(k, v) { this._entries.push([k, v]); }
+        get(k)       { const e = this._entries.find(([key]) => key === k); return e ? e[1] : null; }
+        has(k)       { return this._entries.some(([key]) => key === k); }
+        __serialize() {
+            return this._entries
+                .map(([k, v]) => encodeURIComponent(k) + "=" + encodeURIComponent(v))
+                .join("&");
+        }
     };
 }
 

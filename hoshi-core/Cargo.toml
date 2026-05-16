@@ -9,8 +9,8 @@ discord-rpc = ["dep:discord-rich-presence"]
 [dependencies]
 discord-rich-presence = { version = "1.1.0", optional = true }
 rquickjs = { version = "0.11.0", features = ["loader", "classes", "properties", "futures", "bindgen"] }
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "process", "full"] }
-sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio-rustls", "macros"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "process", "fs"] }
+sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio-rustls"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"

@@ -73,6 +73,7 @@
                 {#each extensions.installed as ext (ext.id)}
                     <Card
                             {ext}
+                            source={ext.id.startsWith('lnr_') ? 'lnreader' : undefined}
                             isSaving={savingIds.has(ext.id)}
                             onAction={handleUninstall}
                             onSave={handleSaveSettings}

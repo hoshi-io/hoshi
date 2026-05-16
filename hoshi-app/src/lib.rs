@@ -29,7 +29,7 @@ use crate::commands::users::{get_all_users, get_me, update_me, delete_me, change
 use crate::commands::content::{get_trending, get_home_content, get_content, get_content_by_cid, update_content, search, get_content_items, play_content_by_number, add_tracker_mapping, add_extension_source, update_extension_mapping, update_tracker_mapping, delete_tracker_mapping, search_extension};
 use crate::commands::schedule::{get_schedule};
 use crate::commands::list::{get_list, get_single_entry, upsert_entry, delete_entry, get_stats};
-use crate::commands::extensions::{get_extensions, get_extension_filters, get_extension_settings, install_extension, update_extension, uninstall_extension, update_extension_settings};
+use crate::commands::extensions::{get_extensions, get_extension_filters, get_extension_settings, install_extension, install_lnreader_extension, update_extension, uninstall_extension, update_extension_settings};
 use crate::commands::config::{get_user_config, patch_user_config};
 use crate::commands::progress::{get_content_progress, get_continue_watching, update_anime_progress, update_chapter_progress};
 use crate::commands::intergations::{list_trackers, add_integration, remove_integration, set_sync_enabled};
@@ -136,7 +136,7 @@ pub fn run_inner() -> anyhow::Result<()> {
             get_trending, get_home_content, get_content, get_content_by_cid, update_content, search, get_content_items, play_content_by_number, add_tracker_mapping, add_extension_source, update_extension_mapping, update_tracker_mapping, delete_tracker_mapping, search_extension,
             get_schedule,
             get_list, get_single_entry, upsert_entry, delete_entry, get_stats,
-            get_extensions, get_extension_filters, get_extension_settings, install_extension, update_extension, uninstall_extension, update_extension_settings,
+            get_extensions, get_extension_filters, get_extension_settings, install_extension, install_lnreader_extension, update_extension, uninstall_extension, update_extension_settings,
             get_user_config, patch_user_config,
             get_content_progress, get_continue_watching, update_anime_progress, update_chapter_progress,
             list_trackers, add_integration, remove_integration, set_sync_enabled,

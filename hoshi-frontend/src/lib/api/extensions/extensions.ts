@@ -3,7 +3,7 @@ import type {
     Extension,
     ExtensionFiltersResponse,
     ExtensionSettingsResponse,
-    InstallExtensionResponse,
+    InstallExtensionResponse, LNReaderMarketplaceEntry, NativeMarketplaceEntry,
     UninstallExtensionResponse, UpdateExtensionResponse,
     UpdateExtensionSettingsResponse,
 } from "./types";
@@ -37,6 +37,19 @@ export const extensionsApi = {
         return call<InstallExtensionResponse>({
             tauri: { cmd: "install_extension", args: { manifestUrl } },
         });
+    },
+
+    installLNReader(entry: LNReaderMarketplaceEntry) {
+        return call<InstallExtensionResponse>({
+            tauri: { cmd: "install_lnreader_extension", args: { entry } },
+        });
+    },
+
+    installAuto(entry: NativeMarketplaceEntry | LNReaderMarketplaceEntry) {
+        if ("url" in entry && "iconUrl" in entry) {
+            return extensionsApi.installLNReader(entry as LNReaderMarketplaceEntry);
+        }
+        return extensionsApi.install((entry as NativeMarketplaceEntry).manifestUrl);
     },
 
     update(id: string, manifestUrl: string) {

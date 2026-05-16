@@ -20,6 +20,7 @@ pub(crate) async fn execute_in_quickjs(
     settings: HashMap<String, Value>,
     extension_id: String,
     state_store: ExtensionStateStore,
+    compat_layer: Option<String>,
 ) -> CoreResult<Value> {
     let base_classes = format!("{}\n{}\n{}\n{}", BASE, ANIME, MANGA, NOVEL);
 
@@ -44,6 +45,7 @@ pub(crate) async fn execute_in_quickjs(
 
     let full_script = build_sandbox_script(
         &base_classes,
+        compat_layer.as_deref(),
         &extension_code,
         &function_name,
         &args_json,
@@ -192,20 +194,32 @@ async fn run_quickjs_local(
 
 fn build_sandbox_script(
     base_classes: &str,
+    compat_layer: Option<&str>,
     extension_code: &str,
     function_name: &str,
     args_json: &str,
     settings_json: &str,
 ) -> String {
+    let compat_block = compat_layer.unwrap_or("");
     let ext_code_repr = serde_json::to_string(extension_code).unwrap_or_default();
-    format!(r#"
-{bootstrap}
 
-globalThis.__settings = Object.freeze({settings});
-
-{base}
-
-(async () => {{
+    let runner = if compat_layer.is_some() {
+        format!(r#"(async () => {{
+    const src = {ext_repr};
+    eval(src);
+    const ExtClass = __lnr_buildNovelClass();
+    const instance = new ExtClass();
+    const fn_name = "{fn}";
+    if (typeof instance[fn_name] !== "function")
+        throw new Error(`Method "${{fn_name}}" not found on compat class`);
+    return await instance[fn_name](...{args});
+}})()"#,
+                ext_repr = ext_code_repr,
+                fn       = function_name,
+                args     = args_json,
+        )
+    } else {
+        format!(r#"(async () => {{
     const VALID_BASES = ["Base", "Anime", "Manga", "Novel"];
 
     const src   = {ext_repr};
@@ -231,14 +245,29 @@ return ${{className}};
         throw new Error(`Method "{fn}" does not exist on ${{className}}`);
 
     return await instance[callable](...{args});
-}})()
+}})()"#,
+                ext_repr = ext_code_repr,
+                fn       = function_name,
+                args     = args_json,
+        )
+    };
+
+    format!(r#"
+{bootstrap}
+
+globalThis.__settings = Object.freeze({settings});
+
+{base}
+
+{compat}
+
+{runner}
 "#,
-        bootstrap = SANDBOX_BOOTSTRAP,
-        base      = base_classes,
-        ext_repr  = ext_code_repr,
-        fn        = function_name,
-        args      = args_json,
-        settings  = settings_json,
+            bootstrap = SANDBOX_BOOTSTRAP,
+            settings  = settings_json,
+            base      = base_classes,
+            compat    = compat_block,
+            runner    = runner,
     )
 }
 

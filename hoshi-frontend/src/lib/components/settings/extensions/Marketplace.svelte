@@ -1,6 +1,8 @@
 <script lang="ts">
     import { extensions } from "@/stores/extensions.svelte.js";
     import type { Extension } from "@/api/extensions/types";
+    import type { AnyMarketplaceEntry, LNReaderMarketplaceEntry, NativeMarketplaceEntry } from "@/api/extensions/types";
+    import { extensionsApi } from "@/api/extensions/extensions";
     import { toast } from "svelte-sonner";
     import { fade } from "svelte/transition";
     import { i18n } from "@/stores/i18n.svelte.js";
@@ -22,7 +24,7 @@
     let marketSearchQuery = $state("");
     let repoUrlLocal = $state(config.repoUrl || "");
     let lastLoadedUrl = $state("");
-    let marketplaceItems = $state<(Extension & { manifestUrl?: string })[]>([]);
+    let marketplaceItems = $state<AnyMarketplaceEntry[]>([]);
     let isLoadingRepo = $state(false);
     let debounceTimer: ReturnType<typeof setTimeout>;
 
@@ -41,16 +43,26 @@
         )
     );
 
-    async function handleInstall(item: Extension & { manifestUrl?: string }) {
-        const manifest = item.manifestUrl;
-        if (!manifest) {
-            toast.error(i18n.t('marketplace.missing_manifest'));
-            return;
-        }
+    function isLNReader(item: AnyMarketplaceEntry): item is LNReaderMarketplaceEntry {
+        return "url" in item && "iconUrl" in item;
+    }
 
+    async function handleInstall(item: AnyMarketplaceEntry) {
         installingIds = new Set(installingIds).add(item.id);
         try {
-            await extensions.install(manifest);
+            if (isLNReader(item)) {
+                const res = await extensionsApi.installLNReader(item);
+                if (res.ok && res.extension) {
+                    extensions.installed = [...extensions.installed, res.extension];
+                }
+            } else {
+                const manifest = (item as NativeMarketplaceEntry).manifestUrl;
+                if (!manifest) {
+                    toast.error(i18n.t('marketplace.missing_manifest'));
+                    return;
+                }
+                await extensions.install(manifest);
+            }
             toast.success(i18n.t('marketplace.installed'));
         } catch (error: any) {
             const errorMessage = typeof error === 'string' ?
@@ -78,11 +90,8 @@
             if (!res.ok) throw new Error(i18n.t('errors.network'));
 
             const data = await res.json();
-            const items = Array.isArray(data) ? data : (data.extensions || []);
-            marketplaceItems = items.map((item: any) => ({
-                ...item,
-                manifestUrl: item.manifestUrl || `${repoUrlLocal.replace(/\/[^\/]*$/, '')}/${item.id}.json`
-            }));
+            // Handle both native { extensions: [] } and lnreader [] shapes
+            marketplaceItems = Array.isArray(data) ? data : (data.extensions ?? []);
         } catch (error: any) {
             const errorMessage = typeof error === 'string' ?
                 error : error?.message || i18n.t('errors.unknown');
@@ -93,15 +102,22 @@
         }
     }
 
-    function isInstalled(id: string) {
-        return extensions.installed.some(ext => ext.id === id);
+    function isInstalled(item: AnyMarketplaceEntry): boolean {
+        const expectedId = isLNReader(item) ? `lnr_${item.id}` : item.id;
+        return extensions.installed.some(ext => ext.id === expectedId);
     }
 
-    function getInstalledVersion(id: string): string | null {
-        return extensions.installed.find(ext => ext.id === id)?.version ?? null;
+    function getInstalledVersion(item: AnyMarketplaceEntry): string | null {
+        const expectedId = isLNReader(item) ? `lnr_${item.id}` : item.id;
+        return extensions.installed.find(ext => ext.id === expectedId)?.version ?? null;
     }
 
-    // New Semantic Version comparison (e.g. 1.0.1 > 1.0.0)
+    function hasUpdate(item: AnyMarketplaceEntry): boolean {
+        const installedVersion = getInstalledVersion(item);
+        if (!installedVersion) return false;
+        return isNewerVersion(item.version, installedVersion);
+    }
+
     function isNewerVersion(repoVer: string, installedVer: string): boolean {
         if (!repoVer || !installedVer) return false;
 
@@ -118,17 +134,17 @@
         return false;
     }
 
-    function hasUpdate(item: Extension & { manifestUrl?: string }): boolean {
-        const installedVersion = getInstalledVersion(item.id);
-        if (!installedVersion) return false;
-        return isNewerVersion(item.version, installedVersion);
-    }
-
-    async function handleUpdate(item: Extension & { manifestUrl?: string }) {
-        if (!item.manifestUrl) return;
+    async function handleUpdate(item: AnyMarketplaceEntry) {
         installingIds = new Set(installingIds).add(item.id);
         try {
-            await extensions.update(item.id, item.manifestUrl);
+            if (isLNReader(item)) {
+                // LNReader has no separate manifest URL — re-install to update
+                await extensionsApi.installLNReader(item);
+            } else {
+                const manifestUrl = (item as NativeMarketplaceEntry).manifestUrl;
+                if (!manifestUrl) return;
+                await extensions.update(item.id, manifestUrl);
+            }
             toast.success(i18n.t('marketplace.updated'));
         } catch (error: any) {
             toast.error(error?.message || i18n.t('errors.unknown'));
@@ -183,9 +199,12 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-3" in:fade>
                 {#each filteredMarketplace as item (item.id)}
                     <Card
-                            ext={item}
+                            ext={isLNReader(item)
+    ? { ...item, ext_type: 'novel', icon: item.iconUrl, language: item.lang, author: 'LNReader' }
+    : item}
+                            source={isLNReader(item) ? 'lnreader' : undefined}
                             mode="marketplace"
-                            isMarketplaceInstalled={isInstalled(item.id)}
+                            isMarketplaceInstalled={isInstalled(item)}
                             hasUpdate={hasUpdate(item)}
                             isActionLoading={installingIds.has(item.id)}
                             onAction={handleInstall}

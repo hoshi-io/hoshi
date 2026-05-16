@@ -11,6 +11,7 @@
 
     let {
         ext,
+        source,
         mode = "installed",
         isActionLoading = false,
         isMarketplaceInstalled = false,
@@ -21,6 +22,7 @@
         onSave
     }: {
         ext: any;
+        source?: string;
         mode?: "installed" | "marketplace";
         isActionLoading?: boolean;
         isMarketplaceInstalled?: boolean;
@@ -113,6 +115,11 @@
                     {#if ext.nsfw}
                         <Badge variant="outline" class="text-[9px] px-1 uppercase font-black tracking-wider h-4 border-destructive text-destructive bg-destructive/10">
                             NSFW
+                        </Badge>
+                    {/if}
+                    {#if source === 'lnreader'}
+                        <Badge variant="outline" class="text-[9px] px-1 uppercase font-black tracking-wider h-4 border-orange-500/40 text-orange-500 bg-orange-500/10">
+                            LNR
                         </Badge>
                     {/if}
                 </div>

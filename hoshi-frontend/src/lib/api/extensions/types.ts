@@ -7,6 +7,30 @@ export interface SettingOption {
     label: string;
 }
 
+export interface NativeMarketplaceEntry {
+    id: string;
+    name: string;
+    version: string;
+    author: string;
+    ext_type: ExtensionType;
+    language: string;
+    main: string;
+    icon?: string;
+    manifestUrl: string;
+}
+
+export type AnyMarketplaceEntry = NativeMarketplaceEntry | LNReaderMarketplaceEntry;
+
+export interface LNReaderMarketplaceEntry {
+    id: string;
+    name: string;
+    site: string;
+    lang: string;
+    version: string;
+    url: string;
+    iconUrl: string;
+}
+
 export interface SettingDefinition {
     key: string;
     label: string;

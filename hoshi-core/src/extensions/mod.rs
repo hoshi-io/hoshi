@@ -14,7 +14,7 @@ use types::{Extension, ExtensionManifest, ExtensionType, SettingDefinition};
 pub type ExtensionStateStore = Arc<Mutex<HashMap<String, HashMap<String, Value>>>>;
 
 use crate::error::{CoreError, CoreResult};
-use crate::extensions::types::{Chapter, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, Page};
+use crate::extensions::types::{Chapter, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, LNReaderMarketplaceEntry, Page};
 use crate::headless::{noop_headless, HeadlessHandle};
 use crate::paths::AppPaths;
 use crate::state::AppState;
@@ -141,6 +141,7 @@ impl ExtensionManager {
                 skip_default_processing: manifest.skip_default_processing,
                 setting_definitions: manifest.settings,
                 settings,
+                source: manifest.source
             };
 
             self.extensions.insert(manifest.id, extension);
@@ -149,6 +150,78 @@ impl ExtensionManager {
 
         info!(count = loaded_count, "Extensions loaded from disk successfully");
         Ok(())
+    }
+
+    #[instrument(skip(self, state, entry))]
+    pub async fn install_lnreader_extension(
+        &mut self,
+        state: &AppState,
+        entry: LNReaderMarketplaceEntry,
+    ) -> CoreResult<Extension> {
+        info!(id = %entry.id, "Installing LNReader extension");
+
+        let script = state.http_client
+            .get(&entry.url)
+            .send()
+            .await
+            .map_err(|e| {
+                error!(error = ?e, "Failed to download LNReader plugin JS");
+                CoreError::Network("error.extension.install_network_failed".into())
+            })?
+            .text()
+            .await
+            .map_err(|_| CoreError::Network("error.extension.install_network_failed".into()))?;
+        let prefixed_id = format!("lnr_{}", entry.id);
+
+        let manifest_yaml = format!(
+            "id: {id}\nname: {name}\nversion: {version}\ntype: novel\nlanguage: {lang}\nicon: {icon}\nsite: {site}\nauthor: lnreader\nmain: index.js\nsource: lnreader\n",
+            id = prefixed_id,
+            name    = entry.name,
+            version = entry.version,
+            lang    = entry.lang,
+            icon    = entry.icon_url,
+            site    = entry.site,
+        );
+
+        debug!(manifest = %manifest_yaml, "Deserializing generated manifest");
+
+        let ext_dir = self.extensions_dir.join(&prefixed_id);
+        fs::create_dir_all(&ext_dir).await.map_err(CoreError::Io)?;
+
+        fs::write(ext_dir.join("manifest.yaml"), &manifest_yaml)
+            .await.map_err(CoreError::Io)?;
+        fs::write(ext_dir.join("index.js"), &script)
+            .await.map_err(CoreError::Io)?;
+
+        // Load it the same way as a normal extension
+        let manifest: ExtensionManifest = serde_yaml::from_str(&manifest_yaml)
+            .map_err(|e| {
+                error!(error = ?e, "Generated manifest is invalid");
+                CoreError::Parse("error.extension.invalid_manifest".into())
+            })?;
+
+        let settings = load_settings(&ext_dir, &manifest.settings).await;
+
+        let extension = Extension {
+            id: manifest.id.clone(),
+            name: manifest.name,
+            version: manifest.version,
+            author: manifest.author.unwrap_or_else(|| "Unknown".to_string()),
+            icon: manifest.icon,
+            ext_type: manifest.ext_type,
+            script_path: ext_dir.join("index.js"),
+            language: manifest.language,
+            nsfw: manifest.nsfw,
+            skip_default_processing: manifest.skip_default_processing,
+            setting_definitions: manifest.settings,
+            settings,
+            source: manifest.source,
+        };
+
+        self.extensions.insert(manifest.id.clone(), extension.clone());
+        info!(ext = %extension.id, "LNReader extension installed successfully");
+
+        Ok(extension)
     }
 
     #[instrument(skip(self, state, manifest_url))]
@@ -244,6 +317,7 @@ impl ExtensionManager {
             skip_default_processing: manifest.skip_default_processing,
             setting_definitions: manifest.settings,
             settings,
+            source: None
         };
 
         self.extensions.insert(manifest.id.clone(), extension.clone());
@@ -339,6 +413,11 @@ impl ExtensionManager {
 
         let extension_code = fs::read_to_string(&extension.script_path).await.map_err(CoreError::Io)?;
 
+        let compat = match extension.source.as_deref() {
+            Some("lnreader") => Some(LNREADER.to_string()),
+            _ => None,
+        };
+
         sandbox::execute_in_quickjs(
             extension_code,
             function_name.to_string(),
@@ -347,6 +426,7 @@ impl ExtensionManager {
             extension.settings.clone(),
             extension_id.to_string(),
             Arc::clone(&self.extension_state),
+            compat
         ).await
     }
 

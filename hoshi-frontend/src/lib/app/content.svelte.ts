@@ -29,7 +29,7 @@ export class ContentDetailState {
     params = $derived(page.params as Record<string, string>);
     pathParts = $derived(this.params.path ? this.params.path.split('/') : []);
     source = $derived(this.pathParts.length === 2 ? this.pathParts[0] : "");
-    id = $derived(this.pathParts.length === 2 ? this.pathParts[1] : "");
+    id = $derived(this.pathParts.length === 2 ? atob(this.pathParts[1]) : "");
     cid = $derived(this.pathParts.length === 1 ? this.pathParts[0] : "");
 
     constructor() {
@@ -37,6 +37,8 @@ export class ContentDetailState {
             if (this.cid) {
                 this.loadContentByCid(this.cid);
             } else if (this.source && this.id) {
+                console.log("a")
+
                 this.loadContent(this.source, this.id);
             }
         });
@@ -67,6 +69,7 @@ export class ContentDetailState {
 
         try {
             const res = await contentApi.get(src, entryId);
+            console.log(res)
             await this.handleResponse(res);
         } catch (e) {
             this.handleError(e);

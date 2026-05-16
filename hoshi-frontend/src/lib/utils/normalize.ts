@@ -121,7 +121,7 @@ export function normalizeExtensionResult(
         trailerUrlRaw: null,
         episodeCount: null,
         contentType,
-        href: `/c/${extensionId}/${item.id}`,
+        href: `/c/${extensionId}/${btoa(item.id)}`,
     };
 }
 

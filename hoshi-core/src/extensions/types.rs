@@ -20,6 +20,20 @@ pub struct ExtensionManifest {
     pub skip_default_processing: bool,
     #[serde(default)]
     pub settings: Vec<SettingDefinition>,
+    #[serde(default)]
+    pub source: Option<String>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct LNReaderMarketplaceEntry {
+    pub id:      String,
+    pub name:    String,
+    pub site:    String,
+    pub lang:    String,
+    pub version: String,
+    pub url:     String,
+    #[serde(rename = "iconUrl")]
+    pub icon_url: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -66,6 +80,7 @@ pub struct Extension {
     pub skip_default_processing: bool,
     pub setting_definitions: Vec<SettingDefinition>,
     pub settings: HashMap<String, Value>,
+    pub source: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
