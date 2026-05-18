@@ -34,9 +34,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     eprintln!("[3/4] Extracting + walking DEX ...");
     let mut zip = ZipArchive::new(Cursor::new(&bytes))?;
     let extracted = extract_dex(&mut zip, &meta)?;
-    let pool = Pool::build(&extracted.dex_files);
 
-    let walked = walk_source(&extracted, &meta)?;
+    let pool = Pool::build(&extracted.dex_files);
+    let walked = walk_source(&extracted, &meta, &pool)?;
 
     // ── 4. Translate + resolve ────────────────────────────────────────────────
     eprintln!("[4/4] Translating ...");
