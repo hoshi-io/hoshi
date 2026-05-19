@@ -88,7 +88,7 @@ pub(crate) async fn execute_in_quickjs(
                 })?;
             tokio::task::LocalSet::new().block_on(
                 &rt,
-                run_quickjs_local(full_script, headless_available, req_tx, state_json, extension_id),
+                run_quickjs_local(full_script, extension_code, headless_available, req_tx, state_json, extension_id),
             )
         }
     })
@@ -120,9 +120,10 @@ struct HeadlessRequest {
     reply:   std::sync::mpsc::SyncSender<String>,
 }
 
-#[instrument(skip(full_script, req_tx, state_json))]
+#[instrument(skip(full_script, extension_code, req_tx, state_json))]
 async fn run_quickjs_local(
     full_script: String,
+    extension_code: String,
     headless_available: bool,
     req_tx: std::sync::mpsc::SyncSender<HeadlessRequest>,
     state_json: String,
@@ -151,7 +152,9 @@ async fn run_quickjs_local(
         serde_json::from_str(&state_json).unwrap_or_default(),
     ));
 
+    let full_script_for_error = full_script.clone();
     let state_map_for_output = Arc::clone(&state_map);
+
     let result: Result<String, String> = async_with!(ctx => |ctx| {
         register_native_apis(&ctx, headless_available, req_tx, Arc::clone(&state_map), extension_id)
             .catch(&ctx)
@@ -180,8 +183,62 @@ async fn run_quickjs_local(
 
     result
         .map_err(|e| {
-            warn!(error = %e, "Sandbox execution threw a JavaScript exception");
-            CoreError::BadRequest("error.sandbox.execution_failed".into())
+            fn parse_loc(line: &str, marker: &str) -> Option<(usize, usize)> {
+                let rest = line.split(marker).nth(1)?;
+                let mut parts = rest.splitn(3, ':');
+                let ln: usize = parts.next()?.trim().parse().ok()?;
+                let col: usize = parts.next()?.trim_end_matches(|c: char| !c.is_numeric()).parse().ok()?;
+                Some((ln, col))
+            }
+
+            fn make_snippet(source: &str, line: usize, col: usize) -> String {
+                source
+                    .lines()
+                    .enumerate()
+                    .filter(|(i, _)| (*i + 1).abs_diff(line) <= 3)
+                    .map(|(i, l)| {
+                        if i + 1 == line {
+                            format!(">>> {:4} | {}    <-- col {}", i + 1, l, col)
+                        } else {
+                            format!("    {:4} | {}", i + 1, l)
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            }
+
+            let mut input_loc: Option<(usize, usize)> = None;
+            let mut eval_loc: Option<(usize, usize)> = None;
+            for l in e.lines() {
+                if input_loc.is_none() && l.contains("<input>:") {
+                    input_loc = parse_loc(l, "<input>:");
+                }
+                if eval_loc.is_none() && l.contains("eval_script:") {
+                    eval_loc = parse_loc(l, "eval_script:");
+                }
+            }
+
+            let (snippet, line, col, source_label) = match (input_loc, eval_loc) {
+                (Some((line, col)), _) => {
+                    (make_snippet(&extension_code, line, col), line, col, "extension_code")
+                }
+                (None, Some((line, col))) => {
+                    (make_snippet(&full_script_for_error, line, col), line, col, "full_script")
+                }
+                (None, None) => (String::new(), 0, 0, "unknown"),
+            };
+
+            warn!(
+            error = %e,
+            line = line,
+            col = col,
+            source = source_label,
+            snippet = %snippet,
+            "Sandbox JS exception"
+        );
+            CoreError::BadRequest(format!(
+                "error.sandbox.execution_failed [{source_label} line {line}:{col}]\n{snippet}"
+            ).into())
         })
         .map(|json_str| {
             let updated_state_json = {
