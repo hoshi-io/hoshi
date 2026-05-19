@@ -1,6 +1,6 @@
 mod sandbox;
 pub mod types;
-pub mod tachiyomi_loader;
+pub mod apk_translator;
 
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -14,7 +14,7 @@ use types::{Extension, ExtensionManifest, ExtensionType, SettingDefinition};
 pub type ExtensionStateStore = Arc<Mutex<HashMap<String, HashMap<String, Value>>>>;
 
 use crate::error::{CoreError, CoreResult};
-use crate::extensions::types::{Chapter, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, LNReaderMarketplaceEntry, Page};
+use crate::extensions::types::{Chapter, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, LNReaderMarketplaceEntry, Page, TachiyomiMarketplaceEntry};
 use crate::headless::{noop_headless, HeadlessHandle};
 use crate::paths::AppPaths;
 use crate::state::AppState;
@@ -23,9 +23,9 @@ const BASE: &str  = include_str!("base/Base.js");
 const ANIME: &str = include_str!("base/Anime.js");
 const MANGA: &str = include_str!("base/Manga.js");
 const NOVEL: &str = include_str!("base/Novel.js");
+
 const TACHIYOMI: &str = include_str!("compatibility/tachiyomi.js");
 const LNREADER: &str = include_str!("compatibility/lnreader.js");
-
 const SANDBOX_BOOTSTRAP: &str = include_str!("sandbox_bootstrap.js");
 
 pub struct ExtensionManager {
@@ -193,7 +193,6 @@ impl ExtensionManager {
         fs::write(ext_dir.join("index.js"), &script)
             .await.map_err(CoreError::Io)?;
 
-        // Load it the same way as a normal extension
         let manifest: ExtensionManifest = serde_yaml::from_str(&manifest_yaml)
             .map_err(|e| {
                 error!(error = ?e, "Generated manifest is invalid");
@@ -220,6 +219,136 @@ impl ExtensionManager {
 
         self.extensions.insert(manifest.id.clone(), extension.clone());
         info!(ext = %extension.id, "LNReader extension installed successfully");
+
+        Ok(extension)
+    }
+
+    pub async fn install_tachiyomi_extension(
+        &mut self,
+        state: &AppState,
+        download_url: &str,
+        entry: TachiyomiMarketplaceEntry,
+    ) -> CoreResult<Extension> {
+        let bytes = state.http_client
+            .get(download_url)
+            .send().await
+            .map_err(|e| CoreError::Network(e.to_string()))?
+            .bytes().await
+            .map_err(|e| CoreError::Network(e.to_string()))?
+            .to_vec();
+
+        let (js, meta_name, meta_package, meta_version, meta_lang) =
+            tokio::task::spawn_blocking(move || -> CoreResult<_> {
+                use std::io::Cursor;
+                use zip::ZipArchive;
+                use crate::extensions::apk_translator::{extract_dex, inspect_apk_reader, walk_source};
+                use crate::extensions::apk_translator::translator;
+                use crate::extensions::apk_translator::translator::resolver;
+                use crate::extensions::apk_translator::translator::resolver::pool::Pool;
+
+                let meta = inspect_apk_reader(Cursor::new(&bytes))
+                    .map_err(|e| CoreError::Parse(e.to_string()))?;
+                let mut zip = ZipArchive::new(Cursor::new(&bytes))
+                    .map_err(|e| CoreError::Parse(e.to_string()))?;
+                let extracted = extract_dex(&mut zip, &meta)
+                    .map_err(|e| CoreError::Parse(e.to_string()))?;
+                let pool = Pool::build(&extracted.dex_files);
+                let walked = walk_source(&extracted, &meta, &pool)
+                    .map_err(|e| CoreError::Parse(e.to_string()))?;
+                let translated = translator::translate(&walked, &meta, &pool)
+                    .map_err(|e| CoreError::Parse(e.to_string()))?;
+                let js = resolver::resolve::resolve(&translated.js, &pool);
+
+                Ok((js, meta.name, meta.package, meta.version_name, meta.lang))
+            })
+                .await
+                .map_err(|e| CoreError::Internal(e.to_string()))??;
+
+        let prefixed_id = format!("tachi_{}", entry.pkg);
+        let ext_dir = self.extensions_dir.join(&prefixed_id);
+        fs::create_dir_all(&ext_dir).await.map_err(CoreError::Io)?;
+
+        let unique_langs: Vec<String> = {
+            let mut seen = std::collections::HashSet::new();
+            entry.sources.iter()
+                .map(|s| s.lang.clone())
+                .filter(|l| seen.insert(l.clone()))
+                .collect()
+        };
+
+        let settings: Vec<Value> = if unique_langs.len() > 1 {
+            vec![json!({
+            "key": "language",
+            "label": "Language",
+            "type": "select",
+            "default": unique_langs[0],
+            "options": unique_langs.iter().map(|l| json!({
+                "value": l,
+                "label": l.to_uppercase()
+            })).collect::<Vec<_>>()
+        })]
+        } else {
+            vec![]
+        };
+
+        let nsfw = entry.nsfw != 0;
+
+        let icon_url = entry.icon_url.clone().unwrap_or_else(|| {
+            format!("{}/icon/{}.png", entry.repo_url, entry.pkg)
+        });
+
+        let manifest = json!({
+            "id": prefixed_id,
+            "name": entry.sources
+                .first()
+                .map(|s| s.name.clone())
+                .unwrap_or_else(|| entry.name),
+            "version": entry.version,
+            "type": "manga",
+            "language": entry.lang,
+            "author": "tachiyomi",
+            "main": "index.js",
+            "source": "tachiyomi",
+            "nsfw": nsfw,
+            "skip_default_processing": nsfw,
+            "settings": settings,
+            "icon": icon_url,
+        });
+
+        let manifest_yaml = serde_yaml::to_string(&manifest)
+            .map_err(|e| CoreError::Parse(e.to_string()))?;
+
+        fs::write(ext_dir.join("manifest.yaml"), &manifest_yaml)
+            .await.map_err(CoreError::Io)?;
+        fs::write(ext_dir.join("index.js"), &js)
+            .await.map_err(CoreError::Io)?;
+
+        let manifest: ExtensionManifest = serde_yaml::from_str(&manifest_yaml)
+            .map_err(|e| {
+                error!(error = ?e, "Generated Tachiyomi manifest is invalid");
+                CoreError::Parse("error.extension.invalid_manifest".into())
+            })?;
+
+        let loaded_settings = load_settings(&ext_dir, &manifest.settings).await;
+
+        let extension = Extension {
+            id: manifest.id.clone(),
+            name: manifest.name,
+            version: manifest.version,
+            author: manifest.author.unwrap_or_else(|| "tachiyomi".to_string()),
+            icon: manifest.icon,
+            ext_type: manifest.ext_type,
+            script_path: ext_dir.join("index.js"),
+            language: manifest.language,
+            nsfw: manifest.nsfw,
+            skip_default_processing: manifest.skip_default_processing,
+            setting_definitions: manifest.settings,
+            settings: loaded_settings,
+            source: manifest.source,
+        };
+
+        self.extensions.insert(manifest.id.clone(), extension.clone());
+        info!(ext = %extension.id, "Tachiyomi extension installed successfully");
 
         Ok(extension)
     }
@@ -415,6 +544,7 @@ impl ExtensionManager {
 
         let compat = match extension.source.as_deref() {
             Some("lnreader") => Some(LNREADER.to_string()),
+            Some("tachiyomi") => Some(TACHIYOMI.to_string()),
             _ => None,
         };
 

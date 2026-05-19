@@ -7,6 +7,26 @@ export interface SettingOption {
     label: string;
 }
 
+export interface TachiyomiSource {
+    name: string;
+    lang: string;
+    id: string;
+    baseUrl: string;
+}
+
+export interface TachiyomiMarketplaceEntry {
+    name: string;
+    pkg: string;
+    apk: string;
+    lang: string;
+    version: string;
+    nsfw: number;
+    sources: TachiyomiSource[];
+
+    repo_url?: string;
+    icon_url?: string;
+}
+
 export interface NativeMarketplaceEntry {
     id: string;
     name: string;
@@ -19,7 +39,7 @@ export interface NativeMarketplaceEntry {
     manifestUrl: string;
 }
 
-export type AnyMarketplaceEntry = NativeMarketplaceEntry | LNReaderMarketplaceEntry;
+export type AnyMarketplaceEntry = NativeMarketplaceEntry | LNReaderMarketplaceEntry | TachiyomiMarketplaceEntry;
 
 export interface LNReaderMarketplaceEntry {
     id: string;

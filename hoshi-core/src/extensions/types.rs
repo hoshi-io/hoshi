@@ -4,6 +4,29 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 #[derive(Debug, Deserialize)]
+pub struct TachiyomiMarketplaceEntry {
+    pub name: String,
+    pub pkg: String,
+    pub apk: String,
+    pub lang: String,
+    pub version: String,
+    pub nsfw: u8,
+    pub sources: Vec<TachiyomiSource>,
+
+    pub repo_url: String,
+    pub icon_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TachiyomiSource {
+    pub name: String,
+    pub lang: String,
+    pub id: String,
+    #[serde(rename = "baseUrl")]
+    pub base_url: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct ExtensionManifest {
     pub id: String,
     pub name: String,

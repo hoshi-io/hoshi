@@ -1,6 +1,6 @@
 <script lang="ts">
     import { extensions } from "@/stores/extensions.svelte.js";
-    import type { Extension } from "@/api/extensions/types";
+    import type {Extension, TachiyomiMarketplaceEntry} from "@/api/extensions/types";
     import type { AnyMarketplaceEntry, LNReaderMarketplaceEntry, NativeMarketplaceEntry } from "@/api/extensions/types";
     import { extensionsApi } from "@/api/extensions/extensions";
     import { toast } from "svelte-sonner";
@@ -43,34 +43,62 @@
         )
     );
 
+    function getItemId(item: AnyMarketplaceEntry): string {
+        if (isTachiyomi(item)) return item.pkg;
+        return item.id;
+    }
+
     function isLNReader(item: AnyMarketplaceEntry): item is LNReaderMarketplaceEntry {
         return "url" in item && "iconUrl" in item;
     }
 
+    function isTachiyomi(item: AnyMarketplaceEntry): item is TachiyomiMarketplaceEntry {
+        return "pkg" in item && "apk" in item;
+    }
+
+    function getRepoBaseUrl(url: string): string {
+        return url.replace(/\/(index(\.min)?\.json)?$/, "");
+    }
+
+    function getTachiyomiIconUrl(item: TachiyomiMarketplaceEntry): string {
+        const base = getRepoBaseUrl(repoUrlLocal);
+        return `${base}/icon/${item.pkg}.png`;
+    }
+
+    function getTachiyomiApkUrl(item: TachiyomiMarketplaceEntry): string {
+        const base = getRepoBaseUrl(repoUrlLocal);
+        return `${base}/apk/${item.apk}`;
+    }
+
     async function handleInstall(item: AnyMarketplaceEntry) {
-        installingIds = new Set(installingIds).add(item.id);
+        installingIds = new Set(installingIds).add(getItemId(item));
         try {
             if (isLNReader(item)) {
                 const res = await extensionsApi.installLNReader(item);
                 if (res.ok && res.extension) {
                     extensions.installed = [...extensions.installed, res.extension];
                 }
+            } else if (isTachiyomi(item)) {
+                const downloadUrl = getTachiyomiApkUrl(item);
+                const res = await extensionsApi.installTachiyomi(downloadUrl, {
+                    ...item,
+                    repo_url: getRepoBaseUrl(repoUrlLocal),
+                    icon_url: getTachiyomiIconUrl(item),
+                });
+                if (res.ok && res.extension) {
+                    extensions.installed = [...extensions.installed, res.extension];
+                }
             } else {
                 const manifest = (item as NativeMarketplaceEntry).manifestUrl;
-                if (!manifest) {
-                    toast.error(i18n.t('marketplace.missing_manifest'));
-                    return;
-                }
+                if (!manifest) { toast.error(i18n.t('marketplace.missing_manifest')); return; }
                 await extensions.install(manifest);
             }
             toast.success(i18n.t('marketplace.installed'));
         } catch (error: any) {
-            const errorMessage = typeof error === 'string' ?
-                error : error?.message || i18n.t('errors.unknown');
-            toast.error(errorMessage);
+            toast.error(error?.message || i18n.t('errors.unknown'));
         } finally {
             const newSet = new Set(installingIds);
-            newSet.delete(item.id);
+            newSet.delete(getItemId(item));
             installingIds = newSet;
         }
     }
@@ -102,14 +130,18 @@
         }
     }
 
+    function getExpectedId(item: AnyMarketplaceEntry): string {
+        if (isLNReader(item)) return `lnr_${item.id}`;
+        if (isTachiyomi(item)) return `tachi_${item.pkg}`;
+        return item.id;
+    }
+
     function isInstalled(item: AnyMarketplaceEntry): boolean {
-        const expectedId = isLNReader(item) ? `lnr_${item.id}` : item.id;
-        return extensions.installed.some(ext => ext.id === expectedId);
+        return extensions.installed.some(ext => ext.id === getExpectedId(item));
     }
 
     function getInstalledVersion(item: AnyMarketplaceEntry): string | null {
-        const expectedId = isLNReader(item) ? `lnr_${item.id}` : item.id;
-        return extensions.installed.find(ext => ext.id === expectedId)?.version ?? null;
+        return extensions.installed.find(ext => ext.id === getExpectedId(item))?.version ?? null;
     }
 
     function hasUpdate(item: AnyMarketplaceEntry): boolean {
@@ -135,11 +167,14 @@
     }
 
     async function handleUpdate(item: AnyMarketplaceEntry) {
-        installingIds = new Set(installingIds).add(item.id);
+        installingIds = new Set(installingIds).add(getItemId(item));
         try {
             if (isLNReader(item)) {
-                // LNReader has no separate manifest URL — re-install to update
                 await extensionsApi.installLNReader(item);
+            } else if (isTachiyomi(item)) {
+                const baseRaw = "https://raw.githubusercontent.com/keiyoushi/extensions/repo/apk/";
+                const downloadUrl = baseRaw + item.apk;
+                await extensionsApi.installTachiyomi(downloadUrl, item);
             } else {
                 const manifestUrl = (item as NativeMarketplaceEntry).manifestUrl;
                 if (!manifestUrl) return;
@@ -150,7 +185,7 @@
             toast.error(error?.message || i18n.t('errors.unknown'));
         } finally {
             const newSet = new Set(installingIds);
-            newSet.delete(item.id);
+            newSet.delete(getItemId(item));
             installingIds = newSet;
         }
     }
@@ -197,16 +232,34 @@
     {:else if marketplaceItems.length > 0}
         {#if filteredMarketplace.length > 0}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-3" in:fade>
-                {#each filteredMarketplace as item (item.id)}
+                {#each filteredMarketplace as item (getItemId(item))}
                     <Card
-                            ext={isLNReader(item)
-    ? { ...item, ext_type: 'novel', icon: item.iconUrl, language: item.lang, author: 'LNReader' }
-    : item}
-                            source={isLNReader(item) ? 'lnreader' : undefined}
+                            ext={
+    isLNReader(item)
+        ? {
+            ...item,
+            ext_type: 'novel',
+            icon: item.iconUrl,
+            language: item.lang,
+            author: 'LNReader'
+        }
+        : isTachiyomi(item)
+            ? {
+                ...item,
+                name: item.sources?.[0]?.name,
+                id: item.pkg,
+                ext_type: 'manga',
+                icon: getTachiyomiIconUrl(item),
+                language: item.lang,
+                author: 'Tachiyomi'
+            }
+            : item
+}
+                            source={isLNReader(item) ? 'lnreader' : isTachiyomi(item) ? 'tachiyomi' : undefined}
                             mode="marketplace"
                             isMarketplaceInstalled={isInstalled(item)}
                             hasUpdate={hasUpdate(item)}
-                            isActionLoading={installingIds.has(item.id)}
+                            isActionLoading={installingIds.has(getItemId(item))}
                             onAction={handleInstall}
                             onUpdate={handleUpdate}
                     />

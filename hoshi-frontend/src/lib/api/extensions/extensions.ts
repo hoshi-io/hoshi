@@ -3,7 +3,7 @@ import type {
     Extension,
     ExtensionFiltersResponse,
     ExtensionSettingsResponse,
-    InstallExtensionResponse, LNReaderMarketplaceEntry, NativeMarketplaceEntry,
+    InstallExtensionResponse, LNReaderMarketplaceEntry, NativeMarketplaceEntry, TachiyomiMarketplaceEntry,
     UninstallExtensionResponse, UpdateExtensionResponse,
     UpdateExtensionSettingsResponse,
 } from "./types";
@@ -50,6 +50,12 @@ export const extensionsApi = {
             return extensionsApi.installLNReader(entry as LNReaderMarketplaceEntry);
         }
         return extensionsApi.install((entry as NativeMarketplaceEntry).manifestUrl);
+    },
+
+    installTachiyomi(downloadUrl: string, entry: TachiyomiMarketplaceEntry) {
+        return call<InstallExtensionResponse>({
+            tauri: { cmd: "install_tachiyomi_extension", args: { downloadUrl, entry } },
+        });
     },
 
     update(id: string, manifestUrl: string) {

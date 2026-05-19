@@ -2,7 +2,6 @@
 members = [
     "hoshi-core",
     "hoshi-app",
-    "test-apk",
 ]
 
 resolver = "2"

@@ -7,7 +7,7 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::State;
-use hoshi_core::extensions::types::{Extension, ExtensionFeatures, LNReaderMarketplaceEntry};
+use hoshi_core::extensions::types::{Extension, ExtensionFeatures, LNReaderMarketplaceEntry, TachiyomiMarketplaceEntry};
 
 #[derive(Serialize)]
 pub struct ExtensionsResponse<T> {
@@ -45,6 +45,17 @@ pub async fn install_lnreader_extension(
 ) -> Result<Value, CoreError> {
     let mut manager = state.inner().extension_manager.write().await;
     let extension = manager.install_lnreader_extension(state.inner(), entry).await?;
+    Ok(json!({ "ok": true, "extension": extension }))
+}
+
+#[tauri::command]
+pub async fn install_tachiyomi_extension(
+    state: State<'_, Arc<AppState>>,
+    download_url: String,
+    entry: TachiyomiMarketplaceEntry,
+) -> Result<Value, CoreError> {
+    let mut manager = state.inner().extension_manager.write().await;
+    let extension = manager.install_tachiyomi_extension(state.inner(), &download_url, entry).await?;
     Ok(json!({ "ok": true, "extension": extension }))
 }
 

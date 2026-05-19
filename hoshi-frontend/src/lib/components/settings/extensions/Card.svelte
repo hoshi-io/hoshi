@@ -122,6 +122,14 @@
                             LNR
                         </Badge>
                     {/if}
+                    {#if source === 'tachiyomi'}
+                        <Badge
+                                variant="outline"
+                                class="text-[9px] px-1 uppercase font-black tracking-wider h-4 border-blue-500/40 text-blue-500 bg-blue-500/10"
+                        >
+                            TACHIYOMI
+                        </Badge>
+                    {/if}
                 </div>
             </div>
 
