@@ -98,13 +98,14 @@ impl Default for ContentConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExtensionsConfig {
-    pub repo_url: String,
+    #[serde(default)]
+    pub repo_urls: Vec<String>,
 }
 
 impl Default for ExtensionsConfig {
     fn default() -> Self {
         Self {
-            repo_url: String::new(),
+            repo_urls: vec![],
         }
     }
 }
