@@ -10,6 +10,7 @@ use tracing::{debug, error, instrument, warn};
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::ExtensionStateStore;
 use crate::extensions::{ANIME, BASE, MANGA, NOVEL, SANDBOX_BOOTSTRAP};
+use crate::extensions::types::CompatLayer;
 use crate::headless::{HeadlessHandle, HeadlessOptions};
 
 pub(crate) async fn execute_in_quickjs(
@@ -20,7 +21,7 @@ pub(crate) async fn execute_in_quickjs(
     settings: HashMap<String, Value>,
     extension_id: String,
     state_store: ExtensionStateStore,
-    compat_layer: Option<String>,
+    compat_layer: Option<CompatLayer>,
 ) -> CoreResult<Value> {
     let base_classes = format!("{}\n{}\n{}\n{}", BASE, ANIME, MANGA, NOVEL);
 
@@ -45,7 +46,7 @@ pub(crate) async fn execute_in_quickjs(
 
     let full_script = build_sandbox_script(
         &base_classes,
-        compat_layer.as_deref(),
+        compat_layer,
         &extension_code,
         &function_name,
         &args_json,
@@ -92,11 +93,11 @@ pub(crate) async fn execute_in_quickjs(
             )
         }
     })
-    .await
-    .map_err(|e| {
-        error!(error = ?e, "Sandbox spawn_blocking thread panicked");
-        CoreError::Internal("error.sandbox.thread_panicked".into())
-    })??;
+        .await
+        .map_err(|e| {
+            error!(error = ?e, "Sandbox spawn_blocking thread panicked");
+            CoreError::Internal("error.sandbox.thread_panicked".into())
+        })??;
 
     drop(req_tx);
     let _ = headless_thread.join();
@@ -251,17 +252,18 @@ async fn run_quickjs_local(
 
 fn build_sandbox_script(
     base_classes: &str,
-    compat_layer: Option<&str>,
+    compat_layer: Option<CompatLayer>,
     extension_code: &str,
     function_name: &str,
     args_json: &str,
     settings_json: &str,
 ) -> String {
-    let compat_block = compat_layer.unwrap_or("");
     let ext_code_repr = serde_json::to_string(extension_code).unwrap_or_default();
 
-    let runner = if compat_layer.is_some() {
-        format!(r#"(async () => {{
+    let (compat_js, runner) = match &compat_layer {
+        Some(CompatLayer::Lnreader(js)) => {
+            let runner = format!(
+                r#"(async () => {{
     const src = {ext_repr};
     eval(src);
     const ExtClass = __lnr_buildNovelClass();
@@ -274,16 +276,62 @@ fn build_sandbox_script(
                 ext_repr = ext_code_repr,
                 fn       = function_name,
                 args     = args_json,
-        )
-    } else {
-        format!(r#"(async () => {{
+            );
+            (js.clone(), runner)
+        }
+
+        Some(CompatLayer::Tachiyomi(js)) => {
+            let runner = format!(
+                r#"(async () => {{
+    globalThis.__tachi_captured = null;
+
+    const src = {ext_repr};
+
+    // Rewrite:
+    // class X extends HttpSource
+    // ->
+    // globalThis.__tachi_captured = class X extends HttpSource
+    //
+    // so the class gets captured INSIDE eval scope.
+    const patched = src.replace(
+        /class\s+([a-zA-Z0-9_$]+)\s+extends\s+(HttpSource|ParsedHttpSource|Manga)/,
+        'globalThis.__tachi_captured = class $1 extends $2'
+    );
+
+    eval(patched);
+
+    const ExtClass = globalThis.__tachi_captured;
+
+    if (!ExtClass)
+        throw new Error("[tachi-compat] No class extending HttpSource found");
+
+    const instance = new ExtClass();
+
+    const fn_name = "{fn}";
+
+    if (typeof instance[fn_name] !== "function")
+        throw new Error(`Method "${{fn_name}}" not found on compat class`);
+
+    return await instance[fn_name](...{args});
+}})()"#,
+                ext_repr = ext_code_repr,
+                fn       = function_name,
+                args     = args_json,
+            );
+
+            (js.clone(), runner)
+        }
+
+        None => {
+            let runner = format!(
+                r#"(async () => {{
     const VALID_BASES = ["Base", "Anime", "Manga", "Novel"];
 
-    const src   = {ext_repr};
-    const match = src.match(/class\s+([a-zA-Z0-9_]+)\s+extends\s+([a-zA-Z0-9_]+)/);
-    if (!match) throw new Error("No class extending a base was found in the extension");
+    const src            = {ext_repr};
+    const classNameMatch = src.match(/class\s+([a-zA-Z0-9_]+)\s+extends\s+([a-zA-Z0-9_]+)/);
+    if (!classNameMatch) throw new Error("No class extending a base was found in the extension");
 
-    const [, className, parentName] = match;
+    const [, className, parentName] = classNameMatch;
     if (!VALID_BASES.includes(parentName))
         throw new Error(`Class must extend one of: ${{VALID_BASES.join(", ")}}. Got: ${{parentName}}`);
 
@@ -306,10 +354,13 @@ return ${{className}};
                 ext_repr = ext_code_repr,
                 fn       = function_name,
                 args     = args_json,
-        )
+            );
+            (String::new(), runner)
+        }
     };
 
-    format!(r#"
+    format!(
+        r#"
 {bootstrap}
 
 globalThis.__settings = Object.freeze({settings});
@@ -320,11 +371,11 @@ globalThis.__settings = Object.freeze({settings});
 
 {runner}
 "#,
-            bootstrap = SANDBOX_BOOTSTRAP,
-            settings  = settings_json,
-            base      = base_classes,
-            compat    = compat_block,
-            runner    = runner,
+        bootstrap = SANDBOX_BOOTSTRAP,
+        settings  = settings_json,
+        base      = base_classes,
+        compat    = compat_js,
+        runner    = runner,
     )
 }
 

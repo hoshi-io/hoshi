@@ -14,7 +14,7 @@ use types::{Extension, ExtensionManifest, ExtensionType, SettingDefinition};
 pub type ExtensionStateStore = Arc<Mutex<HashMap<String, HashMap<String, Value>>>>;
 
 use crate::error::{CoreError, CoreResult};
-use crate::extensions::types::{Chapter, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, LNReaderMarketplaceEntry, Page, TachiyomiMarketplaceEntry};
+use crate::extensions::types::{Chapter, CompatLayer, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, LNReaderMarketplaceEntry, Page, TachiyomiMarketplaceEntry};
 use crate::headless::{noop_headless, HeadlessHandle};
 use crate::paths::AppPaths;
 use crate::state::AppState;
@@ -257,9 +257,14 @@ impl ExtensionManager {
                     .map_err(|e| CoreError::Parse(e.to_string()))?;
                 let translated = translator::translate(&walked, &meta, &pool)
                     .map_err(|e| CoreError::Parse(e.to_string()))?;
-                let js = resolver::resolve::resolve(&translated.js, &pool);
 
-                Ok((js, meta.name, meta.package, meta.version_name, meta.lang))
+                Ok((
+                    translated.js,
+                    meta.name,
+                    meta.package,
+                    meta.version_name,
+                    meta.lang,
+                ))
             })
                 .await
                 .map_err(|e| CoreError::Internal(e.to_string()))??;
@@ -543,8 +548,8 @@ impl ExtensionManager {
         let extension_code = fs::read_to_string(&extension.script_path).await.map_err(CoreError::Io)?;
 
         let compat = match extension.source.as_deref() {
-            Some("lnreader") => Some(LNREADER.to_string()),
-            Some("tachiyomi") => Some(TACHIYOMI.to_string()),
+            Some("lnreader") => Some(CompatLayer::Lnreader(LNREADER.to_string())),
+            Some("tachiyomi") => Some(CompatLayer::Tachiyomi(TACHIYOMI.to_string())),
             _ => None,
         };
 
