@@ -189,7 +189,7 @@
                 {/key}
             </main>
 
-            {#if showNav}
+            {#if showNav && !pathname.startsWith('/settings')}
                 <div class="w-full z-50 lg:hidden absolute bottom-0 left-0 transition-transform duration-300 ease-in-out glass-panel {isNavHidden ? 'translate-y-full' : 'translate-y-0'}">
                     <MobileBottom routes={mobileRoutes} />
                 </div>
