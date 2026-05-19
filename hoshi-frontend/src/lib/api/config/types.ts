@@ -29,7 +29,7 @@ export interface ContentConfig {
 }
 
 export interface ExtensionsConfig {
-    repoUrl: string;
+    repoUrls: string[];
 }
 
 export interface PlayerConfig {

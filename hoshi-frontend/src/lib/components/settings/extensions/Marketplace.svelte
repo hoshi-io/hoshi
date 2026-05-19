@@ -319,7 +319,7 @@
 <div class="space-y-6 relative">
     <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center w-full">
 
-        <div class="relative flex-1 group">
+        <div class="relative w-full md:flex-1 group">
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
             <Input
                     placeholder={i18n.t('marketplace.search_repository')}
@@ -329,8 +329,8 @@
             />
         </div>
 
-        <div class="flex flex-wrap md:flex-nowrap items-center gap-2 shrink-0">
-            <div class="w-36 h-9 flex">
+        <div class="grid grid-cols-[1fr_auto_1.5fr_auto] md:flex items-center gap-2 w-full md:w-auto shrink-0">
+            <div class="h-9 flex min-w-[110px] md:w-36">
                 <ResponsiveSelect
                         bind:value={selectedLang}
                         items={langItems}
@@ -340,14 +340,15 @@
             </div>
 
             <div class="hidden md:block w-px h-6 bg-border mx-1"></div>
+            <div class="md:hidden"></div>
 
-            <div class="relative w-[180px] md:w-56 shrink-0">
+            <div class="relative h-9 flex shrink-0 md:w-56 min-w-[140px]">
                 <Server class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70 z-10 pointer-events-none" />
                 <ResponsiveSelect
                         value={activeRepoValue}
                         items={repoItems}
                         onValueChange={onRepoChange}
-                        class="pl-9 h-10"
+                        class="pl-9 w-full h-full"
                 />
                 {#if isLoadingRepo}
                     <Spinner class="absolute right-9 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground z-10" />
