@@ -848,6 +848,29 @@ class HttpSource extends _SandboxManga {
         return { "User-Agent": "Mozilla/5.0 (compatible; TachiSandbox/1.0)" };
     }
 
+    getId() {
+        if (this.__id == null) {
+            this.__id = this.generateId(
+                this.name,
+                this.lang,
+                this.versionId
+            );
+        }
+
+        return this.__id;
+    }
+
+    generateId(name, lang, versionId) {
+        const key = `${name.toLowerCase()}/${lang}/${versionId}`;
+
+        const md5hex = crypto.md5(key);
+        const first64 = md5hex.slice(0, 16);
+
+        let id = BigInt("0x" + first64);
+        id &= 0x7fffffffffffffffn;
+        return id.toString();
+    }
+
     //  sandbox API entry points 
 
     async search(query, filters, page) {

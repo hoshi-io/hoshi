@@ -287,12 +287,6 @@ fn build_sandbox_script(
 
     const src = {ext_repr};
 
-    // Rewrite:
-    // class X extends HttpSource
-    // ->
-    // globalThis.__tachi_captured = class X extends HttpSource
-    //
-    // so the class gets captured INSIDE eval scope.
     const patched = src.replace(
         /class\s+([a-zA-Z0-9_$]+)\s+extends\s+(HttpSource|ParsedHttpSource|Manga)/,
         'globalThis.__tachi_captured = class $1 extends $2'
