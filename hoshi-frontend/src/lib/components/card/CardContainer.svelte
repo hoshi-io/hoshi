@@ -1,7 +1,7 @@
 <script lang="ts">
     import { AspectRatio } from '@/components/ui/aspect-ratio';
     import { Star } from 'lucide-svelte';
-    import type { Snippet } from "svelte";
+    import {proxyApi} from "@/api/proxy";
 
     let {
         title,
@@ -11,22 +11,41 @@
         shouldBlur = false,
         contentTypeLabel,
         overlay,
-    }: {
-        title: string;
-        cover: string;
-        year?: string | null;
-        score?: number | null;
-        shouldBlur?: boolean;
-        contentTypeLabel?: string | null;
-        overlay?: Snippet;
     } = $props();
+
+    let objectUrl = $state<string | null>(null);
+
+    $effect(() => {
+        if (!cover) return;
+        let revoked = false;
+
+        const tryDirect = () => new Promise<string>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(cover);
+            img.onerror = () => reject();
+            img.src = cover;
+        });
+
+        tryDirect()
+            .then(url => { if (!revoked) objectUrl = url; })
+            .catch(() => {
+                proxyApi.fetch({ url: cover })
+                    .then(blob => { if (!revoked) objectUrl = URL.createObjectURL(blob); })
+                    .catch(() => { if (!revoked) objectUrl = cover; });
+            });
+
+        return () => {
+            revoked = true;
+            if (objectUrl?.startsWith("blob:")) URL.revokeObjectURL(objectUrl);
+        };
+    });
 </script>
 
 <div class="card">
     <div class="cover-wrap">
         <AspectRatio ratio={2/3}>
             <img
-                    src={cover}
+                    src={objectUrl ?? ''}
                     alt={title}
                     loading="lazy"
                     class="cover-img {shouldBlur ? 'blur-xl scale-110' : ''}"

@@ -126,6 +126,21 @@ impl ProxyService {
             }
         }
 
+        if params.referer.is_none() && params.origin.is_none() {
+            if let Ok(parsed) = Url::parse(&params.url) {
+                if let Some(origin) = parsed.origin().ascii_serialization().into() {
+                    let origin_str = parsed.origin().ascii_serialization();
+                    if let Ok(v) = HeaderValue::from_str(&origin_str) {
+                        headers.insert("Origin", v);
+                    }
+                    let referer = format!("{}/", origin_str);
+                    if let Ok(v) = HeaderValue::from_str(&referer) {
+                        headers.insert("Referer", v);
+                    }
+                }
+            }
+        }
+
         Ok(headers)
     }
 
