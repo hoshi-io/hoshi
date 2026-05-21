@@ -264,15 +264,15 @@ fn build_sandbox_script(
         Some(CompatLayer::Lnreader(js)) => {
             let runner = format!(
                 r#"(async () => {{
-    const src = {ext_repr};
-    eval(src);
-    const ExtClass = __lnr_buildNovelClass();
-    const instance = new ExtClass();
-    const fn_name = "{fn}";
-    if (typeof instance[fn_name] !== "function")
-        throw new Error(`Method "${{fn_name}}" not found on compat class`);
-    return await instance[fn_name](...{args});
-}})()"#,
+                    const src = {ext_repr};
+                    eval(src);
+                    const ExtClass = __lnr_buildNovelClass();
+                    const instance = new ExtClass();
+                    const fn_name = "{fn}";
+                    if (typeof instance[fn_name] !== "function")
+                        throw new Error(`Method "${{fn_name}}" not found on compat class`);
+                    return await instance[fn_name](...{args});
+                }})()"#,
                 ext_repr = ext_code_repr,
                 fn       = function_name,
                 args     = args_json,
@@ -283,31 +283,34 @@ fn build_sandbox_script(
         Some(CompatLayer::Tachiyomi(js)) => {
             let runner = format!(
                 r#"(async () => {{
-    globalThis.__tachi_captured = null;
+                    globalThis.__tachi_captured = null;
 
-    const src = {ext_repr};
+                    const src = {ext_repr};
 
-    const patched = src.replace(
-        /class\s+([a-zA-Z0-9_$]+)\s+extends\s+(HttpSource|ParsedHttpSource|Manga)/,
-        'globalThis.__tachi_captured = class $1 extends $2'
-    );
+                    const patched = src.replace(
+                        /class\s+([a-zA-Z0-9_$]+)\s+extends\s+(HttpSource|ParsedHttpSource|Manga)/,
+                        'globalThis.__tachi_captured = class $1 extends $2'
+                    );
 
-    eval(patched);
+                    eval(patched);
 
-    const ExtClass = globalThis.__tachi_captured;
+                    const ExtClass = globalThis.__tachi_captured;
 
-    if (!ExtClass)
-        throw new Error("[tachi-compat] No class extending HttpSource found");
+                    if (!ExtClass)
+                        throw new Error("[tachi-compat] No class extending HttpSource found");
 
-    const instance = new ExtClass();
+                    const nameMatch = src.match(/class\s+([a-zA-Z0-9_$]+)\s+extends\s+(?:HttpSource|ParsedHttpSource|Manga)/);
+                    if (nameMatch) globalThis[nameMatch[1]] = ExtClass;
 
-    const fn_name = "{fn}";
+                    const instance = new ExtClass();
 
-    if (typeof instance[fn_name] !== "function")
-        throw new Error(`Method "${{fn_name}}" not found on compat class`);
+                    const fn_name = "{fn}";
 
-    return await instance[fn_name](...{args});
-}})()"#,
+                    if (typeof instance[fn_name] !== "function")
+                        throw new Error(`Method "${{fn_name}}" not found on compat class`);
+
+                    return await instance[fn_name](...{args});
+                }})()"#,
                 ext_repr = ext_code_repr,
                 fn       = function_name,
                 args     = args_json,
@@ -319,32 +322,32 @@ fn build_sandbox_script(
         None => {
             let runner = format!(
                 r#"(async () => {{
-    const VALID_BASES = ["Base", "Anime", "Manga", "Novel"];
+                    const VALID_BASES = ["Base", "Anime", "Manga", "Novel"];
 
-    const src            = {ext_repr};
-    const classNameMatch = src.match(/class\s+([a-zA-Z0-9_]+)\s+extends\s+([a-zA-Z0-9_]+)/);
-    if (!classNameMatch) throw new Error("No class extending a base was found in the extension");
+                    const src            = {ext_repr};
+                    const classNameMatch = src.match(/class\s+([a-zA-Z0-9_]+)\s+extends\s+([a-zA-Z0-9_]+)/);
+                    if (!classNameMatch) throw new Error("No class extending a base was found in the extension");
 
-    const [, className, parentName] = classNameMatch;
-    if (!VALID_BASES.includes(parentName))
-        throw new Error(`Class must extend one of: ${{VALID_BASES.join(", ")}}. Got: ${{parentName}}`);
+                    const [, className, parentName] = classNameMatch;
+                    if (!VALID_BASES.includes(parentName))
+                        throw new Error(`Class must extend one of: ${{VALID_BASES.join(", ")}}. Got: ${{parentName}}`);
 
-    const ExtClass = new Function("Base", "Anime", "Manga", "Novel", `
-${{src}}
-return ${{className}};
-`)(Base, Anime, Manga, Novel);
+                    const ExtClass = new Function("Base", "Anime", "Manga", "Novel", `
+                        ${{src}}
+                        return ${{className}};
+                    `)(Base, Anime, Manga, Novel);
 
-    if (typeof ExtClass !== "function")
-        throw new Error(`Class '${{className}}' could not be loaded`);
+                    if (typeof ExtClass !== "function")
+                        throw new Error(`Class '${{className}}' could not be loaded`);
 
-    const instance = new ExtClass();
-    const callable = typeof instance[`_{fn}`] === "function" ? `_{fn}` : "{fn}";
+                    const instance = new ExtClass();
+                    const callable = typeof instance[`_{fn}`] === "function" ? `_{fn}` : "{fn}";
 
-    if (typeof instance[callable] !== "function")
-        throw new Error(`Method "{fn}" does not exist on ${{className}}`);
+                    if (typeof instance[callable] !== "function")
+                        throw new Error(`Method "{fn}" does not exist on ${{className}}`);
 
-    return await instance[callable](...{args});
-}})()"#,
+                    return await instance[callable](...{args});
+                }})()"#,
                 ext_repr = ext_code_repr,
                 fn       = function_name,
                 args     = args_json,

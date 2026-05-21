@@ -1,5 +1,16 @@
 // Kotlin stdlib
 
+if (!Array.prototype.iterator) {
+    Array.prototype.iterator = function() {
+        let i = 0;
+        const arr = this;
+        return {
+            hasNext: () => i < arr.length ? true : 0,
+            next: () => i < arr.length ? arr[i++] : 0,
+        };
+    };
+}
+
 globalThis.StringsKt = {
     split$default(str, delimiters, ignoreCase, limit) {
         const sep = Array.isArray(delimiters) ? delimiters[0] : delimiters;
@@ -30,6 +41,17 @@ globalThis.ordinal = function(v) { return typeof v === "number" ? v : v?.ordinal
 
 
 globalThis.CollectionsKt = {
+    createListBuilder(capacity = 0) {
+        return [];
+    },
+    build(builder) {
+        return builder;
+    },
+    mutableListOf(...args) {
+        return args.length === 1 && Array.isArray(args[0])
+            ? [...args[0]]
+            : Array.from(args);
+    },
     joinToString$default(collection, separator, prefix, postfix, limit, truncated, transform) {
         separator = separator ?? ", ";
         prefix    = prefix    ?? "";
@@ -44,19 +66,95 @@ globalThis.CollectionsKt = {
         return prefix + parts.join(separator) + postfix;
     },
     throwIndexOverflow() { throw new RangeError("Index overflow"); },
+    listOf(...args) { return args.length === 1 && Array.isArray(args[0]) ? args[0] : Array.from(args); },
+    toList(collection) { return Array.from(collection); },
+    listOfNotNull(...args) { return args.flat().filter(x => x != null); },
+    collectionSizeOrDefault(collection, default_) {
+        try {
+            return collection?.length ?? default_;
+        } catch(e) {
+            return default_;
+        }
+    },
+};
+
+globalThis.Pair = class Pair {
+    constructor(first, second) {
+        this.first = first;
+        this.second = second;
+    }
+
+    getFirst() {
+        return this.first;
+    }
+
+    getSecond() {
+        return this.second;
+    }
+
+    component1() {
+        return this.first;
+    }
+
+    component2() {
+        return this.second;
+    }
+
+    toString() {
+        return `(${this.first}, ${this.second})`;
+    }
+};
+
+// TODO: remove when settings collected
+globalThis.__settings = {
+    domain_pref: "0",
+};
+
+globalThis.Dispatchers = {
+    getIO()      { return { type: "IO" }; },
+    getMain()    { return { type: "Main" }; },
+    getDefault() { return { type: "Default" }; },
 };
 
 globalThis.BuildersKt = {
     launch$default(scope, context, start, block) {
-        Promise.resolve().then(() => block?.());
+        if (typeof block === "function") {
+            Promise.resolve().then(() => block());
+        } else if (block?.invoke) {
+            Promise.resolve().then(() => block.invoke(scope, null));
+        }
     },
+
+    runBlocking(ctx, block) {
+        let result;
+
+        // Don't call invoke() which re-calls create() and may wipe state
+        // Call invokeSuspend directly since we're not doing real coroutine suspension
+        if (typeof block?.invokeSuspend === "function") {
+            result = block.invokeSuspend(Unit_INSTANCE);
+        } else if (typeof block === "function") {
+            result = block();
+        } else {
+            throw new Error("runBlocking: invalid block");
+        }
+
+        if (result === COROUTINE_SUSPENDED || result === _COROUTINE_SUSPENDED) {
+            throw new Error("Real coroutine suspension not supported in this runtime");
+        }
+
+        return result;
+    }
 };
 
 globalThis.StringBuilder = class StringBuilder {
-    constructor(initial = "") { this._s = String(initial); }
-    append(v)  { this._s += String(v); return this; }
+    constructor(initial = "") { this._s = (initial == null) ? "" : "" + initial; }
     toString() { return this._s; }
     get length() { return this._s.length; }
+};
+StringBuilder.prototype.append = function(v, start, end) {
+    const s = (v == null) ? "" : "" + v;
+    this._s += (start !== undefined) ? s.slice(start, end) : s;
+    return this;
 };
 
 globalThis.ArraysKt = {
@@ -68,12 +166,14 @@ globalThis.ArraysKt = {
 
 globalThis.ArrayList = class ArrayList {
     constructor() { this._a = []; }
+    push(item) { if (item !== 0 && item != null) this._a.push(item); return this; }
     add(item)    { this._a.push(item); return true; }
     get(i)       { return this._a[i]; }
     size()       { return this._a.length; }
     isEmpty()    { return this._a.length === 0; }
     toArray()    { return [...this._a]; }
     [Symbol.iterator]() { return this._a[Symbol.iterator](); }
+    map(fn) { return this._a.map(fn); }
     iterator() {
         let i = 0; const a = this._a;
         return { hasNext() { return i < a.length; }, next() { return a[i++]; } };
@@ -81,9 +181,19 @@ globalThis.ArrayList = class ArrayList {
 };
 
 globalThis.kotlin = { Unit: { INSTANCE: undefined } };
+globalThis.Unit = { INSTANCE: { toString() { return "kotlin.Unit"; } } };
 
 globalThis.java = {
     util: { Locale: { ROOT: "root" } },
+};
+
+java.util.Locale = globalThis.Locale;
+
+globalThis.Locale = {
+    ENGLISH: "en",
+    ROOT:    "root",
+    US:      "en-US",
+    getDefault() { return "en"; },
 };
 
 globalThis.FormBody_Builder = class FormBody_Builder {
@@ -117,18 +227,58 @@ globalThis.JsonTransformingSerializer = class JsonTransformingSerializer {
 // kotlinx.serialization stubs
 globalThis.PluginGeneratedSerialDescriptor = class PluginGeneratedSerialDescriptor {
     constructor(name, plugin, elementsCount) {
-        this.serialName   = name;
-        this._plugin      = plugin;
+        this.serialName = name;
+        this._plugin = plugin;
         this._elementsCount = elementsCount;
+
+        this._elements = [];
+        this._indices = new Map();
     }
-    getElementName(i)        { return `element${i}`; }
-    getElementIndex(name)    { return -1; }
-    elementsCount()          { return this._elementsCount ?? 0; }
-    isElementOptional(i)     { return true; }
-    getElementAnnotations(i) { return []; }
-    getAnnotations()         { return []; }
-    getElementDescriptor(i)  { return this; }
-    toString()               { return this.serialName; }
+
+    addElement(name, isOptional) {
+        const index = this._elements.length;
+
+        this._elements.push({
+            name,
+            optional: !!isOptional,
+        });
+
+        this._indices.set(name, index);
+    }
+
+    getElementName(i) {
+        return this._elements[i]?.name ?? `element${i}`;
+    }
+
+    getElementIndex(name) {
+        return this._indices.has(name)
+            ? this._indices.get(name)
+            : -1;
+    }
+
+    elementsCount() {
+        return this._elements.length || this._elementsCount || 0;
+    }
+
+    isElementOptional(i) {
+        return this._elements[i]?.optional ?? true;
+    }
+
+    getElementAnnotations(i) {
+        return [];
+    }
+
+    getAnnotations() {
+        return [];
+    }
+
+    getElementDescriptor(i) {
+        return this;
+    }
+
+    toString() {
+        return this.serialName;
+    }
 };
 
 if (!PluginGeneratedSerialDescriptor.prototype.encodeSerializableElement) {
@@ -156,6 +306,8 @@ kotlin.LazyThreadSafetyMode = {
     SYNCHRONIZED:   { name: "SYNCHRONIZED" },
     NONE:           { name: "NONE" },
 };
+
+globalThis.LazyThreadSafetyMode = kotlin.LazyThreadSafetyMode;
 
 globalThis.LazyKt = {
     lazy(mode, initializer) {
@@ -191,8 +343,23 @@ if (!Number.prototype.intValue) {
 
 // java.util / Calendar / date shims
 
+globalThis.KTypeProjection = {
+    Companion: {
+        invariant(type) { return { variance: "INVARIANT", type }; },
+        covariant(type) { return { variance: "COVARIANT", type }; },
+        contravariant(type) { return { variance: "CONTRAVARIANT", type }; },
+        STAR: { variance: "STAR", type: null },
+    },
+};
+
+globalThis.Reflection = {
+    typeOf(cls, ...projections) { return { classifier: cls, arguments: projections }; },
+};
+
+// java.util.List as a type token
 globalThis.java = globalThis.java ?? {};
-java.util = java.util ?? {};
+globalThis.java.util = globalThis.java.util ?? {};
+globalThis.java.util.List = { _type: "List" };
 
 java.util.Calendar = {
     getInstance() {
@@ -231,6 +398,9 @@ java.util.concurrent = {
     },
 };
 
+globalThis.Calendar = java.util.Calendar;
+globalThis.TimeUnit = java.util.concurrent.TimeUnit;
+
 globalThis.SimpleDateFormat = class SimpleDateFormat {
     constructor(pattern, locale) { this._pattern = pattern; }
     parse(str) {
@@ -242,29 +412,97 @@ globalThis.SimpleDateFormat = class SimpleDateFormat {
 };
 
 // Kotlin ranges
-
 globalThis.RangesKt = {
     downTo(from, to) {
         return {
+            iterator() {
+                let i = from;
+
+                return {
+                    hasNext() {
+                        return i >= to ? true : 0;
+                    },
+
+                    nextInt() {
+                        return i--;
+                    },
+
+                    next() {
+                        return this.nextInt();
+                    },
+                };
+            },
+
             [Symbol.iterator]() {
                 let i = from;
-                return { next() { return i >= to ? { value: i--, done: false } : { done: true }; } };
+
+                return {
+                    next() {
+                        return i >= to
+                            ? { value: i--, done: false }
+                            : { done: true };
+                    },
+                };
             },
         };
     },
+
     until(from, to) {
         return {
+            iterator() {
+                let i = from;
+
+                return {
+                    hasNext() {
+                        return i < to ? true : 0;
+                    },
+
+                    nextInt() {
+                        return i++;
+                    },
+
+                    next() {
+                        return this.nextInt();
+                    },
+                };
+            },
+
             [Symbol.iterator]() {
                 let i = from;
-                return { next() { return i < to ? { value: i++, done: false } : { done: true }; } };
+
+                return {
+                    next() {
+                        return i < to
+                            ? { value: i++, done: false }
+                            : { done: true };
+                    },
+                };
             },
         };
     },
-    step(range, step) { return range; }, // simplification
+
+    step(range, step) {
+        return range;
+    },
+
+    coerceAtMost(value, max) {
+        return value > max ? max : value;
+    },
+
+    coerceAtLeast(value, min) {
+        return value < min ? min : value;
+    },
+
+    coerceIn(value, min, max) {
+        return value < min
+            ? min
+            : value > max
+                ? max
+                : value;
+    },
 };
 
 // Kotlin Regex
-
 globalThis.Regex = class Regex {
     constructor(pattern, options) {
         this._pattern = pattern;
@@ -337,6 +575,62 @@ globalThis.PreferenceScreen = class PreferenceScreen {
     getPreferences()  { return this._prefs; }
 };
 
+globalThis.Application = class Application {
+    constructor() {
+        this._prefs = new Map();
+    }
+
+    getSharedPreferences(name, mode) {
+        let pref = this._prefs.get(name);
+        if (!pref) {
+            pref = new SharedPreferences(name);
+            this._prefs.set(name, pref);
+        }
+        return pref;
+    }
+};
+
+globalThis.SharedPreferences = class SharedPreferences {
+    constructor(name) {
+        this.name = name;
+    }
+
+    _get(key, def) {
+        const v = __settings?.[key];
+        console.log("SharedPreferences._get:", key, "->", v, "(default:", def, ")");
+        return v === undefined ? def : v;
+    }
+
+    getString(key, def) {
+        return this._get(key, def);
+    }
+
+    getBoolean(key, def) {
+        return this._get(key, def);
+    }
+
+    getInt(key, def) {
+        return this._get(key, def);
+    }
+
+    edit() {
+        return new SharedPreferencesEditor(this);
+    }
+};
+
+globalThis.SharedPreferencesEditor = class SharedPreferencesEditor {
+    constructor(prefs) {
+        this.prefs = prefs;
+    }
+
+    putString() { return this; }
+    putBoolean() { return this; }
+    putInt() { return this; }
+
+    apply() {}
+    commit() { return true; }
+};
+
 // java.lang boxing
 
 globalThis.java = globalThis.java ?? {};
@@ -352,26 +646,242 @@ java.lang.Integer = {
     MAX_VALUE:    2147483647,
     MIN_VALUE:    -2147483648,
 };
-java.lang.String = {
-    valueOf(v)    { return String(v); },
-    format(fmt, ...args) {
-        let i = 0;
-        return fmt.replace(/%[sdf]/g, () => String(args[i++]));
+globalThis.Integer = java.lang.Integer;
+globalThis.String.valueOf = (v) => String(v);
+globalThis.String.format  = (fmt, ...args) => {
+    let i = 0;
+    return fmt.replace(/%[sdf]/g, () => String(args[i++]));
+};
+
+// NetworkHelper shim
+// cloudflareClient → real fetch via headless (handles CF challenges)
+// client / nonCloudflareClient → plain fetch
+
+const _makeOkHttpClient = (useHeadless, interceptors = [], networkInterceptors = []) => ({
+    _useHeadless: useHeadless,
+    _interceptors: interceptors,
+    _networkInterceptors: networkInterceptors,
+
+    newCall(request) {
+        return new _Call(request);
+    },
+
+    newBuilder() {
+        return _makeOkHttpClientBuilder(useHeadless, [...this._interceptors], [...this._networkInterceptors]);
+    },
+    interceptors()        { return _makeKotlinList(this._interceptors); },
+    networkInterceptors() { return _makeKotlinList(this._networkInterceptors); },
+});
+const _makeOkHttpClientBuilder = (useHeadless = false, interceptors = [], networkInterceptors = []) => ({
+    _useHeadless: useHeadless,
+    _interceptors: interceptors,
+    _networkInterceptors: networkInterceptors,
+
+    addInterceptor(i)        { this._interceptors.push(i);        return this; },
+    addNetworkInterceptor(i) { this._networkInterceptors.push(i); return this; },
+    interceptors()        { return _makeKotlinList(this._interceptors); },
+    networkInterceptors() { return _makeKotlinList(this._networkInterceptors); },
+
+    // builder fluent no-ops
+    cookieJar(v)        { return this; },
+    connectTimeout(...a){ return this; },
+    readTimeout(...a)   { return this; },
+    callTimeout(...a)   { return this; },
+    cache(v)            { return this; },
+    rateLimitHost(...a) { return this; },
+
+    // DoH no-ops
+    dohCloudflare()  { return this; },
+    dohGoogle()      { return this; },
+    dohAdGuard()     { return this; },
+    dohQuad9()       { return this; },
+    dohAliDNS()      { return this; },
+    dohDNSPod()      { return this; },
+    doh360()         { return this; },
+    dohQuad101()     { return this; },
+    dohMullvad()     { return this; },
+    dohControlD()    { return this; },
+    dohNajalla()     { return this; },
+    dohShecan()      { return this; },
+
+    apply(fn) { fn.call(this); return this; },
+
+    build() { return _makeOkHttpClient(this._useHeadless); },
+});
+
+const _makeKotlinList = (arr) => ({
+    _arr: arr,
+    iterator() {
+        let i = 0; const a = arr;
+        return { hasNext() { return i < a.length; }, next() { return a[i++]; } };
+    },
+    indexOfFirst(pred) { return arr.findIndex(pred); },
+    removeAt(i)        { return arr.splice(i, 1)[0]; },
+    add(item)          { arr.push(item); return true; },
+    get size()         { return arr.length; },
+    [Symbol.iterator]() { return arr[Symbol.iterator](); },
+});
+
+// BrotliInterceptor — no-op sentinel (the extension just looks for it by instanceof)
+class BrotliInterceptor {}
+globalThis.BrotliInterceptor = new BrotliInterceptor();
+
+globalThis.okhttp3 = {
+    brotli: { BrotliInterceptor: BrotliInterceptor },
+};
+
+globalThis.MediaType = {
+    Companion: {
+        get(str) { return { _type: str, toString() { return str; } }; },
+        parse(str) { return { _type: str, toString() { return str; } }; },
     },
 };
+
+// j0 is the extension's NetworkInterceptor lambda (chain.proceed wrapper)
+// We don't need to execute it; the real fetch handles headers.
+
+const _cookieStore = new Map(); // persisted via state below
+
+const _networkHelper = {
+    cookieJar: {
+        saveFromResponse(url, cookies) {
+            for (const c of cookies) _cookieStore.set(c.name, c.value);
+            state?.set?.("cookies", Object.fromEntries(_cookieStore));
+        },
+        loadForRequest(url) { return []; },
+    },
+
+    get cloudflareClient() { return _makeOkHttpClient(true);  },
+    get client()            { return _makeOkHttpClient(true);  },
+    get nonCloudflareClient(){ return _makeOkHttpClient(false); },
+};
+
+globalThis.NetworkHelper = function NetworkHelper() { return _networkHelper; };
+
+globalThis.Request = class Request {
+    constructor(url, method, headers, body) {
+        this._url = url;
+        this._method = method ?? "GET";
+        this._headers = headers ?? new Headers();
+        this._body = body ?? null;
+    }
+    url()     { return this._url; }
+    method()  { return this._method; }
+    headers() { return this._headers; }
+    body()    { return this._body; }
+    newBuilder() { return new Request.Builder(this); }
+
+    static Builder = class RequestBuilder {
+        constructor(req) {
+            this._url     = req?._url ?? "";
+            this._method  = req?._method ?? "GET";
+            this._headers = req?._headers ?? new Headers();
+            this._body    = req?._body ?? null;
+        }
+        url(u)           { this._url = u?.toString?.() ?? u; return this; }
+        method(m, body)  { this._method = m; this._body = body; return this; }
+        header(k, v)     { this._headers.set(k, v); return this; }
+        addHeader(k, v)  { this._headers.set(k, v); return this; }
+        removeHeader(k)  { this._headers.delete(k); return this; }
+        post(body)       { this._method = "POST"; this._body = body; return this; }
+        get()            { this._method = "GET"; return this; }
+        cacheControl(c)  { return this; }
+        build() {
+            return new Request(this._url, this._method, this._headers, this._body);
+        }
+    };
+};
+
+function _wrapKotlinObject(obj) {
+    if (obj === null || obj === undefined) return null;
+    if (Array.isArray(obj)) return obj.map(_wrapKotlinObject);
+    if (typeof obj !== "object") return obj;
+    if (typeof obj.toSManga === "function") return obj;
+
+    return new Proxy(obj, {
+        get(target, prop) {
+            if (prop === Symbol.iterator) return target[Symbol.iterator]?.bind(target);
+            if (prop === "iterator") return () => {
+                const arr = Array.isArray(target) ? target : Object.values(target);
+                let i = 0;
+                return {
+                    hasNext: () => i < arr.length,
+                    next: () => _wrapKotlinObject(arr[i++]),
+                };
+            };
+            if (prop in target) {
+                const val = target[prop];
+                if (typeof val === "function") return val.bind(target);
+                return () => _wrapKotlinObject(val);
+            }
+            return () => null;
+        }
+    });
+}
+
+globalThis.OkioStreamsKt = {
+    decodeFromBufferedSource(deserializer, type, source) {
+        try {
+            const text = typeof source === "string" ? source : source?._text ?? "";
+            const parsed = JSON.parse(text);
+
+            // Add toSManga to each item in data array directly
+            if (parsed.data && Array.isArray(parsed.data)) {
+                parsed.data = parsed.data.map(item => {
+                    const wrapped = { ...item };
+                    Object.defineProperty(wrapped, 'toSManga', {
+                        value: function() {
+                            const m = SManga.create();
+                            m.url = `/comic/${item.slug}`;
+                            m.title = item.title ?? "";
+                            m.thumbnail_url = item.default_thumbnail ?? null;
+                            m.status = SManga.UNKNOWN;
+                            return m;
+                        },
+                        writable: true,
+                        configurable: true,
+                        enumerable: true,
+                    });
+                    return wrapped;
+                });
+            }
+
+            return _wrapKotlinObject(parsed);
+        } catch(e) {
+            return _wrapKotlinObject({ data: [], d: null });
+        }
+    },
+};
+
+globalThis.ResponseBody = class ResponseBody {
+    constructor(text) { this._text = text; }
+    source()  { return this; }
+    string()  { return this._text; }
+};
+
+// What the extension actually calls: this.getNetwork()
+// HttpSource base sets this up; we patch getNetwork() onto the prototype chain.
+if (globalThis.HttpSource) {
+    HttpSource.prototype.getNetwork = function() { return _networkHelper; };
+}
+// Also cover pre-construction access via a global fallback
+globalThis.getNetwork = () => _networkHelper;
 
 // Rate limit interceptor, no-op in sandbox
 
 globalThis.SpecificHostRateLimitInterceptorKt = {
     rateLimitHost(client, host, permits, period, unit, ...rest) {
-        // rate limiting is meaningless in sandbox — return client unchanged
-        return client;
+        return client ?? rest[0] ?? { build() { return _makeOkHttpClient(false); } };
     },
 };
 
 globalThis.SerializersKt = {
-    serializer()     { return null; },
-    serializerOrNull() { return null; },
+    serializer(klass) { return klass?.Companion ?? klass; },
+};
+globalThis.BuiltinSerializersKt = {
+    ListSerializer(s) { return { _type: "List", _elem: s }; },
+    ArrayListSerializer(s) { return { _type: "ArrayList", _elem: s }; },
+    NullableSerializer(s) { return { _type: "Nullable", _elem: s }; },
 };
 
 globalThis.Json = {
@@ -382,6 +892,15 @@ globalThis.Json = {
     decodeFromString(deserializer, str) { return JSON.parse(str); },
     encodeToString(serializer, obj)     { return JSON.stringify(obj); },
 };
+
+function _jsonToSManga(item) {
+    const manga = SManga.create();
+    manga.url         = `/comic/${item.slug}`;
+    manga.title       = item.title ?? "";
+    manga.thumbnail_url = item.cover ?? item.thumbnail ?? item.cover_url ?? null;
+    manga.status      = SManga.UNKNOWN;
+    return manga;
+}
 
 // Tachiyomi models
 
@@ -609,13 +1128,25 @@ globalThis["Filter$Sort$Selection"] = Filter.Sort.Selection;
 globalThis.FilterList = class FilterList extends Array {
     constructor(...args) {
         super();
-        // called as FilterList(filter1, filter2, ...) or FilterList([...])
         const items = args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
         this.push(...items.filter(x => x != null));
-        this.list = this; // FilterList.list delegate
+        this.list = this;
     }
 
-    // always unequal (mirrors Kotlin impl)
+    iterator() {
+        let i = 0;
+        const arr = this;
+        return {
+            hasNext: () => i < arr.length ? true : 0,
+            next: () => {
+                if (i >= arr.length) {
+                    throw new Error("NoSuchElementException");
+                }
+                return arr[i++];
+            }
+        };
+    }
+
     equals() { return false; }
 };
 
@@ -623,12 +1154,28 @@ globalThis.FilterList = class FilterList extends Array {
 
 globalThis._SandboxResponse = class _SandboxResponse {
     constructor(text, status, url) {
-        this._text  = text;
-        this.code   = status;
-        this._url   = url;
+        this._text   = text;
+        this._status = status;
+        this._url    = url;
     }
+    body()    { return new ResponseBody(this._text); }
+    code()         { return this._status; }
+    isSuccessful() { return this._status >= 200 && this._status < 300; }
+    header(name) { return null; }
     async text() { return this._text; }
     async json() { return JSON.parse(this._text); }
+    request() {
+        return {
+            url() {
+                return {
+                    fragment() { return null; },
+                    toString() { return this._url; },
+                    toUrl()    { return { toString() { return this._url; } }; },
+                };
+            },
+            header(name) { return null; },
+        };
+    }
     // asJsoup() comes later
 }
 
@@ -701,9 +1248,67 @@ globalThis.Request = class Request {
     };
 };
 
+// PreferencesKt — Kotlin generates an inline class named
+// PreferencesKt$getPreferences$$inlined$get$1 at every call-site of
+// Injekt.get<Application>(). We register a global proxy so that
+// `new PreferencesKt$getPreferences$$inlined$get$1()` works and
+// getType() returns a token that InjektKt.getInstance() resolves to
+// the Application singleton (which itself delegates to __settings).
+(function() {
+    const _token = { _ctor: null }; // filled after Application is defined
+
+    function _makePrefsTypeToken() {
+        // Lazily resolve Application so definition order doesn't matter.
+        if (!_token._ctor) _token._ctor = globalThis.Application ?? null;
+        return _token;
+    }
+
+    const _PrefsInlined = function PreferencesKt$getPreferences$$inlined$get$1() {
+        this._token = _makePrefsTypeToken();
+    };
+    _PrefsInlined.prototype.getType  = function() { return _makePrefsTypeToken(); };
+    _PrefsInlined.prototype.invoke   = function() { return _makePrefsTypeToken(); };
+    _PrefsInlined.prototype.toString = function() { return "PreferencesKt$get$1"; };
+
+    globalThis["PreferencesKt$getPreferences$$inlined$get$1"] = _PrefsInlined;
+    // Some builds use a shorter name; cover both.
+    globalThis["PreferencesKt$get$1"] = _PrefsInlined;
+    globalThis.PreferencesKt = globalThis.PreferencesKt ?? {
+        getPreferences(context, name) {
+            const app = globalThis.__appInstance ||= new Application();
+            return app.getSharedPreferences(name ?? "prefs", 0);
+        },
+    };
+})();
+
+globalThis.InjektKt = class InjektKt {
+    static getInjekt() {
+        return {
+            getInstance: (cls) => {
+                // Kotlin's Injekt passes a type token (FullTypeReference / array) rather
+                // than a plain constructor when the call-site uses an inline reified get<T>().
+                // Unwrap: if it's an array, take the first element; if it has a _ctor field
+                // (set by PreferencesKt shim below), use that.
+                let ctor = cls;
+                if (Array.isArray(cls))   ctor = cls[0];
+                if (cls && cls._ctor)     ctor = cls._ctor;
+
+                // Application is the only type extensions request via Injekt in practice —
+                // it's the gateway to getSharedPreferences(), which reads __settings.
+                if (ctor === Application || ctor == null || typeof ctor !== "function") {
+                    return globalThis.__appInstance ||= new Application();
+                }
+                return new ctor();
+            }
+        };
+    }
+};
 // RequestsKt
 globalThis.RequestsKt = {
     GET(url, headers, cache) {
+        return new Request.Builder().url(url).headers(headers ?? new Headers()).cacheControl(cache ?? null).build();
+    },
+    GET$default(url, headers, cache, flags, mask) {
         return new Request.Builder().url(url).headers(headers ?? new Headers()).cacheControl(cache ?? null).build();
     },
     POST$default(url, headers, body) {
@@ -728,14 +1333,21 @@ globalThis.HttpUrl = class HttpUrl {
             this._url += `${sep}${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
             return this;
         }
+        fragment(v) { this._url += `#${v}`; return this; }
         addPathSegment(v) { this._url += `/${v}`; return this; }
         build()           { return new HttpUrl(this._url); }
         toString()        { return this._url; }
     };
 };
 
+HttpUrl.Companion = {
+    get(url) {
+        return new HttpUrl(url?.toString?.() ?? url);
+    },
+};
+
 // String.toHttpUrl() extension
-String.prototype.toHttpUrl = function() { return new HttpUrl(this.toString()); };
+globalThis.toHttpUrl = (str) => new HttpUrl(str.toString());
 
 // OkHttpClient — newCall() returns a fake Call that _doRequest handles
 globalThis.OkHttpClient = class OkHttpClient {
@@ -746,22 +1358,93 @@ globalThis.OkHttpClient = class OkHttpClient {
 
 globalThis._Call = class _Call {
     constructor(req) { this._req = req; }
+
+    execute() {
+        // synchronous fetch isn't possible in JS, but runBlocking expects sync
+        // store the request so the sandbox can dispatch it
+        const url = this._req.url?.toString?.() ?? String(this._req.url);
+        const method = this._req.method ?? "GET";
+        const headers = this._req.headers?.toFetchHeaders?.() ?? {};
+
+        // Return a response-like object that will be resolved by the sandbox
+        return fetch(url, { method, headers })
+            .then(res => res.text().then(text => new _SandboxResponse(text, res.status, url)));
+    }
 }
 
-
-globalThis.SuspendLambda = class SuspendLambda {
-    constructor(arity) { this.arity = arity; }
-    invokeSuspend(result) { return kotlin.Unit.INSTANCE; }
-    // coroutines runtime calls create() to clone the lambda for each invocation
-    create(value, completion) {
-        const copy = Object.create(Object.getPrototypeOf(this));
-        Object.assign(copy, this);
-        copy._completion = completion;
-        return copy;
+globalThis.firstInstance = function(iterator, predicate) {
+    while (iterator.hasNext !== undefined ? iterator.hasNext() : false) {
+        const item = iterator.next();
+        if (predicate(item)) return item;
     }
+    return null;
+};
+
+globalThis.CloseableKt = {
+    closeFinally(closeable, cause) {
+        try { closeable?.close?.(); } catch(e) {}
+    },
+};
+
+// TODO: make sync fetch
+globalThis.OkHttpExtensionsKt = {
+    await(call, continuation) {
+        // Return a fake failed response — extension will use cached/default filters
+        return new _SandboxResponse("", 503, "");
+    }
+};
+
+const COROUTINE_SUSPENDED = Symbol("COROUTINE_SUSPENDED");
+globalThis.SuspendLambda = class SuspendLambda {
+    constructor(arity, completion) {
+        this.arity = arity;
+        this.completion = completion || null;
+
+        this.a_val = null;
+        this.b_val = 0;
+
+        this.label = 0;
+    }
+
+    create(value, completion) {
+        this.completion = completion;
+        return this;
+    }
+
     invoke(p1, p2) {
-        const c = this.create(p1, p2);
-        return c.invokeSuspend(Unit_INSTANCE);
+        // p1 is the value/scope, p2 is the completion
+        // Only set completion, don't reconstruct — captured fields are already set
+        if (p2 !== undefined && p2 !== null) {
+            this.completion = p2;
+        }
+        return this.invokeSuspend(Unit_INSTANCE);
+    }
+
+    resumeWith(result) {
+        let current = this;
+        let param = result;
+
+        while (current) {
+            try {
+                const outcome = current.invokeSuspend(param);
+
+                if (outcome === COROUTINE_SUSPENDED) {
+                    return COROUTINE_SUSPENDED;
+                }
+
+                param = outcome;
+            } catch (e) {
+                param = e;
+            }
+
+            current = current.completion;
+        }
+
+        return param;
+    }
+
+    invokeSuspend(result) {
+        return Unit_INSTANCE;
     }
 };
 
@@ -785,10 +1468,14 @@ globalThis.ResultKt = {
 globalThis.FullTypeReference = class FullTypeReference {
     constructor(...args) {
         this._typeArgs = args;
+        // If the first arg is a constructor, stash it so getInstance() can find it.
+        this._ctor = (typeof args[0] === "function") ? args[0] : null;
     }
 
     getType() {
-        return this._typeArgs;
+        // Return `this` so that getInstance() can inspect _ctor directly,
+        // rather than returning the raw args array (which is not a constructor).
+        return this;
     }
 
     toString() {
@@ -828,21 +1515,18 @@ Manga.prototype._doRequest = async function(req) {
     return new _SandboxResponse(text, res.status, url);
 };
 
+if (!Number.prototype.toSManga) {
+    Number.prototype.toSManga = function() { return 0; };
+}
+
 //  HttpSource
 
-// Save whatever Manga was before (the sandbox base)
 globalThis._SandboxManga = Manga;
 class HttpSource extends _SandboxManga {
 
-    get baseUrl()   { return ""; }
     get lang()      { return "en"; }
     get name()      { return "Unknown"; }
     get versionId() { return 1; }
-
-    get headers() {
-        if (!this._headers) this._headers = this.headersBuilder();
-        return this._headers;
-    }
 
     headersBuilder() {
         return { "User-Agent": "Mozilla/5.0 (compatible; TachiSandbox/1.0)" };
@@ -880,7 +1564,7 @@ class HttpSource extends _SandboxManga {
             return this._parsePage(this.popularMangaParse(res));
         }
         const res = await this._doRequest(
-            this.searchMangaRequest(page, query, new FilterList(filters ?? []))
+            this.searchMangaRequest(page, query, this.getFilterList())
         );
         return this._parsePage(this.searchMangaParse(res));
     }
@@ -947,6 +1631,8 @@ class HttpSource extends _SandboxManga {
 
     async _doRequest(req) {
         const url    = req.url?.toString?.() ?? String(req.url);
+        console.log("base _doRequest url:", url, "type:", typeof req.url);
+
         const method = req.method ?? "GET";
         const headers = req.headers instanceof Object ? req.headers : this.headers;
         const body    = req.body ?? undefined;
@@ -968,11 +1654,17 @@ class HttpSource extends _SandboxManga {
     }
 }
 
+HttpSource.prototype.getHeaders = function() { if (!this._headers) this._headers = this.headersBuilder(); return this._headers;};
+
 let __tachi_captured = null;
 
 globalThis.HttpSource       = HttpSource;
 globalThis.ParsedHttpSource = HttpSource;
 globalThis.Manga            = HttpSource;
+HttpSource.prototype.getNetwork = function() { return _networkHelper; };
+_networkHelper.getCloudflareClient = function() { return _makeOkHttpClient(true); };
+_networkHelper.getClient            = function() { return _makeOkHttpClient(true); };
+_networkHelper.getNonCloudflareClient = function() { return _makeOkHttpClient(false); };
 
 globalThis.__tachi_getCapturedClass = function() {
     if (__tachi_captured)
