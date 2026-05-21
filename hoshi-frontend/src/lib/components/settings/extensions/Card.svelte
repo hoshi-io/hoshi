@@ -184,7 +184,7 @@
                 <Button
                         variant="destructive"
                         size="sm"
-                        class="h-8 w-8 p-0 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        class="h-8 w-8 p-0 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white"
                         onclick={() => onAction?.(ext.id)}
                         disabled={isActionLoading}
                 >

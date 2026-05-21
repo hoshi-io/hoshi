@@ -43,8 +43,37 @@
     function normalizeLang(lang: string | undefined): string {
         if (!lang) return 'Unknown';
         const l = lang.toLowerCase().trim();
-        if (l === 'en' || l === 'english') return 'English';
-        if (l === 'all' || l === 'multi') return 'Multi';
+
+        // Multi-language aliases
+        if (['all', 'multi', 'multiple', 'multilingual', 'various', 'universal'].includes(l)) return 'Multi';
+
+        // ISO 639-1 / common codes
+        const codes: Record<string, string> = {
+            af: 'Afrikaans', ar: 'Arabic', az: 'Azerbaijani', be: 'Belarusian',
+            bg: 'Bulgarian', bn: 'Bengali', ca: 'Catalan', cs: 'Czech',
+            da: 'Danish', de: 'German', el: 'Greek', en: 'English',
+            eo: 'Esperanto', es: 'Spanish', et: 'Estonian', eu: 'Basque',
+            fa: 'Persian', fi: 'Finnish', fr: 'French', gl: 'Galician',
+            gu: 'Gujarati', he: 'Hebrew', hi: 'Hindi', hr: 'Croatian',
+            hu: 'Hungarian', hy: 'Armenian', id: 'Indonesian', is: 'Icelandic',
+            it: 'Italian', ja: 'Japanese', ka: 'Georgian', kk: 'Kazakh',
+            km: 'Khmer', kn: 'Kannada', ko: 'Korean', lt: 'Lithuanian',
+            lv: 'Latvian', mk: 'Macedonian', ml: 'Malayalam', mn: 'Mongolian',
+            mr: 'Marathi', ms: 'Malay', my: 'Burmese', ne: 'Nepali',
+            nl: 'Dutch', no: 'Norwegian', pa: 'Punjabi', pl: 'Polish',
+            pt: 'Portuguese', ro: 'Romanian', ru: 'Russian', si: 'Sinhala',
+            sk: 'Slovak', sl: 'Slovenian', sq: 'Albanian', sr: 'Serbian',
+            sv: 'Swedish', sw: 'Swahili', ta: 'Tamil', te: 'Telugu',
+            th: 'Thai', tl: 'Filipino', tr: 'Turkish', uk: 'Ukrainian',
+            ur: 'Urdu', uz: 'Uzbek', vi: 'Vietnamese', zh: 'Chinese',
+            'zh-hans': 'Chinese (Simplified)', 'zh-hant': 'Chinese (Traditional)',
+            'pt-br': 'Portuguese (Brazil)', 'pt-pt': 'Portuguese (Portugal)',
+            'es-419': 'Spanish (Latin America)',
+        };
+
+        if (codes[l]) return codes[l];
+
+        // Already a full word (e.g. "english", "spanish") — just capitalize
         return l.charAt(0).toUpperCase() + l.slice(1);
     }
 
