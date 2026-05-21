@@ -101,3 +101,17 @@ pub async fn build_app_state(
     info!("Hoshi Core initialization completed successfully");
     Ok(state)
 }
+
+#[macro_export]
+macro_rules! impl_from_row {
+    ($struct:ty { $($field:ident),* $(,)? }) => {
+        impl sqlx::FromRow<'_, sqlx::sqlite::SqliteRow> for $struct {
+            fn from_row(row: &sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
+                use sqlx::Row;
+                Ok(Self {
+                    $($field: row.try_get(stringify!($field))?,)*
+                })
+            }
+        }
+    };
+}

@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use crate::impl_from_row;
 
-#[derive(sqlx::FromRow, Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ListEntry {
     pub id: Option<i64>,
@@ -19,6 +20,8 @@ pub struct ListEntry {
     pub created_at: String,
     pub updated_at: String,
 }
+
+impl_from_row!(ListEntry { id, user_id, cid, status, progress, score, start_date, end_date, repeat_count, notes, is_private, created_at, updated_at });
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -37,12 +40,14 @@ pub struct EnrichedListEntry {
     pub has_extension_source: bool,
 }
 
-#[derive(sqlx::FromRow, Debug, Serialize)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScoreDistribution {
     pub score: i32,
     pub count: i32,
 }
+
+impl_from_row!(ScoreDistribution { score, count });
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]

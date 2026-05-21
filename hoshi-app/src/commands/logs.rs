@@ -44,13 +44,39 @@ pub async fn list_log_files(
         let size_bytes = meta.len();
 
         let created_at = {
-            chrono::NaiveDateTime::parse_from_str(
-                name.trim_end_matches(".log"),
-                "%Y-%m-%dT%H-%M-%S"
-            )
-                .map(|dt| dt.and_utc().timestamp_millis())
-                .unwrap_or(0)
+            parse_log_timestamp(name.trim_end_matches(".log")).unwrap_or(0)
         };
+
+        fn parse_log_timestamp(s: &str) -> Option<i64> {
+            // Parse "%Y-%m-%dT%H-%M-%S"
+            let b = s.as_bytes();
+            if b.len() != 19 { return None; }
+
+            let year:  i64 = s[0..4].parse().ok()?;
+            let month: u32 = s[5..7].parse().ok()?;
+            let day:   u32 = s[8..10].parse().ok()?;
+            let hour:  i64 = s[11..13].parse().ok()?;
+            let min:   i64 = s[14..16].parse().ok()?;
+            let sec:   i64 = s[17..19].parse().ok()?;
+
+            if month < 1 || month > 12 || day < 1 || day > 31 { return None; }
+
+            let days = days_from_civil(year, month, day)?;
+            let millis = (days * 86_400 + hour * 3_600 + min * 60 + sec) * 1_000;
+            Some(millis)
+        }
+
+        fn days_from_civil(y: i64, m: u32, d: u32) -> Option<i64> {
+            // Algorithm by Howard Hinnant (public domain)
+            let m = m as i64;
+            let d = d as i64;
+            let y = if m <= 2 { y - 1 } else { y };
+            let era = y.div_euclid(400);
+            let yoe = y.rem_euclid(400);                          // [0, 399]
+            let doy = (153 * (m + (if m > 2 { -3 } else { 9 })) + 2) / 5 + d - 1; // [0, 365]
+            let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;    // [0, 146096]
+            Some(era * 146_097 + doe - 719_468)
+        }
 
         files.push(LogFileInfo { name, size_bytes, created_at });
     }

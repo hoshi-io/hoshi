@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::impl_from_row;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BackupTrigger {
@@ -17,7 +18,7 @@ impl BackupTrigger {
     }
 }
 
-#[derive(sqlx::FromRow, Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListBackupMeta {
     pub id: i64,
@@ -28,6 +29,7 @@ pub struct ListBackupMeta {
     pub entry_count: i32,
     pub created_at: i64,
 }
+impl_from_row!(ListBackupMeta { id, user_id, trigger, tracker_name, file_path, entry_count, created_at });
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use crate::content::models::ContentUnit;
+use crate::impl_from_row;
 
-#[derive(sqlx::FromRow, Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AnimeProgress {
     pub id: i64,
@@ -14,8 +15,9 @@ pub struct AnimeProgress {
     pub completed: bool,
     pub last_accessed: i64,
 }
+impl_from_row!(AnimeProgress { id, user_id, cid, episode, timestamp_seconds, episode_duration_seconds, completed, last_accessed });
 
-#[derive(sqlx::FromRow, Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ChapterProgress {
     pub id: i64,
@@ -25,6 +27,7 @@ pub struct ChapterProgress {
     pub completed: bool,
     pub last_accessed: i64,
 }
+impl_from_row!(ChapterProgress { id, user_id, cid, chapter, completed, last_accessed });
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
