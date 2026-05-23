@@ -302,7 +302,8 @@ fn build_sandbox_script(
                     const nameMatch = src.match(/class\s+([a-zA-Z0-9_$]+)\s+extends\s+(?:HttpSource|ParsedHttpSource|Manga)/);
                     if (nameMatch) globalThis[nameMatch[1]] = ExtClass;
 
-                    const instance = new ExtClass();
+                    const lang = __settings.language ?? "en";
+                    const instance = new ExtClass(lang, lang);
 
                     const fn_name = "{fn}";
 
@@ -449,6 +450,11 @@ fn register_native_apis(
             Ok::<String, rquickjs::Error>(result)
         },
     )?)?;
+
+    globals.set("__native_sleep", Function::new(ctx.clone(), |ms: u64| {
+        std::thread::sleep(std::time::Duration::from_millis(ms));
+        Ok::<(), rquickjs::Error>(())
+    })?)?;
 
     globals.set("__native_html_query", Function::new(ctx.clone(),
         |html: String, selector: String| -> rquickjs::Result<String> {

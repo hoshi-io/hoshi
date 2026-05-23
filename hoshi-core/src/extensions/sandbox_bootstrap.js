@@ -130,6 +130,29 @@ globalThis.fetch = async function(url, options) {
     };
 };
 
+globalThis.fetchSync = function(url, options) {
+    options = options || {};
+    const method = (options.method || "GET").toUpperCase();
+    let body = "";
+    let headersObj = options.headers || {};
+
+    if (options.body !== undefined && options.body !== null) {
+        body = String(options.body);
+    }
+
+    const headersJson = JSON.stringify(headersObj);
+    const rawJson = __native_fetch(url, method, headersJson, body);
+    const raw = JSON.parse(rawJson);
+
+    if (raw.error) throw new TypeError("fetchSync failed: " + raw.error);
+
+    return {
+        text: raw.body,
+        status: raw.status,
+        ok: raw.ok,
+    };
+};
+
 globalThis.URL = class URL {
     constructor(input, base) {
         let full = input;
@@ -289,12 +312,40 @@ if (typeof globalThis.FormData === "undefined") {
 }
 
 if (typeof setTimeout === "undefined") {
-    globalThis.setTimeout  = (fn, _ms, ...args) => { fn(...args); return 0; };
-    globalThis.clearTimeout  = (_id) => {};
-    globalThis.setInterval   = (fn, _ms, ...args) => { fn(...args); return 0; };
-    globalThis.clearInterval = (_id) => {};
+    let __timer_id = 1;
+    const __timers = new Map();
+    globalThis.setTimeout = (fn, ms, ...args) => {
+        const id = __timer_id++;
+        __timers.set(id, true);
+        __native_sleep(Number(ms) || 0);
+        if (__timers.has(id)) {
+            try {
+                fn(...args);
+            } finally {
+                __timers.delete(id);
+            }
+        }
+        return id;
+    };
+    globalThis.clearTimeout = (id) => {
+        __timers.delete(id);
+    };
+    globalThis.setInterval = (fn, ms, ...args) => {
+        const id = __timer_id++;
+        __timers.set(id, true);
+        while (__timers.has(id)) {
+            __native_sleep(Number(ms) || 0);
+            if (!__timers.has(id)) {
+                break;
+            }
+            fn(...args);
+        }
+        return id;
+    };
+    globalThis.clearInterval = (id) => {
+        __timers.delete(id);
+    };
 }
-
 globalThis.headless = {
     get available() { return !!__headless_available; },
 
