@@ -46,6 +46,4 @@ aes = "0.8"
 cbc = { version = "0.1", features = ["alloc"] }
 hex = "0.4"
 
-axmldecoder = "0.5"
-zip = { version = "8.6.0", default-features = false, features = ["deflate"] }
-dex = "0.5"
+apktojs = { git = "https://github.com/dot-fx/apktojs.git" }

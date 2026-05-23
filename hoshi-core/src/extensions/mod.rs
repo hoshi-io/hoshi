@@ -1,6 +1,5 @@
 mod sandbox;
 pub mod types;
-pub mod apk_translator;
 
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -237,37 +236,12 @@ impl ExtensionManager {
             .map_err(|e| CoreError::Network(e.to_string()))?
             .to_vec();
 
-        let (js, meta_name, meta_package, meta_version, meta_lang) =
-            tokio::task::spawn_blocking(move || -> CoreResult<_> {
-                use std::io::Cursor;
-                use zip::ZipArchive;
-                use crate::extensions::apk_translator::{extract_dex, inspect_apk_reader, walk_source};
-                use crate::extensions::apk_translator::translator;
-                use crate::extensions::apk_translator::translator::resolver;
-                use crate::extensions::apk_translator::translator::resolver::pool::Pool;
-
-                let meta = inspect_apk_reader(Cursor::new(&bytes))
-                    .map_err(|e| CoreError::Parse(e.to_string()))?;
-                let mut zip = ZipArchive::new(Cursor::new(&bytes))
-                    .map_err(|e| CoreError::Parse(e.to_string()))?;
-                let extracted = extract_dex(&mut zip, &meta)
-                    .map_err(|e| CoreError::Parse(e.to_string()))?;
-                let pool = Pool::build(&extracted.dex_files);
-                let walked = walk_source(&extracted, &meta, &pool)
-                    .map_err(|e| CoreError::Parse(e.to_string()))?;
-                let translated = translator::translate(&walked, &meta, &pool)
-                    .map_err(|e| CoreError::Parse(e.to_string()))?;
-
-                Ok((
-                    translated.js,
-                    meta.name,
-                    meta.package,
-                    meta.version_name,
-                    meta.lang,
-                ))
-            })
-                .await
-                .map_err(|e| CoreError::Internal(e.to_string()))??;
+        let translated = tokio::task::spawn_blocking(move || {
+            apktojs::apk_to_js(&bytes)
+        })
+            .await
+            .map_err(|e| CoreError::Internal(e.to_string()))?
+            .map_err(|e| CoreError::Parse(e.to_string()))?;
 
         let prefixed_id = format!("tachi_{}", entry.pkg);
         let ext_dir = self.extensions_dir.join(&prefixed_id);
@@ -325,7 +299,7 @@ impl ExtensionManager {
 
         fs::write(ext_dir.join("manifest.yaml"), &manifest_yaml)
             .await.map_err(CoreError::Io)?;
-        fs::write(ext_dir.join("index.js"), &js)
+        fs::write(ext_dir.join("index.js"), &translated.js)
             .await.map_err(CoreError::Io)?;
 
         let manifest: ExtensionManifest = serde_yaml::from_str(&manifest_yaml)
