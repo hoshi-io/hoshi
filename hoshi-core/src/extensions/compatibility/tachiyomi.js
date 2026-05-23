@@ -10,27 +10,158 @@ if (!Array.prototype.iterator) {
         };
     };
 }
+Object.defineProperty(Array.prototype, 'firstInstance', {
+    value: function(predicate) {
+        const result = this.find(predicate);
+        // QuickJS / Dalvik usually expects strict null rather than undefined
+        return result === undefined ? null : result;
+    },
+    enumerable: false, // Keep it hidden from for...in loops
+    writable: true,
+    configurable: true
+});
+Array.prototype.get = function(i) { return this[i]; };
+
+// Polyfill to catch obfuscated Dalvik array lengths
+Object.defineProperty(Array.prototype, 'length_val', {
+    get: function() {
+        return this.length;
+    },
+    enumerable: false,
+    configurable: true
+});
+
+if (!String.prototype.hashCode) {
+    String.prototype.hashCode = function() {
+        let h = 0;
+        for (let i = 0; i < this.length; i++) {
+            h = (Math.imul(31, h) + this.charCodeAt(i)) | 0;
+        }
+        return h;
+    };
+}
+
+if (!Number.prototype.hashCode) {
+    Number.prototype.hashCode = function() { return this | 0; };
+}
+
+Object.defineProperty(Boolean.prototype, 'booleanValue', {
+    value: function() {
+        return this.valueOf() ? 1 : 0;
+    },
+    enumerable: false,
+    writable: true,
+    configurable: true
+});
+
+// Polyfill for Number just in case the transpiler has already unboxed it into an int
+Object.defineProperty(Number.prototype, 'booleanValue', {
+    value: function() {
+        return this.valueOf() !== 0 ? 1 : 0;
+    },
+    enumerable: false,
+    writable: true,
+    configurable: true
+});
 
 globalThis.StringsKt = {
-    split$default(str, delimiters, ignoreCase, limit) {
+    // ---------------------------------------------------------
+    // NEW & UPDATED METHODS
+    // ---------------------------------------------------------
+
+    // Updated to accept all 6 arguments: (str, delimiters, ignoreCase, limit, mask, marker)
+    split$default(str, delimiters, ignoreCase, limit, mask, marker) {
+        if (str == null) return [];
         const sep = Array.isArray(delimiters) ? delimiters[0] : delimiters;
+
+        // Note: A more robust split for multiple delimiters could use Regex,
+        // but this keeps your original logic intact while preventing arg-count crashes.
         const parts = str.split(sep);
         return (limit && limit > 0) ? parts.slice(0, limit) : parts;
     },
+
+    // New: replaceFirst$default (str, oldValue, newValue, ignoreCase, mask, marker)
+    replaceFirst$default(str, oldValue, newValue, ignoreCase, mask, marker) {
+        if (str == null) return str;
+        if (ignoreCase) {
+            // Escape RegExp special characters in oldValue to safely use it in a Regex
+            const escapedOld = String(oldValue).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return str.replace(new RegExp(escapedOld, 'i'), newValue);
+        }
+        // standard string replace in JS naturally only replaces the first instance
+        return str.replace(oldValue, newValue);
+    },
+
+    // Updated: Returns 1 (true) or 0 (false) to be compatible with Dalvik `!== 0` branch checks
+    isBlank(str) {
+        return (str == null || typeof str !== "string" || str.trim().length === 0) ? 1 : 0;
+    },
+
+    // New: strictly parses integers or returns null, matching Kotlin's behavior
+    toIntOrNull(str) {
+        if (str == null || typeof str !== "string") return null;
+        const s = str.trim();
+        // Kotlin toIntOrNull strictly expects digits (optional +/-), no trailing garbage
+        if (/^[+-]?\d+$/.test(s)) {
+            return parseInt(s, 10);
+        }
+        return null;
+    },
+
+    // ---------------------------------------------------------
+    // EXISTING METHODS (Expanded with mask/marker args)
+    // ---------------------------------------------------------
+
     removeSuffix(str, suffix) {
+        if (str == null) return str;
         return str.endsWith(suffix) ? str.slice(0, -suffix.length) : str;
     },
-    isBlank(str) {
-        return str == null || str.trim().length === 0;
-    },
-    substringBefore$default(str, delimiter, missingDelimiterValue, ...rest) {
+
+    substringBefore$default(str, delimiter, missingDelimiterValue, mask, marker) {
+        if (str == null) return str;
         const idx = str.indexOf(delimiter);
         return idx === -1 ? (missingDelimiterValue ?? str) : str.slice(0, idx);
     },
-    endsWith$default(str, suffix, ignoreCase, ...rest) {
-        if (ignoreCase) return str.toLowerCase().endsWith(suffix.toLowerCase());
-        return str.endsWith(suffix);
+
+    endsWith$default(str, suffix, ignoreCase, mask, marker) {
+        if (str == null) return 0;
+        let result = false;
+        if (ignoreCase) {
+            result = str.toLowerCase().endsWith(suffix.toLowerCase());
+        } else {
+            result = str.endsWith(suffix);
+        }
+        return result ? 1 : 0; // Return Dalvik boolean format
     },
+
+    trim(str) {
+        return (typeof str === "string") ? str.trim() : str;
+    },
+
+    append(sb, parts) {
+        if (Array.isArray(parts)) {
+            for (const p of parts) sb.append(p);
+        } else {
+            sb.append(parts);
+        }
+        return sb;
+    }
+};
+
+globalThis.kotlin = globalThis.kotlin || {};
+globalThis.kotlin.text = globalThis.kotlin.text || {};
+
+globalThis.kotlin.text.StringsKt = globalThis.StringsKt;
+
+globalThis.ParsePosition = class ParsePosition {
+    constructor(index) {
+        this._index = index;
+        this._errorIndex = -1;
+    }
+    getIndex()        { return this._index; }
+    setIndex(v)       { this._index = v; }
+    getErrorIndex()   { return this._errorIndex; }
+    setErrorIndex(v)  { this._errorIndex = v; }
 };
 
 globalThis.CharsKt = {
@@ -42,8 +173,16 @@ globalThis.ordinal = function(v) { return typeof v === "number" ? v : v?.ordinal
 
 globalThis.CollectionsKt = {
     createListBuilder(capacity = 0) {
-        return [];
+        const arr = [];
+        arr.add = (item) => { arr.push(item); return true; };
+        arr.addAll = (collection) => {
+            const items = Array.isArray(collection) ? collection : [...collection];
+            for (const item of items) arr.push(item);
+            return true;
+        };
+        return arr;
     },
+
     build(builder) {
         return builder;
     },
@@ -52,14 +191,27 @@ globalThis.CollectionsKt = {
             ? [...args[0]]
             : Array.from(args);
     },
-    joinToString$default(collection, separator, prefix, postfix, limit, truncated, transform) {
+    toMutableList(collection) {
+        if (Array.isArray(collection)) return [...collection];
+        if (collection?.[Symbol.iterator]) return [...collection];
+        return [];
+    },
+    joinToString$default(collection, separator, prefix, postfix, limit, truncated, transform, flags, marker) {
+        if (!collection) return "";
         separator = separator ?? ", ";
         prefix    = prefix    ?? "";
         postfix   = postfix   ?? "";
         limit     = limit     ?? -1;
         truncated = truncated ?? "...";
-        let items = Array.from(collection);
-        let over  = false;
+        let items;
+        if (Array.isArray(collection)) {
+            items = collection.map(_wrapKotlinObject);
+        } else if (collection[Symbol.iterator]) {
+            items = Array.from(collection);
+        } else {
+            items = Object.values(collection).map(_wrapKotlinObject);
+        }
+        let over = false;
         if (limit >= 0 && items.length > limit) { items = items.slice(0, limit); over = true; }
         const parts = items.map(x => transform ? transform(x) : String(x));
         if (over) parts.push(truncated);
@@ -70,11 +222,19 @@ globalThis.CollectionsKt = {
     toList(collection) { return Array.from(collection); },
     listOfNotNull(...args) { return args.flat().filter(x => x != null); },
     collectionSizeOrDefault(collection, default_) {
-        try {
-            return collection?.length ?? default_;
-        } catch(e) {
-            return default_;
+        if (!collection) return 0;
+        return collection.length ?? default_;
+    },
+    addAll(collection, elements) {
+        const items = Array.isArray(elements) ? elements : [...elements];
+        for (const item of items) {
+            if (Array.isArray(collection)) {
+                collection.push(item);
+            } else {
+                collection.add(item);
+            }
         }
+        return true;
     },
 };
 
@@ -128,9 +288,9 @@ globalThis.BuildersKt = {
     runBlocking(ctx, block) {
         let result;
 
-        // Don't call invoke() which re-calls create() and may wipe state
-        // Call invokeSuspend directly since we're not doing real coroutine suspension
-        if (typeof block?.invokeSuspend === "function") {
+        if (typeof block?.invoke === "function") {
+            result = block.invoke(null, null);
+        } else if (typeof block?.invokeSuspend === "function") {
             result = block.invokeSuspend(Unit_INSTANCE);
         } else if (typeof block === "function") {
             result = block();
@@ -138,8 +298,13 @@ globalThis.BuildersKt = {
             throw new Error("runBlocking: invalid block");
         }
 
-        if (result === COROUTINE_SUSPENDED || result === _COROUTINE_SUSPENDED) {
-            throw new Error("Real coroutine suspension not supported in this runtime");
+        if (
+            result === COROUTINE_SUSPENDED ||
+            result === _COROUTINE_SUSPENDED
+        ) {
+            throw new Error(
+                "Coroutine suspension unsupported in sync runtime"
+            );
         }
 
         return result;
@@ -151,6 +316,7 @@ globalThis.StringBuilder = class StringBuilder {
     toString() { return this._s; }
     get length() { return this._s.length; }
 };
+
 StringBuilder.prototype.append = function(v, start, end) {
     const s = (v == null) ? "" : "" + v;
     this._s += (start !== undefined) ? s.slice(start, end) : s;
@@ -169,15 +335,23 @@ globalThis.ArrayList = class ArrayList {
     push(item) { if (item !== 0 && item != null) this._a.push(item); return this; }
     add(item)    { this._a.push(item); return true; }
     get(i)       { return this._a[i]; }
-    size()       { return this._a.length; }
-    isEmpty()    { return this._a.length === 0; }
     toArray()    { return [...this._a]; }
     [Symbol.iterator]() { return this._a[Symbol.iterator](); }
     map(fn) { return this._a.map(fn); }
+
     iterator() {
         let i = 0; const a = this._a;
-        return { hasNext() { return i < a.length; }, next() { return a[i++]; } };
+        return {
+            hasNext() { return i < a.length ? 1 : 0; },
+            next() { return a[i++]; }
+        };
     }
+
+    isEmpty() { return this._a.length === 0 ? 1 : 0; }  // 1=true, 0=false
+    size()    { return this._a.length; }
+
+    get length() { return this._a.length; }
+    get length_val() { return this._a.length; }
 };
 
 globalThis.kotlin = { Unit: { INSTANCE: undefined } };
@@ -216,77 +390,88 @@ globalThis.JsonTransformingSerializer = class JsonTransformingSerializer {
     }
 
     deserialize(decoder) {
-        return decoder;
+        const transformed = this.transformDeserialize(decoder._json);
+        const newDecoder = new JsonDecoder(transformed, decoder._descriptor);
+        return this.tSerializer.deserialize(newDecoder);
     }
 
     serialize(encoder, value) {
-        return value;
+        const transformed = this.transformSerialize(value);
+        return this.tSerializer.serialize(encoder, transformed);
     }
 };
 
 // kotlinx.serialization stubs
 globalThis.PluginGeneratedSerialDescriptor = class PluginGeneratedSerialDescriptor {
-    constructor(name, plugin, elementsCount) {
-        this.serialName = name;
-        this._plugin = plugin;
-        this._elementsCount = elementsCount;
-
-        this._elements = [];
-        this._indices = new Map();
+    constructor(name, serializer, size) {
+        this._name = name;
+        this._serializer = serializer;
+        this._fields = [];
     }
-
     addElement(name, isOptional) {
-        const index = this._elements.length;
-
-        this._elements.push({
-            name,
-            optional: !!isOptional,
-        });
-
-        this._indices.set(name, index);
+        this._fields.push(name);
     }
-
-    getElementName(i) {
-        return this._elements[i]?.name ?? `element${i}`;
-    }
-
     getElementIndex(name) {
-        return this._indices.has(name)
-            ? this._indices.get(name)
-            : -1;
+        return this._fields.indexOf(name);
     }
-
-    elementsCount() {
-        return this._elements.length || this._elementsCount || 0;
-    }
-
-    isElementOptional(i) {
-        return this._elements[i]?.optional ?? true;
-    }
-
-    getElementAnnotations(i) {
-        return [];
-    }
-
-    getAnnotations() {
-        return [];
-    }
-
-    getElementDescriptor(i) {
-        return this;
-    }
-
-    toString() {
-        return this.serialName;
+    getElementName(index) {
+        return this._fields[index];
     }
 };
 
-if (!PluginGeneratedSerialDescriptor.prototype.encodeSerializableElement) {
-    PluginGeneratedSerialDescriptor.prototype.encodeSerializableElement = function() {};
-    PluginGeneratedSerialDescriptor.prototype.encodeStringElement        = function() {};
-    PluginGeneratedSerialDescriptor.prototype.decodeSerializableElement  = function() { return null; };
-    PluginGeneratedSerialDescriptor.prototype.decodeStringElement        = function() { return ""; };
-}
+globalThis.JsonDecoder = class JsonDecoder {
+    constructor(json, descriptor) {
+        this._json = json;
+        this._descriptor = descriptor;
+        this._index = 0;
+    }
+
+    decodeNullableSerializableElement(descriptor, index, serializer, old) {
+        const key = descriptor._fields[index];
+        const val = this._json[key];
+        if (val === null || val === undefined) return null;
+        if (serializer && typeof serializer.deserialize === 'function') {
+            const childDescriptor = serializer.getDescriptor?.() ?? descriptor;
+            return serializer.deserialize(new JsonDecoder(val, childDescriptor));
+        }
+        return val;
+    }
+
+    beginStructure(descriptor) {
+        const json = this._json instanceof JsonArray ? this._json._arr : this._json;
+        return new JsonDecoder(json, descriptor);
+    }
+    endStructure(descriptor) {}
+    decodeSequentially() { return 0; }
+    decodeElementIndex(descriptor) {
+        if (this._index < descriptor._fields.length) return this._index++;
+        return -1;
+    }
+
+    decodeStringElement(descriptor, index) {
+        const key = descriptor._fields[index];
+        return this._json[key] ?? null;
+    }
+    decodeIntElement(descriptor, index) {
+        const key = descriptor._fields[index];
+        return this._json[key] ?? 0;
+    }
+    decodeBooleanElement(descriptor, index) {
+        const key = descriptor._fields[index];
+        return this._json[key] ?? false;
+    }
+    decodeSerializableElement(descriptor, index, serializer, old) {
+        const key = descriptor._fields[index];
+        const val = this._json[key];
+        if (val === undefined || val === null) return old ?? null;
+
+        if (serializer && typeof serializer.deserialize === 'function') {
+            const childDescriptor = serializer.getDescriptor?.() ?? descriptor;
+            return serializer.deserialize(new JsonDecoder(val, childDescriptor));
+        }
+        return val;
+    }
+};
 
 globalThis.PluginExceptionsKt = {
     throwMissingFieldException(seenBits, requiresBits, descriptor) {
@@ -295,11 +480,28 @@ globalThis.PluginExceptionsKt = {
 };
 
 globalThis.ArrayListSerializer = class ArrayListSerializer {
-    constructor(elementSerializer) { this._el = elementSerializer; }
+    constructor(elementSerializer) {
+        this._elementSerializer = elementSerializer;
+    }
+    deserialize(decoder) {
+        let raw = decoder._json;
+        if (raw?.__isJsonArray) raw = raw._arr;
+        const arr = Array.isArray(raw) ? raw : [];
+        const list = new ArrayList();
+        for (const item of arr) {
+            if (this._elementSerializer && typeof this._elementSerializer.deserialize === "function") {
+                const childDescriptor = this._elementSerializer.getDescriptor?.() ?? decoder._descriptor;
+                list.add(this._elementSerializer.deserialize(new JsonDecoder(item, childDescriptor)));
+            } else {
+                list.add(_wrapKotlinObject(item));
+            }
+        }
+        return list;
+    }
+    getDescriptor() { return null; }
 };
 
 // Kotlin lazy / threading
-
 globalThis.kotlin = globalThis.kotlin ?? {};
 kotlin.LazyThreadSafetyMode = {
     PUBLICATION:    { name: "PUBLICATION" },
@@ -311,26 +513,127 @@ globalThis.LazyThreadSafetyMode = kotlin.LazyThreadSafetyMode;
 
 globalThis.LazyKt = {
     lazy(mode, initializer) {
-        let _value;
-        let _init = true;
+        let value;
+        let initialized = false;
         return {
-            get value() {
-                if (_init) { _value = initializer(); _init = false; }
-                return _value;
-            },
-            isInitialized() { return !_init; },
-            invoke(...args) {
-                if (_init) { _value = initializer(); _init = false; }
-                return _value;
-            },
+            getValue() {
+                if (!initialized) {
+                    try {
+                        value = initializer();
+                    } catch(e) {
+                        console.log("lazy getValue error:", e.message);
+                    }
+                    initialized = true;
+                }
+                return value;
+            }
         };
+    }
+};
+
+globalThis.Intrinsics = {
+    areEqual(a, b) {
+        if (a === b) return 1;
+        if (a === null || b === null) return 0;
+        if (typeof a === 'object' && typeof a.equals === 'function') {
+            return a.equals(b) ? 1 : 0;
+        }
+        return 0;
     },
+
+    checkNotNull(value, message) {
+        if (value === null || value === undefined) {
+            throw new Error(message ?? "Required value was null");
+        }
+        return value;
+    },
+
+    checkNotNullParameter(value, name) {
+        if (value === null || value === undefined) {
+            throw new Error(`Parameter specified as non-null is null: ${name}`);
+        }
+        return value;
+    },
+
+    checkExpressionValueIsNotNull(value, expression) {
+        if (value === null || value === undefined) {
+            throw new Error(`Expression '${expression}' must not be null`);
+        }
+        return value;
+    },
+
+    checkFieldIsNotNull(value, className, fieldName) {
+        if (value === null || value === undefined) {
+            throw new Error(`Field '${fieldName}' in '${className}' must not be null`);
+        }
+        return value;
+    },
+
+    throwUninitializedPropertyAccessException(name) {
+        throw new Error(`lateinit property ${name} has not been initialized`);
+    },
+
+    throwNpe() {
+        throw new Error("NullPointerException");
+    },
+
+    stringPlus(a, b) {
+        return String(a ?? "null") + String(b ?? "null");
+    },
+
+    areEqualOrBothNull(a, b) {
+        if (a === null && b === null) return 1;
+        if (a === null || b === null) return 0;
+        return a === b ? 1 : 0;
+    },
+};
+
+// StringSerializer
+globalThis.StringSerializer = {
+    INSTANCE: {
+        deserialize(decoder) {
+            const val = decoder._json;
+            if (val === null || val === undefined) return null;
+            return String(val);
+        },
+        serialize(encoder, value) { return String(value ?? ""); },
+        getDescriptor() { return { _fields: [], serialName: "kotlin.String" }; },
+    }
+};
+
+// IntSerializer, BooleanSerializer etc. while we're at it
+globalThis.IntSerializer = {
+    INSTANCE: {
+        deserialize(decoder) { return decoder._json ?? 0 | 0; },
+        getDescriptor() { return { _fields: [], serialName: "kotlin.Int" }; },
+    }
+};
+globalThis.BooleanSerializer = {
+    INSTANCE: {
+        deserialize(decoder) { return decoder._json ? 1 : 0; },
+        getDescriptor() { return { _fields: [], serialName: "kotlin.Boolean" }; },
+    }
+};
+globalThis.LongSerializer = {
+    INSTANCE: {
+        deserialize(decoder) { return decoder._json ?? 0; },
+        getDescriptor() { return { _fields: [], serialName: "kotlin.Long" }; },
+    }
 };
 
 // Kotlin Pair / TuplesKt
 
 globalThis.TuplesKt = {
-    to(first, second) { return { first, second, getFirst() { return first; }, getSecond() { return second; } }; },
+    to(first, second) {
+        return {
+            first,
+            second,
+            getFirst()  { return first; },
+            getSecond() { return second; },
+            component1() { return first; },
+            component2() { return second; },
+        };
+    }
 };
 
 // Kotlin number boxing
@@ -403,9 +706,10 @@ globalThis.TimeUnit = java.util.concurrent.TimeUnit;
 
 globalThis.SimpleDateFormat = class SimpleDateFormat {
     constructor(pattern, locale) { this._pattern = pattern; }
-    parse(str) {
+    parse(str, pos) {
         const ms = Date.parse(str);
-        return isNaN(ms) ? new Date(0) : new Date(ms);
+        if (pos) pos.setIndex(str.length);
+        return isNaN(ms) ? null : new Date(ms);
     }
     format(date) { return (date instanceof Date ? date : new Date(date)).toISOString(); }
     setTimeZone(tz) { this._tz = tz; }
@@ -792,15 +1096,124 @@ globalThis.Request = class Request {
     };
 };
 
+globalThis.JsoupDocument = class JsoupDocument {
+    constructor(html) {
+        this._html = html;
+        this._$ = parseHTML(html);
+    }
+
+    select(selector)              { return new JsoupElements(this._$(selector)); }
+    text()                        { return this._$("body").text(); }
+    html()                        { return this._html; }
+    outerHtml()                   { return this._html; }
+    title()                       { return this._$("title").text(); }
+    body()                        { return this.select("body").first(); }
+    head()                        { return this.select("head").first(); }
+    getElementById(id)            { return this.select(`#${id}`).first(); }
+    getElementsByTag(tag)         { return this.select(tag); }
+    getElementsByClass(cls)       { return this.select(`.${cls}`); }
+
+    selectFirst(selector) {
+        return this.select(selector).first();
+    }
+
+    wholeText() { return this._$("body").text(); }
+};
+
+globalThis.JsoupElements = class JsoupElements {
+    constructor(raw) {
+        this._els = raw.map(item => new JsoupElement(item._raw));
+    }
+
+    get(i)      { return this._els[i] ?? null; }
+    first()     { return this._els[0] ?? null; }
+    last()      { return this._els[this._els.length - 1] ?? null; }
+    size()      { return this._els.length; }
+    isEmpty()   { return this._els.length === 0; }
+    text()      { return this._els.map(el => el.text()).join(""); }
+    html()      { return this._els[0]?.html() ?? ""; }
+    outerHtml() { return this._els[0]?.outerHtml() ?? ""; }
+    attr(name)  { return this._els[0]?.attr(name) ?? null; }
+    select(sel) { return this._els[0] ? this._els[0].select(sel) : new JsoupElements([]); }
+
+    forEach(fn) { this._els.forEach(fn); }
+    map(fn)     { return this._els.map(fn); }
+    filter(fn)  { return this._els.filter(fn); }
+
+    selectFirst(selector) { return this.select(selector).first(); }
+};
+
+globalThis.JsoupElement = class JsoupElement {
+    constructor(raw) {
+        this._raw = raw;
+    }
+
+    text()        { return this._raw.text; }
+    html()        { return this._raw.html; }
+    outerHtml()   { return this._raw.outer; }
+    attr(name)    { return this._raw.attrs?.[name] ?? null; }
+    hasAttr(name) { return name in (this._raw.attrs ?? {}); }
+    id()          { return this.attr("id") ?? ""; }
+    className()   { return this.attr("class") ?? ""; }
+    tagName()     { return this._raw.tag ?? ""; }
+
+    select(selector) {
+        const $ = parseHTML(this._raw.html);
+        return new JsoupElements($(selector));
+    }
+
+    wholeText() { return this._raw.text; }
+
+    selectFirst(selector) { return this.select(selector).first(); }
+
+    data() { return this._raw.text; }
+};
+
+globalThis["JsoupExtensionsKt"] = {
+    ["asJsoup$default"]: function(body, baseUri, charset, flags) {
+        const html = typeof body?.string === "function" ? body.string() : body._text;
+        return new JsoupDocument(html);
+    },
+    ["asJsoup"]: function(body, baseUri, charset) {
+        return new JsoupDocument(body.string());
+    },
+};
+
+globalThis.Jsoup = {
+    parseBodyFragment(html) {
+        return new JsoupDocument(html);
+    },
+    parse(html) {
+        return new JsoupDocument(html);
+    },
+};
+
 function _wrapKotlinObject(obj) {
     if (obj === null || obj === undefined) return null;
     if (Array.isArray(obj)) return obj.map(_wrapKotlinObject);
     if (typeof obj !== "object") return obj;
-    if (typeof obj.toSManga === "function") return obj;
+
+    const keys = Object.keys(obj);
+    const normalizedMap = {};
+    for (const key of keys) {
+        normalizedMap[String(key).toLowerCase().replace(/[_-]/g, "")] = key;
+    }
+
+    // ordered list of values for positional obfuscated access (a, b, c... l, n, o...)
+    const orderedValues = keys.map(k => obj[k]);
+
+    // build a map of single/short obfuscated names to positional values
+    // obfuscated names are typically 1-2 chars: a-z, aa, ab etc.
+    const obfuscatedNames = [];
+    for (let i = 0; i < 26; i++) obfuscatedNames.push(String.fromCharCode(97 + i));
+    for (let i = 0; i < 26; i++) for (let j = 0; j < 26; j++) obfuscatedNames.push(String.fromCharCode(97+i) + String.fromCharCode(97+j));
 
     return new Proxy(obj, {
         get(target, prop) {
-            if (prop === Symbol.iterator) return target[Symbol.iterator]?.bind(target);
+            if (prop === Symbol.iterator) {
+                const arr = Array.isArray(target) ? target : Object.values(target);
+                return arr[Symbol.iterator].bind(arr.map(_wrapKotlinObject));
+            }
             if (prop === "iterator") return () => {
                 const arr = Array.isArray(target) ? target : Object.values(target);
                 let i = 0;
@@ -809,46 +1222,109 @@ function _wrapKotlinObject(obj) {
                     next: () => _wrapKotlinObject(arr[i++]),
                 };
             };
+
+            // exact match
             if (prop in target) {
                 const val = target[prop];
                 if (typeof val === "function") return val.bind(target);
                 return () => _wrapKotlinObject(val);
             }
+
+            // fuzzy snake_case/camelCase match
+            const normalizedProp = String(prop).toLowerCase().replace(/[_-]/g, "");
+            const matchedKey = normalizedMap[normalizedProp];
+            if (matchedKey !== undefined) {
+                const val = target[matchedKey];
+                if (typeof val === "function") return val.bind(target);
+                return () => _wrapKotlinObject(val);
+            }
+
+            // positional obfuscated match: l = 11th field, n = 13th etc.
+            const idx = obfuscatedNames.indexOf(String(prop));
+            if (idx !== -1 && idx < orderedValues.length) {
+                return () => _wrapKotlinObject(orderedValues[idx]);
+            }
+
             return () => null;
         }
     });
 }
+
+globalThis.JsonArray = class JsonArray {
+    constructor(list) {
+        this._arr = Array.isArray(list) ? list : (list ? [...list] : []);
+        this.__isJsonArray = true;
+    }
+    values()  { return this._arr; }
+    size()    { return this._arr.length; }
+    isEmpty() { return this._arr.length === 0 ? 1 : 0; }
+    get(i)    { return this._arr[i]; }
+    iterator() {
+        let i = 0; const a = this._arr;
+        return { hasNext() { return i < a.length ? 1 : 0; }, next() { return a[i++]; } };
+    }
+    [Symbol.iterator]() { return this._arr[Symbol.iterator](); }
+
+    static [Symbol.hasInstance](instance) {
+        if (instance === null || instance === undefined) return false;
+        return instance.__isJsonArray === true || Array.isArray(instance);
+    }
+};
+
+const _JsonObject = class JsonObject {
+    static [Symbol.hasInstance](instance) {
+        return instance !== null && typeof instance === 'object'
+            && !Array.isArray(instance) && !instance.__isJsonArray;
+    }
+};
+
+// Kotlin's JsonObject.values is a property returning the map's values collection.
+// Since plain JS objects are used as JsonObject at runtime, we patch Object.prototype
+// carefully so any plain object gets a values() method.
+// We do it on _JsonObject.prototype but since instanceof is faked, actual objects
+// won't have it — so we need to inject it differently.
+
+// The cleanest approach: wrap values() as a global helper that works on plain objects.
+// But since the translated code calls it as v2_1.values(), we need it on the object itself.
+// Patch Object.prototype as a last resort, guarded to avoid breaking arrays/primitives:
+Object.defineProperty(Object.prototype, 'values', {
+    value: function() {
+        return Object.values(this);
+    },
+    writable: true,
+    configurable: true,
+    enumerable: false,  // non-enumerable so it doesn't show up in for..in loops
+});
+
+const _JsonPrimitive = class JsonPrimitive {
+    static [Symbol.hasInstance](instance) {
+        return typeof instance === 'string' || typeof instance === 'number' || typeof instance === 'boolean';
+    }
+};
+
+globalThis.kotlinx = {
+    serialization: {
+        json: {
+            JsonObject:    _JsonObject,
+            JsonArray:     JsonArray,
+            JsonPrimitive: _JsonPrimitive,
+            JsonElement:   _JsonObject,
+            JsonNull:      { INSTANCE: null },
+        }
+    }
+};
 
 globalThis.OkioStreamsKt = {
     decodeFromBufferedSource(deserializer, type, source) {
         try {
             const text = typeof source === "string" ? source : source?._text ?? "";
             const parsed = JSON.parse(text);
-
-            // Add toSManga to each item in data array directly
-            if (parsed.data && Array.isArray(parsed.data)) {
-                parsed.data = parsed.data.map(item => {
-                    const wrapped = { ...item };
-                    Object.defineProperty(wrapped, 'toSManga', {
-                        value: function() {
-                            const m = SManga.create();
-                            m.url = `/comic/${item.slug}`;
-                            m.title = item.title ?? "";
-                            m.thumbnail_url = item.default_thumbnail ?? null;
-                            m.status = SManga.UNKNOWN;
-                            return m;
-                        },
-                        writable: true,
-                        configurable: true,
-                        enumerable: true,
-                    });
-                    return wrapped;
-                });
-            }
-
-            return _wrapKotlinObject(parsed);
+            const actualSerializer = type ?? deserializer;
+            const decoder = new JsonDecoder(parsed, null);
+            return actualSerializer.deserialize(decoder);
         } catch(e) {
-            return _wrapKotlinObject({ data: [], d: null });
+            console.log("error msg:", e.message);
+            throw e;
         }
     },
 };
@@ -879,28 +1355,43 @@ globalThis.SerializersKt = {
     serializer(klass) { return klass?.Companion ?? klass; },
 };
 globalThis.BuiltinSerializersKt = {
-    ListSerializer(s) { return { _type: "List", _elem: s }; },
-    ArrayListSerializer(s) { return { _type: "ArrayList", _elem: s }; },
-    NullableSerializer(s) { return { _type: "Nullable", _elem: s }; },
+    ListSerializer(elementSerializer) {
+        return new ArrayListSerializer(elementSerializer);
+    },
+    ArrayListSerializer(elementSerializer) {
+        return new ArrayListSerializer(elementSerializer);
+    },
+    NullableSerializer(elementSerializer) {
+        return {
+            _elem: elementSerializer,
+            deserialize(decoder) {
+                const val = decoder._json;
+                if (val === null || val === undefined) return null;
+                return elementSerializer.deserialize(new JsonDecoder(val, decoder._descriptor));
+            },
+            getDescriptor() { return elementSerializer.getDescriptor?.() ?? null; },
+        };
+    },
 };
 
 globalThis.Json = {
     Default: {
-        decodeFromString(deserializer, str) { return JSON.parse(str); },
+        decodeFromString(deserializer, str) {
+            const parsed = JSON.parse(str);
+            const data = parsed?.data ?? parsed;
+            const decoder = new JsonDecoder(data, null);
+            return deserializer.deserialize(decoder);
+        },
         encodeToString(serializer, obj)     { return JSON.stringify(obj); },
     },
-    decodeFromString(deserializer, str) { return JSON.parse(str); },
+    decodeFromString(deserializer, str) {
+        const parsed = JSON.parse(str);
+        const data = parsed?.data ?? parsed;
+        const decoder = new JsonDecoder(data, null);
+        return deserializer.deserialize(decoder);
+    },
     encodeToString(serializer, obj)     { return JSON.stringify(obj); },
 };
-
-function _jsonToSManga(item) {
-    const manga = SManga.create();
-    manga.url         = `/comic/${item.slug}`;
-    manga.title       = item.title ?? "";
-    manga.thumbnail_url = item.cover ?? item.thumbnail ?? item.cover_url ?? null;
-    manga.status      = SManga.UNKNOWN;
-    return manga;
-}
 
 // Tachiyomi models
 
@@ -973,6 +1464,17 @@ globalThis.SManga = class SManga {
     }
 };
 
+SManga.Companion = {
+    UNKNOWN:             0,
+    ONGOING:             1,
+    COMPLETED:           2,
+    LICENSED:            3,
+    PUBLISHING_FINISHED: 4,
+    CANCELLED:           5,
+    ON_HIATUS:           6,
+    create() { return new SManga(); },
+};
+
 globalThis.SChapter = class SChapter {
     static create() { return new SChapter(); }
 
@@ -1005,6 +1507,10 @@ globalThis.SChapter = class SChapter {
         this.chapter_number = other.chapter_number;
         this.scanlator      = other.scanlator;
     }
+};
+
+SChapter.Companion = {
+    create() { return new SChapter(); }
 };
 
 globalThis.Page = class Page {
@@ -1052,6 +1558,11 @@ globalThis.Filter = class Filter {
         this.name  = name;
         this.state = state;
     }
+
+    getState() { return this.state; }
+    setState(s) { this.state = s; }
+
+    getName() { return this.name; }
 
     equals(other) {
         if (this === other) return true;
@@ -1104,6 +1615,7 @@ Filter.Sort = class Sort extends Filter {
         super(name, state);
         this.values = values;
     }
+    getValues() { return this.values; }
 };
 
 Filter.Sort.Selection = class Selection {
@@ -1111,6 +1623,12 @@ Filter.Sort.Selection = class Selection {
         this.index     = index;
         this.ascending = ascending;
     }
+    getIndex()     { return this.index; }
+    getFirst()     { return this.index; }
+    getSecond()    { return this.ascending; }
+    getAscending() { return this.ascending; }
+    component1()   { return this.index; }
+    component2()   { return this.ascending; }
 };
 
 globalThis["Filter$Header"]    = Filter.Header;
@@ -1120,7 +1638,7 @@ globalThis["Filter$Text"]      = Filter.Text;
 globalThis["Filter$CheckBox"]  = Filter.CheckBox;
 globalThis["Filter$TriState"]  = Filter.TriState;
 globalThis["Filter$Group"]     = Filter.Group;
-globalThis["Filter$Sort"]      = Filter.Sort;
+globalThis["Filter$Sort"]           = Filter.Sort;
 globalThis["Filter$Sort$Selection"] = Filter.Sort.Selection;
 
 // FilterList
@@ -1164,16 +1682,13 @@ globalThis._SandboxResponse = class _SandboxResponse {
     header(name) { return null; }
     async text() { return this._text; }
     async json() { return JSON.parse(this._text); }
+
     request() {
+        const url = this._url;
         return {
-            url() {
-                return {
-                    fragment() { return null; },
-                    toString() { return this._url; },
-                    toUrl()    { return { toString() { return this._url; } }; },
-                };
-            },
+            url() { return new HttpUrl(url); },
             header(name) { return null; },
+            method() { return "GET"; },
         };
     }
     // asJsoup() comes later
@@ -1285,20 +1800,22 @@ globalThis.InjektKt = class InjektKt {
     static getInjekt() {
         return {
             getInstance: (cls) => {
-                // Kotlin's Injekt passes a type token (FullTypeReference / array) rather
-                // than a plain constructor when the call-site uses an inline reified get<T>().
-                // Unwrap: if it's an array, take the first element; if it has a _ctor field
-                // (set by PreferencesKt shim below), use that.
-                let ctor = cls;
-                if (Array.isArray(cls))   ctor = cls[0];
-                if (cls && cls._ctor)     ctor = cls._ctor;
+                return globalThis.__universalInstance ||= {
+                    // Json
+                    decodeFromString(deserializer, str) {
+                        const parsed = JSON.parse(str);
+                        const data = parsed?.data ?? parsed;
+                        const decoder = new JsonDecoder(data, null);
+                        return deserializer.deserialize(decoder);
+                    },
+                    encodeToString(serializer, obj)     { return JSON.stringify(obj); },
 
-                // Application is the only type extensions request via Injekt in practice —
-                // it's the gateway to getSharedPreferences(), which reads __settings.
-                if (ctor === Application || ctor == null || typeof ctor !== "function") {
-                    return globalThis.__appInstance ||= new Application();
-                }
-                return new ctor();
+                    // Application / SharedPreferences
+                    getSharedPreferences(name, mode) { return new SharedPreferences(name); },
+
+                    // OkHttpClient
+                    newCall(request) { return new OkHttpCall(request); },
+                };
             }
         };
     }
@@ -1306,13 +1823,16 @@ globalThis.InjektKt = class InjektKt {
 // RequestsKt
 globalThis.RequestsKt = {
     GET(url, headers, cache) {
-        return new Request.Builder().url(url).headers(headers ?? new Headers()).cacheControl(cache ?? null).build();
+        const h = typeof headers?.build === 'function' ? headers.build() : headers;
+        return new Request.Builder().url(url).headers(h ?? new Headers()).cacheControl(cache ?? null).build();
     },
     GET$default(url, headers, cache, flags, mask) {
-        return new Request.Builder().url(url).headers(headers ?? new Headers()).cacheControl(cache ?? null).build();
+        const h = typeof headers?.build === 'function' ? headers.build() : headers;
+        return new Request.Builder().url(url).headers(h ?? new Headers()).cacheControl(cache ?? null).build();
     },
     POST$default(url, headers, body) {
-        return new Request.Builder().url(url).headers(headers ?? new Headers()).post(body).build();
+        const h = typeof headers?.build === 'function' ? headers.build() : headers;
+        return new Request.Builder().url(url).headers(h ?? new Headers()).post(body).build();
     },
 };
 
@@ -1323,12 +1843,33 @@ globalThis.POST = (url, headers, body, cache) =>
 // HttpUrl
 globalThis.HttpUrl = class HttpUrl {
     constructor(url) { this._url = url; }
-    toString()       { return this._url; }
-    newBuilder()     { return new HttpUrl.Builder(this._url); }
+    toString()   { return this._url; }
+    fragment()   {
+        const m = this._url.match(/#(.*)$/);
+        return m ? m[1] : null;
+    }
+    host()       { try { return new URL(this._url).hostname; } catch { return ""; } }
+    encodedPath(){ try { return new URL(this._url).pathname; } catch { return "/"; } }
+    newBuilder() { return new HttpUrl.Builder(this._url); }
+
+    pathSegments() {
+        try {
+            const segs = new URL(this._url).pathname
+                .split("/")
+                .filter(s => s.length > 0);
+            segs.get = (i) => segs[i];
+            return segs;
+        } catch {
+            const segs = this._url.split("/").filter(s => s.length > 0);
+            segs.get = (i) => segs[i];
+            return segs;
+        }
+    }
 
     static Builder = class HttpUrlBuilder {
         constructor(base = "") { this._url = base; }
         addQueryParameter(k, v) {
+            if (v === null || v === undefined) return this;
             const sep = this._url.includes("?") ? "&" : "?";
             this._url += `${sep}${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
             return this;
@@ -1360,15 +1901,20 @@ globalThis._Call = class _Call {
     constructor(req) { this._req = req; }
 
     execute() {
-        // synchronous fetch isn't possible in JS, but runBlocking expects sync
-        // store the request so the sandbox can dispatch it
-        const url = this._req.url?.toString?.() ?? String(this._req.url);
+        const url    = this._req.url?.toString?.() ?? String(this._req.url);
         const method = this._req.method ?? "GET";
         const headers = this._req.headers?.toFetchHeaders?.() ?? {};
+        const body   = this._req.body ?? undefined;
 
-        // Return a response-like object that will be resolved by the sandbox
-        return fetch(url, { method, headers })
-            .then(res => res.text().then(text => new _SandboxResponse(text, res.status, url)));
+        const now = Date.now();
+        const elapsed = now - globalThis.__lastFetchTime;
+        if (elapsed < 1000 && globalThis.__lastFetchTime !== 0) {
+            __native_sleep(1000 - elapsed);
+        }
+        globalThis.__lastFetchTime = Date.now();
+
+        const result = fetchSync(url, { method, headers, body });
+        return new _SandboxResponse(result.text, result.status, url);
     }
 }
 
@@ -1386,11 +1932,16 @@ globalThis.CloseableKt = {
     },
 };
 
-// TODO: make sync fetch
 globalThis.OkHttpExtensionsKt = {
     await(call, continuation) {
-        // Return a fake failed response — extension will use cached/default filters
-        return new _SandboxResponse("", 503, "");
+        const req = call._req;
+        const url = req?.url?.toString?.() ?? String(req?.url ?? "");
+        const method = req?.method ?? "GET";
+        const headers = req?.headers?.toFetchHeaders?.() ?? {};
+        const body = req?.body ?? undefined;
+
+        const result = fetchSync(url, { method, headers, body });
+        return new _SandboxResponse(result.text, result.status, url);
     }
 };
 
@@ -1529,7 +2080,8 @@ class HttpSource extends _SandboxManga {
     get versionId() { return 1; }
 
     headersBuilder() {
-        return { "User-Agent": "Mozilla/5.0 (compatible; TachiSandbox/1.0)" };
+        return new Headers.Builder()
+            .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
     }
 
     getId() {
@@ -1555,7 +2107,73 @@ class HttpSource extends _SandboxManga {
         return id.toString();
     }
 
-    //  sandbox API entry points 
+    //  sandbox API entry points
+
+    async getFilters() {
+        const filterList = this.getFilterList();
+        const result = {};
+
+        for (const filter of filterList) {
+            if (filter instanceof Filter.Header || filter instanceof Filter.Separator) continue;
+
+            if (filter instanceof Filter.Select) {
+                result[filter.name] = {
+                    label: filter.name,
+                    type: "select",
+                    options: filter.values.map((v, i) => ({
+                        label: typeof v === "string" ? v : v?.toString?.() ?? String(i),
+                        value: String(i),
+                    })),
+                };
+            } else if (filter instanceof Filter.Text) {
+                result[filter.name] = {
+                    label: filter.name,
+                    type: "text",
+                };
+            } else if (filter instanceof Filter.CheckBox) {
+                result[filter.name] = {
+                    label: filter.name,
+                    type: "boolean",
+                };
+            } else if (filter instanceof Filter.TriState) {
+                result[filter.name] = {
+                    label: filter.name,
+                    type: "select",
+                    options: [
+                        { label: "Any", value: "0" },
+                        { label: "Include", value: "1" },
+                        { label: "Exclude", value: "2" },
+                    ],
+                };
+            } else if (filter instanceof Filter.Group) {
+                const state = Array.isArray(filter.state) ? filter.state : [...(filter.state ?? [])];
+                if (state.length > 0 && state[0] instanceof Filter.CheckBox) {
+                    result[filter.name] = {
+                        label: filter.name,
+                        type: "multiselect",
+                        options: state.map(f => ({ label: f.name, value: f.name })),
+                    };
+                } else if (state.length > 0 && state[0] instanceof Filter.TriState) {
+                    result[filter.name] = {
+                        label: filter.name,
+                        type: "multiselect",
+                        options: state.map(f => ({ label: f.name, value: f.name })),
+                    };
+                }
+            } else if (filter instanceof Filter.Sort) {
+                result[filter.name] = {
+                    label: filter.name,
+                    type: "select",
+                    options: filter.values.map((v, i) => ({
+                        label: typeof v === "string" ? v : String(v),
+                        value: String(i),
+                    })),
+                };
+            }
+        }
+
+        return result;
+    }
 
     async search(query, filters, page) {
         page = page ?? 1;
@@ -1594,10 +2212,13 @@ class HttpSource extends _SandboxManga {
         manga.url   = contentId;
         const res   = await this._doRequest(this.chapterListRequest(manga));
         const list  = this.chapterListParse(res);
-        return list.map((ch, i) => ({
-            id:     ch.url,
-            title:  ch.name,
-            number: ch.chapter_number >= 0 ? ch.chapter_number : list.length - i,
+        const arr   = Array.isArray(list) ? list : [...list];
+        return arr.map((ch, i) => ({
+            id:     ch.url      ?? ch.getUrl?.(),
+            title:  ch.name     ?? ch.getName?.(),
+            number: (ch.chapter_number ?? ch.getChapter_number?.() ?? -1) >= 0
+                ? (ch.chapter_number ?? ch.getChapter_number?.())
+                : arr.length - i,
             index:  i,
         }));
     }
@@ -1618,11 +2239,11 @@ class HttpSource extends _SandboxManga {
     searchMangaParse(response)                       { throw new Error("not implemented"); }
     latestUpdatesRequest(page)                       { throw new Error("not implemented"); }
     latestUpdatesParse(response)                     { throw new Error("not implemented"); }
-    mangaDetailsRequest(manga)                       { return GET(this.baseUrl + manga.url, this.headers); }
+    mangaDetailsRequest(manga)                       { return GET(this.getBaseUrl() + manga.url, this.headers); }
     mangaDetailsParse(response)                      { throw new Error("not implemented"); }
-    chapterListRequest(manga)                        { return GET(this.baseUrl + manga.url, this.headers); }
+    chapterListRequest(manga)                        { return GET(this.getBaseUrl() + manga.url, this.headers); }
     chapterListParse(response)                       { throw new Error("not implemented"); }
-    pageListRequest(chapter)                         { return GET(this.baseUrl + chapter.url, this.headers); }
+    pageListRequest(chapter)                         { return GET(this.getBaseUrl() + chapter.url, this.headers); }
     pageListParse(response)                          { throw new Error("not implemented"); }
     imageUrlParse(response)                          { throw new Error("not implemented"); }
     getFilterList()                                  { return new FilterList(); }
@@ -1654,7 +2275,13 @@ class HttpSource extends _SandboxManga {
     }
 }
 
-HttpSource.prototype.getHeaders = function() { if (!this._headers) this._headers = this.headersBuilder(); return this._headers;};
+HttpSource.prototype.getHeaders = function() {
+    if (!this._headers) {
+        const h = this.headersBuilder();
+        this._headers = typeof h?.build === 'function' ? h.build() : (h instanceof Headers ? h : new Headers(h));
+    }
+    return this._headers;
+};
 
 let __tachi_captured = null;
 
