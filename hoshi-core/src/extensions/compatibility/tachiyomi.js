@@ -174,29 +174,8 @@ globalThis.ordinal = function(v) { return typeof v === "number" ? v : v?.ordinal
 
 
 globalThis.CollectionsKt = {
-    createListBuilder(capacity = 0) {
-        const arr = [];
-        arr.add = (item) => { arr.push(item); return true; };
-        arr.addAll = (collection) => {
-            const items = Array.isArray(collection) ? collection : [...collection];
-            for (const item of items) arr.push(item);
-            return true;
-        };
-        return arr;
-    },
-
     build(builder) {
         return builder;
-    },
-    mutableListOf(...args) {
-        return args.length === 1 && Array.isArray(args[0])
-            ? [...args[0]]
-            : Array.from(args);
-    },
-    toMutableList(collection) {
-        if (Array.isArray(collection)) return [...collection];
-        if (collection?.[Symbol.iterator]) return [...collection];
-        return [];
     },
     joinToString$default(collection, separator, prefix, postfix, limit, truncated, transform, flags, marker) {
         if (!collection) return "";
@@ -238,7 +217,43 @@ globalThis.CollectionsKt = {
         }
         return true;
     },
+
+    emptyMap:     () => new LinkedHashMap(),
+    emptySet:     () => new Set(),
+    setOf:        (...args) => new Set(args),
+    mapOf:        (...args) => new LinkedHashMap(args),
+    plus:         (a, b)   => [...a, ...b],
+    single:       (list)   => { if (list.length !== 1) throw new Error("Expected single element"); return list[0]; },
+    firstOrNull:  (list, pred) => pred ? (list.find(pred) ?? null) : (list[0] ?? null),
+    filter:       (list, pred) => list.filter(pred),
+    map:          (list, fn)   => list.map(fn),
+    forEach:      (list, fn)   => list.forEach(fn),
+
+    emptyList:     () => _mutableList(),
+    toMutableList: (col) => _mutableList(col?.[Symbol.iterator] ? [...col] : []),
+    mutableListOf: (...args) => _mutableList(args.length === 1 && Array.isArray(args[0]) ? args[0] : args),
+    createListBuilder: () => _mutableList(),
 };
+
+function _mutableList(items = []) {
+    const arr = Array.isArray(items) ? [...items] : [...items];
+    arr.add    = (item) => { arr.push(item); return true; };
+    arr.addAll = (col)  => {
+        const els = Array.isArray(col) ? col : [...col];
+        for (const e of els) arr.push(e);
+        return true;
+    };
+    arr.remove = (item) => {
+        const i = arr.indexOf(item);
+        if (i >= 0) { arr.splice(i, 1); return true; }
+        return false;
+    };
+    arr.isEmpty   = () => arr.length === 0;
+    arr.size      = () => arr.length;  // kotlin .size property won't work but .size() will
+    arr.contains  = (item) => arr.includes(item);
+    return arr;
+}
+globalThis._mutableList = _mutableList;
 
 globalThis.Pair = class Pair {
     constructor(first, second) {
@@ -266,6 +281,8 @@ globalThis.Pair = class Pair {
         return `(${this.first}, ${this.second})`;
     }
 };
+
+globalThis.Pair_2 = Pair;
 
 // TODO: remove when settings collected
 globalThis.__settings = {
@@ -312,6 +329,33 @@ globalThis.BuildersKt = {
         return result;
     }
 };
+
+globalThis.CoroutineScopeKt = {
+    CoroutineScope(context) {
+        return { _context: context };
+    }
+};
+
+globalThis.LinkedHashMap = class LinkedHashMap extends Map {
+    constructor(init) {
+        super();
+        if (init) {
+            for (const [k, v] of init) this.set(k, v);
+        }
+    }
+    get(key)            { return super.get(key) ?? null; }
+    put(key, value)     { this.set(key, value); return null; }
+    containsKey(key)    { return this.has(key); }
+    containsValue(val)  { for (const v of this.values()) if (v === val) return true; return false; }
+    remove(key)         { const v = this.get(key); this.delete(key); return v; }
+    isEmpty()           { return this.size === 0; }
+    entrySet()          { return [...this.entries()].map(([k,v]) => ({ getKey: () => k, getValue: () => v })); }
+    keySet()            { return new Set(this.keys()); }
+    values()            { return [...super.values()]; }
+    putAll(map)         { for (const [k,v] of map) this.set(k,v); return this; }
+};
+
+globalThis.HashMap = LinkedHashMap;
 
 globalThis.StringBuilder = class StringBuilder {
     constructor(initial = "") { this._s = (initial == null) ? "" : "" + initial; }
@@ -1706,6 +1750,14 @@ globalThis.Headers = class Headers {
         return this._map[name.toLowerCase()] ?? null;
     }
 
+    newBuilder() {
+        const b = new Headers.Builder();
+        for (const k in this._map) {
+            b._map[k] = this._map[k];
+        }
+        return b;
+    }
+
     set(name, value) {
         this._map[name.toLowerCase()] = String(value);
     }
@@ -1747,6 +1799,15 @@ globalThis.Headers = class Headers {
     static Builder = class HeadersBuilder {
         constructor() {
             this._map = {};
+        }
+
+        push(name, value) {
+            return this.add(name, value);
+        }
+
+        removeAll(name) {
+            delete this._map[name.toLowerCase()];
+            return this;
         }
 
         add(name, value) {
@@ -2455,25 +2516,23 @@ _networkHelper.getClient            = function() { return _makeOkHttpClient(true
 _networkHelper.getNonCloudflareClient = function() { return _makeOkHttpClient(false); };
 
 globalThis.__tachi_getCapturedClass = function() {
-    if (__tachi_captured)
-        return __tachi_captured;
+    if (__tachi_captured) return __tachi_captured;
 
+    const candidates = [];
     for (const key of Object.getOwnPropertyNames(globalThis)) {
         try {
             const v = globalThis[key];
-
-            if (
-                typeof v === "function" &&
-                v !== HttpSource &&
-                v.prototype instanceof HttpSource
-            ) {
-                __tachi_captured = v;
-                return v;
+            if (typeof v === "function" && v !== HttpSource && v.prototype instanceof HttpSource) {
+                candidates.push(v);
             }
         } catch (_) {}
     }
 
-    throw new Error(
-        "[tachi-compat] No class extending HttpSource found"
+    const leaf = candidates.find(cls =>
+        !candidates.some(other => other !== cls && other.prototype instanceof cls)
     );
+
+    __tachi_captured = leaf ?? candidates[0];
+    if (!__tachi_captured) throw new Error("[tachi-compat] No class extending HttpSource found");
+    return __tachi_captured;
 };

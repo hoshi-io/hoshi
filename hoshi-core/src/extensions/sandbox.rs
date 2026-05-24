@@ -287,9 +287,18 @@ fn build_sandbox_script(
 
                     const src = {ext_repr};
 
-                    const patched = src.replace(
+                const patched = src
+                    .replace(
                         /class\s+([a-zA-Z0-9_$]+)\s+extends\s+(HttpSource|ParsedHttpSource|Manga)/,
-                        'globalThis.__tachi_captured = class $1 extends $2'
+                        'globalThis.__tachi_captured = globalThis["$1"] = class $1 extends $2'
+                    )
+                    .replace(
+                        /\bclass\s+([a-zA-Z0-9_$]+)\s+extends\s+(?!HttpSource|ParsedHttpSource|Manga\b)/g,
+                        'globalThis["$1"] = class $1 extends '
+                    )
+                    .replace(
+                        /\bclass\s+([a-zA-Z0-9_$]+)\s*\{{/g,
+                        'globalThis["$1"] = class $1 {{'
                     );
 
                     eval(patched);
