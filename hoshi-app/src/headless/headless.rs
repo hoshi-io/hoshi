@@ -123,9 +123,12 @@ impl<R: Runtime + 'static> TauriHeadless<R> {
             });
         }
 
+        let url_for_webview = url.clone();
+        let url_clone = url.clone();
+
         let app_c = app.clone();
         app.run_on_main_thread(move || {
-            if let Err(e) = create_desktop_webview(&app_c, &label_c, &url, &options_c) {
+            if let Err(e) = create_desktop_webview(&app_c, &label_c, &url_for_webview, &options_c) {
                 error!(label = %label_c, error = ?e, "Failed to create desktop webview");
             }
         }).map_err(|e| {
@@ -137,10 +140,15 @@ impl<R: Runtime + 'static> TauriHeadless<R> {
             Ok(Ok(Ok(p))) => {
                 debug!(url = %p.url, "Headless fetch completed successfully on desktop");
 
+                let url_clone = url_clone;
+
                 let cookies = app
                     .get_webview_window(&label)
                     .and_then(|w| {
-                        w.cookies_for_url((&p.url).parse().unwrap()).ok()
+                        let u1 = (&p.url).parse().unwrap();
+                        let u2 = url_clone.parse().unwrap();
+                        let r = w.cookies_for_url(u1);
+                        r.or_else(|_| w.cookies_for_url(u2)).ok()
                     })
                     .map(|tauri_cookies| {
                         tauri_cookies.iter().map(|c| Cookie {
@@ -149,6 +157,14 @@ impl<R: Runtime + 'static> TauriHeadless<R> {
                         }).collect::<Vec<_>>()
                     })
                     .unwrap_or_else(|| parse_cookies(&p.cookies));
+
+                let app_destroy = app.clone();
+                let label_d = label.clone();
+                let _ = app.run_on_main_thread(move || {
+                    if let Some(w) = app_destroy.get_webview_window(&label_d) {
+                        let _ = w.destroy();
+                    }
+                });
 
                 Ok(HeadlessResponse {
                     url: p.url, status: 200, html: p.html,
@@ -264,12 +280,12 @@ fn create_desktop_webview<R: Runtime>(
         CoreError::BadRequest("error.headless.invalid_url".into())
     })?;
 
-    let init_script      = build_init_script(label, options);
+    let init_script = build_init_script(label, options);
     let blocked_patterns = build_blocked_url_patterns(&options.block);
 
     debug!(label = %label, "Configuring desktop WebviewWindowBuilder");
     let mut builder = WebviewWindowBuilder::new(app, label, WebviewUrl::External(parsed_url))
-        .visible(false)
+        .visible(true)
         .decorations(false)
         .inner_size(1280.0, 800.0)
         .initialization_script(&init_script);
