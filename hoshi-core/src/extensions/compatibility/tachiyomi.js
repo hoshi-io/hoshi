@@ -1,3 +1,5 @@
+const _cookieStore = new Map(Object.entries(state?.get?.("cookies") ?? {}));
+
 // Kotlin stdlib
 
 if (!Array.prototype.iterator) {
@@ -961,25 +963,19 @@ globalThis.String.format  = (fmt, ...args) => {
 // cloudflareClient → real fetch via headless (handles CF challenges)
 // client / nonCloudflareClient → plain fetch
 
-const _makeOkHttpClient = (useHeadless, interceptors = [], networkInterceptors = []) => ({
-    _useHeadless: useHeadless,
+const _makeOkHttpClient = (useCloudflare, interceptors = [], networkInterceptors = []) => {
+    const client = new OkHttpClient(useCloudflare);
+    client._interceptors = interceptors;
+    client._networkInterceptors = networkInterceptors;
+    client.newBuilder = () => _makeOkHttpClientBuilder(useCloudflare, [...interceptors], [...networkInterceptors]);
+    client.interceptors = () => _makeKotlinList(interceptors);
+    client.networkInterceptors = () => _makeKotlinList(networkInterceptors);
+    return client;
+};
+const _makeOkHttpClientBuilder = (useCloudflare = false, interceptors = [], networkInterceptors = []) => ({
     _interceptors: interceptors,
     _networkInterceptors: networkInterceptors,
-
-    newCall(request) {
-        return new _Call(request);
-    },
-
-    newBuilder() {
-        return _makeOkHttpClientBuilder(useHeadless, [...this._interceptors], [...this._networkInterceptors]);
-    },
-    interceptors()        { return _makeKotlinList(this._interceptors); },
-    networkInterceptors() { return _makeKotlinList(this._networkInterceptors); },
-});
-const _makeOkHttpClientBuilder = (useHeadless = false, interceptors = [], networkInterceptors = []) => ({
-    _useHeadless: useHeadless,
-    _interceptors: interceptors,
-    _networkInterceptors: networkInterceptors,
+    _useCloudflare: useCloudflare,
 
     addInterceptor(i)        { this._interceptors.push(i);        return this; },
     addNetworkInterceptor(i) { this._networkInterceptors.push(i); return this; },
@@ -1010,7 +1006,7 @@ const _makeOkHttpClientBuilder = (useHeadless = false, interceptors = [], networ
 
     apply(fn) { fn.call(this); return this; },
 
-    build() { return _makeOkHttpClient(this._useHeadless); },
+    build() { return _makeOkHttpClient(this._useCloudflare); },
 });
 
 const _makeKotlinList = (arr) => ({
@@ -1041,11 +1037,6 @@ globalThis.MediaType = {
     },
 };
 
-// j0 is the extension's NetworkInterceptor lambda (chain.proceed wrapper)
-// We don't need to execute it; the real fetch handles headers.
-
-const _cookieStore = new Map(); // persisted via state below
-
 const _networkHelper = {
     cookieJar: {
         saveFromResponse(url, cookies) {
@@ -1055,9 +1046,9 @@ const _networkHelper = {
         loadForRequest(url) { return []; },
     },
 
-    get cloudflareClient() { return _makeOkHttpClient(true);  },
-    get client()            { return _makeOkHttpClient(true);  },
+    get client()             { return _makeOkHttpClient(true);  },
     get nonCloudflareClient(){ return _makeOkHttpClient(false); },
+    get cloudflareClient()   { return _makeOkHttpClient(true);  },
 };
 
 globalThis.NetworkHelper = function NetworkHelper() { return _networkHelper; };
@@ -1703,19 +1694,74 @@ globalThis.GET = function GET(url, headers) {
 //  OkHttp shims
 
 globalThis.Headers = class Headers {
-    constructor(map = {}) { this._map = { ...map }; }
+    constructor(map = {}) {
+        this._map = {};
 
-    get(name)          { return this._map[name.toLowerCase()] ?? null; }
-    set(name, value)   { this._map[name.toLowerCase()] = value; }
-    has(name)          { return name.toLowerCase() in this._map; }
+        for (const k in map) {
+            this._map[k.toLowerCase()] = map[k];
+        }
+    }
 
-    toFetchHeaders()   { return { ...this._map }; }
+    get(name) {
+        return this._map[name.toLowerCase()] ?? null;
+    }
+
+    set(name, value) {
+        this._map[name.toLowerCase()] = String(value);
+    }
+
+    has(name) {
+        return name.toLowerCase() in this._map;
+    }
+
+    delete(name) {
+        delete this._map[name.toLowerCase()];
+    }
+
+    forEach(callback, thisArg = undefined) {
+        for (const key in this._map) {
+            callback.call(thisArg, this._map[key], key, this);
+        }
+    }
+
+    entries() {
+        return Object.entries(this._map)[Symbol.iterator]();
+    }
+
+    keys() {
+        return Object.keys(this._map)[Symbol.iterator]();
+    }
+
+    values() {
+        return Object.values(this._map)[Symbol.iterator]();
+    }
+
+    [Symbol.iterator]() {
+        return this.entries();
+    }
+
+    toFetchHeaders() {
+        return { ...this._map };
+    }
 
     static Builder = class HeadersBuilder {
-        constructor() { this._map = {}; }
-        add(name, value)  { this._map[name.toLowerCase()] = value; return this; }
-        set(name, value)  { this._map[name.toLowerCase()] = value; return this; }
-        build()           { return new Headers(this._map); }
+        constructor() {
+            this._map = {};
+        }
+
+        add(name, value) {
+            this._map[name.toLowerCase()] = String(value);
+            return this;
+        }
+
+        set(name, value) {
+            this._map[name.toLowerCase()] = String(value);
+            return this;
+        }
+
+        build() {
+            return new Headers(this._map);
+        }
     };
 };
 
@@ -1892,13 +1938,18 @@ globalThis.toHttpUrl = (str) => new HttpUrl(str.toString());
 
 // OkHttpClient — newCall() returns a fake Call that _doRequest handles
 globalThis.OkHttpClient = class OkHttpClient {
+    constructor(useCloudflare = false) {
+        this._useCloudflare = useCloudflare;
+    }
     newCall(request) {
-        return new _Call(request);
+        return new _Call(request, this._useCloudflare);
     }
 };
-
 globalThis._Call = class _Call {
-    constructor(req) { this._req = req; }
+    constructor(req, useCloudflare = false) {
+        this._req = req;
+        this._useCloudflare = useCloudflare;
+    }
 
     execute() {
         const url    = this._req.url?.toString?.() ?? String(this._req.url);
@@ -1935,12 +1986,28 @@ globalThis.CloseableKt = {
 globalThis.OkHttpExtensionsKt = {
     await(call, continuation) {
         const req = call._req;
-        const url = req?.url?.toString?.() ?? String(req?.url ?? "");
-        const method = req?.method ?? "GET";
+        const useCloudflare = call._useCloudflare ?? false;
+        const url     = req?.url?.toString?.() ?? String(req?.url ?? "");
+        const method  = req?.method ?? "GET";
         const headers = req?.headers?.toFetchHeaders?.() ?? {};
-        const body = req?.body ?? undefined;
+        const body    = req?.body ?? undefined;
 
         const result = fetchSync(url, { method, headers, body });
+
+        if (useCloudflare && (result.status === 403 || result.status === 503)) {
+            if (typeof headless === "undefined" || !headless.available) {
+                throw new Error(`Cloudflare challenge on ${url} but headless is not available`);
+            }
+            const cfResult = headless.fetchSync(url, { waitFor: "network_idle", block: ["images", "fonts"] });
+            if (cfResult?.cookies?.length) {
+                for (const c of cfResult.cookies) _cookieStore.set(c.name, c.value);
+                state?.set?.("cookies", Object.fromEntries(_cookieStore));
+            }
+            const mergedHeaders = _mergeCloudfareCookies(headers, cfResult?.cookies ?? []);
+            const retry = fetchSync(url, { method, headers: mergedHeaders, body });
+            return new _SandboxResponse(retry.text, retry.status, url);
+        }
+
         return new _SandboxResponse(result.text, result.status, url);
     }
 };
@@ -2047,28 +2114,49 @@ globalThis.IllegalStateException = class IllegalStateException extends Error {
     }
 };
 
+async function _isCloudflareChallenged(res) {
+    if (res.status !== 403 && res.status !== 503) return false;
+    const text = await res.text();
+    return text.includes("challenge-error-title") || text.includes("challenge-error-text");
+}
+
+async function _resolveCloudflare(url) {
+    const result = await headless.fetch(url, {
+        waitFor: "network_idle",
+        timeoutMs: 30000,
+        javascript: `({ userAgent: navigator.userAgent })`,
+    });
+
+    if (result?.cookies?.length) {
+        for (const c of result.cookies) _cookieStore.set(c.name, c.value);
+        state?.set?.("cookies", Object.fromEntries(_cookieStore));
+    }
+
+    return {
+        cookies: result?.cookies ?? [],
+        userAgent: result?.result?.userAgent ?? null,
+    };
+}
+
+function _mergeCloudfareCookies(existingHeaders, cookies) {
+    let out;
+    if (existingHeaders instanceof Headers) {
+        out = new Headers(existingHeaders._map); // copy the internal map
+    } else {
+        out = new Headers(existingHeaders ?? {});
+    }
+
+    if (cookies && cookies.length) {
+        const cookieStr = cookies.map(c => `${c.name}=${c.value}`).join("; ");
+        const existing = out.get("cookie") ?? "";
+        out.set("cookie", existing ? `${existing}; ${cookieStr}` : cookieStr);
+    }
+    return out;
+}
+
 
 // Override in HttpSource to unwrap Headers and HttpUrl properly
 globalThis._origDoRequest = Manga.prototype._doRequest;
-
-Manga.prototype._doRequest = async function(req) {
-    // req may be a Request object or a _Call — unwrap if needed
-    const r = req instanceof _Call ? req._req : req;
-
-    const url    = r.url?.toString?.() ?? String(r.url);
-    const method = r.method ?? "GET";
-    const headers = r.headers?.toFetchHeaders?.() ?? r.headers ?? this.headers?.toFetchHeaders?.() ?? this.headers ?? {};
-    const body   = r.body   ?? undefined;
-
-    const res  = await fetch(url, { method, headers, body });
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
-    const text = await res.text();
-    return new _SandboxResponse(text, res.status, url);
-};
-
-if (!Number.prototype.toSManga) {
-    Number.prototype.toSManga = function() { return 0; };
-}
 
 //  HttpSource
 
@@ -2177,12 +2265,47 @@ class HttpSource extends _SandboxManga {
 
     async search(query, filters, page) {
         page = page ?? 1;
-        if (!query) {
+
+        console.log(filters)
+
+        const filterList = this.getFilterList();
+        const hasFilters = filters && typeof filters === "object" && Object.keys(filters).length > 0;
+
+        if (hasFilters) {
+            for (const filter of filterList) {
+                const incoming = filters[filter.name];
+                if (incoming === undefined || incoming === null) continue;
+
+                if (filter instanceof Filter.Select || filter instanceof Filter.Sort) {
+                    filter.state = parseInt(incoming, 10) || 0;
+                } else if (filter instanceof Filter.Text) {
+                    filter.state = incoming;
+                } else if (filter instanceof Filter.CheckBox) {
+                    filter.state = incoming === true || incoming === "true" || incoming === 1;
+                } else if (filter instanceof Filter.TriState) {
+                    filter.state = parseInt(incoming, 10) || 0;
+                } else if (filter instanceof Filter.Group) {
+                    const state = Array.isArray(filter.state) ? filter.state : [...(filter.state ?? [])];
+                    const selectedValues = Array.isArray(incoming) ? incoming : [incoming];
+                    for (const child of state) {
+                        if (child instanceof Filter.CheckBox || child instanceof Filter.TriState) {
+                            child.state = selectedValues.includes(child.name)
+                                ? (child instanceof Filter.TriState ? 1 : true)
+                                : (child instanceof Filter.TriState ? 0 : false);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Only fall back to popular if there's truly nothing to search by
+        if (!query && !hasFilters) {
             const res = await this._doRequest(this.popularMangaRequest(page));
             return this._parsePage(this.popularMangaParse(res));
         }
+
         const res = await this._doRequest(
-            this.searchMangaRequest(page, query, this.getFilterList())
+            this.searchMangaRequest(page, query, filterList)
         );
         return this._parsePage(this.searchMangaParse(res));
     }
@@ -2251,16 +2374,54 @@ class HttpSource extends _SandboxManga {
     //  internal 
 
     async _doRequest(req) {
-        const url    = req.url?.toString?.() ?? String(req.url);
-        console.log("base _doRequest url:", url, "type:", typeof req.url);
+        const r = req instanceof _Call ? req._req : req;
+        const useCloudflare = req instanceof _Call
+            ? req._useCloudflare
+            : (this.client?._useCloudflare ?? true);
 
-        const method = req.method ?? "GET";
-        const headers = req.headers instanceof Object ? req.headers : this.headers;
-        const body    = req.body ?? undefined;
+        const url    = r.url?.toString?.() ?? String(r.url);
+        const method = r.method ?? "GET";
+        let headers  = r.headers?.toFetchHeaders?.() ?? r.headers ?? this.headers?.toFetchHeaders?.() ?? this.headers ?? {};
+        const body   = r.body ?? undefined;
 
-        const res = await fetch(url, { method, headers, body });
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
+        if (_cookieStore.size > 0) {
+            const h = headers instanceof Headers ? headers : new Headers(headers);
+            const existing = h.get("cookie") ?? "";
+            const stored = [..._cookieStore.entries()].map(([k, v]) => `${k}=${v}`).join("; ");
+            h.set("cookie", existing ? `${existing}; ${stored}` : stored);
+            headers = h;
+        }
+
+        const res  = await fetch(url, { method, headers, body });
         const text = await res.text();
+
+        if (useCloudflare && (res.status === 403 || res.status === 503) &&
+            (text.includes("challenge-error-title") || text.includes("challenge-error-text"))
+        ) {
+            const { cookies, userAgent } = await _resolveCloudflare(url);
+            const retryHeaders = _mergeCloudfareCookies(
+                headers instanceof Headers ? headers : new Headers(headers),
+                cookies
+            );
+            retryHeaders.set("user-agent", userAgent);
+            retryHeaders.set("referer", new URL(url).origin + "/");
+            retryHeaders.set("sec-fetch-site", "same-origin");
+            retryHeaders.set("sec-fetch-mode", "cors");
+            retryHeaders.set("sec-fetch-dest", "empty");
+
+            const fetchHeaders = retryHeaders.toFetchHeaders();
+            const retry = await headless.fetch(url, {
+                method,
+                headers: Object.fromEntries(fetchHeaders.entries()),
+                body,
+            });
+
+            if (!retry.ok) throw new Error(`HTTP ${retry.status}: ${url}`);
+            const retryText = await retry.text();
+            return new _SandboxResponse(retryText, retry.status, url);
+        }
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
         return new _SandboxResponse(text, res.status, url);
     }
 
