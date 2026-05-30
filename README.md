@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/icon.webp" style="height: 128px; width: 128px;" alt="Hoshi icon" />
+  <img src="assets/icon-2.png" style="height: 128px; width: 128px;" alt="Hoshi icon" />
 </p>
 
 <h1 align="center">Hoshi ⭐</h1>
