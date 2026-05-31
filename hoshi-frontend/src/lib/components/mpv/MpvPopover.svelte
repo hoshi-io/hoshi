@@ -106,6 +106,7 @@
                     coverImage: layoutState.mpv.coverImage ?? null,
                     startTime: 0,
                     autoUpdateProgress: appConfig.data?.content?.autoUpdateProgress ?? true,
+                    use_hoshi_config: appConfig.data?.mpv?.useHoshiConfig ?? false,
                 }
             );
             layoutState.mpv = {

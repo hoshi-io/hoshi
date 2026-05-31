@@ -8,14 +8,15 @@ use crate::list::types::UpsertEntryBody;
 use crate::progress::types::UpdateAnimeProgressBody;
 use crate::state::AppState;
 use crate::{list, progress};
-use crate::extensions::types::EpisodeChapter;
+use crate::content::services::extensions::ExtensionService;
+use crate::extensions::types::{EpisodeChapter, PlayContentResult};
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MpvLaunchOptions {
-    pub source: MpvSource,
-    pub subtitles: Vec<String>,
-    pub chapters: Vec<EpisodeChapter>,
+    pub extension: String,
+    pub server: String,
+    pub category: String,
 
     pub start_time: f64,
     pub cid: String,
@@ -31,14 +32,17 @@ pub struct MpvLaunchOptions {
     #[serde(skip)]
     pub state: Option<Arc<AppState>>,
     pub user_id: i32,
+
+    #[serde(skip)]
+    pub chapters: Vec<EpisodeChapter>,
 }
 
 impl std::fmt::Debug for MpvLaunchOptions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MpvLaunchOptions")
-            .field("source", &self.source)
-            .field("subtitles", &self.subtitles)
-            .field("chapters", &self.chapters)
+            .field("extension", &self.extension)
+            .field("server", &self.server)
+            .field("category", &self.category)
             .field("start_time", &self.start_time)
             .field("cid", &self.cid)
             .field("ep_number", &self.ep_number)
@@ -54,42 +58,6 @@ impl std::fmt::Debug for MpvLaunchOptions {
     }
 }
 
-impl Clone for MpvLaunchOptions {
-    fn clone(&self) -> Self {
-        Self {
-            source: self.source.clone(),
-            subtitles: self.subtitles.clone(),
-            chapters: self.chapters.clone(),
-            start_time: self.start_time,
-            cid: self.cid.clone(),
-            ep_number: self.ep_number,
-            total_episodes: self.total_episodes,
-            anime_title: self.anime_title.clone(),
-            episode_title: self.episode_title.clone(),
-            is_nsfw: self.is_nsfw,
-            cover_image: self.cover_image.clone(),
-            auto_update_progress: self.auto_update_progress,
-            state: self.state.clone(),
-            user_id: self.user_id,
-            use_hoshi_mpv_config: self.use_hoshi_mpv_config,
-        }
-    }
-}
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub enum MpvSource {
-    Url(String),
-    File(PathBuf),
-}
-
-impl MpvSource {
-    fn as_arg(&self) -> String {
-        match self {
-            MpvSource::Url(url) => url.clone(),
-            MpvSource::File(path) => path.to_string_lossy().to_string(),
-        }
-    }
-}
 
 pub struct MpvService {
     process: Child,
@@ -98,7 +66,26 @@ pub struct MpvService {
 }
 
 impl MpvService {
-    pub fn launch(opts: MpvLaunchOptions) -> CoreResult<Self> {
+    pub async fn launch(mut opts: MpvLaunchOptions) -> CoreResult<Self> {
+        let state = opts.state.clone().expect("MpvLaunchOptions.state must be set");
+
+        let result = ExtensionService::play_content(
+            &state,
+            &opts.cid,
+            &opts.extension,
+            opts.ep_number as f64,
+            Some(opts.server.clone()),
+            Some(opts.category.clone()),
+        )
+            .await?;
+
+        let episode_source = match result {
+            PlayContentResult::Video(src) => src,
+            _ => return Err(CoreError::Internal("Expected a video source".to_string())),
+        };
+
+        opts.chapters = episode_source.source.chapters.clone();
+
         let socket_path = Self::socket_path();
 
         let mut cmd = Command::new("mpv");
@@ -109,26 +96,34 @@ impl MpvService {
             opts.episode_title
         ));
 
-        cmd.arg(opts.source.as_arg());
+        cmd.arg(episode_source.source.url.clone());
         cmd.arg(format!("--input-ipc-server={}", socket_path));
+
+        if !episode_source.headers.is_empty() {
+            let header_str = episode_source
+                .headers
+                .iter()
+                .map(|(k, v)| format!("{}: {}", k, v))
+                .collect::<Vec<_>>()
+                .join(",");
+            cmd.arg(format!("--http-header-fields={}", header_str));
+        }
 
         if opts.start_time > 0.0 {
             cmd.arg(format!("--start={}", opts.start_time));
         }
 
-        for sub in &opts.subtitles {
-            cmd.arg(format!("--sub-file={}", sub));
+        for sub in &episode_source.source.subtitles {
+            cmd.arg(format!("--sub-file={}", sub.url));
         }
 
         if opts.use_hoshi_mpv_config {
-            let state = opts.state.as_ref().expect("MpvLaunchOptions.state must be set");
             cmd.arg(format!("--config-dir={}", state.paths.mpv_path.display()));
         }
 
         if !opts.chapters.is_empty() {
             let path = write_chapters_file(&opts.chapters)
                 .map_err(CoreError::Io)?;
-
             cmd.arg(format!("--chapters-file={}", path.display()));
         }
 
@@ -142,28 +137,34 @@ impl MpvService {
             }
         })?;
 
-
         let socket_path_clone = socket_path.clone();
-        tokio::spawn(async move {
-            if let Err(e) = Self::run_ipc_tracker(socket_path_clone, opts).await {
-                eprintln!("MPV IPC Tracker error: {:?}", e);
-            }
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("failed to build MPV tracker runtime");
+            rt.block_on(async move {
+                if let Err(e) = Self::run_ipc_tracker(socket_path_clone, opts).await {
+                    eprintln!("MPV IPC Tracker error: {:?}", e);
+                }
+            });
         });
 
         Ok(Self { process, socket_path })
     }
 
-    async fn run_ipc_tracker(socket_path: String, opts: MpvLaunchOptions) -> CoreResult<()> {
-        let state = opts.state.as_ref().expect("MpvLaunchOptions.state must be set before launching");
+    async fn run_ipc_tracker(socket_path: String, mut opts: MpvLaunchOptions) -> CoreResult<()> {
+        let state = opts.state.clone().expect("MpvLaunchOptions.state must be set before launching");
         let config =
             crate::config::service::ConfigService::get_config(
-                state,
+                &state,
                 opts.user_id,
             )
                 .await?;
 
         let auto_skip_intro = config.player.auto_skip_intro;
         let auto_skip_outro = config.player.auto_skip_outro;
+        let autoplay_next_episode = config.player.autoplay_next_episode;
 
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
 
@@ -218,6 +219,7 @@ impl MpvService {
         let mut is_paused = false;
 
         let mut skipped_chapters = std::collections::HashSet::<usize>::new();
+        let mut queued_next = false;
 
         let mut line = String::new();
 
@@ -262,6 +264,40 @@ impl MpvService {
                                         break;
                                     }
                                 }
+
+                                // Pre-fetch and queue the next episode before this one ends
+                                if autoplay_next_episode
+                                    && !queued_next
+                                    && duration > 0.0
+                                    && current_time / duration >= 0.85
+                                {
+                                    let next_ep = opts.ep_number + 1;
+                                    let has_next = opts.total_episodes <= 0 || next_ep <= opts.total_episodes;
+                                    if has_next {
+                                        if let Ok(PlayContentResult::Video(src)) = ExtensionService::play_content(
+                                            &state,
+                                            &opts.cid,
+                                            &opts.extension,
+                                            next_ep as f64,
+                                            Some(opts.server.clone()),
+                                            Some(opts.category.clone()),
+                                        ).await {
+                                            let cmd = serde_json::json!({
+                                                "command": ["loadfile", src.source.url, "append-play"]
+                                            });
+                                            let _ = writer.write_all(format!("{}
+", cmd).as_bytes()).await;
+                                            opts.ep_number = next_ep;
+                                            opts.start_time = 0.0;
+                                            opts.chapters = src.source.chapters.clone();
+                                            last_sync_time = 0.0;
+                                            has_updated_list = false;
+                                            discord_status_updated = false;
+                                            skipped_chapters.clear();
+                                            queued_next = true;
+                                        }
+                                    }
+                                }
                             }
                         }
                         "duration" => {
@@ -272,8 +308,15 @@ impl MpvService {
                         "pause" => {
                             if let Some(p) = data.as_bool() {
                                 is_paused = p;
-                                Self::update_discord(&opts, current_time, duration, is_paused)
-                                    .await;
+                                Self::update_discord(
+                                    &state,
+                                    opts.user_id,
+                                    &opts.anime_title,
+                                    &opts.episode_title,
+                                    opts.cover_image.as_deref(),
+                                    opts.is_nsfw,
+                                    current_time, duration, is_paused,
+                                ).await;
                             }
                         }
                         _ => {}
@@ -281,7 +324,15 @@ impl MpvService {
 
                     if duration > 0.0 {
                         if !discord_status_updated {
-                            Self::update_discord(&opts, current_time, duration, is_paused).await;
+                            Self::update_discord(
+                                &state,
+                                opts.user_id,
+                                &opts.anime_title,
+                                &opts.episode_title,
+                                opts.cover_image.as_deref(),
+                                opts.is_nsfw,
+                                current_time, duration, is_paused,
+                            ).await;
                             discord_status_updated = true;
                         }
 
@@ -299,7 +350,7 @@ impl MpvService {
                             };
 
                             let _ = progress::service::ProgressService::update_anime_progress(
-                                state,
+                                &*state,
                                 opts.user_id,
                                 body,
                             )
@@ -339,9 +390,12 @@ impl MpvService {
                                 .await;
                         }
                     }
-                } else if msg["event"].as_str() == Some("end-file")
-                    || msg["event"].as_str() == Some("shutdown")
-                {
+                } else if msg["event"].as_str() == Some("end-file") {
+                    #[cfg(feature = "discord-rpc")]
+                    state.discord_rpc.clear_activity();
+                    // Next episode already queued via append-play at 85%
+                    queued_next = false;
+                } else if msg["event"].as_str() == Some("shutdown") {
                     #[cfg(feature = "discord-rpc")]
                     state.discord_rpc.clear_activity();
                     break;
@@ -353,10 +407,19 @@ impl MpvService {
         Ok(())
     }
 
-    async fn update_discord(opts: &MpvLaunchOptions, current_time: f64, duration: f64, paused: bool) {
+    async fn update_discord(
+        state: &Arc<AppState>,
+        user_id: i32,
+        anime_title: &str,
+        episode_title: &str,
+        cover_image: Option<&str>,
+        is_nsfw: bool,
+        current_time: f64,
+        duration: f64,
+        paused: bool,
+    ) {
         #[cfg(feature = "discord-rpc")]
         {
-            let state = opts.state.as_ref().expect("MpvLaunchOptions.state must be set before launching");
             let now_in_seconds = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
@@ -376,14 +439,14 @@ impl MpvService {
 
             state.discord_rpc.set_activity(
                 state,
-                opts.user_id,
-                &opts.anime_title,
-                &opts.episode_title,
-                opts.cover_image.as_deref(),
+                user_id,
+                anime_title,
+                episode_title,
+                cover_image,
                 start_time,
                 end_time,
                 true,
-                opts.is_nsfw,
+                is_nsfw,
             ).await;
         }
     }

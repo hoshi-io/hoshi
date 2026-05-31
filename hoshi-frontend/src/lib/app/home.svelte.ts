@@ -1,4 +1,4 @@
-import type { FullContent, ContentType, Metadata } from '@/api/content/types';
+import type { FullContent, ContentType } from '@/api/content/types';
 import type { ContinueItem } from '@/api/progress/types';
 import { contentApi } from '@/api/content/content';
 import { progressApi } from '@/api/progress/progress';

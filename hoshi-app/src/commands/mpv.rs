@@ -19,7 +19,7 @@ pub async fn launch_mpv(
     opts.state = Option::from(state.inner().clone());
     opts.user_id = user_id;
 
-    let mpv = MpvService::launch(opts)?;
+    let mpv = MpvService::launch(opts).await?;
 
     let mut guard = state.mpv.lock().unwrap();
     *guard = Some(mpv);

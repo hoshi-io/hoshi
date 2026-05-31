@@ -100,16 +100,11 @@ class ExtensionsStore {
         const ext = this.installed.find(e => e.id === extId);
         if (!ext) throw new Error("Extension not found");
 
-        const playRes = await contentApi.play(cid, extId, epNumber, {
-            server: opts.server,
-            category: opts.isDub ? "dub" : "sub",
-        }) as any;
-
         await invoke("launch_mpv", {
             opts: {
-                source: { Url: playRes.data.source.url },
-                subtitles: playRes.data.source.subtitles?.map((s: any) => s.url) ?? [],
-                chapters: playRes.data.source.chapters ?? [],
+                extension: extId,
+                server: opts.server ?? "",
+                category: opts.isDub ? "dub" : "sub",
                 startTime: opts.startTime ?? 0,
                 cid,
                 epNumber,
@@ -120,7 +115,7 @@ class ExtensionsStore {
                 coverImage: opts.coverImage ?? null,
                 autoUpdateProgress: opts.autoUpdateProgress,
                 userId: 0,
-                useHoshiMpvConfig: opts.use_hoshi_config
+                useHoshiMpvConfig: opts.use_hoshi_config,
             },
         });
     }
