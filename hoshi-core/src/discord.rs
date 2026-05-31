@@ -25,10 +25,6 @@ impl DiscordRpcService {
         }
     }
 
-    fn format_image(url: &str) -> String {
-        url.to_string()
-    }
-
     #[instrument(skip(self, state, details, image_url), fields(title = %title, is_video = %is_video))]
     pub async fn set_activity(
         &self,

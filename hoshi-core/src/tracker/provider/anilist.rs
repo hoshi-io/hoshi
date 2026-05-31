@@ -218,20 +218,6 @@ query ($userId: Int) {
 }
 "#;
 
-const AIRING_SCHEDULE_QUERY: &str = r#"
-query ($mediaId: Int, $page: Int) {
-  Page(page: $page, perPage: 50) {
-    airingSchedules(mediaId: $mediaId) {
-      episode
-      airingAt
-      media {
-        ...mediaFields
-      }
-    }
-  }
-}
-"#;
-
 pub struct AniListProvider {
     client: Client,
 }

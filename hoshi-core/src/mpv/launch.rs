@@ -125,14 +125,11 @@ impl MpvService {
             cmd.arg(format!("--config-dir={}", state.paths.mpv_path.display()));
         }
 
-        let mut chapter_file: Option<PathBuf> = None;
         if !opts.chapters.is_empty() {
             let path = write_chapters_file(&opts.chapters)
                 .map_err(CoreError::Io)?;
 
             cmd.arg(format!("--chapters-file={}", path.display()));
-
-            chapter_file = Some(path);
         }
 
         cmd.stdout(Stdio::null()).stderr(Stdio::null());
@@ -301,7 +298,7 @@ impl MpvService {
                                 completed: Some(current_time / duration >= 0.9),
                             };
 
-                            progress::service::ProgressService::update_anime_progress(
+                            let _ = progress::service::ProgressService::update_anime_progress(
                                 state,
                                 opts.user_id,
                                 body,
@@ -334,7 +331,7 @@ impl MpvService {
                                 is_private: None,
                             };
 
-                            list::service::ListService::upsert_entry(
+                            let _ = list::service::ListService::upsert_entry(
                                 state.clone(),
                                 opts.user_id,
                                 body,

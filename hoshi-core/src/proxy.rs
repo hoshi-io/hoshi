@@ -96,7 +96,7 @@ impl ProxyService {
             CoreError::Network("error.proxy.upstream_timeout".into())
         })?;
 
-        Self::process_response(response, &params, t0).await
+        Self::process_response(response, &params).await
     }
 
     fn build_upstream_headers(params: &ProxyQuery, range_header: Option<&str>) -> CoreResult<HeaderMap> {
@@ -128,15 +128,15 @@ impl ProxyService {
 
         if params.referer.is_none() && params.origin.is_none() {
             if let Ok(parsed) = Url::parse(&params.url) {
-                if let Some(origin) = parsed.origin().ascii_serialization().into() {
-                    let origin_str = parsed.origin().ascii_serialization();
-                    if let Ok(v) = HeaderValue::from_str(&origin_str) {
-                        headers.insert("Origin", v);
-                    }
-                    let referer = format!("{}/", origin_str);
-                    if let Ok(v) = HeaderValue::from_str(&referer) {
-                        headers.insert("Referer", v);
-                    }
+                let origin_str = parsed.origin().ascii_serialization();
+
+                if let Ok(v) = HeaderValue::from_str(&origin_str) {
+                    headers.insert("Origin", v);
+                }
+
+                let referer = format!("{}/", origin_str);
+                if let Ok(v) = HeaderValue::from_str(&referer) {
+                    headers.insert("Referer", v);
                 }
             }
         }
@@ -144,7 +144,7 @@ impl ProxyService {
         Ok(headers)
     }
 
-    async fn process_response(response: reqwest::Response, params: &ProxyQuery, t0: std::time::Instant) -> CoreResult<ProxyResponse> {
+    async fn process_response(response: reqwest::Response, params: &ProxyQuery) -> CoreResult<ProxyResponse> {
         let status = response.status();
         let content_length = response.content_length();
         let headers = response.headers().clone();

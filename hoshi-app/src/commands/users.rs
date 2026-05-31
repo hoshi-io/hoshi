@@ -1,14 +1,14 @@
 use crate::{require_auth, TauriSession};
+use hoshi_core::users::types::UserResponse;
+use hoshi_core::users::types::{ChangePasswordBody, DeleteUserBody, UpdateUserBody, UserPrivate};
 use hoshi_core::{
     error::CoreError,
     state::AppState,
     users::service::UserService
 };
-use std::sync::Arc;
 use serde::Serialize;
+use std::sync::Arc;
 use tauri::State;
-use hoshi_core::users::types::UserResponse;
-use hoshi_core::users::types::{ChangePasswordBody, DeleteUserBody, UpdateUserBody, UserPrivate, UserPublic};
 
 #[derive(Serialize)]
 pub struct UsersListResponse {

@@ -1,13 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
-pub struct UserPublic {
-    pub id: i32,
-    pub username: String,
-    pub avatar: Option<String>,
-}
-
-#[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserPrivate {
     pub id: i32,

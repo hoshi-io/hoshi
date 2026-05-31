@@ -614,7 +614,7 @@ fn register_native_apis(
           };
           let out = match algo.as_str() {
               "sha1" => {
-                  let mut m = Hmac::<Sha1>::new_from_slice(&key).map_err(|e| rquickjs::Error::Unknown)?;
+                  let mut m = Hmac::<Sha1>::new_from_slice(&key).map_err(|_e| rquickjs::Error::Unknown)?;
                   m.update(data.as_bytes()); hex::encode(m.finalize().into_bytes())
               }
               "sha256" => {

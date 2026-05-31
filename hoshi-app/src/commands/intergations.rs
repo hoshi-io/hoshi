@@ -1,5 +1,5 @@
 use crate::{require_auth, TauriSession};
-use hoshi_core::tracker::types::{AddIntegrationRequest, ImportEvent};
+use hoshi_core::tracker::types::{AddIntegrationRequest};
 use hoshi_core::{
     error::CoreError,
     state::AppState,

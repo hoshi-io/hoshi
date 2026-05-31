@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use serde_json::{json, Value};
-use tracing::{debug, error, instrument};
+use tracing::{error, instrument};
 use crate::content::types::{parse_content_type, SearchParams};
 use crate::content::utils::show_adult;
 use crate::error::{CoreError, CoreResult};

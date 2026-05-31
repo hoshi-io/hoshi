@@ -6,7 +6,7 @@ use crate::state::AppState;
 use crate::users::repository::UserRepo;
 use crate::users::types::{
     ChangePasswordBody, DeleteUserBody, UpdateUserBody,
-    UserPrivate, UserPublic, UserResponse,
+    UserPrivate, UserResponse,
 };
 
 pub struct UserService;
