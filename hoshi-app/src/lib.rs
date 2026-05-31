@@ -10,6 +10,7 @@ use hoshi_core::logs::{new_log_store, MemoryLogLayer};
 pub mod commands;
 pub mod headless;
 pub mod orientation;
+pub mod intent;
 pub mod proxy_protocol;
 
 #[cfg(mobile)]
@@ -23,6 +24,13 @@ use crate::orientation::orientation_plugin::{
     get_current_orientation,
 };
 
+#[cfg(mobile)]
+use crate::intent::intent_plugin::{
+    init as intent_plugin_init,
+    launch_intent,
+};
+
+
 use crate::commands::i18n::load_locale;
 use crate::commands::auth::{login, register, logout, get_current_profile};
 use crate::commands::users::{get_all_users, get_me, update_me, delete_me, change_password, upload_avatar, delete_avatar};
@@ -35,6 +43,9 @@ use crate::commands::progress::{get_content_progress, get_continue_watching, upd
 use crate::commands::intergations::{list_trackers, add_integration, remove_integration, set_sync_enabled};
 use crate::commands::backups::{list_backups, create_manual_backup, delete_backup, restore_backup, download_backup};
 use crate::commands::logs::{get_system_logs, list_log_files, get_log_file, delete_log_file};
+
+#[cfg(not(mobile))]
+use crate::commands::mpv::{launch_mpv, is_mpv_running, download_osc, download_known_script};
 
 #[cfg(feature = "discord-rpc")]
 use crate::commands::discord::{set_activity, clear_activity};
@@ -93,7 +104,8 @@ pub fn run_inner() -> anyhow::Result<()> {
     {
         builder = builder
             .plugin(headless_plugin_init())
-            .plugin(orientation_plugin_init());
+            .plugin(orientation_plugin_init())
+            .plugin(intent_plugin_init());
     }
 
     builder
@@ -141,6 +153,9 @@ pub fn run_inner() -> anyhow::Result<()> {
             get_content_progress, get_continue_watching, update_anime_progress, update_chapter_progress,
             list_trackers, add_integration, remove_integration, set_sync_enabled,
             list_backups, create_manual_backup, delete_backup, restore_backup, download_backup,
+
+            #[cfg(not(mobile))]
+            launch_mpv, is_mpv_running, download_osc, download_known_script,
             #[cfg(feature = "discord-rpc")]
             set_activity,
             #[cfg(feature = "discord-rpc")]
@@ -153,6 +168,8 @@ pub fn run_inner() -> anyhow::Result<()> {
             unlock_orientation,
             #[cfg(mobile)]
             get_current_orientation,
+            #[cfg(mobile)]
+            launch_intent,
         ])
         .run(tauri::generate_context!())
         .map_err(|e| anyhow::anyhow!("Tauri runtime error: {}", e))?;

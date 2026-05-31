@@ -17,11 +17,14 @@ pub mod backup;
 pub mod discord;
 pub mod logs;
 
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+pub mod mpv;
+
 use crate::error::{CoreError, CoreResult};
 use headless::HeadlessHandle;
 use state::AppState;
 use paths::AppPaths;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use reqwest::Client;
 use tokio::sync::RwLock;
@@ -90,6 +93,9 @@ pub async fn build_app_state(
         headless,
         log_store,
         http_client,
+
+        #[cfg(not(any(target_os = "android", target_os = "ios")))]
+        mpv: Arc::new(Mutex::new(None)),
 
         #[cfg(feature = "discord-rpc")]
         discord_rpc,

@@ -4,17 +4,21 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { CheckCircle2 } from "lucide-svelte";
     import ResponsiveSelect from "$lib/components/ResponsiveSelect.svelte";
+    import MpvLauncher from "@/components/mpv/MpvLauncher.svelte";
+    import {appConfig} from "@/stores/config.svelte";
 
-    let { cid, epsOrChapters, contentUnits = [], duration, progress = [] }: {
+    let { cid, epsOrChapters, contentUnits = [], duration, progress = [], animeTitle = "", isNsfw, coverImage }: {
         cid: string,
         epsOrChapters?: number | null,
         contentUnits?: ContentUnit[],
         duration?: number | null,
+        animeTitle?: string,
+        isNsfw?: boolean,
+        coverImage?: string,
         progress?: AnimeProgress[],
     } = $props();
 
     const ARC_SIZE = 24;
-
     const progressMap = $derived(
         new Map(progress.map(p => [p.episode, p]))
     );
@@ -130,10 +134,26 @@
             }
         };
     }
+
+    // Launcher state
+    let mpvOpen = $state(false);
+    let mpvEpNumber = $state(1);
+    let mpvEpTitle = $state("");
+
+    function handleEpisodeClick(e: MouseEvent, ep: { number: number; title: string | null }) {
+        if (appConfig.data?.mpv?.useMpv){
+            e.preventDefault();
+            mpvEpNumber = ep.number;
+            mpvEpTitle = ep.title
+                ? i18n.t('watch.episode_with_title', { num: ep.number, title: ep.title })
+                : i18n.t('watch.episode_number', { num: ep.number });
+            mpvOpen = true;
+            return;
+        }
+    }
 </script>
 
 <div class="flex flex-col h-full space-y-4">
-    <!-- Arc / range selector -->
     {#if arcs}
         <ResponsiveSelect
                 bind:value={selectedArc}
@@ -143,7 +163,6 @@
         />
     {/if}
 
-    <!-- Episode list -->
     <div class="flex-1 overflow-y-auto pr-2 space-y-3 hide-scrollbar">
         {#each visibleEpisodes as ep (ep.number)}
             {@const prog = progressMap.get(ep.number)}
@@ -160,14 +179,14 @@
             <a
                     use:scrollIfResume={isResume}
                     {href}
+                    onclick={(e) => handleEpisodeClick(e, ep)}
                     class="group relative flex gap-4 border transition-all duration-200
-                    {isCompleted
+                        {isCompleted
                         ? 'border-white/5 bg-white/[0.02] opacity-40 hover:opacity-70 hover:bg-white/[0.04] hover:border-white/8'
                         : isResume
                             ? 'border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 ring-1 ring-primary/20'
                             : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10'}"
             >
-                <!-- Thumbnail -->
                 <div class="relative shrink-0 w-48 aspect-video overflow-hidden bg-muted/20">
                     {#if ep.thumbnail}
                         <img
@@ -181,21 +200,18 @@
                         </div>
                     {/if}
 
-                    <!-- Duration pill -->
                     {#if ep.duration}
                         <div class="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/80 text-[10px] font-medium text-white rounded">
                             {formatDuration(ep.duration)}
                         </div>
                     {/if}
 
-                    <!-- Completed checkmark overlay -->
                     {#if isCompleted}
                         <div class="absolute inset-0 flex items-center justify-center bg-black/30">
                             <CheckCircle2 class="w-8 h-8 text-primary/70" />
                         </div>
                     {/if}
 
-                    <!-- Progress bar at bottom of thumbnail -->
                     {#if progressPct !== null}
                         <div class="absolute bottom-0 inset-x-0 h-1 bg-white/10">
                             <div
@@ -206,7 +222,6 @@
                     {/if}
                 </div>
 
-                <!-- Metadata -->
                 <div class="flex-1 min-w-0 py-3 pr-4 flex flex-col justify-between">
                     <div class="space-y-1">
                         <div class="flex justify-between items-start gap-2">
@@ -225,7 +240,6 @@
                         {/if}
                     </div>
 
-                    <!-- Status row -->
                     <div class="flex items-center gap-2 mt-2">
                         {#if isResume && !isCompleted}
                             <span class="text-[10px] font-bold uppercase tracking-widest text-primary/80 bg-primary/10 px-2 py-0.5 rounded-sm">
@@ -244,6 +258,20 @@
         {/each}
     </div>
 </div>
+
+{#if mpvOpen}
+    <MpvLauncher
+            {cid}
+            epNumber={mpvEpNumber}
+            epTitle={mpvEpTitle}
+            {animeTitle}
+            totalEpisodes={epsOrChapters ?? 0}
+            {isNsfw}
+            {coverImage}
+            startTime={progressMap.get(mpvEpNumber)?.timestampSeconds ?? 0}
+            bind:open={mpvOpen}
+    />
+{/if}
 
 <style>
     .hide-scrollbar::-webkit-scrollbar { display: none; }

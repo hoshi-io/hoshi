@@ -251,7 +251,11 @@
                             <Tabs.Content value="player" class="focus-visible:outline-none mt-0 w-full">
                                 {#if activeTab === 'player'}
                                     <div in:fade={{ duration: 250, delay: 50 }}>
-                                        <Player bind:config={appConfig.data.player} onSave={handleSaveConfig} />
+                                        <Player
+                                                bind:playerConfig={appConfig.data.player}
+                                                bind:mpvConfig={appConfig.data.mpv}
+                                                onSave={handleSaveConfig}
+                                        />
                                     </div>
                                 {/if}
                             </Tabs.Content>

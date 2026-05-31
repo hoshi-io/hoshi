@@ -7,6 +7,19 @@ export type ListEditorPayload = {
     coverImage?: string;
 };
 
+export type MpvState = {
+    cid: string;
+    epNumber: number;
+    extId: string;
+    server?: string;
+    isDub: boolean;
+    animeTitle: string;
+    epTitle: string;
+    totalEpisodes: number;
+    isNsfw: boolean;
+    coverImage: string;
+};
+
 export const layoutState = $state({
     title: "Hoshi",
     showBack: false,
@@ -15,6 +28,7 @@ export const layoutState = $state({
     isMobile: false,
     listEditor: null as ListEditorPayload | null,
     listEditorOpen: false,
+    mpv: null as MpvState | null,
 });
 
 export function openListEditor(payload: ListEditorPayload) {

@@ -190,7 +190,7 @@ pub struct Subtitle {
     pub is_default: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EpisodeChapter {
     pub start: f64,
     pub end: f64,

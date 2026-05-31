@@ -42,6 +42,14 @@ export interface PlayerConfig {
     resumeFromLastPos: boolean;
 }
 
+export interface MpvConfig {
+    useMpv: boolean;
+    useHoshiConfig: boolean;
+    activeOsc: string | null;
+    enabledScripts: string[];
+    extraOptions: Record<string, string>;
+}
+
 export interface MangaConfig {
     layout: MangaLayout;
     direction: ReadingDirection;
@@ -74,6 +82,7 @@ export interface AppConfig {
     content: ContentConfig;
     extensions: ExtensionsConfig;
     player: PlayerConfig;
+    mpv: MpvConfig;
     manga: MangaConfig;
     novel: NovelConfig;
     discord: DiscordConfig;

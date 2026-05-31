@@ -285,7 +285,7 @@ fn create_desktop_webview<R: Runtime>(
 
     debug!(label = %label, "Configuring desktop WebviewWindowBuilder");
     let mut builder = WebviewWindowBuilder::new(app, label, WebviewUrl::External(parsed_url))
-        .visible(true)
+        .visible(false)
         .decorations(false)
         .inner_size(1280.0, 800.0)
         .initialization_script(&init_script);

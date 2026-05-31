@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { PlayerState } from "@/app/watch.svelte.js";
+    import { PlayerState } from "@/app/watch.svelte";
     import Player from "@/components/player/Player.svelte";
     import { primaryMetadata } from "$lib/api/content/types";
     import { appConfig } from "@/stores/config.svelte";

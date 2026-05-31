@@ -343,7 +343,11 @@
     "invalid_response_type": "The extension returned an incompatible format.",
     "no_stream_url": "No video URL was found in the selected server.",
     "skip_op": "Skip Opening",
-    "skip_ed": "Skip Ending"
+    "skip_ed": "Skip Ending",
+    "open": "Open",
+    "launching": "launching...",
+    "mark_watched": "Mark as watched",
+    "relaunch": "Relaunch MPV"
   },
   "content": {
     "details": "Details",
@@ -629,7 +633,15 @@
       "auto_skip_intro": "Auto-Skip Intros",
       "auto_skip_intro_desc": "Automatically skip opening themes if detected",
       "auto_skip_outro": "Auto-Skip Outros",
-      "auto_skip_outro_desc": "Automatically skip ending themes if detected."
+      "auto_skip_outro_desc": "Automatically skip ending themes if detected.",
+      "use_mpv": "Use MPV",
+      "use_mpv_desc": "Use mpv instead of the built-in player. mpv must be on PATH.",
+      "let_hoshi": "Let Hoshi manage mpv config",
+      "let_hoshi_desc": "Hoshi will write and manage mpv's config directory: scripts, fonts, and OSC.",
+      "osc": "MPV skin (OSC)",
+      "osc_desc": "Choose an OSC style. It will be downloaded and applied automatically.",
+      "scripts": "Scripts",
+      "scripts_desc": "Enable scripts to extend mpv functionality. They will be downloaded automatically."
     },
 
     "readers_section": {

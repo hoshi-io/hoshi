@@ -1,4 +1,6 @@
 import { extensionsApi } from "@/api/extensions/extensions";
+import { contentApi } from "@/api/content/content";
+import { invoke } from "@tauri-apps/api/core";
 import type { Extension } from "@/api/extensions/types";
 import type { CoreError } from "@/api/client";
 
@@ -51,7 +53,7 @@ class ExtensionsStore {
             const res = await extensionsApi.update(id, manifestUrl);
             if (res.ok && res.extension) {
                 this.installed = this.installed.map(ext =>
-                    ext.id === id ? res.extension : ext
+                    ext.id === id ? res.extension! : ext
                 );
             }
             return res;
@@ -76,6 +78,61 @@ class ExtensionsStore {
         } finally {
             this.loading = false;
         }
+    }
+
+    async playWithMpv(
+        cid: string,
+        epNumber: number,
+        extId: string,
+        opts: {
+            server?: string;
+            isDub?: boolean;
+            animeTitle: string;
+            episodeTitle: string;
+            totalEpisodes: number;
+            isNsfw: boolean;
+            coverImage?: string | null;
+            startTime?: number;
+            autoUpdateProgress: boolean;
+            use_hoshi_config: boolean;
+        }
+    ) {
+        const ext = this.installed.find(e => e.id === extId);
+        if (!ext) throw new Error("Extension not found");
+
+        const playRes = await contentApi.play(cid, extId, epNumber, {
+            server: opts.server,
+            category: opts.isDub ? "dub" : "sub",
+        }) as any;
+
+        await invoke("launch_mpv", {
+            opts: {
+                source: { Url: playRes.data.source.url },
+                subtitles: playRes.data.source.subtitles?.map((s: any) => s.url) ?? [],
+                chapters: playRes.data.source.chapters ?? [],
+                startTime: opts.startTime ?? 0,
+                cid,
+                epNumber,
+                totalEpisodes: opts.totalEpisodes,
+                animeTitle: opts.animeTitle,
+                episodeTitle: opts.episodeTitle,
+                isNsfw: opts.isNsfw,
+                coverImage: opts.coverImage ?? null,
+                autoUpdateProgress: opts.autoUpdateProgress,
+                userId: 0,
+                useHoshiMpvConfig: opts.use_hoshi_config
+            },
+        });
+    }
+
+    async resolveStream(
+        cid: string,
+        epNumber: number,
+        extId: string,
+        opts: { server?: string; category?: string }
+    ) {
+        const playRes = await contentApi.play(cid, extId, epNumber, opts) as any;
+        return playRes.data;
     }
 }
 

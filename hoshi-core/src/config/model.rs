@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -19,6 +20,8 @@ pub struct UserConfig {
     pub novel: NovelConfig,
     #[serde(default)]
     pub discord: DiscordConfig,
+    #[serde(default)]
+    pub mpv: MpvConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,7 +67,7 @@ pub enum TitleLanguage {
     #[default]
     Romaji,
     English,
-    Chinese
+    Chinese,
 }
 
 impl Default for UiConfig {
@@ -94,7 +97,6 @@ impl Default for ContentConfig {
     }
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExtensionsConfig {
@@ -104,9 +106,7 @@ pub struct ExtensionsConfig {
 
 impl Default for ExtensionsConfig {
     fn default() -> Self {
-        Self {
-            repo_urls: vec![],
-        }
+        Self { repo_urls: vec![] }
     }
 }
 
@@ -132,6 +132,33 @@ impl Default for PlayerConfig {
             auto_skip_outro: false,
             seek_step: 10,
             resume_from_last_pos: true,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MpvConfig {
+    /// Use mpv instead of the built-in player
+    pub use_mpv: bool,
+    /// Let Hoshi manage mpv's config directory (writes mpv.conf, scripts, fonts)
+    pub use_hoshi_config: bool,
+    /// Active OSC bundle name (e.g. "modernz"), None = mpv default OSC
+    pub active_osc: Option<String>,
+    /// Standalone scripts enabled from scripts-available/
+    pub enabled_scripts: Vec<String>,
+    /// Raw mpv.conf key=value overrides written when applying config
+    pub extra_options: HashMap<String, String>,
+}
+
+impl Default for MpvConfig {
+    fn default() -> Self {
+        Self {
+            use_mpv: false,
+            use_hoshi_config: false,
+            active_osc: None,
+            enabled_scripts: vec![],
+            extra_options: HashMap::new(),
         }
     }
 }

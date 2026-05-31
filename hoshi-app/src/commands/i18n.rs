@@ -1,3 +1,5 @@
+use serde_json::Value;
+
 fn get_locale_str(lang: &str) -> Option<&'static str> {
     match lang {
         "en" => Some(include_str!("../../../locales/en.json")),
@@ -25,7 +27,7 @@ fn get_locale_str(lang: &str) -> Option<&'static str> {
 }
 
 #[tauri::command]
-pub async fn load_locale(lang: String) -> Result<serde_json::Value, String> {
+pub async fn load_locale(lang: String) -> Result<Value, String> {
     if !lang.chars().all(|c| c.is_alphanumeric() || c == '-') {
         return Err(format!("Invalid language code: {}", lang));
     }
