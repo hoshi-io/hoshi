@@ -11,14 +11,14 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Platforms-Win_%7C_Mac_%7C_Linux_%7C_Android-2a2a2a?style=for-the-badge&logo=github" alt="Platforms" />
-  <a href="https://github.com/dot-fx/hoshi/releases">
-    <img src="https://img.shields.io/github/v/release/dot-fx/hoshi?style=for-the-badge&color=2a2a2a" alt="Latest Release" />
+  <a href="https://github.com/hoshi-io/hoshi/releases">
+    <img src="https://img.shields.io/github/v/release/hoshi-io/hoshi?style=for-the-badge&color=2a2a2a" alt="Latest Release" />
   </a>
-  <a href="https://github.com/dot-fx/hoshi/releases">
-    <img src="https://img.shields.io/github/downloads/dot-fx/hoshi/total?style=for-the-badge&color=2a2a2a" alt="Downloads" />
+  <a href="https://github.com/hoshi-io/hoshi/releases">
+    <img src="https://img.shields.io/github/downloads/hoshi-io/hoshi/total?style=for-the-badge&color=2a2a2a" alt="Downloads" />
   </a>
-  <a href="https://github.com/dot-fx/hoshi/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/dot-fx/hoshi?style=for-the-badge&color=2a2a2a" alt="License" />
+  <a href="https://github.com/hoshi-io/hoshi/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/hoshi-io/hoshi?style=for-the-badge&color=2a2a2a" alt="License" />
   </a>
 </p>
 
@@ -52,7 +52,7 @@ Hoshi is built with a modern, performance-focused stack:
 
 ## Downloads
 
-Check out the [Releases](https://github.com/dot-fx/hoshi/releases) page to download the latest version for your platform.
+Check out the [Releases](https://github.com/hoshi-io/hoshi/releases) page to download the latest version for your platform.
 
 ### Arch-based distributions
 
