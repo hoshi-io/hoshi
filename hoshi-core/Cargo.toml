@@ -41,7 +41,7 @@ aes = "0.8"
 cbc = { version = "0.1", features = ["alloc"] }
 hex = "0.4"
 
-apktojs = { git = "https://github.com/dot-fx/apktojs.git" }
+apktojs = { git = "https://github.com/hoshi-io/apktojs.git" }
 
 [target.'cfg(target_os = "android")'.dependencies]
 rquickjs = { version = "0.11", features = ["loader", "classes", "properties", "futures", "bindgen"] }
