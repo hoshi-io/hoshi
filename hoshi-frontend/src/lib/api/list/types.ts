@@ -22,6 +22,33 @@ export interface ListEntry {
     updatedAt: string;
 }
 
+export type ChangeSource = "LOCAL" | "REMOTE_SYNC" | "IMPORT";
+
+export interface EntrySource {
+    tracker: string;
+    remoteId: string;
+    remoteStatus?: string | null;
+    remoteProgress?: number | null;
+    remoteScore?: number | null;
+    syncedAt?: string | null;
+}
+
+export interface ListEntryChange {
+    id?: number | null;
+    entryId: number;
+    userId: number;
+    changedAt: string;
+    source: ChangeSource;
+    tracker?: string | null;
+    field: string;
+    oldValue?: string | null;
+    newValue: string;
+}
+
+export interface EntryHistoryResponse {
+    changes: ListEntryChange[];
+}
+
 export interface EnrichedListEntry extends ListEntry {
     title: string;
     titleI18n?: Record<string, string>;
@@ -32,6 +59,7 @@ export interface EnrichedListEntry extends ListEntry {
     trackerIds: Record<string, string>;
     externalIds: unknown;
     hasExtensionSource: boolean;
+    sources: EntrySource[];
 }
 
 export interface ScoreDistribution {

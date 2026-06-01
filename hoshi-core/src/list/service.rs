@@ -10,7 +10,7 @@ use crate::error::{CoreError, CoreResult};
 use crate::list::repository::ListRepository;
 use crate::tracker::repository::TrackerRepository;
 use crate::tracker::types::TrackerIntegration;
-use crate::list::types::{EnrichedListEntry, FilterQuery, ListEntry, ListResponse, SingleEntryResponse, SuccessResponse, UpsertEntryBody, UpsertEntryResponse, UserStats};
+use crate::list::types::{ChangeSource, EnrichedListEntry, EntryHistoryResponse, FilterQuery, ListEntry, ListResponse, SingleEntryResponse, SuccessResponse, UpsertEntryBody, UpsertEntryResponse, UserStats};
 use crate::tracker::provider::UpdateEntryParams;
 use crate::state::AppState;
 
@@ -26,7 +26,7 @@ impl ListService {
     ) -> CoreResult<ListResponse> {
         let entries = ListRepository::get_entries(&state.pool, user_id, filter.status.as_deref()).await?;
 
-        let mut enriched = Self::enrich_entries(&state.pool, entries).await?;
+        let mut enriched = Self::enrich_entries(&state, &state.pool, entries).await?;
 
         if let Some(ct) = filter.content_type {
             enriched.retain(|e| e.content_type == ct.to_lowercase());
@@ -44,7 +44,7 @@ impl ListService {
         let entry = ListRepository::get_entry(&state.pool, user_id, &cid).await?;
 
         if let Some(e) = entry {
-            let enriched = Self::enrich_entries(&state.pool, vec![e]).await?;
+            let enriched = Self::enrich_entries(&state, &state.pool, vec![e]).await?;
             Ok(SingleEntryResponse {
                 found: true,
                 entry: enriched.into_iter().next(),
@@ -142,9 +142,35 @@ impl ListService {
             &body,
             &final_status,
             new_progress,
-            final_start_date,
-            final_end_date,
+            final_start_date.clone(),
+            final_end_date.clone(),
         ).await?;
+
+        let changes_rows = Self::diff_entry(
+            prev_entry.as_ref(),
+            &final_status,
+            new_progress,
+            &body,
+            &final_start_date,
+            &final_end_date,
+        );
+
+        if !changes_rows.is_empty() {
+            if let Ok(Some(saved)) = ListRepository::get_entry(&state.pool, user_id, &body.cid).await {
+                if let Some(entry_id) = saved.id {
+                    if let Err(e) = ListRepository::insert_changes(
+                        &state.pool,
+                        entry_id,
+                        user_id,
+                        ChangeSource::Local.as_str(),
+                        None,
+                        &changes_rows,
+                    ).await {
+                        error!(error = ?e, "Failed to write changelog");
+                    }
+                }
+            }
+        }
 
         info!(is_new = is_new, "List entry successfully saved");
 
@@ -177,6 +203,17 @@ impl ListService {
 
         let deleted = ListRepository::delete_entry(&state.pool, user_id, &cid).await?;
 
+        if let Ok(Some(entry)) = ListRepository::get_entry(&state.pool, user_id, &cid).await {
+            if let Some(entry_id) = entry.id {
+                let _ = ListRepository::insert_deletion_change(
+                    &state.pool,
+                    entry_id,
+                    user_id,
+                    ChangeSource::Local.as_str(),
+                ).await;
+            }
+        }
+
         if deleted {
             info!("Entry deleted successfully from local database");
             Ok(SuccessResponse { success: true })
@@ -187,6 +224,7 @@ impl ListService {
     }
 
     async fn enrich_entries(
+        state: &AppState,
         pool: &SqlitePool,
         entries: Vec<ListEntry>,
     ) -> CoreResult<Vec<EnrichedListEntry>> {
@@ -220,6 +258,14 @@ impl ListService {
                             );
                         }
 
+                        let sources = if let Some(entry_id) = entry.id {
+                            ListRepository::get_entry_sources(&state.pool, entry_id)
+                                .await
+                                .unwrap_or_default()
+                        } else {
+                            vec![]
+                        };
+
                         EnrichedListEntry {
                             entry,
                             title,
@@ -231,6 +277,7 @@ impl ListService {
                             tracker_ids: Value::Object(tracker_ids),
                             external_ids,
                             has_extension_source: !full.extension_sources.is_empty(),
+                            sources
                         }
                     }
                     None => EnrichedListEntry {
@@ -244,6 +291,7 @@ impl ListService {
                         tracker_ids: json!({}),
                         external_ids: json!({}),
                         has_extension_source: false,
+                        sources: vec![],
                     },
                 }
             }
@@ -351,5 +399,82 @@ impl ListService {
         }
 
         Ok(())
+    }
+
+    pub fn diff_entry(
+        prev: Option<&ListEntry>,
+        final_status: &str,
+        new_progress: i32,
+        body: &UpsertEntryBody,
+        final_start_date: &Option<String>,
+        final_end_date: &Option<String>,
+    ) -> Vec<(&'static str, Option<String>, String)> {
+        let mut changes = vec![];
+
+        macro_rules! diff {
+        ($field:expr, $old:expr, $new:expr) => {
+            let old_s = $old.as_ref().map(|v: &String| v.clone());
+            let new_s = $new.clone();
+            if prev.is_none() || old_s.as_deref() != Some(new_s.as_str()) {
+                changes.push(($field, old_s, new_s));
+            }
+        };
+    }
+
+        diff!("status",
+        prev.map(|e| e.status.clone()),
+        final_status.to_string());
+
+        diff!("progress",
+        prev.map(|e| e.progress.to_string()),
+        new_progress.to_string());
+
+        if let Some(score) = body.score {
+            diff!("score",
+            prev.and_then(|e| e.score).map(|s| s.to_string()),
+            score.to_string());
+        }
+
+        diff!("start_date",
+        prev.and_then(|e| e.start_date.clone()),
+        final_start_date.clone().unwrap_or_default());
+
+        if let Some(ref ed) = final_end_date {
+            diff!("end_date",
+            prev.and_then(|e| e.end_date.clone()),
+            ed.clone());
+        }
+
+        if let Some(notes) = &body.notes {
+            diff!("notes",
+            prev.and_then(|e| e.notes.clone()),
+            notes.clone());
+        }
+
+        changes
+    }
+
+    pub async fn get_entry_history(
+        state: &AppState,
+        user_id: i32,
+        cid: String,
+    ) -> CoreResult<EntryHistoryResponse> {
+        let entry = ListRepository::get_entry(&state.pool, user_id, &cid)
+            .await?
+            .ok_or_else(|| CoreError::NotFound("error.list.entry_not_found".into()))?;
+
+        let entry_id = entry.id.ok_or_else(|| CoreError::Internal("error.list.missing_id".into()))?;
+
+        let changes = ListRepository::get_entry_history(&state.pool, entry_id, user_id).await?;
+        Ok(EntryHistoryResponse { changes })
+    }
+
+    pub async fn get_activity_feed(
+        state: &AppState,
+        user_id: i32,
+        limit: i64,
+    ) -> CoreResult<EntryHistoryResponse> {
+        let changes = ListRepository::get_user_history(&state.pool, user_id, limit).await?;
+        Ok(EntryHistoryResponse { changes })
     }
 }

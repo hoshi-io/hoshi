@@ -3,7 +3,6 @@
 
     import { Switch } from "$lib/components/ui/switch";
     import { Label } from "$lib/components/ui/label";
-    import Backups from "./Backups.svelte";
     import type { GeneralConfig } from "@/api/config/types";
     import LanguageSelector from "@/components/LanguageSelector.svelte";
 
@@ -60,18 +59,5 @@
                 onCheckedChange={onSave}
                 class="shrink-0"
         />
-    </div>
-
-    <div class="pt-8 mt-2 border-t border-border/40 w-full">
-        <div class="mb-6">
-            <h3 class="text-xl font-bold tracking-tight">
-                {i18n.t('settings.general_section.backups')}
-            </h3>
-            <p class="text-sm text-muted-foreground mt-1">
-                {i18n.t('settings.general_section.backups_desc')}
-            </p>
-        </div>
-
-        <Backups />
     </div>
 </section>

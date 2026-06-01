@@ -7,7 +7,6 @@ pub mod schedule;
 pub mod list;
 pub mod config;
 pub mod progress;
-pub mod backups;
 pub mod logs;
 pub mod i18n;
 

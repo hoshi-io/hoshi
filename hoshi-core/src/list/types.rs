@@ -25,6 +25,50 @@ impl_from_row!(ListEntry { id, user_id, cid, status, progress, score, start_date
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct EntrySource {
+    pub tracker: String,
+    pub remote_id: String,
+    pub synced_at: Option<String>,
+    pub status: Option<String>,
+    pub progress: Option<i32>,
+    pub score: Option<f64>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+    pub repeat_count: Option<i32>,
+}
+
+#[derive(Debug)]
+pub struct EntrySourceRow {
+    pub tracker: String,
+    pub remote_id: String,
+    pub synced_at: Option<String>,
+    pub remote_snapshot: Option<String>,
+}
+
+impl_from_row!(EntrySourceRow { tracker, remote_id, synced_at, remote_snapshot });
+
+impl From<EntrySourceRow> for EntrySource {
+    fn from(row: EntrySourceRow) -> Self {
+        let snap: Value = row.remote_snapshot
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or(Value::Null);
+
+        EntrySource {
+            tracker: row.tracker,
+            remote_id: row.remote_id,
+            synced_at: row.synced_at,
+            status:       snap["status"].as_str().map(str::to_owned),
+            progress:     snap["progress"].as_i64().map(|v| v as i32),
+            score:        snap["score"].as_f64(),
+            start_date:   snap["startDate"].as_str().map(str::to_owned),
+            end_date:     snap["endDate"].as_str().map(str::to_owned),
+            repeat_count: snap["repeatCount"].as_i64().map(|v| v as i32),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EnrichedListEntry {
     #[serde(flatten)]
     pub entry: ListEntry,
@@ -38,6 +82,7 @@ pub struct EnrichedListEntry {
     pub tracker_ids: Value,
     pub external_ids: Value,
     pub has_extension_source: bool,
+    pub sources: Vec<EntrySource>,
 }
 
 #[derive(Debug, Serialize)]
@@ -116,4 +161,44 @@ pub struct UpsertEntryResponse {
 #[serde(rename_all = "camelCase")]
 pub struct SuccessResponse {
     pub success: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ChangeSource {
+    Local,
+    RemoteSync,
+    Import,
+}
+
+impl ChangeSource {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ChangeSource::Local      => "LOCAL",
+            ChangeSource::RemoteSync => "REMOTE_SYNC",
+            ChangeSource::Import     => "IMPORT",
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListEntryChange {
+    pub id: Option<i64>,
+    pub entry_id: i64,
+    pub user_id: i32,
+    pub changed_at: String,
+    pub source: String,
+    pub tracker: Option<String>,
+    pub field: String,
+    pub old_value: Option<String>,
+    pub new_value: String,
+}
+
+impl_from_row!(ListEntryChange { id, entry_id, user_id, changed_at, source, tracker, field, old_value, new_value });
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EntryHistoryResponse {
+    pub changes: Vec<ListEntryChange>,
 }

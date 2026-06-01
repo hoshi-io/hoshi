@@ -5,7 +5,7 @@ use hoshi_core::{
 use std::sync::Arc;
 use tauri::State;
 use hoshi_core::list::service::ListService;
-use hoshi_core::list::types::{FilterQuery, ListResponse, SingleEntryResponse, UpsertEntryBody, UpsertEntryResponse, UserStats};
+use hoshi_core::list::types::{EntryHistoryResponse, FilterQuery, ListResponse, SingleEntryResponse, UpsertEntryBody, UpsertEntryResponse, UserStats};
 use crate::{require_auth, TauriSession};
 
 #[tauri::command]
@@ -56,4 +56,24 @@ pub async fn delete_entry(
     let user_id = require_auth(&session_state).await?;
     ListService::delete_entry(state.inner().clone(), user_id, cid).await?;
     Ok(())
+}
+
+#[tauri::command]
+pub async fn get_entry_history(
+    state: State<'_, Arc<AppState>>,
+    session_state: State<'_, TauriSession>,
+    cid: String,
+) -> Result<EntryHistoryResponse, CoreError> {
+    let user_id = require_auth(&session_state).await?;
+    ListService::get_entry_history(&state, user_id, cid).await
+}
+
+#[tauri::command]
+pub async fn get_activity_feed(
+    state: State<'_, Arc<AppState>>,
+    session_state: State<'_, TauriSession>,
+    limit: Option<i64>,
+) -> Result<EntryHistoryResponse, CoreError> {
+    let user_id = require_auth(&session_state).await?;
+    ListService::get_activity_feed(&state, user_id, limit.unwrap_or(50)).await
 }

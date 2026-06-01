@@ -7,13 +7,11 @@ use crate::content::models::ContentType;
 use crate::content::services::enrichment::EnrichmentService;
 use crate::error::{CoreError, CoreResult};
 use crate::list::repository::ListRepository;
-use crate::list::types::UpsertEntryBody;
+use crate::list::types::{ListEntry, UpsertEntryBody};
 use crate::state::AppState;
 use crate::tracker::provider::{TrackerProvider, UserListEntry};
 use crate::tracker::repository::TrackerRepository;
 use crate::tracker::types::{AddIntegrationRequest, ImportEvent, IntegrationsResponse, SuccessResponse, TrackerInfoResponse, TrackerIntegration};
-use crate::backup::repository::BackupRepository;
-use crate::backup::types::BackupTrigger;
 
 const MANGA_RATE_LIMIT_MS: u64 = 500;
 const ANIME_TSV_URL: &str = "https://animeapi.my.id/aa.tsv";
@@ -245,18 +243,6 @@ async fn import_from_tracker(
         .get_user_list(&integration.access_token, &integration.tracker_user_id)
         .await?;
 
-    if let Err(e) = BackupRepository::save_remote_list(
-        pool, &state.paths, user_id, &integration.tracker_name, &remote_entries,
-    ).await {
-        warn!(error = ?e, "Failed to save tracker backup");
-    }
-    if let Err(e) = BackupRepository::create_snapshot(
-        pool, &state.paths, user_id,
-        BackupTrigger::PreImport, Some(&integration.tracker_name),
-    ).await {
-        warn!(error = ?e, "Failed to create pre-import snapshot");
-    }
-
     let needs_anime = remote_entries.iter().any(|e| e.content_type == ContentType::Anime);
     let anime_index: Option<AnimeIdIndex> = if needs_anime {
         match fetch_anime_tsv(state, &integration.tracker_name).await {
@@ -284,7 +270,7 @@ async fn import_from_tracker(
         ).await?;
 
         if let Some(cid) = existing_cid {
-            if let Err(e) = upsert_list_entry(state, user_id, &cid, &remote).await {
+            if let Err(e) = upsert_list_entry(state, user_id, &cid, &remote, &integration.tracker_name).await {
                 warn!(error = ?e, cid = %cid, "Failed to upsert list entry");
             }
             count += 1;
@@ -347,7 +333,7 @@ async fn import_from_tracker(
             }
         };
 
-        if let Err(e) = upsert_list_entry(state, user_id, &cid, &remote).await {
+        if let Err(e) = upsert_list_entry(state, user_id, &cid, &remote, &integration.tracker_name).await {
             warn!(error = ?e, cid = %cid, "Failed to upsert list entry");
         }
 
@@ -436,43 +422,118 @@ async fn upsert_list_entry(
     user_id: i32,
     cid: &str,
     remote: &UserListEntry,
+    tracker_name: &str,
 ) -> CoreResult<()> {
     let pool = state.pool();
     let remote_status = normalize_list_status(remote.status.as_deref().unwrap_or("PLANNING"));
 
     let local = ListRepository::get_entry(pool, user_id, cid).await?;
 
-    let (final_status, final_progress, final_score, final_start, final_end) = match local {
+    let (final_status, final_progress, final_score, final_start, final_end) = match &local {
         None => (remote_status, remote.progress, remote.score, remote.start_date.clone(), remote.end_date.clone()),
         Some(local) => {
             let progress = remote.progress.max(local.progress);
             let status   = if status_priority(&remote_status) >= status_priority(&local.status) {
                 remote_status
             } else {
-                local.status
+                local.status.clone()
             };
             let score = remote.score.or(local.score);
-            let start = local.start_date.or(remote.start_date.clone());
-            let end   = local.end_date.or(remote.end_date.clone());
+            let start = local.start_date.clone().or(remote.start_date.clone());
+            let end   = local.end_date.clone().or(remote.end_date.clone());
             (status, progress, score, start, end)
         }
     };
 
+    let body = UpsertEntryBody {
+        cid:          cid.to_string(),
+        status:       final_status.clone(),
+        progress:     Some(final_progress),
+        score:        final_score,
+        start_date:   final_start.clone(),
+        end_date:     final_end.clone(),
+        repeat_count: Some(remote.repeat_count),
+        notes:        remote.notes.clone(),
+        is_private:   Some(remote.is_private),
+    };
+
     ListRepository::upsert_entry(
-        pool, user_id,
-        &UpsertEntryBody {
-            cid:          cid.to_string(),
-            status:       final_status.clone(),
-            progress:     Some(final_progress),
-            score:        final_score,
-            start_date:   final_start.clone(),
-            end_date:     final_end.clone(),
-            repeat_count: Some(remote.repeat_count),
-            notes:        remote.notes.clone(),
-            is_private:   Some(remote.is_private),
-        },
+        pool, user_id, &body,
         &final_status, final_progress, final_start, final_end,
     ).await?;
 
+    if let Ok(Some(saved)) = ListRepository::get_entry(pool, user_id, cid).await {
+        if let Some(entry_id) = saved.id {
+            let changes = diff_entry(local.as_ref(), &saved);
+            if !changes.is_empty() {
+                let snapshot = serde_json::json!({
+                "status": remote.status,
+                "progress": remote.progress,
+                "score": remote.score,
+                "startDate": remote.start_date,
+                "endDate": remote.end_date,
+                "repeatCount": remote.repeat_count,
+            });
+
+                if let Err(e) = ListRepository::upsert_entry_source(
+                    pool, entry_id, user_id, tracker_name, &remote.tracker_media_id, &snapshot,
+                ).await {
+                    warn!(error = ?e, "Failed to write entry source");
+                }
+            }
+        }
+    }
+
     Ok(())
+}
+
+fn diff_entry(
+    prev: Option<&ListEntry>,
+    next: &ListEntry,
+) -> Vec<(&'static str, Option<String>, String)> {
+    let mut changes = vec![];
+
+    macro_rules! diff_field {
+        ($field:expr, $old:expr, $new:expr) => {
+            let old_s: Option<String> = $old;
+            let new_s: String = $new;
+            if prev.is_none() || old_s.as_deref() != Some(new_s.as_str()) {
+                changes.push(($field, old_s, new_s));
+            }
+        };
+    }
+
+    diff_field!("status",
+        prev.map(|e| e.status.clone()),
+        next.status.clone());
+
+    diff_field!("progress",
+        prev.map(|e| e.progress.to_string()),
+        next.progress.to_string());
+
+    diff_field!("score",
+        prev.and_then(|e| e.score).map(|s| s.to_string()),
+        next.score.map(|s| s.to_string()).unwrap_or_default());
+
+    diff_field!("repeat_count",
+        prev.map(|e| e.repeat_count.to_string()),
+        next.repeat_count.to_string());
+
+    diff_field!("start_date",
+        prev.and_then(|e| e.start_date.clone()),
+        next.start_date.clone().unwrap_or_default());
+
+    diff_field!("end_date",
+        prev.and_then(|e| e.end_date.clone()),
+        next.end_date.clone().unwrap_or_default());
+
+    diff_field!("notes",
+        prev.and_then(|e| e.notes.clone()),
+        next.notes.clone().unwrap_or_default());
+
+    diff_field!("is_private",
+        prev.map(|e| (e.is_private as i32).to_string()),
+        (next.is_private as i32).to_string());
+
+    changes
 }

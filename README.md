@@ -47,7 +47,7 @@ Hoshi is built with a modern, performance-focused stack:
 
 - **Frontend:** SvelteKit (static) with Tailwind CSS and shadcn-svelte for a fast, responsive UI.
 - **Backend/Core:** Rust + Tauri for a lightweight, native desktop experience.
-- **Database:** SQLite via rusqlite for simple and reliable local storage.
+- **Database:** SQLite via sqlx for simple and reliable local storage.
 - **Extensions Sandbox:** QuickJS, providing a secure and isolated runtime for extensions.
 
 ## Downloads

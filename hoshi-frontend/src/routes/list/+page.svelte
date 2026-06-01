@@ -37,6 +37,15 @@
         { value: "DROPPED",   label: i18n.t('list.dropped') },
     ]);
 
+    const statusCounts = $derived({
+        ALL:       listStore.entries.length,
+        CURRENT:   listStore.stats?.watching   ?? 0,
+        COMPLETED: listStore.stats?.completed  ?? 0,
+        PLANNING:  listStore.stats?.planning   ?? 0,
+        PAUSED:    listStore.stats?.paused     ?? 0,
+        DROPPED:   listStore.stats?.dropped    ?? 0,
+    });
+
     const PAGE_SIZE = 30;
     let visibleCount = $state(PAGE_SIZE);
     let sentinel = $state<HTMLElement | null>(null);
@@ -66,7 +75,7 @@
     <ResponsiveSelect
             bind:value={listStore.activeStatus}
             items={statusOptions}
-            class="h-11 rounded-xl font-bold bg-card border border-border/40 shadow-sm"
+            class="h-11 rounded-sm font-bold bg-card border border-border/40 shadow-sm"
     />
 {/snippet}
 
@@ -78,7 +87,7 @@
             { value: "TITLE_ASC", label: "A-Z" },
             { value: "TITLE_DESC", label: "Z-A" },
         ]}
-            class="h-11 rounded-xl font-bold bg-card border border-border/40 shadow-sm"
+            class="h-11 rounded-sm font-bold bg-card border border-border/40 shadow-sm"
     />
 {/snippet}
 
@@ -87,7 +96,7 @@
         <Search class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
         <Input
                 placeholder={i18n.t('list.search_placeholder')}
-                class="pl-9 pr-3 h-9 text-sm rounded-full border-none bg-muted/30 focus-visible:ring-1 focus-visible:ring-primary/50 w-full shadow-inner"
+                class="pl-9 pr-3 h-9 text-sm rounded-sm border-none bg-muted/30 focus-visible:ring-1 focus-visible:ring-primary/50 w-full shadow-inner"
                 bind:value={listStore.searchQuery}
         />
     </div>
@@ -101,6 +110,9 @@
                     onclick={() => listStore.activeStatus = option.value}
             >
                 {option.label}
+                <span class="ml-auto text-xs text-muted-foreground/60 font-normal tabular-nums">
+                    {statusCounts[option.value] ?? 0}
+                </span>
             </button>
         {/each}
     </div>
@@ -210,33 +222,10 @@
                     {auth.user?.username?.charAt(0) || 'U'}
                 </Avatar.Fallback>
             </Avatar.Root>
-            <div class="flex flex-col gap-2 w-full">
+            <div class="flex flex-col w-full">
                 <h1 class="text-2xl md:text-3xl font-black tracking-tight leading-none">
                     {i18n.t('list.header_title', { name: auth.user?.username || i18n.t('list.default_user')})}
                 </h1>
-                {#if listStore.stats}
-                    <div class="flex flex-wrap items-center gap-2 mt-1">
-                        <div class="flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1 rounded-md border border-primary/20">
-                            <Library class="size-3.5" />
-                            <span class="text-xs font-bold">{listStore.stats.totalEntries}</span>
-                            <span class="text-[10px] uppercase font-bold tracking-wider opacity-80">Entries</span>
-                        </div>
-                        {#snippet statBadge(value, icon, colorClass)}
-                            {#if value > 0}
-                                <div class="flex items-center gap-1.5 bg-muted/40 px-2 py-1 rounded-md border border-border/40 text-muted-foreground">
-                                    <svelte:component this={icon} class="size-3.5 {colorClass}" />
-                                    <span class="text-xs font-bold text-foreground">{value}</span>
-                                </div>
-                            {/if}
-                        {/snippet}
-                        {@render statBadge(listStore.stats.watching, PlayCircle, 'text-primary')}
-                        {@render statBadge(listStore.stats.completed, CheckCircle2, 'text-green-500')}
-                        {@render statBadge(listStore.stats.planning, Clock, 'text-blue-500')}
-                        {@render statBadge(listStore.stats.paused, PauseCircle, 'text-yellow-500')}
-                        {@render statBadge(listStore.stats.dropped, XCircle, 'text-destructive')}
-                        {@render statBadge(listStore.stats.totalEpisodes, Monitor, 'text-purple-500')}
-                    </div>
-                {/if}
             </div>
         </div>
     </header>

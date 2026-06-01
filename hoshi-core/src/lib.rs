@@ -13,7 +13,6 @@ pub mod config;
 pub mod headless;
 pub mod proxy;
 pub mod progress;
-pub mod backup;
 pub mod discord;
 pub mod logs;
 

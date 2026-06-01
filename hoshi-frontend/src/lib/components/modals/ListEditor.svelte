@@ -8,9 +8,9 @@
     import { Textarea } from "@/components/ui/textarea";
     import { Checkbox } from "@/components/ui/checkbox";
     import { listApi } from "@/api/list/list";
-    import type {EnrichedListEntry, ListStatus, UpsertEntryBody} from "@/api/list/types";
+    import type { EnrichedListEntry, EntrySource, ListEntryChange, ListStatus, UpsertEntryBody } from "@/api/list/types";
     import { toast } from "svelte-sonner";
-    import { Trash2, Save, Star, CheckCircle, Calendar as CalendarIcon } from "lucide-svelte";
+    import { Trash2, Save, Star, CheckCircle, Calendar as CalendarIcon, Clock, GitMerge, AlertTriangle } from "lucide-svelte";
     import { Spinner } from "$lib/components/ui/spinner";
     import { onMount } from "svelte";
     import {
@@ -40,6 +40,31 @@
         coverImage?: string;
     } = $props();
 
+    // Tracker metadata: icon url and display name per tracker slug
+    const TRACKER_META: Record<string, { icon: string; label: string }> = {
+        anilist:     { icon: "https://anilist.co/img/icons/favicon-32x32.png",         label: "AniList" },
+        myanimelist: { icon: "https://myanimelist.net/favicon.ico",                    label: "MyAnimeList" },
+        mal:         { icon: "https://myanimelist.net/favicon.ico",                    label: "MAL" },
+        kitsu:       { icon: "https://kitsu.app/favicon.ico",                          label: "Kitsu" },
+        simkl:       { icon: "https://simkl.com/favicon.ico",                          label: "Simkl" },
+    };
+
+    function trackerIcon(tracker: string): string {
+        return TRACKER_META[tracker.toLowerCase()]?.icon ?? "";
+    }
+    function trackerLabel(tracker: string): string {
+        return TRACKER_META[tracker.toLowerCase()]?.label ?? tracker;
+    }
+
+    const COMPARE_FIELDS = [
+        { key: "status",      label: "Status" },
+        { key: "progress",    label: "Progress" },
+        { key: "score",       label: "Score" },
+        { key: "startDate",   label: "Start Date" },
+        { key: "endDate",     label: "End Date" },
+        { key: "repeatCount", label: "Rewatches" },
+    ];
+
     const df = $derived(new DateFormatter(i18n.locale === 'es' ? 'es-ES' : 'en-US', { dateStyle: "long" }));
 
     let loading = $state(true);
@@ -58,6 +83,12 @@
     let endValue = $state<CalendarDate | undefined>();
     let deleteDialogOpen = $state(false);
 
+    // sources & history
+    let sources = $state<EntrySource[]>([]);
+    let history = $state<ListEntryChange[]>([]);
+    let historyLoading = $state(false);
+    let showHistory = $state(false);
+    let showSources = $state(false);
 
     let isTouchDevice = $state(false);
 
@@ -79,13 +110,21 @@
     let progressLabel = $derived(isAnime ? i18n.t('list.modal.episodes') : i18n.t('list.modal.chapters'));
 
     let statusOptions = $derived([
-        { value: "CURRENT", label: isAnime ? i18n.t('list.modal.watching') : i18n.t('list.modal.reading') },
+        { value: "CURRENT",   label: isAnime ? i18n.t('list.modal.watching') : i18n.t('list.modal.reading') },
         { value: "COMPLETED", label: i18n.t('list.completed') },
-        { value: "PLANNING", label: i18n.t('list.planning') },
-        { value: "PAUSED", label: i18n.t('list.paused') },
-        { value: "DROPPED", label: i18n.t('list.dropped') },
+        { value: "PLANNING",  label: i18n.t('list.planning') },
+        { value: "PAUSED",    label: i18n.t('list.paused') },
+        { value: "DROPPED",   label: i18n.t('list.dropped') },
         { value: "REPEATING", label: i18n.t('list.repeating') }
     ]);
+
+    // Whether any field differs between remotes — used to show conflict indicator
+    let hasConflicts = $derived(
+        sources.length > 1 && COMPARE_FIELDS.some(f => {
+            const vals = sources.map(s => String(s[f.key] ?? "")).filter(v => v !== "");
+            return vals.length > 1 && new Set(vals).size > 1;
+        })
+    );
 
     $effect(() => {
         if (open && cid) {
@@ -97,6 +136,11 @@
 
     async function loadEntry() {
         loading = true;
+        showHistory = false;
+        showSources = false;
+        history = [];
+        sources = [];
+
         try {
             const existing = listStore.entries.find(e => e.cid === cid);
             if (existing) {
@@ -106,10 +150,17 @@
                 score = existing.score ?? "";
                 startValue = existing.startDate ? parseDate(existing.startDate.split('T')[0]) : undefined;
                 endValue = existing.endDate ? parseDate(existing.endDate.split('T')[0]) : undefined;
-                repeatCount = existing.repeatCount;
+                repeatCount = existing.repeatCount ?? 0;
                 notes = existing.notes || "";
                 isPrivate = existing.isPrivate;
                 totalUnits = existing.totalUnits ?? null;
+                sources = existing.sources ?? [];
+
+                historyLoading = true;
+                listApi.getEntryHistory(cid)
+                    .then(r => { history = r.changes; })
+                    .catch(() => {})
+                    .finally(() => { historyLoading = false; });
             } else {
                 isNew = true;
                 resetForm();
@@ -128,6 +179,10 @@
         repeatCount = 0;
         notes = "";
         isPrivate = false;
+        sources = [];
+        history = [];
+        showHistory = false;
+        showSources = false;
     }
 
     async function handleSubmit(e: Event) {
@@ -161,6 +216,7 @@
                 nsfw:               existing?.nsfw               ?? false,
                 totalUnits:         existing?.totalUnits         ?? null,
                 titleI18n:          existing?.titleI18n          ?? {},
+                sources:            existing?.sources            ?? [],
                 cid,
                 title,
                 contentType,
@@ -176,9 +232,6 @@
                 isPrivate:     body.isPrivate   ?? false,
             };
             listStore.upsertLocal(body, updated);
-
-            open = false;
-
             open = false;
         } catch (err) {
             const error = err as CoreError;
@@ -203,6 +256,35 @@
             deleteDialogOpen = false;
         }
     }
+
+    function formatChangeField(field: string): string {
+        return field.replace(/_/g, ' ');
+    }
+
+    function formatChangeDate(dateStr: string): string {
+        return new Date(dateStr).toLocaleDateString(i18n.locale === 'es' ? 'es-ES' : 'en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+        });
+    }
+
+    // For the comparison table: local merged value per field
+    function localValueFor(field: string): string {
+        switch (field) {
+            case "status":      return status;
+            case "progress":    return String(progress);
+            case "score":       return score !== "" ? String(score) : "—";
+            case "startDate":   return startValue?.toString() ?? "—";
+            case "endDate":     return endValue?.toString() ?? "—";
+            case "repeatCount": return String(repeatCount);
+            default:            return "—";
+        }
+    }
+
+    // Whether a specific field has differing values across remotes
+    function fieldHasConflict(field: string): boolean {
+        const vals = sources.map(s => String((s as any)[field] ?? "").toUpperCase()).filter(v => v !== "");
+        return vals.length > 1 && new Set(vals).size > 1;
+    }
 </script>
 
 <Dialog.Root bind:open={open}>
@@ -223,9 +305,33 @@
                     {#if coverImage}
                         <img src={coverImage} alt={title} class="w-16 h-24 md:w-20 md:h-28 object-cover rounded-sm shadow-lg border border-border/50 hidden sm:block" />
                     {/if}
-                    <div>
+                    <div class="min-w-0">
                         <h2 class="text-xl md:text-2xl font-black text-foreground line-clamp-2 leading-tight drop-shadow-md tracking-tight">{title}</h2>
                         <p class="text-sm text-muted-foreground font-bold mt-1.5 uppercase tracking-wider">{isNew ? i18n.t('list.add_to_list') : i18n.t('list.modal.edit')}</p>
+
+                        {#if sources.length > 0}
+                            <div class="flex items-center gap-2 mt-2 flex-wrap">
+                                {#each sources as source}
+                                    {@const icon = trackerIcon(source.tracker)}
+                                    {@const label = trackerLabel(source.tracker)}
+                                    <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-black/50 border border-white/10">
+                                        {#if icon}
+                                            <img src={icon} alt={label} class="w-3.5 h-3.5 rounded-sm" />
+                                        {/if}
+                                        <span class="text-[11px] font-bold text-white/80">{label}</span>
+                                        {#if source.syncedAt}
+                                            <span class="text-[10px] text-white/40">· {formatChangeDate(source.syncedAt)}</span>
+                                        {/if}
+                                    </div>
+                                {/each}
+                                {#if hasConflicts}
+                                    <div class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-yellow-500/15 border border-yellow-500/30">
+                                        <AlertTriangle class="w-3 h-3 text-yellow-500" />
+                                        <span class="text-[11px] font-bold text-yellow-500">Conflicts</span>
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
                     </div>
                 </div>
             </div>
@@ -326,6 +432,126 @@
                     <Label for="notes" class="font-bold text-foreground/90">{i18n.t('list.modal.notes')}</Label>
                     <Textarea id="notes" bind:value={notes} class="min-h-[100px] rouded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-medium resize-none" />
                 </div>
+
+                {#if !isNew && sources.length > 1}
+                    <div class="border-t border-border/40 pt-4 space-y-2">
+                        <button
+                                type="button"
+                                class="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors w-full"
+                                onclick={() => showSources = !showSources}
+                        >
+                            <GitMerge class="h-3.5 w-3.5 shrink-0" />
+                            <span>{i18n.t("list.modal.merge")}</span>
+                            {#if hasConflicts}
+                                <span class="inline-flex items-center gap-0.5 text-[10px] font-bold text-yellow-500">
+                                    <AlertTriangle class="w-3 h-3" /> {i18n.t("list.modal.conflict")}
+                                </span>
+                            {/if}
+                            <span class="ml-auto opacity-50 text-[10px]">{showSources ? '▲' : '▼'}</span>
+                        </button>
+
+                        {#if showSources}
+                            <div class="rounded-md border border-border/40 overflow-hidden text-xs">
+                                <div class="grid bg-muted/20 border-b border-border/40 font-bold text-muted-foreground"
+                                     style="grid-template-columns: 90px repeat({sources.length + 1}, 1fr)">
+                                    <div class="px-3 py-2">Field</div>
+                                    <div class="px-3 py-2 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+                                        Merged
+                                    </div>
+                                    {#each sources as source}
+                                        {@const icon = trackerIcon(source.tracker)}
+                                        {@const label = trackerLabel(source.tracker)}
+                                        <div class="px-3 py-2 flex items-center gap-1.5">
+                                            {#if icon}
+                                                <img src={icon} alt={label} class="w-3.5 h-3.5 rounded-sm shrink-0" />
+                                            {/if}
+                                            <span class="truncate">{label}</span>
+                                        </div>
+                                    {/each}
+                                </div>
+
+                                {#each COMPARE_FIELDS as field}
+                                    {@const conflict = fieldHasConflict(field.key)}
+                                    <div class="grid border-b border-border/30 last:border-0 {conflict ? 'bg-yellow-500/5' : ''}"
+                                         style="grid-template-columns: 90px repeat({sources.length + 1}, 1fr)">
+                                        <div class="px-3 py-2 font-bold text-muted-foreground flex items-center gap-1">
+                                            {#if conflict}
+                                                <AlertTriangle class="w-3 h-3 text-yellow-500 shrink-0" />
+                                            {/if}
+                                            {field.label}
+                                        </div>
+                                        <div class="px-3 py-2 font-semibold text-foreground">
+                                            {localValueFor(field.key)}
+                                        </div>
+                                        {#each sources as source}
+                                            {@const val = source[field.key]}
+                                            {@const displayVal = val != null ? String(val) : "—"}
+                                            {@const isWinner = String(val ?? "").toUpperCase() === localValueFor(field.key).toUpperCase()}
+                                            <div class="px-3 py-2 {isWinner ? 'text-foreground' : 'text-muted-foreground'}">
+                                                {displayVal}
+                                                {#if isWinner && conflict}
+                                                    <span class="text-[9px] text-primary font-bold ml-1 uppercase">used</span>
+                                                {/if}
+                                            </div>
+                                        {/each}
+                                    </div>
+                                {/each}
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
+
+                {#if !isNew}
+                    <div class="border-t border-border/40 pt-4 space-y-2">
+                        <button
+                                type="button"
+                                class="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors w-full"
+                                onclick={() => showHistory = !showHistory}
+                        >
+                            <Clock class="h-3.5 w-3.5 shrink-0" />
+                            <span>{i18n.t('list.modal.history')}</span>
+                            <span class="ml-auto opacity-50 text-[10px]">{showHistory ? '▲' : '▼'}</span>
+                        </button>
+
+                        {#if showHistory}
+                            {#if historyLoading}
+                                <div class="flex justify-center py-4">
+                                    <Spinner class="h-4 w-4 animate-spin text-muted-foreground" />
+                                </div>
+                            {:else if history.length === 0}
+                                <p class="text-xs text-muted-foreground text-center py-3">{i18n.t('list.modal.no_history')}</p>
+                            {:else}
+                                <div class="space-y-0.5 max-h-48 overflow-y-auto hide-scrollbar">
+                                    {#each history as change}
+                                        <div class="flex items-center justify-between gap-3 px-2 py-1.5 rounded-md hover:bg-muted/20 text-xs">
+                                            <div class="flex items-center gap-2 min-w-0">
+                                                <span class="font-bold text-foreground/60 capitalize shrink-0">{formatChangeField(change.field)}</span>
+                                                {#if change.oldValue}
+                                                    <span class="text-muted-foreground line-through truncate max-w-[60px]">{change.oldValue}</span>
+                                                    <span class="text-muted-foreground shrink-0">→</span>
+                                                {/if}
+                                                <span class="text-foreground font-semibold truncate">{change.newValue}</span>
+                                            </div>
+                                            <div class="flex items-center gap-1.5 shrink-0 text-muted-foreground/50 text-[10px]">
+                                                {#if change.tracker}
+                                                    {@const icon = trackerIcon(change.tracker)}
+                                                    {#if icon}
+                                                        <img src={icon} alt={change.tracker} class="w-3 h-3 rounded-sm opacity-60" />
+                                                    {:else}
+                                                        <span class="uppercase font-bold text-primary/60">{change.tracker}</span>
+                                                    {/if}
+                                                    <span>·</span>
+                                                {/if}
+                                                <span>{formatChangeDate(change.changedAt)}</span>
+                                            </div>
+                                        </div>
+                                    {/each}
+                                </div>
+                            {/if}
+                        {/if}
+                    </div>
+                {/if}
             </form>
 
             <Dialog.Footer class="p-5 border-t border-border bg-muted/10">

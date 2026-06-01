@@ -5,7 +5,7 @@ import type {
     UpsertEntryResponse,
     UpsertEntryBody,
     FilterQuery,
-    UserStats,
+    UserStats, EntryHistoryResponse,
 } from "./types";
 
 export const listApi = {
@@ -37,6 +37,18 @@ export const listApi = {
     delete(cid: string) {
         return call<void>({
             tauri: { cmd: "delete_entry", args: { cid } },
+        });
+    },
+
+    getEntryHistory(cid: string) {
+        return call<EntryHistoryResponse>({
+            tauri: { cmd: "get_entry_history", args: { cid } },
+        });
+    },
+
+    getActivityFeed(limit?: number) {
+        return call<EntryHistoryResponse>({
+            tauri: { cmd: "get_activity_feed", args: { limit: limit ?? 50 } },
         });
     },
 };

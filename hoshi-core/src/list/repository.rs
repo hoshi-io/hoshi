@@ -1,6 +1,6 @@
 use sqlx::SqlitePool;
 use crate::error::CoreResult;
-use crate::list::types::{ListEntry, ScoreDistribution, UpsertEntryBody, UserStats};
+use crate::list::types::{EntrySource, EntrySourceRow, ListEntry, ListEntryChange, ScoreDistribution, UpsertEntryBody, UserStats};
 
 pub struct ListRepository;
 
@@ -215,5 +215,125 @@ impl ListRepository {
             query = query.bind(cid);
         }
         Ok(query.fetch_all(pool).await?)
+    }
+
+    pub async fn insert_changes(
+        pool: &SqlitePool,
+        entry_id: i64,
+        user_id: i32,
+        source: &str,
+        tracker: Option<&str>,
+        changes: &[(&str, Option<String>, String)], // (field, old, new)
+    ) -> CoreResult<()> {
+        for (field, old_value, new_value) in changes {
+            sqlx::query(
+                r#"INSERT INTO ListEntryChange
+               (entry_id, user_id, source, tracker, field, old_value, new_value)
+               VALUES (?, ?, ?, ?, ?, ?, ?)"#,
+            )
+                .bind(entry_id)
+                .bind(user_id)
+                .bind(source)
+                .bind(tracker)
+                .bind(field)
+                .bind(old_value.as_deref())
+                .bind(new_value)
+                .execute(pool)
+                .await?;
+        }
+        Ok(())
+    }
+
+    pub async fn insert_deletion_change(
+        pool: &SqlitePool,
+        entry_id: i64,
+        user_id: i32,
+        source: &str,
+    ) -> CoreResult<()> {
+        sqlx::query(
+            r#"INSERT INTO ListEntryChange
+           (entry_id, user_id, source, field, old_value, new_value)
+           VALUES (?, ?, ?, 'deleted', NULL, 'true')"#,
+        )
+            .bind(entry_id)
+            .bind(user_id)
+            .bind(source)
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn get_entry_history(
+        pool: &SqlitePool,
+        entry_id: i64,
+        user_id: i32,
+    ) -> CoreResult<Vec<ListEntryChange>> {
+        let rows = sqlx::query_as::<_, ListEntryChange>(
+            "SELECT * FROM ListEntryChange
+         WHERE entry_id = ? AND user_id = ?
+         ORDER BY changed_at DESC",
+        )
+            .bind(entry_id)
+            .bind(user_id)
+            .fetch_all(pool)
+            .await?;
+        Ok(rows)
+    }
+
+    pub async fn get_user_history(
+        pool: &SqlitePool,
+        user_id: i32,
+        limit: i64,
+    ) -> CoreResult<Vec<ListEntryChange>> {
+        let rows = sqlx::query_as::<_, ListEntryChange>(
+            "SELECT * FROM ListEntryChange
+         WHERE user_id = ?
+         ORDER BY changed_at DESC
+         LIMIT ?",
+        )
+            .bind(user_id)
+            .bind(limit)
+            .fetch_all(pool)
+            .await?;
+        Ok(rows)
+    }
+
+    pub async fn upsert_entry_source(
+        pool: &SqlitePool,
+        entry_id: i64,
+        user_id: i32,
+        tracker: &str,
+        remote_id: &str,
+        snapshot: &serde_json::Value,
+    ) -> CoreResult<()> {
+        sqlx::query(
+            r#"INSERT INTO ListEntrySource (entry_id, user_id, tracker, remote_id, remote_snapshot, synced_at)
+           VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+           ON CONFLICT(entry_id, tracker) DO UPDATE SET
+               remote_id       = excluded.remote_id,
+               remote_snapshot = excluded.remote_snapshot,
+               synced_at       = CURRENT_TIMESTAMP"#,
+        )
+            .bind(entry_id)
+            .bind(user_id)
+            .bind(tracker)
+            .bind(remote_id)
+            .bind(snapshot.to_string())
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn get_entry_sources(
+        pool: &SqlitePool,
+        entry_id: i64,
+    ) -> CoreResult<Vec<EntrySource>> {
+        let rows = sqlx::query_as::<_, EntrySourceRow>(
+            "SELECT tracker, remote_id, synced_at, remote_snapshot FROM ListEntrySource WHERE entry_id = ?",
+        )
+            .bind(entry_id)
+            .fetch_all(pool)
+            .await?;
+        Ok(rows.into_iter().map(EntrySource::from).collect())
     }
 }
