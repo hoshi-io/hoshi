@@ -55,7 +55,8 @@
       "title_language": "Başlık Dili",
       "romaji": "Romaji",
       "english": "İngilizce",
-      "native": "Orijinal Dil"
+      "native": "Orijinal Dil",
+      "chinese": "Çince"
     },
     "marketplace": {
       "title": "Eklentiler",
@@ -116,7 +117,8 @@
     "cover": "Kapak",
     "banner": "Afiş",
     "episodes": "{{count}} bölüm",
-    "watch": "İzle"
+    "watch": "İzle",
+    "OVA": "OVA"
   },
   "list": {
     "title": "Liste",
@@ -171,7 +173,11 @@
       "update": "Güncelle",
       "default_title": "Bilinmeyen Başlık",
       "of_total": "({{count}} içinden)",
-      "saving": "Kaydediliyor"
+      "saving": "Kaydediliyor",
+      "merge": "Birleştir",
+      "conflict": "Çakışma",
+      "history": "Geçmiş",
+      "no_history": "Geçmiş yok"
     }
   },
   "marketplace": {
@@ -226,9 +232,17 @@
     "paragraph_spacing": "Paragraf Boşluğu",
     "content_width": "İçerik Genişliği",
     "align_left": "Sol",
-    "align_justify": "Yasla"
+    "align_justify": "Yasla",
+    "next_page": "Sonraki sayfa",
+    "prev_page": "Önceki sayfa",
+    "scroll_up": "Yukarı kaydır",
+    "scroll_down": "Aşağı kaydır",
+    "page_scroll": "Sayfa Kaydırma",
+    "increase_font": "Yazı tipini büyüt",
+    "decrease_font": "Yazı tipini küçült"
   },
   "schedule": {
+    "my_list_filter": "Listem",
     "title": "Takvim",
     "upcoming_episodes": "Yaklaşan bölümler",
     "release_calendar": "{{name}}'in Yayın Takvimi",
@@ -324,9 +338,14 @@
     "invalid_response_type": "Uzantı uyumsuz bir format döndürdü.",
     "no_stream_url": "Seçilen sunucuda video URL'si bulunamadı.",
     "skip_op": "Açılışı atla",
-    "skip_ed": "Kapanışı atla"
+    "skip_ed": "Kapanışı atla",
+    "open": "Aç",
+    "launching": "Başlatılıyor...",
+    "mark_watched": "İzlendi olarak işaretle",
+    "relaunch": "MPV'yi Yeniden Başlat"
   },
   "content": {
+    "resume": "Devam Et",
     "details": "Detaylar",
     "close": "Kapat",
     "connected_trackers": "Bağlı takipçiler",
@@ -508,7 +527,22 @@
       "processing": "Girdiler işleniyor: {{imported}} / {{total}}",
       "importing": "{{imported}} girdi içe aktarılıyor...",
       "imported": "{{imported}} girdi başarıyla içe aktarıldı.",
-      "error": "Liste içe aktarılırken bir hata oluştu. Lütfen tekrar deneyin."
+      "error": "Liste içe aktarılırken bir hata oluştu. Lütfen tekrar deneyin.",
+      "sync_startup": "Başlangıçta senkronize et",
+      "sync_startup_desc": "Uygulama başlatıldığında etkin bir uzak katalog senkronizasyonunu hemen tetikler.",
+      "private": "Varsayılan olarak özel",
+      "private_desc": "Yeni senkronize edilen tüm takipçi koleksiyonu meta veri girişlerini varsayılan olarak gizli veya özel yapar.",
+      "sync_interval": "Senkronizasyon aralığı",
+      "sync_interval_desc": "Periyodik veritabanı güncellemesi için arka plan frekans sürelerini (saniye cinsinden) tanımlar.",
+      "conflict_strategy": "Çakışma stratejisi",
+      "conflict_strategy_desc": "Girişler servisler arasında çakıştığında öncelikli yedekleme izleme mantığına karar verir.",
+      "conflict_score": "En Yüksek Puanı Koru",
+      "conflict_local": "Yerel Sürümü Koru",
+      "conflict_remote": "Uzak Sürümü Koru",
+      "conflict_updated": "Son Güncelleneni Koru",
+      "conflict_anilist": "Anilist'e Öncelik Ver",
+      "conflict_mal": "MyAnimeList'e Öncelik Ver",
+      "conflict_kitsu": "Kitsu'ya Öncelik Ver"
     },
 
     "general_section": {
@@ -560,7 +594,8 @@
       "default_home_manga": "Manga",
       "default_home_novel": "Romanlar",
       "disable_card_trailers": "Kart fragmanlarını devre dışı bırak",
-      "disable_card_trailers_desc": "Kartların üzerine gelindiğinde fragmanların otomatik olarak oynatılmasını engeller."
+      "disable_card_trailers_desc": "Kartların üzerine gelindiğinde fragmanların otomatik olarak oynatılmasını engeller.",
+      "title_language_chinese": "Çince (örn. 进击的巨人)"
     },
 
     "content_section": {
@@ -606,7 +641,15 @@
       "auto_skip_intro": "İntroları Otomatik Atla",
       "auto_skip_intro_desc": "Algılanırsa açılış temalarını otomatik olarak atlar",
       "auto_skip_outro": "Outroları Otomatik Atla",
-      "auto_skip_outro_desc": "Algılanırsa kapanış temalarını otomatik olarak atlar."
+      "auto_skip_outro_desc": "Algılanırsa kapanış temalarını otomatik olarak atlar.",
+      "use_mpv": "MPV Kullan",
+      "use_mpv_desc": "Yerleşik oynatıcı yerine mpv kullanır. mpv, sistem PATH ortam değişkeninde olmalıdır.",
+      "let_hoshi": "Hoshi'nin mpv yapılandırmasını yönetmesine izin ver",
+      "let_hoshi_desc": "Hoshi, mpv'nin yapılandırma dizinini (komut dosyaları, yazı tipleri ve OSC) yazacak ve yönetecektir.",
+      "osc": "MPV görünümü (OSC)",
+      "osc_desc": "Bir OSC stili seçin. Otomatik olarak indirilecek ve uygulanacaktır.",
+      "scripts": "Komut Dosyaları (Scripts)",
+      "scripts_desc": "MPV işlevselliğini genişletmek için komut dosyalarını etkinleştirir. Otomatik olarak indirileceklerdir."
     },
 
     "readers_section": {

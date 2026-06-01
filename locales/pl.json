@@ -56,7 +56,8 @@
       "title_language": "Język tytułów",
       "romaji": "Romaji",
       "english": "Angielski",
-      "native": "Rodzimy"
+      "native": "Rodzimy",
+      "chinese": "Chiński"
     },
     "marketplace": {
       "title": "Rozszerzenia",
@@ -121,7 +122,8 @@
     "cover": "Okładka",
     "banner": "Baner",
     "episodes": "{{count}} odcinków",
-    "watch": "Oglądaj"
+    "watch": "Oglądaj",
+    "OVA": "OVA"
   },
 
   "list": {
@@ -178,7 +180,11 @@
       "update": "Aktualizuj",
       "default_title": "Nieznany tytuł",
       "of_total": "(z {{count}})",
-      "saving": "Zapisywanie"
+      "saving": "Zapisywanie",
+      "merge": "Scal",
+      "conflict": "Konflikt",
+      "history": "Historia",
+      "no_history": "Brak historii"
     }
   },
   "marketplace": {
@@ -235,9 +241,17 @@
     "paragraph_spacing": "Odstępy między akapitami",
     "content_width": "Szerokość treści",
     "align_left": "Do lewej",
-    "align_justify": "Wyjustuj"
+    "align_justify": "Wyjustuj",
+    "next_page": "Następna strona",
+    "prev_page": "Poprzednia strona",
+    "scroll_up": "Przewiń w górę",
+    "scroll_down": "Przewiń w dół",
+    "page_scroll": "Przewijanie stron",
+    "increase_font": "Zwiększ czcionkę",
+    "decrease_font": "Zmniejsz czcionkę"
   },
   "schedule": {
+    "my_list_filter": "Moja lista",
     "title": "Harmonogram",
     "upcoming_episodes": "Nadchodzące odcinki",
     "release_calendar": "Kalendarz wydań użytkownika {{name}}",
@@ -334,9 +348,14 @@
     "invalid_response_type": "Rozszerzenie zwróciło niekompatybilny format.",
     "no_stream_url": "Nie znaleziono adresu URL wideo na wybranym serwerze.",
     "skip_op": "Pomiń opening",
-    "skip_ed": "Pomiń ending"
+    "skip_ed": "Pomiń ending",
+    "open": "Otwórz",
+    "launching": "Uruchamianie...",
+    "mark_watched": "Oznacz jako obejrzane",
+    "relaunch": "Uruchom ponownie MPV"
   },
   "content": {
+    "resume": "Wznów",
     "details": "Szczegóły",
     "loading": "Ładowanie",
     "close": "Zamknij",
@@ -520,7 +539,22 @@
       "processing": "Przetwarzanie wpisów: {{imported}} z {{total}}",
       "importing": "Importowanie {{imported}} wpisów...",
       "imported": "{{imported}} wpisów zostało pomyślnie zaimportowanych.",
-      "error": "Wystąpił błąd podczas importowania listy. Spróbuj ponownie."
+      "error": "Wystąpił błąd podczas importowania listy. Spróbuj ponownie.",
+      "sync_startup": "Synchronizuj przy uruchamianiu",
+      "sync_startup_desc": "Wyzwala aktywną synchronizację zdalnego katalogu natychmiast po uruchomieniu aplikacji.",
+      "private": "Domyślnie prywatne",
+      "private_desc": "Sprawia, że wszystkie nowo zsynchronizowane wpisy metadanych kolekcji trackerów są domyślnie ukryte lub prywatne.",
+      "sync_interval": "Interwał synchronizacji",
+      "sync_interval_desc": "Definiuje częstotliwość okresów aktualizacji bazy danych w tle (w sekundach).",
+      "conflict_strategy": "Strategia rozwiązywania konfliktów",
+      "conflict_strategy_desc": "Decyduje o priorytecie logiki śledzenia rezerwowego, gdy wpisy nakładają się na siebie w różnych usługach.",
+      "conflict_score": "Zachowaj najwyższy wynik",
+      "conflict_local": "Zachowaj wersję lokalną",
+      "conflict_remote": "Zachowaj wersję zdalną",
+      "conflict_updated": "Zachowaj najnowszą aktualizację",
+      "conflict_anilist": "Priorytet dla Anilist",
+      "conflict_mal": "Priorytet dla MyAnimeList",
+      "conflict_kitsu": "Priorytet dla Kitsu"
     },
 
     "general_section": {
@@ -572,7 +606,8 @@
       "default_home_manga": "Manga",
       "default_home_novel": "Powieści",
       "disable_card_trailers": "Wyłącz zwiastuny na kartach",
-      "disable_card_trailers_desc": "Zapobiega automatycznemu odtwarzaniu zwiastunów po najechaniu na kartę."
+      "disable_card_trailers_desc": "Zapobiega automatycznemu odtwarzaniu zwiastunów po najechaniu na kartę.",
+      "title_language_chinese": "Chiński (np. 进击的巨人)"
     },
 
     "content_section": {
@@ -618,7 +653,15 @@
       "auto_skip_intro": "Automatyczne pomijanie intro",
       "auto_skip_intro_desc": "Automatycznie pomijaj czołówki, jeśli zostaną wykryte.",
       "auto_skip_outro": "Automatyczne pomijanie outro",
-      "auto_skip_outro_desc": "Automatycznie pomijaj napisy końcowe, jeśli zostaną wykryte."
+      "auto_skip_outro_desc": "Automatycznie pomijaj napisy końcowe, jeśli zostaną wykryte.",
+      "use_mpv": "Użyj MPV",
+      "use_mpv_desc": "Używa odtwarzacza mpv zamiast wbudowanego. mpv musi znajdować się w zmiennej środowiskowej PATH.",
+      "let_hoshi": "Pozwól Hoshi zarządzać konfiguracją mpv",
+      "let_hoshi_desc": "Hoshi będzie zapisywać i zarządzać katalogiem konfiguracyjnym mpv: skryptami, czcionkami i OSC.",
+      "osc": "Skórka MPV (OSC)",
+      "osc_desc": "Wybierz styl OSC. Zostanie on pobrany i zastosowany automatycznie.",
+      "scripts": "Skrypty",
+      "scripts_desc": "Włącza skrypty rozszerzające funkcjonalność mpv. Zostaną one pobrane automatycznie."
     },
 
     "readers_section": {

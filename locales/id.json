@@ -55,7 +55,8 @@
       "title_language": "Bahasa Judul",
       "romaji": "Romaji",
       "english": "Inggris",
-      "native": "Asli"
+      "native": "Asli",
+      "chinese": "Tionghoa"
     },
     "marketplace": {
       "title": "Ekstensi",
@@ -116,7 +117,8 @@
     "cover": "Sampul",
     "banner": "Banner",
     "episodes": "{{count}} episode",
-    "watch": "Tonton"
+    "watch": "Tonton",
+    "OVA": "OVA"
   },
   "list": {
     "title": "Daftar",
@@ -171,7 +173,11 @@
       "update": "Perbarui",
       "default_title": "Judul Tidak Diketahui",
       "of_total": "(dari {{count}})",
-      "saving": "Menyimpan"
+      "saving": "Menyimpan",
+      "merge": "Gabungkan",
+      "conflict": "Konflik",
+      "history": "Riwayat",
+      "no_history": "Tidak ada riwayat"
     }
   },
   "marketplace": {
@@ -226,9 +232,17 @@
     "paragraph_spacing": "Jarak Paragraf",
     "content_width": "Lebar Konten",
     "align_left": "Kiri",
-    "align_justify": "Rata Kanan Kiri"
+    "align_justify": "Rata Kanan Kiri",
+    "next_page": "Halaman berikutnya",
+    "prev_page": "Halaman sebelumnya",
+    "scroll_up": "Gulir ke atas",
+    "scroll_down": "Gulir ke bawah",
+    "page_scroll": "Gulir Halaman",
+    "increase_font": "Perbesar font",
+    "decrease_font": "Perkecil font"
   },
   "schedule": {
+    "my_list_filter": "Daftar Saya",
     "title": "Jadwal",
     "upcoming_episodes": "Episode mendatang",
     "release_calendar": "Kalender Rilis {{name}}",
@@ -324,9 +338,14 @@
     "invalid_response_type": "Ekstensi mengembalikan format yang tidak kompatibel.",
     "no_stream_url": "URL video tidak ditemukan di server yang dipilih.",
     "skip_op": "Lewati pembuka",
-    "skip_ed": "Lewati penutup"
+    "skip_ed": "Lewati penutup",
+    "open": "Buka",
+    "launching": "Memulai...",
+    "mark_watched": "Tandai sudah ditonton",
+    "relaunch": "Luncurkan ulang MPV"
   },
   "content": {
+    "resume": "Lanjutkan",
     "details": "Detail",
     "loading": "Memuat",
     "close": "Tutup",
@@ -508,7 +527,22 @@
       "processing": "Memproses entri: {{imported}} dari {{total}}",
       "importing": "Mengimpor {{imported}} entri...",
       "imported": "{{imported}} entri berhasil diimpor.",
-      "error": "Terjadi kesalahan saat mengimpor daftar. Silakan coba lagi."
+      "error": "Terjadi kesalahan saat mengimpor daftar. Silakan coba lagi.",
+      "sync_startup": "Sinkronisasi saat memulai",
+      "sync_startup_desc": "Picu sinkronisasi katalog jarak jauh yang aktif segera saat meluncurkan aplikasi.",
+      "private": "Privat secara default",
+      "private_desc": "Buat semua entri metadata koleksi pelacak yang baru disinkronkan tersembunyi atau privat secara default.",
+      "sync_interval": "Interval sinkronisasi",
+      "sync_interval_desc": "Tentukan periode frekuensi latar belakang (dalam detik) untuk pembaruan basis data berkala.",
+      "conflict_strategy": "Strategi konflik",
+      "conflict_strategy_desc": "Tentukan logika pelacakan cadangan prioritas ketika entri bertabrakan di berbagai layanan.",
+      "conflict_score": "Simpan Skor Tertinggi",
+      "conflict_local": "Simpan Versi Lokal",
+      "conflict_remote": "Simpan Versi Jarak Jauh",
+      "conflict_updated": "Simpan Pembaruan Terakhir",
+      "conflict_anilist": "Prioritaskan Anilist",
+      "conflict_mal": "Prioritaskan MyAnimeList",
+      "conflict_kitsu": "Prioritaskan Kitsu"
     },
 
     "general_section": {
@@ -560,7 +594,8 @@
       "default_home_manga": "Manga",
       "default_home_novel": "Novel",
       "disable_card_trailers": "Nonaktifkan trailer kartu",
-      "disable_card_trailers_desc": "Mencegah trailer diputar otomatis saat mengarahkan kursor ke atas kartu."
+      "disable_card_trailers_desc": "Mencegah trailer diputar otomatis saat mengarahkan kursor ke atas kartu.",
+      "title_language_chinese": "Tionghoa (misal: 进击的巨人)"
     },
 
     "content_section": {
@@ -606,7 +641,15 @@
       "auto_skip_intro": "Lewati Intro Otomatis",
       "auto_skip_intro_desc": "Lewati lagu pembuka secara otomatis jika terdeteksi",
       "auto_skip_outro": "Lewati Outro Otomatis",
-      "auto_skip_outro_desc": "Lewati lagu penutup secara otomatis jika terdeteksi."
+      "auto_skip_outro_desc": "Lewati lagu penutup secara otomatis jika terdeteksi.",
+      "use_mpv": "Gunakan MPV",
+      "use_mpv_desc": "Gunakan mpv alih-alih pemutar bawaan. mpv harus ada di PATH.",
+      "let_hoshi": "Biarkan Hoshi mengelola konfigurasi mpv",
+      "let_hoshi_desc": "Hoshi akan menulis dan mengelola direktori konfigurasi mpv: skrip, font, dan OSC.",
+      "osc": "Tampilan MPV (OSC)",
+      "osc_desc": "Pilih gaya OSC. Ini akan diunduh dan diterapkan secara otomatis.",
+      "scripts": "Skrip",
+      "scripts_desc": "Aktifkan skrip untuk memperluas fungsionalitas mpv. Skrip akan diunduh secara otomatis."
     },
 
     "readers_section": {

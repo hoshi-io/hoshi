@@ -56,7 +56,8 @@
             "title_language": "Titelsprache",
             "romaji": "Romaji",
             "english": "Englisch",
-            "native": "Originalsprache"
+            "native": "Originalsprache",
+            "chinese": "Chinesisch"
         },
         "marketplace": {
             "title": "Erweiterungen",
@@ -119,7 +120,8 @@
         "cover": "Cover",
         "banner": "Banner",
         "episodes": "{{count}} Episoden",
-        "watch": "Ansehen"
+        "watch": "Ansehen",
+        "OVA": "OVA"
     },
     "list": {
         "title": "Liste",
@@ -175,7 +177,11 @@
             "update": "Aktualisieren",
             "default_title": "Unbekannter Titel",
             "of_total": "(von {{count}})",
-            "saving": "Speichern"
+            "saving": "Speichern",
+            "merge": "Zusammenführen",
+            "conflict": "Konflikt",
+            "history": "Verlauf",
+            "no_history": "Kein Verlauf"
         }
     },
     "marketplace": {
@@ -232,7 +238,14 @@
         "paragraph_spacing": "Absatzabstand",
         "content_width": "Inhaltsbreite",
         "align_left": "Links",
-        "align_justify": "Blocksatz"
+        "align_justify": "Blocksatz",
+        "next_page": "Nächste Seite",
+        "prev_page": "Vorherige Seite",
+        "scroll_up": "Nach oben scrollen",
+        "scroll_down": "Nach unten scrollen",
+        "page_scroll": "Seiten-Scrollen",
+        "increase_font": "Schriftart vergrößern",
+        "decrease_font": "Schriftart verkleinern"
     },
     "schedule": {
         "title": "Sendeplan",
@@ -248,7 +261,8 @@
         "empty_desc": "Für den gewählten Zeitraum sind keine Episoden geplant.",
         "airing_today": "Heute im TV",
         "watching": "Schaut gerade",
-        "planning": "Geplant"
+        "planning": "Geplant",
+        "my_list_filter": "Meine Liste"
     },
     "search": {
         "title": "Suche",
@@ -330,7 +344,11 @@
         "invalid_response_type": "Die Erweiterung hat ein inkompatibles Format zurückgegeben.",
         "no_stream_url": "Keine Video-URL auf dem gewählten Server gefunden.",
         "skip_op": "Intro überspringen",
-        "skip_ed": "Outro überspringen"
+        "skip_ed": "Outro überspringen",
+        "open": "Öffnen",
+        "launching": "Wird gestartet...",
+        "mark_watched": "Als gesehen markieren",
+        "relaunch": "MPV neu starten"
     },
     "content": {
         "details": "Details",
@@ -403,6 +421,7 @@
         "provider": "Anbieter",
         "select": "Wählen",
         "id_slug": "ID",
+        "resume": "Fortsetzen",
         "extension_manager": {
             "no_results_found_ext": "Keine Ergebnisse gefunden",
             "missing_id_error": "ID fehlt Fehler",
@@ -514,7 +533,22 @@
             "processing": "Einträge werden verarbeitet: {{imported}} von {{total}}",
             "importing": "{{imported}} Einträge werden importiert...",
             "imported": "{{imported}} Einträge wurden erfolgreich importiert.",
-            "error": "Beim Importieren der Liste ist ein Fehler aufgetreten. Bitte versuche es erneut."
+            "error": "Beim Importieren der Liste ist ein Fehler aufgetreten. Bitte versuche es erneut.",
+            "sync_startup": "Beim Start synchronisieren",
+            "sync_startup_desc": "Löst sofort beim Starten der App eine aktive Synchronisation des Remote-Katalogs aus.",
+            "private": "Standardmäßig privat",
+            "private_desc": "Macht alle neu synchronisierten Metadateneinträge der Tracker-Sammlung standardmäßig ausgeblendet oder privat.",
+            "sync_interval": "Synchronisationsintervall",
+            "sync_interval_desc": "Definiert die Intervalle für die Hintergrundaktualisierung (in Sekunden) zur regelmäßigen Datenbank-Aktualisierung.",
+            "conflict_strategy": "Konfliktstrategie",
+            "conflict_strategy_desc": "Bestimmt die Prioritäts-Fallback-Logik für das Tracking, wenn Einträge über verschiedene Dienste hinweg kollidieren.",
+            "conflict_score": "Höchste Bewertung behalten",
+            "conflict_local": "Lokale Version behalten",
+            "conflict_remote": "Remote-Version behalten",
+            "conflict_updated": "Zuletzt aktualisierte Version behalten",
+            "conflict_anilist": "Anilist priorisieren",
+            "conflict_mal": "MyAnimeList priorisieren",
+            "conflict_kitsu": "Kitsu priorisieren"
         },
 
         "general_section": {
@@ -566,7 +600,8 @@
             "default_home_manga": "Manga",
             "default_home_novel": "Novels",
             "disable_card_trailers": "Karten-Trailer deaktivieren",
-            "disable_card_trailers_desc": "Verhindert, dass Trailer beim Drüberfahren mit der Maus automatisch abgespielt werden."
+            "disable_card_trailers_desc": "Verhindert, dass Trailer beim Drüberfahren mit der Maus automatisch abgespielt werden.",
+            "title_language_chinese": "Chinesisch (z. B. 进击的巨人)"
         },
 
         "content_section": {
@@ -612,7 +647,16 @@
             "auto_skip_intro": "Intros automatisch überspringen",
             "auto_skip_intro_desc": "Überspringt automatisch Openings, falls erkannt.",
             "auto_skip_outro": "Outros automatisch überspringen",
-            "auto_skip_outro_desc": "Überspringt automatisch Endings, falls erkannt."
+            "auto_skip_outro_desc": "Überspringt automatisch Endings, falls erkannt.",
+            "use_mpv": "MPV verwenden",
+            "use_mpv_desc": "Verwendet mpv anstelle des integrierten Players. mpv muss in der Umgebungsvariable PATH enthalten sein.",
+            "let_hoshi": "Hoshi die mpv-Konfiguration verwalten lassen",
+            "let_hoshi_desc": "Hoshi schreibt und verwaltet das Konfigurationsverzeichnis von mpv: Skripte, Schriftarten und OSC.",
+            "osc": "MPV-Skin (OSC)",
+            "osc_desc": "Wählen Sie einen OSC-Stil. Er wird automatisch heruntergeladen und angewendet.",
+            "scripts": "Skripte",
+            "scripts_desc": "Aktiviert Skripte zur Erweiterung der mpv-Funktionalität. Sie werden automatisch heruntergeladen."
+        }
         },
 
         "readers_section": {

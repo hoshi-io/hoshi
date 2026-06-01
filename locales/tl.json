@@ -56,7 +56,8 @@
       "title_language": "Wika ng Pamagat",
       "romaji": "Romaji",
       "english": "Ingles",
-      "native": "Katutubo"
+      "native": "Katutubo",
+      "chinese": "Intsik"
     },
     "marketplace": {
       "title": "Mga Extension",
@@ -122,7 +123,8 @@
     "cover": "Cover",
     "banner": "Banner",
     "episodes": "{{count}} episode",
-    "watch": "Manood"
+    "watch": "Manood",
+    "OVA": "OVA"
   },
 
   "list": {
@@ -179,7 +181,11 @@
       "update": "I-update",
       "default_title": "Hindi Alam na Pamagat",
       "of_total": "(mula sa {{count}})",
-      "saving": "Nag-i-save"
+      "saving": "Nag-i-save",
+      "merge": "Pagsamahin",
+      "conflict": "Hidwaan",
+      "history": "Kasaysayan",
+      "no_history": "Walang kasaysayan"
     }
   },
   "marketplace": {
@@ -236,9 +242,17 @@
     "paragraph_spacing": "Spacing ng Parapo",
     "content_width": "Lapad ng Nilalaman",
     "align_left": "Kaliwa",
-    "align_justify": "Justify"
+    "align_justify": "Justify",
+    "next_page": "Susunod na pahina",
+    "prev_page": "Nakaraang pahina",
+    "scroll_up": "Mag-scroll pataas",
+    "scroll_down": "Mag-scroll pababa",
+    "page_scroll": "Pag-scroll ng Pahina",
+    "increase_font": "Lakihan ang font",
+    "decrease_font": "Liitan ang font"
   },
   "schedule": {
+    "my_list_filter": "Aking Listahan",
     "title": "Iskedyul",
     "upcoming_episodes": "Mga susunod na episode",
     "release_calendar": "Release Calendar ni {{name}}",
@@ -334,9 +348,14 @@
     "invalid_response_type": "Ang extension ay nagbalik ng hindi tugmang format.",
     "no_stream_url": "Walang nahanap na video URL sa napiling server.",
     "skip_op": "Laktawan ang opening",
-    "skip_ed": "Laktawan ang ending"
+    "skip_ed": "Laktawan ang ending",
+    "open": "Buksan",
+    "launching": "Nagbubukas...",
+    "mark_watched": "Markahan bilang napanood na",
+    "relaunch": "I-relaunch ang MPV"
   },
   "content": {
+    "resume": "Ituloy",
     "details": "Mga Detalye",
     "loading": "Naglo-load",
     "close": "Isara",
@@ -520,7 +539,22 @@
       "processing": "Pinoproseso ang mga entry: {{imported}} ng {{total}}",
       "importing": "Ini-import ang {{imported}} entry...",
       "imported": "{{imported}} entry ay matagumpay na na-import.",
-      "error": "Nagkaroon ng error habang ini-import ang listahan. Pakisubukang muli."
+      "error": "Nagkaroon ng error habang ini-import ang listahan. Pakisubukang muli.",
+      "sync_startup": "I-sync sa simula",
+      "sync_startup_desc": "Agad na mag-trigger ng aktibong pag-sync ng remote catalog kapag binuksan ang app.",
+      "private": "Naka-private bilang default",
+      "private_desc": "Gawing nakatago o pribado bilang default ang lahat ng bagong naka-sync na entry ng metadata ng koleksyon ng tracker.",
+      "sync_interval": "Agwat ng pag-sync",
+      "sync_interval_desc": "Itakda ang dalas ng pag-update sa background (sa segundo) para sa pana-panahong pag-update ng database.",
+      "conflict_strategy": "Diskarte sa hidwaan",
+      "conflict_strategy_desc": "Pumili ng priyoridad na fallback tracking logic kapag nagka-overlap ang mga entry sa magkakaibang serbisyo.",
+      "conflict_score": "Panatilihin ang Pinakamataas na Selyo",
+      "conflict_local": "Panatilihin ang Lokal na Bersyon",
+      "conflict_remote": "Panatilihin ang Remote na Bersyon",
+      "conflict_updated": "Panatilihin ang Pinakabagong Na-update",
+      "conflict_anilist": "Unahin ang Anilist",
+      "conflict_mal": "Unahin ang MyAnimeList",
+      "conflict_kitsu": "Unahin ang Kitsu"
     },
 
     "general_section": {
@@ -572,7 +606,8 @@
       "default_home_manga": "Manga",
       "default_home_novel": "Mga Nobela",
       "disable_card_trailers": "I-disable ang mga card trailer",
-      "disable_card_trailers_desc": "Pinipigilan ang mga trailer na awtomatikong tumugtog kapag itinuturo ang card."
+      "disable_card_trailers_desc": "Pinipigilan ang mga trailer na awtomatikong tumugtog kapag itinuturo ang card.",
+      "title_language_chinese": "Intsik (hal. 进击的巨人)"
     },
 
     "content_section": {
@@ -618,7 +653,15 @@
       "auto_skip_intro": "Auto-Skip ng mga Intro",
       "auto_skip_intro_desc": "Awtomatikong laktawan ang mga opening theme kung ma-de-detect.",
       "auto_skip_outro": "Auto-Skip ng mga Outro",
-      "auto_skip_outro_desc": "Awtomatikong laktawan ang mga ending theme kung ma-de-detect."
+      "auto_skip_outro_desc": "Awtomatikong laktawan ang mga ending theme kung ma-de-detect.",
+      "use_mpv": "Gamitin ang MPV",
+      "use_mpv_desc": "Gamitin ang mpv sa halip na ang built-in player. Dapat ay nasa PATH ang mpv.",
+      "let_hoshi": "Hayaan ang Hoshi na mamahala ng config ng mpv",
+      "let_hoshi_desc": "Ang Hoshi ang magsusulat at mamamahala sa config directory ng mpv: mga script, font, at OSC.",
+      "osc": "Balat ng MPV (OSC)",
+      "osc_desc": "Pumili ng istilo ng OSC. Awtomatiko itong idodownload at ilalapat.",
+      "scripts": "Mga Script",
+      "scripts_desc": "Paganahin ang mga script upang palawakin ang mga tampok ng mpv. Awtomatiko silang idodownload."
     },
 
     "readers_section": {

@@ -56,7 +56,8 @@
       "title_language": "Bahasa Tajuk",
       "romaji": "Romaji",
       "english": "Inggeris",
-      "native": "Asal"
+      "native": "Asal",
+      "chinese": "Bahasa Cina"
     },
     "marketplace": {
       "title": "Sambungan",
@@ -121,7 +122,8 @@
     "cover": "Kulit",
     "banner": "Sepanduk",
     "episodes": "{{count}} episod",
-    "watch": "Tonton"
+    "watch": "Tonton",
+    "OVA": "OVA"
   },
 
   "list": {
@@ -178,7 +180,11 @@
       "update": "Kemaskini",
       "default_title": "Tajuk Tidak Diketahui",
       "of_total": "(daripada {{count}})",
-      "saving": "Menyimpan"
+      "saving": "Menyimpan",
+      "merge": "Gabung",
+      "conflict": "Konflik",
+      "history": "Sejarah",
+      "no_history": "Tiada sejarah"
     }
   },
   "marketplace": {
@@ -235,9 +241,17 @@
     "paragraph_spacing": "Jarak Perenggan",
     "content_width": "Lebar Kandungan",
     "align_left": "Kiri",
-    "align_justify": "Wajarkan"
+    "align_justify": "Wajarkan",
+    "next_page": "Halaman seterusnya",
+    "prev_page": "Halaman sebelum",
+    "scroll_up": "Skrol ke atas",
+    "scroll_down": "Skrol ke bawah",
+    "page_scroll": "Skrol Halaman",
+    "increase_font": "Besarkan fon",
+    "decrease_font": "Kecilkan fon"
   },
   "schedule": {
+    "my_list_filter": "Senarai Saya",
     "title": "Jadual",
     "upcoming_episodes": "Episod akan datang",
     "release_calendar": "Kalendar Pelancaran {{name}}",
@@ -333,9 +347,14 @@
     "invalid_response_type": "Sambungan mengembalikan format yang tidak serasi.",
     "no_stream_url": "Tiada URL video ditemui dalam pelayan yang dipilih.",
     "skip_op": "Langkau pembukaan",
-    "skip_ed": "Langkau penutup"
+    "skip_ed": "Langkau penutup",
+    "open": "Buka",
+    "launching": "Melancarkan...",
+    "mark_watched": "Tanda sebagai telah ditonton",
+    "relaunch": "Lancar semula MPV"
   },
   "content": {
+    "resume": "Sambung",
     "details": "Butiran",
     "loading": "Memuatkan",
     "close": "Tutup",
@@ -519,7 +538,22 @@
       "processing": "Memproses entri: {{imported}} daripada {{total}}",
       "importing": "Mengimport {{imported}} entri...",
       "imported": "{{imported}} entri berjaya diimport.",
-      "error": "Ralat berlaku semasa mengimport senarai. Sila cuba lagi."
+      "error": "Ralat berlaku semasa mengimport senarai. Sila cuba lagi.",
+      "sync_startup": "Sankron pada permulaan",
+      "sync_startup_desc": "Cetuskan penyegerakan katalog jauh yang aktif serta-merta apabila melancarkan aplikasi.",
+      "private": "Peribadi secara lalai",
+      "private_desc": "Jadikan semua entri metadata koleksi penjejak yang baru disegerakan tersembunyi atau peribadi secara lalai.",
+      "sync_interval": "Selang masa penyegerakan",
+      "sync_interval_desc": "Tentukan tempoh kekerapan latar belakang (dalam saat) untuk pengemaskinian pangkalan data secara berkala.",
+      "conflict_strategy": "Strategi konflik",
+      "conflict_strategy_desc": "Tentukan logik penjejakan sandaran keutamaan apabila entri bertembung merentas pelbagai perkhidmatan.",
+      "conflict_score": "Kekalkan Skor Tertinggi",
+      "conflict_local": "Kekalkan Versi Tempatan",
+      "conflict_remote": "Kekalkan Versi Jauh",
+      "conflict_updated": "Kekalkan Kemas Kini Terkini",
+      "conflict_anilist": "Utamakan Anilist",
+      "conflict_mal": "Utamakan MyAnimeList",
+      "conflict_kitsu": "Utamakan Kitsu"
     },
 
     "general_section": {
@@ -571,7 +605,8 @@
       "default_home_manga": "Manga",
       "default_home_novel": "Novel",
       "disable_card_trailers": "Lumpuhkan treler kad",
-      "disable_card_trailers_desc": "Menghalang treler daripada dimainkan secara automatik apabila menuding pada kad."
+      "disable_card_trailers_desc": "Menghalang treler daripada dimainkan secara automatik apabila menuding pada kad.",
+      "title_language_chinese": "Bahasa Cina (cth. 进击的巨人)"
     },
 
     "content_section": {
@@ -617,7 +652,15 @@
       "auto_skip_intro": "Langkau Auto Intro",
       "auto_skip_intro_desc": "Langkau tema pembukaan secara automatik jika dikesan",
       "auto_skip_outro": "Langkau Auto Outro",
-      "auto_skip_outro_desc": "Langkau tema penutup secara automatik jika dikesan."
+      "auto_skip_outro_desc": "Langkau tema penutup secara automatik jika dikesan.",
+      "use_mpv": "Gunakan MPV",
+      "use_mpv_desc": "Gunakan mpv dan bukannya pemain terbina dalam. mpv mesti berada pada PATH.",
+      "let_hoshi": "Biarkan Hoshi menguruskan konfigurasi mpv",
+      "let_hoshi_desc": "Hoshi akan menulis dan mengurus direktori konfigurasi mpv: skrip, fon, dan OSC.",
+      "osc": "Rupa MPV (OSC)",
+      "osc_desc": "Pilih gaya OSC. Ia akan dimuat turun dan diguna pakai secara automatik.",
+      "scripts": "Skrip",
+      "scripts_desc": "Dayakan skrip untuk meluaskan fungsi mpv. Ia akan dimuat turun secara automatik."
     },
 
     "readers_section": {

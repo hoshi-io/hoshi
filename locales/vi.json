@@ -56,7 +56,8 @@
       "title_language": "Ngôn ngữ tiêu đề",
       "romaji": "Romaji",
       "english": "Tiếng Anh",
-      "native": "Tiếng gốc"
+      "native": "Tiếng gốc",
+      "chinese": "Tiếng Trung"
     },
     "marketplace": {
       "title": "Tiện ích mở rộng",
@@ -121,7 +122,8 @@
     "cover": "Bìa",
     "banner": "Banner",
     "episodes": "{{count}} tập",
-    "watch": "Xem"
+    "watch": "Xem",
+    "OVA": "OVA"
   },
 
   "list": {
@@ -178,7 +180,11 @@
       "update": "Cập nhật",
       "default_title": "Tiêu đề không xác định",
       "of_total": "(trên {{count}})",
-      "saving": "Đang lưu"
+      "saving": "Đang lưu",
+      "merge": "Hợp nhất",
+      "conflict": "Xung đột",
+      "history": "Lịch sử",
+      "no_history": "Không có lịch sử"
     }
   },
   "marketplace": {
@@ -235,9 +241,17 @@
     "paragraph_spacing": "Khoảng cách đoạn",
     "content_width": "Chiều rộng nội dung",
     "align_left": "Căn trái",
-    "align_justify": "Căn đều"
+    "align_justify": "Căn đều",
+    "next_page": "Trang sau",
+    "prev_page": "Trang trước",
+    "scroll_up": "Cuộn lên",
+    "scroll_down": "Cuộn xuống",
+    "page_scroll": "Cuộn trang",
+    "increase_font": "Phóng to chữ",
+    "decrease_font": "Thu nhỏ chữ"
   },
   "schedule": {
+    "my_list_filter": "Danh sách của tôi",
     "title": "Lịch chiếu",
     "upcoming_episodes": "Tập phim sắp tới",
     "release_calendar": "Lịch phát hành của {{name}}",
@@ -333,9 +347,14 @@
     "invalid_response_type": "Tiện ích trả về định dạng không tương thích.",
     "no_stream_url": "Không tìm thấy URL video trong máy chủ đã chọn.",
     "skip_op": "Bỏ qua mở đầu",
-    "skip_ed": "Bỏ qua kết thúc"
+    "skip_ed": "Bỏ qua kết thúc",
+    "open": "Mở",
+    "launching": "Đang khởi chạy...",
+    "mark_watched": "Đánh dấu là đã xem",
+    "relaunch": "Khởi chạy lại MPV"
   },
   "content": {
+    "resume": "Tiếp tục",
     "details": "Chi tiết",
     "loading": "Đang tải",
     "close": "Đóng",
@@ -519,7 +538,22 @@
       "processing": "Đang xử lý mục: {{imported}} / {{total}}",
       "importing": "Đang nhập {{imported}} mục...",
       "imported": "Đã nhập thành công {{imported}} mục.",
-      "error": "Đã xảy ra lỗi khi nhập danh sách. Vui lòng thử lại."
+      "error": "Đã xảy ra lỗi khi nhập danh sách. Vui lòng thử lại.",
+      "sync_startup": "Đồng bộ hóa khi khởi động",
+      "sync_startup_desc": "Kích hoạt đồng bộ hóa danh mục từ xa ngay lập tức khi khởi chạy ứng dụng.",
+      "private": "Riêng tư theo mặc định",
+      "private_desc": "Đặt tất cả các mục siêu dữ liệu bộ sưu tập theo dõi mới được đồng bộ hóa thành ẩn hoặc riêng tư theo mặc định.",
+      "sync_interval": "Khoảng thời gian đồng bộ hóa",
+      "sync_interval_desc": "Xác định khoảng thời gian tần suất chạy nền (tính bằng giây) để cập nhật cơ sở dữ liệu định kỳ.",
+      "conflict_strategy": "Chiến lược xử lý xung đột",
+      "conflict_strategy_desc": "Quyết định logic theo dõi dự phòng ưu tiên khi các mục dữ liệu bị xung đột giữa các dịch vụ.",
+      "conflict_score": "Giữ lại điểm số cao nhất",
+      "conflict_local": "Giữ lại phiên bản cục bộ",
+      "conflict_remote": "Giữ lại phiên bản từ xa",
+      "conflict_updated": "Giữ lại bản cập nhật mới nhất",
+      "conflict_anilist": "Ưu tiên Anilist",
+      "conflict_mal": "Ưu tiên MyAnimeList",
+      "conflict_kitsu": "Ưu tiên Kitsu"
     },
 
     "general_section": {
@@ -571,7 +605,8 @@
       "default_home_manga": "Manga",
       "default_home_novel": "Tiểu thuyết",
       "disable_card_trailers": "Tắt trailer trên thẻ",
-      "disable_card_trailers_desc": "Ngăn trailer tự động phát khi di chuột qua các thẻ nội dung."
+      "disable_card_trailers_desc": "Ngăn trailer tự động phát khi di chuột qua các thẻ nội dung.",
+      "title_language_chinese": "Tiếng Trung (v.d. 进击的巨人)"
     },
 
     "content_section": {
@@ -617,7 +652,16 @@
       "auto_skip_intro": "Tự động bỏ qua Intro",
       "auto_skip_intro_desc": "Tự động bỏ qua đoạn nhạc đầu phim nếu phát hiện được.",
       "auto_skip_outro": "Tự động bỏ qua Outro",
-      "auto_skip_outro_desc": "Tự động bỏ qua đoạn nhạc cuối phim nếu phát hiện được."
+      "auto_skip_outro_desc": "Tự động bỏ qua đoạn nhạc cuối phim nếu phát hiện được.",
+      "use_mpv": "Sử dụng MPV",
+      "use_mpv_desc": "Sử dụng mpv thay vì trình phát tích hợp sẵn. mpv phải được thêm vào biến môi trường PATH.",
+      "let_hoshi": "Cho phép Hoshi quản lý cấu hình mpv",
+      "let_hoshi_desc": "Hoshi sẽ tự ghi và quản lý thư mục cấu hình của mpv: tập lệnh (scripts), phông chữ và giao diện (OSC).",
+      "osc": "Giao diện MPV (OSC)",
+      "osc_desc": "Chọn một kiểu giao diện OSC. Nó sẽ được tải xuống và áp dụng tự động.",
+      "scripts": "Tập lệnh (Scripts)",
+      "scripts_desc": "Bật các tập lệnh để mở rộng chức năng của mpv. Chúng sẽ được tải xuống tự động."
+    }
     },
 
     "readers_section": {

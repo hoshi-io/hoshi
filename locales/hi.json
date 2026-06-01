@@ -56,7 +56,8 @@
       "title_language": "शीर्षक की भाषा",
       "romaji": "रोमाजी (Romaji)",
       "english": "अंग्रेज़ी",
-      "native": "मूल (Native)"
+      "native": "मूल (Native)",
+      "chinese": "चीनी"
     },
     "marketplace": {
       "title": "एक्सटेंशन",
@@ -121,7 +122,8 @@
     "cover": "कवर",
     "banner": "बैनर",
     "episodes": "{{count}} एपिसोड",
-    "watch": "देखें"
+    "watch": "देखें",
+    "OVA": "OVA"
   },
 
   "list": {
@@ -178,7 +180,11 @@
       "update": "अपडेट करें",
       "default_title": "अज्ञात शीर्षक",
       "of_total": "({{count}} में से)",
-      "saving": "सहेज रहे हैं"
+      "saving": "सहेज रहे हैं",
+      "merge": "मिलाएं (Merge)",
+      "conflict": "विरोध (Conflict)",
+      "history": "इतिहास",
+      "no_history": "कोई इतिहास नहीं"
     }
   },
   "marketplace": {
@@ -235,9 +241,17 @@
     "paragraph_spacing": "अनुच्छेद रिक्ति",
     "content_width": "सामग्री की चौड़ाई",
     "align_left": "बाएं",
-    "align_justify": "जस्टिफाई"
+    "align_justify": "जस्टिफाई",
+    "next_page": "अगला पृष्ठ",
+    "prev_page": "पिछला पृष्ठ",
+    "scroll_up": "ऊपर स्क्रॉल करें",
+    "scroll_down": "नीचे स्क्रॉल करें",
+    "page_scroll": "पेज स्क्रॉल",
+    "increase_font": "फ़ॉन्ट का आकार बढ़ाएं",
+    "decrease_font": "फ़ॉन्ट का आकार घटाएं"
   },
   "schedule": {
+    "my_list_filter": "मेरी सूची",
     "title": "शेड्यूल",
     "upcoming_episodes": "आने वाले एपिसोड",
     "release_calendar": "{{name}} का रिलीज कैलेंडर",
@@ -333,9 +347,14 @@
     "invalid_response_type": "एक्सटेंशन ने एक असंगत फॉर्मेट लौटाया।",
     "no_stream_url": "चयनित सर्वर में कोई वीडियो URL नहीं मिला।",
     "skip_op": "ओपनिंग छोड़ें",
-    "skip_ed": "एंडिंग छोड़ें"
+    "skip_ed": "एंडिंग छोड़ें",
+    "open": "खोलें",
+    "launching": "शुरू किया जा रहा है...",
+    "mark_watched": "देखा हुआ मार्क करें",
+    "relaunch": "MPV को फिर से शुरू करें"
   },
   "content": {
+    "resume": "जारी रखें",
     "details": "विवरण",
     "close": "बंद करें",
     "connected_trackers": "कनेक्टेड ट्रैकर्स",
@@ -519,7 +538,22 @@
       "processing": "एंट्री प्रोसेस की जा रही हैं: {{imported}} में से {{total}}",
       "importing": "{{imported}} एंट्रियों को इम्पोर्ट किया जा रहा है...",
       "imported": "{{imported}} एंट्रियाँ सफलतापूर्वक इम्पोर्ट की गई हैं।",
-      "error": "सूची इम्पोर्ट करते समय एक त्रुटि हुई। कृपया पुनः प्रयास करें।"
+      "error": "सूची इम्पोर्ट करते समय एक त्रुटि हुई। कृपया पुनः प्रयास करें।",
+      "sync_startup": "स्टार्टअप पर सिंक करें",
+      "sync_startup_desc": "ऐप लॉन्च करते ही तुरंत एक सक्रिय रिमोट कैटलॉग सिंक शुरू करें।",
+      "private": "डिफ़ॉल्ट रूप से प्राइवेट",
+      "private_desc": "सभी नए सिंक किए गए ट्रैकर कलेक्शन मेटाडेटा एंट्रीज़ को डिफ़ॉल्ट रूप से हिडन या प्राइवेट बनाएं।",
+      "sync_interval": "सिंक अंतराल",
+      "sync_interval_desc": "समय-समय पर डेटाबेस अपडेट करने के लिए बैकग्राउंड फ़्रीक्वेंसी अवधि (सेकंड में) निर्धारित करें।",
+      "conflict_strategy": "कॉन्फ्लिक्ट स्ट्रेटेजी",
+      "conflict_strategy_desc": "विभिन्न सेवाओं के बीच एंट्रीज़ टकराने पर प्रायोरिटी फ़ॉलबैक ट्रैकिंग लॉजिक तय करें।",
+      "conflict_score": "उच्चतम स्कोर रखें",
+      "conflict_local": "लोकल वर्शन रखें",
+      "conflict_remote": "रिमोट वर्शन रखें",
+      "conflict_updated": "नवीनतम अपडेटेड वर्शन रखें",
+      "conflict_anilist": "Anilist को प्राथमिकता दें",
+      "conflict_mal": "MyAnimeList को प्राथमिकता दें",
+      "conflict_kitsu": "Kitsu को प्राथमिकता दें"
     },
 
     "general_section": {
@@ -571,7 +605,8 @@
       "default_home_manga": "मंगा",
       "default_home_novel": "नॉवेल्स",
       "disable_card_trailers": "कार्ड ट्रेलर अक्षम करें",
-      "disable_card_trailers_desc": "कार्ड के ऊपर कर्सर ले जाने पर ट्रेलर को स्वचालित रूप से चलने से रोकता है।"
+      "disable_card_trailers_desc": "कार्ड के ऊपर कर्सर ले जाने पर ट्रेलर को स्वचालित रूप से चलने से रोकता है।",
+      "title_language_chinese": "चीनी (जैसे: 进击的巨人)"
     },
 
     "content_section": {
@@ -617,7 +652,15 @@
       "auto_skip_intro": "इंट्रो ऑटो-स्किप करें",
       "auto_skip_intro_desc": "यदि पता चले तो ओपनिंग थीम को स्वचालित रूप से छोड़ दें",
       "auto_skip_outro": "आउट्रो ऑटो-स्किप करें",
-      "auto_skip_outro_desc": "यदि पता चले तो एंडिंग थीम को स्वचालित रूप से छोड़ दें।"
+      "auto_skip_outro_desc": "यदि पता चले तो एंडिंग थीम को स्वचालित रूप से छोड़ दें।",
+      "use_mpv": "MPV का उपयोग करें",
+      "use_mpv_desc": "इन-बिल्ट प्लेयर के बजाय mpv का उपयोग करें। mpv एनवायरनमेंट वेरिएबल PATH पर होना चाहिए।",
+      "let_hoshi": "Hoshi को mpv कॉन्फ़िगरेशन मैनेज करने दें",
+      "let_hoshi_desc": "Hoshi स्वयं mpv की कॉन्फ़िगरेशन डायरेक्टरी लिखेगा और मैनेज करेगा: स्क्रिप्ट, फ़ॉन्ट और OSC।",
+      "osc": "MPV स्किन (OSC)",
+      "osc_desc": "एक OSC स्टाइल चुनें। इसे स्वचालित रूप से डाउनलोड और लागू किया जाएगा।",
+      "scripts": "स्क्रिप्ट्स",
+      "scripts_desc": "mpv की कार्यक्षमता बढ़ाने के लिए स्क्रिप्ट सक्षम करें। इन्हें स्वचालित रूप से डाउनलोड किया जाएगा।"
     },
 
     "readers_section": {

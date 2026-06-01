@@ -56,7 +56,8 @@
       "title_language": "Idioma de los títulos",
       "romaji": "Romaji",
       "english": "Inglés",
-      "native": "Nativo"
+      "native": "Nativo",
+      "chinese": "Chino"
     },
     "marketplace": {
       "title": "Extensiones",
@@ -120,7 +121,8 @@
     "cover": "Portada",
     "banner": "Banner",
     "episodes": "{{count}} episodios",
-    "watch": "Ver"
+    "watch": "Ver",
+    "OVA": "OVA"
   },
   "list": {
     "title": "Lista",
@@ -176,7 +178,11 @@
       "update": "Actualizar",
       "default_title": "Título desconocido",
       "of_total": "(de {{count}})",
-      "saving": "Guardando"
+      "saving": "Guardando",
+      "merge": "Combinar",
+      "conflict": "Conflicto",
+      "history": "Historial",
+      "no_history": "Sin historial"
     }
   },
   "marketplace": {
@@ -234,7 +240,14 @@
     "paragraph_spacing": "Espaciado de párrafos",
     "content_width": "Ancho del contenido",
     "align_left": "Izquierda",
-    "align_justify": "Justificado"
+    "align_justify": "Justificado",
+    "next_page": "Página siguiente",
+    "prev_page": "Página anterior",
+    "scroll_up": "Desplazar hacia arriba",
+    "scroll_down": "Desplazar hacia abajo",
+    "page_scroll": "Desplazamiento de página",
+    "increase_font": "Aumentar fuente",
+    "decrease_font": "Disminuir fuente"
   },
   "schedule": {
     "title": "Calendario",
@@ -250,7 +263,8 @@
     "empty_desc": "No hay episodios programados para el período seleccionado.",
     "airing_today": "En emisión hoy",
     "watching": "Viendo",
-    "planning": "Planeando"
+    "planning": "Planeando",
+    "my_list_filter": "Mi lista"
   },
   "search": {
     "title": "Búsqueda",
@@ -332,9 +346,14 @@
     "invalid_response_type": "La extensión devolvió un formato incompatible.",
     "no_stream_url": "No se encontró ninguna URL de video en el servidor seleccionado.",
     "skip_op": "Saltar Opening",
-    "skip_ed": "Saltar Ending"
+    "skip_ed": "Saltar Ending",
+    "open": "Abrir",
+    "launching": "Iniciando...",
+    "mark_watched": "Marcar como visto",
+    "relaunch": "Reiniciar MPV"
   },
   "content": {
+    "resume": "Reanudar",
     "details": "Detalles",
     "loading": "Cargando",
     "score": "{{score}}%",
@@ -516,7 +535,22 @@
       "processing": "Procesando entradas: {{imported}} de {{total}}",
       "importing": "Importando {{imported}} entradas...",
       "imported": "{{imported}} entradas se han importado correctamente.",
-      "error": "Ocurrió un error al importar la lista. Por favor, inténtalo de nuevo."
+      "error": "Ocurrió un error al importar la lista. Por favor, inténtalo de nuevo.",
+      "sync_startup": "Sincronizar al iniciar",
+      "sync_startup_desc": "Activa una sincronización del catálogo remoto de inmediato al iniciar la aplicación.",
+      "private": "Privado por defecto",
+      "private_desc": "Hace que todas las entradas de metadatos de las colecciones sincronizadas sean ocultas o privadas por defecto.",
+      "sync_interval": "Intervalo de sincronización",
+      "sync_interval_desc": "Define los intervalos de actualización en segundo plano (en segundos) para la base de datos.",
+      "conflict_strategy": "Estrategia de conflicto",
+      "conflict_strategy_desc": "Determina la lógica de respaldo prioritaria cuando las entradas chocan entre diferentes servicios.",
+      "conflict_score": "Mantener puntuación más alta",
+      "conflict_local": "Mantener versión local",
+      "conflict_remote": "Mantener versión remota",
+      "conflict_updated": "Mantener actualización más reciente",
+      "conflict_anilist": "Priorizar Anilist",
+      "conflict_mal": "Priorizar MyAnimeList",
+      "conflict_kitsu": "Priorizar Kitsu"
     },
 
     "general_section": {
@@ -568,7 +602,8 @@
       "title_language_desc": "Selecciona cómo prefieres ver los nombres de las obras en la aplicación.",
       "title_language_romaji": "Romaji (p. ej. Shingeki no Kyojin)",
       "title_language_english": "Inglés (p. ej. Attack on Titan)",
-      "title_language_native": "Nativo (p. ej. 進撃の巨人)"
+      "title_language_native": "Nativo (p. ej. 進撃の巨人)",
+      "title_language_chinese": "Chino (ej. 进击的巨人)"
     },
 
     "content_section": {
@@ -614,7 +649,15 @@
       "auto_skip_intro": "Omitir intros automáticamente",
       "auto_skip_intro_desc": "Omite automáticamente los temas de apertura si se detectan.",
       "auto_skip_outro": "Omitir endings automáticamente",
-      "auto_skip_outro_desc": "Omite automáticamente los temas de cierre si se detectan."
+      "auto_skip_outro_desc": "Omite automáticamente los temas de cierre si se detectan.",
+      "use_mpv": "Usar MPV",
+      "use_mpv_desc": "Usa mpv en lugar del reproductor integrado. mpv debe estar en la variable de entorno PATH.",
+      "let_hoshi": "Permitir que Hoshi administre la configuración de mpv",
+      "let_hoshi_desc": "Hoshi escribirá y administrará el directorio de configuración de mpv: scripts, fuentes y OSC.",
+      "osc": "Apariencia de MPV (OSC)",
+      "osc_desc": "Elige un estilo de OSC. Se descargará y aplicará automáticamente.",
+      "scripts": "Scripts",
+      "scripts_desc": "Habilita scripts para expandir las funciones de mpv. Se descargarán automáticamente."
     },
 
     "readers_section": {

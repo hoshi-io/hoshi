@@ -55,7 +55,8 @@
             "title_language": "لغة العناوين",
             "romaji": "روماجي",
             "english": "الإنجليزية",
-            "native": "اللغة الأصلية"
+            "native": "اللغة الأصلية",
+            "chinese": "الصينية"
         },
         "marketplace": {
             "title": "الإضافات",
@@ -116,7 +117,8 @@
         "MOVIE": "فيلم",
         "SPECIAL": "حلقة خاصة",
         "MANGA": "مانغا",
-        "NOVEL": "رواية"
+        "NOVEL": "رواية",
+        "OVA": "أوفا (OVA)"
     },
     "list": {
         "title": "القائمة",
@@ -171,7 +173,11 @@
             "update": "تحديث",
             "default_title": "عنوان غير معروف",
             "of_total": "(من أصل {{count}})",
-            "saving": "جاري الحفظ"
+            "saving": "جاري الحفظ",
+            "merge": "دمج",
+            "conflict": "تعارض",
+            "history": "السجل",
+            "no_history": "لا يوجد سجل"
         }
     },
     "marketplace": {
@@ -226,7 +232,14 @@
         "paragraph_spacing": "تباعد الفقرات",
         "content_width": "عرض المحتوى",
         "align_left": "يسار",
-        "align_justify": "ضبط"
+        "align_justify": "ضبط",
+        "next_page": "الصفحة التالية",
+        "prev_page": "الصفحة السابقة",
+        "scroll_up": "التمرير لأعلى",
+        "scroll_down": "التمرير لأسفل",
+        "page_scroll": "تمرير الصفحة",
+        "increase_font": "تكبير الخط",
+        "decrease_font": "تصغير الخط"
     },
     "schedule": {
         "title": "الجدول",
@@ -242,7 +255,8 @@
         "empty_desc": "لا توجد حلقات مجدولة للإطار الزمني المحدد.",
         "airing_today": "يعرض اليوم",
         "watching": "أتابعه",
-        "planning": "أخطط لمتابعته"
+        "planning": "أخطط لمتابعته",
+        "my_list_filter": "قائمتي"
     },
     "search": {
         "title": "بحث",
@@ -324,7 +338,11 @@
         "invalid_response_type": "أعادت الإضافة تنسيقاً غير متوافق.",
         "no_stream_url": "لم يتم العثور على رابط فيديو في السيرفر المختار.",
         "skip_op": "تخطي المقدمة",
-        "skip_ed": "تخطي النهاية"
+        "skip_ed": "تخطي النهاية",
+        "open": "فتح",
+        "launching": "جاري التشغيل...",
+        "mark_watched": "تحديد كمشاهد",
+        "relaunch": "إعادة تشغيل MPV"
     },
     "content": {
         "details": "التفاصيل",
@@ -397,6 +415,7 @@
         "provider": "المزود",
         "select": "اختيار",
         "id_slug": "المعرف",
+        "resume": "متابعة",
         "extension_manager": {
             "no_results_found_ext": "لم يتم العثور على نتائج",
             "missing_id_error": "خطأ في المعرف المفقود",
@@ -508,7 +527,22 @@
             "processing": "جارٍ معالجة الإدخالات: {{imported}} من {{total}}",
             "importing": "جارٍ استيراد {{imported}} من الإدخالات...",
             "imported": "تم استيراد {{imported}} إدخالًا بنجاح.",
-            "error": "حدث خطأ أثناء استيراد القائمة. يرجى المحاولة مرة أخرى."
+            "error": "حدث خطأ أثناء استيراد القائمة. يرجى المحاولة مرة أخرى.",
+            "sync_startup": "مزامنة عند بدء التشغيل",
+            "sync_startup_desc": "بدء مزامنة الفهرس البعيد النشط فوراً عند تشغيل التطبيق.",
+            "private": "خاص بشكل افتراضي",
+            "private_desc": "جعل جميع إدخالات البيانات الوصفية لمجموعات التتبع المتزامنة حديثاً مخفية أو خاصة بشكل افتراضي.",
+            "sync_interval": "فترة المزامنة",
+            "sync_interval_desc": "تحديد الفترات الزمنية للتحديث في الخلفية (بالثواني) لتحديث قاعدة البيانات بشكل دوري.",
+            "conflict_strategy": "استراتيجية التعارض",
+            "conflict_strategy_desc": "تحديد منطق التتبع البديل ذو الأولوية عند تضارب الإدخالات عبر الخدمات المختلفة.",
+            "conflict_score": "الاحتفاظ بالتقييم الأعلى",
+            "conflict_local": "الاحتفاظ بالنسخة المحلية",
+            "conflict_remote": "الاحتفاظ بالنسخة البعيدة",
+            "conflict_updated": "الاحتفاظ بأحدث تحديث",
+            "conflict_anilist": "إعطاء الأولوية لـ Anilist",
+            "conflict_mal": "إعطاء الأولوية لـ MyAnimeList",
+            "conflict_kitsu": "إعطاء الأولوية لـ Kitsu"
         },
 
         "general_section": {
@@ -560,7 +594,8 @@
             "default_home_manga": "مانجا",
             "default_home_novel": "روايات",
             "disable_card_trailers": "تعطيل العروض الدعائية للبطاقات",
-            "disable_card_trailers_desc": "يمنع العروض الدعائية من التشغيل تلقائياً عند تمرير الفأرة فوق البطاقات."
+            "disable_card_trailers_desc": "يمنع العروض الدعائية من التشغيل تلقائياً عند تمرير الفأرة فوق البطاقات.",
+            "title_language_chinese": "الصينية (مثال: 进击的巨人)"
         },
 
         "content_section": {
@@ -606,7 +641,15 @@
             "auto_skip_intro": "تخطي المقدمة تلقائياً",
             "auto_skip_intro_desc": "تخطي شارة البداية تلقائياً إذا تم اكتشافها",
             "auto_skip_outro": "تخطي الخاتمة تلقائياً",
-            "auto_skip_outro_desc": "تخطي شارة النهاية تلقائياً إذا تم اكتشافها."
+            "auto_skip_outro_desc": "تخطي شارة النهاية تلقائياً إذا تم اكتشافها.",
+            "use_mpv": "استخدام MPV",
+            "use_mpv_desc": "استخدام مشغل mpv بدلاً من المشغل المدمج. يجب أن يكون مشغل mpv مضافاً إلى متغير البيئة PATH.",
+            "let_hoshi": "السماح لـ Hoshi بإدارة إعدادات mpv",
+            "let_hoshi_desc": "سيتولى Hoshi كتابة وإدارة دليل إعدادات mpv: السكربتات، الخطوط، وواجهة التحكم (OSC).",
+            "osc": "مظهر واجهة MPV (OSC)",
+            "osc_desc": "اختر نمط واجهة التحكم (OSC). سيتم تنزيله وتطبيقه تلقائياً.",
+            "scripts": "السكربتات",
+            "scripts_desc": "تمكين السكربتات لتوسيع وظائف mpv. سيتم تنزيلها تلقائياً."
         },
 
         "readers_section": {

@@ -56,7 +56,8 @@
       "title_language": "標題語言",
       "romaji": "羅馬拼音 (Romaji)",
       "english": "英文",
-      "native": "原文"
+      "native": "原文",
+      "chinese": "繁體中文"
     },
     "marketplace": {
       "title": "擴充功能",
@@ -121,7 +122,8 @@
     "cover": "封面",
     "banner": "橫幅",
     "episodes": "{{count}} 集",
-    "watch": "觀看"
+    "watch": "觀看",
+    "OVA": "OVA"
   },
 
   "list": {
@@ -178,7 +180,11 @@
       "update": "更新",
       "default_title": "未知標題",
       "of_total": "/ 共 {{count}}",
-      "saving": "儲存中"
+      "saving": "儲存中",
+      "merge": "合併",
+      "conflict": "衝突",
+      "history": "歷史紀錄",
+      "no_history": "暫無歷史紀錄"
     }
   },
   "marketplace": {
@@ -235,9 +241,17 @@
     "paragraph_spacing": "段落間距",
     "content_width": "內容寬度",
     "align_left": "靠左",
-    "align_justify": "左右對齊"
+    "align_justify": "左右對齊",
+    "next_page": "下一頁",
+    "prev_page": "上一頁",
+    "scroll_up": "向上捲動",
+    "scroll_down": "向下捲動",
+    "page_scroll": "頁面捲動",
+    "increase_font": "放大字型",
+    "decrease_font": "縮小字型"
   },
   "schedule": {
+    "my_list_filter": "我的列表",
     "title": "播放表",
     "upcoming_episodes": "即將播放",
     "release_calendar": "{{name}} 的發布日曆",
@@ -333,9 +347,14 @@
     "invalid_response_type": "擴充功能回傳了不相容的格式。",
     "no_stream_url": "所選伺服器中找不到影片網址。",
     "skip_op": "跳過片頭",
-    "skip_ed": "跳過片尾"
+    "skip_ed": "跳過片尾",
+    "open": "開啟",
+    "launching": "正在啟動...",
+    "mark_watched": "標記為已觀看",
+    "relaunch": "重新啟動 MPV"
   },
   "content": {
+    "resume": "繼續觀看",
     "details": "詳情",
     "close": "關閉",
     "connected_trackers": "已連接的追蹤器",
@@ -519,7 +538,22 @@
       "processing": "正在處理項目：{{imported}} / {{total}}",
       "importing": "正在匯入 {{imported}} 項目...",
       "imported": "已成功匯入 {{imported}} 項目。",
-      "error": "匯入清單時發生錯誤。請再試一次。"
+      "error": "匯入清單時發生錯誤。請再試一次。",
+      "sync_startup": "啟動時同步",
+      "sync_startup_desc": "在啟動應用程式時，立即觸發主動的遠端目錄同步。",
+      "private": "預設私有",
+      "private_desc": "預設將所有新同步的追蹤器（Tracker）收藏元數據條目設定為隱藏或私有。",
+      "sync_interval": "同步時間間隔",
+      "sync_interval_desc": "定義用於定期更新資料庫的背景頻率週期（以秒為單位）。",
+      "conflict_strategy": "衝突解決策略",
+      "conflict_strategy_desc": "當不同服務之間的條目發生衝突時，決定優先使用的備用追蹤邏輯。",
+      "conflict_score": "保留最高評分",
+      "conflict_local": "保留本地版本",
+      "conflict_remote": "保留遠端版本",
+      "conflict_updated": "保留最新更新",
+      "conflict_anilist": "優先 Anilist",
+      "conflict_mal": "優先 MyAnimeList",
+      "conflict_kitsu": "優先 Kitsu"
     },
 
     "general_section": {
@@ -571,7 +605,8 @@
       "default_home_manga": "漫畫",
       "default_home_novel": "小說",
       "disable_card_trailers": "停用卡片預告片",
-      "disable_card_trailers_desc": "防止當滑鼠停留在卡片上時自動播放預告片。"
+      "disable_card_trailers_desc": "防止當滑鼠停留在卡片上時自動播放預告片。",
+      "title_language_chinese": "中文（例如：進擊的巨人）"
     },
 
     "content_section": {
@@ -617,7 +652,15 @@
       "auto_skip_intro": "自動跳過片頭",
       "auto_skip_intro_desc": "如果偵測到片頭主題曲則自動跳過。",
       "auto_skip_outro": "自動跳過片尾",
-      "auto_skip_outro_desc": "如果偵測到片尾主題曲則自動跳過。"
+      "auto_skip_outro_desc": "如果偵測到片尾主題曲則自動跳過。",
+      "use_mpv": "使用 MPV",
+      "use_mpv_desc": "使用 mpv 代替內建播放器。mpv 必須設定於環境變數 PATH 中。",
+      "let_hoshi": "允許 Hoshi 管理 mpv 設定",
+      "let_hoshi_desc": "Hoshi 將自動寫入並管理 mpv 的設定目錄：包含腳本（scripts）、字型（fonts）與 OSC（螢幕控制）。",
+      "osc": "MPV 面板 (OSC)",
+      "osc_desc": "選擇一種 OSC 樣式。系統將會自動下載並套用。",
+      "scripts": "腳本",
+      "scripts_desc": "啟用擴充 mpv 功能的腳本。系統將會自動下載。"
     },
 
     "readers_section": {

@@ -55,7 +55,8 @@
       "title_language": "タイトルの表示言語",
       "romaji": "ローマ字",
       "english": "英語",
-      "native": "ネイティブ"
+      "native": "ネイティブ",
+      "chinese": "中国語"
     },
     "marketplace": {
       "title": "拡張機能",
@@ -120,7 +121,8 @@
     "cover": "カバー",
     "banner": "バナー",
     "episodes": "{{count}}話",
-    "watch": "視聴"
+    "watch": "視聴",
+    "OVA": "OVA"
   },
 
   "list": {
@@ -177,7 +179,11 @@
       "update": "更新",
       "default_title": "不明なタイトル",
       "of_total": "(全{{count}})",
-      "saving": "保存中"
+      "saving": "保存中",
+      "merge": "統合",
+      "conflict": "競合",
+      "history": "履歴",
+      "no_history": "履歴なし"
     }
   },
 
@@ -236,7 +242,14 @@
     "paragraph_spacing": "段落間隔",
     "content_width": "コンテンツ幅",
     "align_left": "左揃え",
-    "align_justify": "両端揃え"
+    "align_justify": "両端揃え",
+    "next_page": "次のページ",
+    "prev_page": "前のページ",
+    "scroll_up": "上にスクロール",
+    "scroll_down": "下にスクロール",
+    "page_scroll": "ページスクロール",
+    "increase_font": "フォントを大きく",
+    "decrease_font": "フォントを小さく"
   },
 
   "schedule": {
@@ -253,7 +266,8 @@
     "empty_desc": "選択した期間に予定されているエピソードはありません。",
     "airing_today": "本日放送",
     "watching": "視聴中",
-    "planning": "予定"
+    "planning": "予定",
+    "my_list_filter": "マイリスト"
   },
 
   "search": {
@@ -337,9 +351,14 @@
     "invalid_response_type": "拡張機能が互換性のないフォーマットを返しました。",
     "no_stream_url": "選択したサーバーに動画のURLが見つかりませんでした。",
     "skip_op": "オープニングをスキップ",
-    "skip_ed": "エンディングをスキップ"
+    "skip_ed": "エンディングをスキップ",
+    "open": "開く",
+    "launching": "起動中...",
+    "mark_watched": "視聴済みにする",
+    "relaunch": "MPVを再起動"
   },
   "content": {
+    "resume": "再開",
     "details": "詳細",
     "loading": "読み込み中",
     "close": "閉じる",
@@ -521,7 +540,22 @@
       "processing": "エントリを処理中: {{imported}} / {{total}}",
       "importing": "{{imported}}件のエントリをインポート中...",
       "imported": "{{imported}}件のエントリが正常にインポートされました。",
-      "error": "リストのインポート中にエラーが発生しました。もう一度お試しください。"
+      "error": "リストのインポート中にエラーが発生しました。もう一度お試しください。",
+      "sync_startup": "起動時に同期",
+      "sync_startup_desc": "アプリの起動時に、リモートカタログのアクティブな同期を即座に実行します。",
+      "private": "デフォルトで非公開",
+      "private_desc": "新しく同期されたトラッカーコレクションのメタデータエントリを、デフォルトで非表示または非公開にします。",
+      "sync_interval": "同期の間隔",
+      "sync_interval_desc": "定期的なデータベース更新を行うバックグラウンド処理の間隔（秒単位）を設定します。",
+      "conflict_strategy": "競合の解決戦略",
+      "conflict_strategy_desc": "複数のサービス間でエントリが重複・衝突した場合の、優先フォールバック追跡ロジックを決定します。",
+      "conflict_score": "最高スコアを維持",
+      "conflict_local": "ローカルバージョンを維持",
+      "conflict_remote": "リモートバージョンを維持",
+      "conflict_updated": "最新の更新を維持",
+      "conflict_anilist": "Anilistを優先",
+      "conflict_mal": "MyAnimeListを優先",
+      "conflict_kitsu": "Kitsuを優先"
     },
 
     "general_section": {
@@ -573,7 +607,8 @@
       "default_home_manga": "マンガ",
       "default_home_novel": "小説",
       "disable_card_trailers": "カードの予告編を無効にする",
-      "disable_card_trailers_desc": "カードにホバーした際に予告編が自動再生されるのを防ぎます。"
+      "disable_card_trailers_desc": "カードにホバーした際に予告編が自動再生されるのを防ぎます。",
+      "title_language_chinese": "中国語 (例: 进击的巨人)"
     },
 
     "content_section": {
@@ -619,7 +654,15 @@
       "auto_skip_intro": "イントロ自動スキップ",
       "auto_skip_intro_desc": "オープニングを自動スキップします",
       "auto_skip_outro": "アウトロ自動スキップ",
-      "auto_skip_outro_desc": "エンディングを自動スキップします。"
+      "auto_skip_outro_desc": "エンディングを自動スキップします。",
+      "use_mpv": "MPVを使用する",
+      "use_mpv_desc": "内蔵プレイヤーの代わりにmpvを使用します。mpvが環境変数PATHに通っている必要があります。",
+      "let_hoshi": "Hoshiにmpvの構成を管理させる",
+      "let_hoshi_desc": "Hoshiがmpvの設定ディレクトリ（スクリプト、フォント、OSC）を自動生成・管理します。",
+      "osc": "MPVスキン (OSC)",
+      "osc_desc": "OSCのスタイルを選択します。自動的にダウンロードされ、適用されます。",
+      "scripts": "スクリプト",
+      "scripts_desc": "mpvの機能を拡張するスクリプトを有効にします。これらは自動的にダウンロードされます。"
     },
 
     "readers_section": {
