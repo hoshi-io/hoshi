@@ -17,7 +17,7 @@
   <a href="https://github.com/hoshi-io/hoshi/releases">
     <img src="https://img.shields.io/github/downloads/hoshi-io/hoshi/total?style=for-the-badge&color=2a2a2a" alt="Downloads" />
   </a>
-  <a href="https://github.com/hoshi-io/hoshi/blob/main/LICENSE">
+  <a href="https://github.com/hoshi-io/hoshi/blob/master/LICENSE">
     <img src="https://img.shields.io/github/license/hoshi-io/hoshi?style=for-the-badge&color=2a2a2a" alt="License" />
   </a>
 </p>
