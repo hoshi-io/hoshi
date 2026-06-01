@@ -76,6 +76,9 @@ pub struct TokenData {
     pub token_type: String,
     pub expires_at: String,
     pub tracker_user_id: String,
+    pub display_name:    Option<String>,
+    pub avatar_url:      Option<String>,
+    pub profile_url:     Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -76,7 +76,7 @@ impl TrackerProvider for MalProvider {
         access_token: &str,
         token_type: &str,
     ) -> CoreResult<TokenData> {
-        let url = format!("{}/users/@me", MAL_API_BASE_URL);
+        let url = format!("{}/users/@me?fields=picture", MAL_API_BASE_URL);
 
         let res = self
             .client
@@ -106,6 +106,9 @@ impl TrackerProvider for MalProvider {
                 .unwrap_or_else(Utc::now)
                 .to_rfc3339(),
             tracker_user_id: user_data.id.to_string(),
+            display_name: user_data.name,
+            avatar_url:   user_data.picture,
+            profile_url:  Some(format!("https://myanimelist.net/profile/{}", user_data.id)),
         })
     }
 
@@ -696,8 +699,10 @@ impl TrackerProvider for MalProvider {
 }
 
 #[derive(Debug, Deserialize)]
-struct MalUserResponse {
-    id: i32,
+pub struct MalUserResponse {
+    pub id:      i64,
+    pub name:    Option<String>,
+    pub picture: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

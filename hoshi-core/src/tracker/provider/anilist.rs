@@ -508,12 +508,14 @@ impl TrackerProvider for AniListProvider {
     }
 
     async fn validate_and_store_token(&self, access_token: &str, token_type: &str) -> CoreResult<TokenData> {
-        let res = self.graphql(Some(access_token), &json!({ "query": "query { Viewer { id } }" })).await?;
+        let res = self.graphql(Some(access_token), &json!({
+            "query": "query { Viewer { id name avatar { large } siteUrl } }"
+        })).await?;
 
-        let user_id = res.get("data")
-            .and_then(|d| d.get("Viewer"))
-            .and_then(|v| v.get("id"))
-            .and_then(|id| id.as_i64())
+        let viewer = res.get("data").and_then(|d| d.get("Viewer"))
+            .ok_or_else(|| CoreError::AuthError("error.tracker.invalid_credentials".into()))?;
+
+        let user_id = viewer.get("id").and_then(|v| v.as_i64())
             .ok_or_else(|| CoreError::AuthError("error.tracker.invalid_credentials".into()))?;
 
         let expires_at = Utc::now()
@@ -527,6 +529,9 @@ impl TrackerProvider for AniListProvider {
             token_type:      token_type.to_string(),
             expires_at,
             tracker_user_id: user_id.to_string(),
+            display_name: viewer.get("name").and_then(|v| v.as_str()).map(str::to_string),
+            avatar_url:   viewer.get("avatar").and_then(|a| a.get("large")).and_then(|v| v.as_str()).map(str::to_string),
+            profile_url:  viewer.get("siteUrl").and_then(|v| v.as_str()).map(str::to_string),
         })
     }
 

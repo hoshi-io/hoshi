@@ -744,14 +744,12 @@ impl TrackerProvider for KitsuProvider {
             .get_auth("/users?filter[self]=true", access_token)
             .await?;
 
-        let user_id = res
-            .get("data")
-            .and_then(|d| d.as_array())
+        let user = res.get("data").and_then(|d| d.as_array())
             .and_then(|arr| arr.first())
-            .and_then(|u| u.get("id"))
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| CoreError::AuthError("Invalid Kitsu token".into()))?
-            .to_string();
+            .ok_or_else(|| CoreError::AuthError("Invalid Kitsu token".into()))?;
+
+        let attrs = user.get("attributes");
+        
 
         let expires_at = Utc::now()
             .checked_add_signed(chrono::Duration::days(30))
@@ -763,7 +761,10 @@ impl TrackerProvider for KitsuProvider {
             refresh_token: None,
             token_type: token_type.to_string(),
             expires_at,
-            tracker_user_id: user_id,
+            tracker_user_id: user.get("id").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
+            display_name: attrs.and_then(|a| a.get("name")).and_then(|v| v.as_str()).map(str::to_string),
+            avatar_url:   attrs.and_then(|a| a.get("avatar")).and_then(|a| a.get("original")).and_then(|v| v.as_str()).map(str::to_string),
+            profile_url:  None,
         })
     }
 

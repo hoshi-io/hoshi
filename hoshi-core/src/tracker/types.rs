@@ -7,7 +7,7 @@ pub struct IntegrationsResponse {
     pub integrations: Vec<TrackerIntegration>,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TrackerInfoResponse {
     pub name: String,
@@ -18,8 +18,12 @@ pub struct TrackerInfoResponse {
     pub connected: bool,
     pub tracker_user_id: Option<String>,
     pub sync_enabled: Option<bool>,
+    pub display_name_user: Option<String>,
+    pub avatar_url: Option<String>,
+    pub profile_url: Option<String>,
+    pub total_entries: Option<i32>,
+    pub last_synced_at: Option<i64>,
 }
-
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncResponse {
@@ -50,6 +54,11 @@ pub struct TrackerIntegration {
     pub token_type: String,
     pub expires_at: i64,
     pub sync_enabled: bool,
+    pub display_name: Option<String>,
+    pub avatar_url: Option<String>,
+    pub profile_url: Option<String>,
+    pub total_entries: Option<i32>,
+    pub last_synced_at: Option<i64>,
     pub created_at: i64,
     pub updated_at: i64,
 }

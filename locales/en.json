@@ -537,7 +537,22 @@
       "processing": "Processing entries: {{imported}} of {{total}}",
       "importing": "Importing {{imported}} entries...",
       "imported": "{{imported}} entries have been successfully imported.",
-      "error": "An error occurred while importing the list. Please try again."
+      "error": "An error occurred while importing the list. Please try again.",
+      "sync_startup": "Sync on startup",
+      "sync_startup_desc": "Trigger an active remote catalog sync immediately when launching the app.",
+      "private": "Private by default",
+      "private_desc": "Make all newly synced tracker collection metadata entries hidden or private by default.",
+      "sync_interval": "Sync interval",
+      "sync_interval_desc": "Define background frequency periods (in seconds) for periodic database updating.",
+      "conflict_strategy": "Conflict strategy",
+      "conflict_strategy_desc": "Decide priority fallback tracking logic when entries collide across services.",
+      "conflict_score": "Keep Highest Score",
+      "conflict_local": "Keep Local Version",
+      "conflict_remote": "Keep Remote Version",
+      "conflict_updated": "Keep Latest Updated",
+      "conflict_anilist": "Prioritize Anilist",
+      "conflict_mal": "Prioritize MyAnimeList",
+      "conflict_kitsu": "Prioritize Kitsu"
     },
 
     "general_section": {

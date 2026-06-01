@@ -120,7 +120,7 @@
                 <PackageOpen class="h-8 w-8 text-muted-foreground" />
             </div>
             <p class="text-lg font-bold text-foreground mb-1">{i18n.t('settings.extension_section.no_installed')}</p>
-            <p class="text-sm text-muted-foreground">{i18n.t('settings.extension_section.no_installed_desc', { defaultValue: 'Browse the Marketplace to install extensions.' })}</p>
+            <p class="text-sm text-muted-foreground">{i18n.t('settings.extension_section.no_installed_desc')}</p>
         </div>
 
     {:else}
@@ -129,7 +129,7 @@
             <div class="relative w-full md:flex-1 group">
                 <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <Input
-                        placeholder={i18n.t('settings.extension_section.search_installed', { defaultValue: 'Search installed…' })}
+                        placeholder={i18n.t('marketplace.search_repository')}
                         class="pl-9 bg-background h-9 text-sm w-full"
                         bind:value={searchQuery}
                 />

@@ -287,7 +287,7 @@
                             <Tabs.Content value="tracking" class="focus-visible:outline-none mt-0 w-full">
                                 {#if activeTab === 'tracking'}
                                     <div in:fade={{ duration: 250, delay: 50 }}>
-                                        <Tracker />
+                                        <Tracker bind:config={appConfig.data.list} onSave={handleSaveConfig}/>
                                     </div>
                                 {/if}
                             </Tabs.Content>

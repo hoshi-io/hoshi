@@ -22,6 +22,8 @@ pub struct UserConfig {
     pub discord: DiscordConfig,
     #[serde(default)]
     pub mpv: MpvConfig,
+    #[serde(default)]
+    pub list: ListConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -139,15 +141,10 @@ impl Default for PlayerConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MpvConfig {
-    /// Use mpv instead of the built-in player
     pub use_mpv: bool,
-    /// Let Hoshi manage mpv's config directory (writes mpv.conf, scripts, fonts)
     pub use_hoshi_config: bool,
-    /// Active OSC bundle name (e.g. "modernz"), None = mpv default OSC
     pub active_osc: Option<String>,
-    /// Standalone scripts enabled from scripts-available/
     pub enabled_scripts: Vec<String>,
-    /// Raw mpv.conf key=value overrides written when applying config
     pub extra_options: HashMap<String, String>,
 }
 
@@ -280,6 +277,39 @@ impl Default for DiscordConfig {
             enabled: true,
             show_title: true,
             hide_nsfw: true,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListConfig {
+    pub merge_strategy: MergeStrategy,
+    pub sync_on_startup: bool,
+    pub sync_interval_seconds: u32,
+    pub private_by_default: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum MergeStrategy {
+    #[default]
+    KeepHighest,
+    KeepLocal,
+    KeepRemote,
+    KeepLatest,
+    AnilistFirst,
+    MalFirst,
+    KitsuFirst
+}
+
+impl Default for ListConfig {
+    fn default() -> Self {
+        Self {
+            merge_strategy: MergeStrategy::KeepHighest,
+            sync_on_startup:         true,
+            sync_interval_seconds:   3600,
+            private_by_default:      false,
         }
     }
 }

@@ -10,6 +10,15 @@ export type NovelTheme = 'light' | 'dark' | 'sepia' | 'oled';
 export type FontFamily = 'sans' | 'serif' | 'mono';
 export type TextAlign = 'left' | 'justify';
 
+export type MergeStrategy =
+    | 'keepHighest'
+    | 'keepLocal'
+    | 'keepRemote'
+    | 'keepLatest'
+    | 'anilistFirst'
+    | 'malFirst'
+    | 'kitsuFirst';
+
 export interface GeneralConfig {
     showAdultContent: boolean;
     blurAdultContent: boolean;
@@ -76,6 +85,13 @@ export interface DiscordConfig {
     hideNsfw: boolean;
 }
 
+export interface ListConfig {
+    mergeStrategy: MergeStrategy;
+    syncOnStartup: boolean;
+    syncIntervalSeconds: number;
+    privateByDefault: boolean;
+}
+
 export interface AppConfig {
     general: GeneralConfig;
     ui: UiConfig;
@@ -86,4 +102,5 @@ export interface AppConfig {
     manga: MangaConfig;
     novel: NovelConfig;
     discord: DiscordConfig;
+    list: ListConfig;
 }

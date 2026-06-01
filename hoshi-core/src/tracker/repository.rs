@@ -16,20 +16,27 @@ impl TrackerRepository {
         refresh_token: Option<&str>,
         token_type: &str,
         expires_at: i64,
+        display_name: Option<&str>,
+        avatar_url: Option<&str>,
+        profile_url: Option<&str>,
     ) -> CoreResult<()> {
         sqlx::query(
             r#"
-            INSERT INTO UserIntegration
-                (user_id, tracker_name, tracker_user_id, access_token, refresh_token, token_type, expires_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(user_id, tracker_name) DO UPDATE SET
-                tracker_user_id = excluded.tracker_user_id,
-                access_token    = excluded.access_token,
-                refresh_token   = excluded.refresh_token,
-                token_type      = excluded.token_type,
-                expires_at      = excluded.expires_at,
-                updated_at      = strftime('%s', 'now')
-            "#,
+        INSERT INTO UserIntegration
+            (user_id, tracker_name, tracker_user_id, access_token, refresh_token,
+             token_type, expires_at, display_name, avatar_url, profile_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(user_id, tracker_name) DO UPDATE SET
+            tracker_user_id = excluded.tracker_user_id,
+            access_token    = excluded.access_token,
+            refresh_token   = excluded.refresh_token,
+            token_type      = excluded.token_type,
+            expires_at      = excluded.expires_at,
+            display_name    = excluded.display_name,
+            avatar_url      = excluded.avatar_url,
+            profile_url     = excluded.profile_url,
+            updated_at      = strftime('%s', 'now')
+        "#,
         )
             .bind(user_id)
             .bind(tracker_name)
@@ -38,6 +45,9 @@ impl TrackerRepository {
             .bind(refresh_token)
             .bind(token_type)
             .bind(expires_at)
+            .bind(display_name)
+            .bind(avatar_url)
+            .bind(profile_url)
             .execute(pool)
             .await?;
 
@@ -84,22 +94,54 @@ impl TrackerRepository {
         pool: &SqlitePool,
         user_id: i32,
     ) -> CoreResult<Vec<TrackerIntegration>> {
-        let rows: Vec<(i32, String, String, String, Option<String>, String, i64, i32, Option<String>, Option<String>)> =
-            sqlx::query_as(
-                "SELECT user_id, tracker_name, tracker_user_id, access_token, refresh_token,
-                         token_type, expires_at, sync_enabled,
-                         CAST(created_at AS TEXT) as created_at,
-                         CAST(updated_at AS TEXT) as updated_at
-                 FROM UserIntegration WHERE user_id = ?",
-            )
-                .bind(user_id)
-                .fetch_all(pool)
-                .await?;
+        let rows: Vec<(
+            i32,
+            String,
+            String,
+            String,
+            Option<String>,
+            String,
+            i64,
+            i32,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<i32>,
+            Option<i64>,
+            Option<String>,
+            Option<String>,
+        )> = sqlx::query_as(
+            "SELECT user_id, tracker_name, tracker_user_id, access_token, refresh_token,
+                token_type, expires_at, sync_enabled,
+                display_name, avatar_url, profile_url, total_entries,
+                CAST(last_synced_at AS INTEGER) as last_synced_at,
+                CAST(created_at AS TEXT) as created_at,
+                CAST(updated_at AS TEXT) as updated_at
+         FROM UserIntegration WHERE user_id = ?",
+        )
+            .bind(user_id)
+            .fetch_all(pool)
+            .await?;
 
         Ok(rows
             .into_iter()
-            .map(|(user_id, tracker_name, tracker_user_id, access_token, refresh_token,
-                      token_type, expires_at, sync_enabled, created_at, updated_at)| {
+            .map(|(
+                      user_id,
+                      tracker_name,
+                      tracker_user_id,
+                      access_token,
+                      refresh_token,
+                      token_type,
+                      expires_at,
+                      sync_enabled,
+                      display_name,
+                      avatar_url,
+                      profile_url,
+                      total_entries,
+                      last_synced_at,
+                      created_at,
+                      updated_at,
+                  )| {
                 TrackerIntegration {
                     user_id,
                     tracker_name,
@@ -109,6 +151,11 @@ impl TrackerRepository {
                     token_type,
                     expires_at,
                     sync_enabled: sync_enabled == 1,
+                    display_name,
+                    avatar_url,
+                    profile_url,
+                    total_entries,
+                    last_synced_at,
                     created_at: created_at.and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
                     updated_at: updated_at.and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
                 }
@@ -258,14 +305,26 @@ impl TrackerRepository {
         Ok(row.map(|(cid,)| cid))
     }
 
-    pub async fn has_canonical_mapping(pool: &SqlitePool, cid: &str) -> CoreResult<bool> {
-        let row: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM tracker_mappings WHERE cid = ?",
+
+    pub async fn update_sync_stats(
+        pool: &SqlitePool,
+        user_id: i32,
+        tracker_name: &str,
+        total_entries: i64,
+    ) -> CoreResult<()> {
+        sqlx::query(
+            "UPDATE UserIntegration
+         SET total_entries  = ?,
+             last_synced_at = strftime('%s', 'now'),
+             updated_at     = strftime('%s', 'now')
+         WHERE user_id = ? AND tracker_name = ?",
         )
-            .bind(cid)
-            .fetch_one(pool)
+            .bind(total_entries)
+            .bind(user_id)
+            .bind(tracker_name)
+            .execute(pool)
             .await?;
 
-        Ok(row.0 > 0)
+        Ok(())
     }
 }

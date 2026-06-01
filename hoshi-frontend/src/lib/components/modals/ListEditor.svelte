@@ -40,7 +40,6 @@
         coverImage?: string;
     } = $props();
 
-    // Tracker metadata: icon url and display name per tracker slug
     const TRACKER_META: Record<string, { icon: string; label: string }> = {
         anilist:     { icon: "https://anilist.co/img/icons/favicon-32x32.png",         label: "AniList" },
         myanimelist: { icon: "https://myanimelist.net/favicon.ico",                    label: "MyAnimeList" },
