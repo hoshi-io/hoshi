@@ -164,12 +164,6 @@
         handleFilterChange();
     }
 
-    function getSelectedLabel(type: 'status' | 'genres' | 'formats', value: string, defaultKey: string) {
-        if (!value) return i18n.t(defaultKey);
-        const option = activeFilters[type].find((f: any) => f.value === value);
-        return option ? i18n.t(option.label) : value;
-    }
-
     const toggleMultiSelect = (key: string, value: string) => {
         if (!extFilterValues[key]) extFilterValues[key] = [];
         const index = extFilterValues[key].indexOf(value);
@@ -206,7 +200,7 @@
         ]}
                         onValueChange={handleFilterChange}
                         placeholder={i18n.t('search.any_status')}
-                        class="bg-muted/20 border-none h-11 rounded-sm font-semibold"
+                        class="bg-muted/20 border-none h-1 rounded-sm font-semibold"
                 />
             </div>
 

@@ -206,12 +206,8 @@
 
 <div class="bg-background px-4 md:px-8 lg:pl-32 lg:pr-12 lg:pt-20 w-full max-w-[2000px] mx-auto space-y-10 pt-5">
     <section class="flex flex-col lg:flex-row gap-8 lg:gap-10 w-full items-start">
-        <aside class="hidden lg:block w-[260px] shrink-0 sticky top-24 h-fit">
+        <aside class="hidden lg:block w-[280px] sticky top-18">
             <div class="pb-6">
-                <h3 class="font-black text-lg mb-6 flex items-center gap-2 text-foreground/90 tracking-tight">
-                    <SlidersHorizontal class="w-5 h-5 text-primary" />
-                    {i18n.t('search.filters')}
-                </h3>
                 <SearchFilters
                         searchMode={searchState.searchMode}
                         tracker={searchState.tracker}

@@ -173,21 +173,9 @@
         {@const pref = appConfig.data?.ui?.titleLanguage || 'romaji'}
         {@const displayTitle = meta?.titleI18n?.[pref] || meta?.title || ''}
         {@const isAdultContent = detail.fullContent.content.nsfw || meta?.genres?.some(g => ['hentai', 'adult'].includes(g.toLowerCase()))}
-        {@const shouldBlur = isAdultContent && (appConfig.data?.general?.blurAdultContent ?? true)}
         {@const isAnime = detail.fullContent.content.contentType === 'anime'}
         {@const hasCastOrStaff = (meta?.characters?.length ?? 0) > 0 || (meta?.staff?.length ?? 0) > 0}
         {@const hasRelations = detail.relations.length > 0 || detail.relationsLoading}
-
-        <div class="absolute top-0 inset-x-0 h-[62vh] md:h-[72vh] overflow-hidden pointer-events-none" in:fade={{ duration: 1000 }}>
-            <img
-                    src={meta?.bannerImage || meta?.coverImage}
-                    alt=""
-                    class="w-full h-full object-cover {shouldBlur ? 'blur-3xl scale-125 opacity-5' : 'opacity-45'}"
-            />
-            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background"></div>
-            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background"></div>
-            <div class="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-background/60 to-transparent"></div>
-        </div>
 
         <ContentHero
                 fullContent={detail.fullContent}

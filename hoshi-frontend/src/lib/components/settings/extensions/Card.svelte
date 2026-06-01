@@ -97,47 +97,43 @@
             {/if}
         </Avatar.Root>
 
-        <div class="space-y-0.5 flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-                <h3 class="font-bold text-sm truncate">{ext.name}</h3>
+        <div class="space-y-1 flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h3 class="font-bold text-sm truncate max-w-[140px] sm:max-w-none">{ext.name}</h3>
 
                 <div class="flex items-center gap-1 shrink-0">
                     <Badge variant="outline" class="text-[9px] px-1 uppercase font-black tracking-wider h-4 {getTypeColor(ext.ext_type)}">
                         {ext.ext_type}
                     </Badge>
 
-                    {#if ext.language}
-                        <Badge variant="secondary" class="text-[9px] px-1 uppercase font-black tracking-wider h-4 bg-muted/80 text-muted-foreground">
-                            {ext.language}
-                        </Badge>
-                    {/if}
-
                     {#if ext.nsfw}
                         <Badge variant="outline" class="text-[9px] px-1 uppercase font-black tracking-wider h-4 border-destructive text-destructive bg-destructive/10">
                             NSFW
                         </Badge>
                     {/if}
-                    {#if source === 'lnreader'}
-                        <Badge variant="outline" class="text-[9px] px-1 uppercase font-black tracking-wider h-4 border-orange-500/40 text-orange-500 bg-orange-500/10">
-                            LNR
-                        </Badge>
-                    {/if}
-                    {#if source === 'tachiyomi'}
-                        <Badge
-                                variant="outline"
-                                class="text-[9px] px-1 uppercase font-black tracking-wider h-4 border-blue-500/40 text-blue-500 bg-blue-500/10"
-                        >
-                            TACHIYOMI
-                        </Badge>
-                    {/if}
                 </div>
             </div>
 
-            <div class="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground/80 mt-0.5">
+            <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] font-semibold text-muted-foreground/80">
                 <span>v{ext.version}</span>
+
                 {#if ext.author}
-                    <span class="opacity-50">•</span>
-                    <span class="truncate">{ext.author}</span>
+                    <span class="opacity-40">•</span>
+                    <span class="truncate max-w-[80px] sm:max-w-[120px]">{ext.author}</span>
+                {/if}
+
+                {#if ext.language}
+                    <span class="opacity-40">•</span>
+                    <span class="uppercase text-[10px] tracking-wider font-bold text-muted-foreground/70 bg-muted px-1 rounded-sm">
+                        {ext.language}
+                    </span>
+                {/if}
+
+                {#if source === 'lnreader' || source === 'tachiyomi'}
+                    <span class="opacity-40">•</span>
+                    <span class="text-[10px] font-bold tracking-wide {source === 'lnreader' ? 'text-orange-500' : 'text-blue-500'}">
+                        {source === 'lnreader' ? 'LNR' : 'Tachiyomi'}
+                    </span>
                 {/if}
             </div>
         </div>
@@ -206,12 +202,12 @@
                             {/if}
                             {i18n.t('marketplace.update')}
                         </Button>
-                        {:else}
+                    {:else}
                         <Button variant="secondary" size="sm" class="rounded-lg h-8 px-4 text-xs font-bold bg-muted/40 text-muted-foreground" disabled>
                             {i18n.t('marketplace.installed')}
                         </Button>
                     {/if}
-                    {:else}
+                {:else}
                     <Button size="sm" class="rounded-lg h-8 px-4 text-xs font-bold shadow-sm" onclick={() => onAction?.(ext)} disabled={isActionLoading}>
                         {#if isActionLoading}
                             <Spinner class="h-3 w-3 mr-1.5 animate-spin" />

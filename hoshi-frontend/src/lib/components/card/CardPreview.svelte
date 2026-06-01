@@ -55,11 +55,9 @@
 >
     <div class="banner">
         <div class="banner-media">
-            <!-- Base cover never blurred — it's just the placeholder while loading -->
             <img src={cover} alt="" class="media-img base-cover" />
 
             {#if isHovered}
-                <!-- Hover image respects shouldBlur -->
                 <img
                         src={thumbnailSrc}
                         alt=""
@@ -231,8 +229,6 @@
         font-size: 0.8rem;
         transition: filter 0.2s;
     }
-
-    .play-btn:hover { filter: brightness(1.1); }
 
     .action-btn-circle {
         width: 2.25rem;
