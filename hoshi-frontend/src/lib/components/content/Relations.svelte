@@ -12,7 +12,7 @@
     } = $props();
 
     let showAll = $state(false);
-    const INITIAL_LIMIT = 6;
+    const INITIAL_LIMIT = 7;
 
     const visibleRelations = $derived(showAll ? relations : relations.slice(0, INITIAL_LIMIT));
 

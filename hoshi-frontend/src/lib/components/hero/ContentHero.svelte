@@ -5,6 +5,7 @@
     import { Button } from "@/components/ui/button";
     import { Star, Calendar, Tv, BookMarked, Building2, Play, BookOpen, Link, Plug } from "lucide-svelte";
     import ListEditorButton from "@/components/ListEditorButton.svelte";
+    import SmartImage from "@/components/SmartImage.svelte";
 
     let {
         fullContent,
@@ -63,10 +64,11 @@
 </script>
 
 <div class="absolute top-0 inset-x-0 h-[62vh] md:h-[72vh] overflow-hidden pointer-events-none" in:fade={{ duration: 1000 }}>
-    <img
+    <SmartImage
             src={meta?.bannerImage || meta?.coverImage}
-            alt=""
-            class="w-full h-full object-cover {shouldBlur ? 'blur-3xl scale-125 opacity-5' : 'opacity-45'}"
+            alt={""}
+            {shouldBlur}
+            class="w-full h-full object-cover opacity-45"
     />
     <div class="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background"></div>
     <div class="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-background/60 to-transparent"></div>
@@ -77,10 +79,12 @@
 
         <div class="shrink-0 w-32 sm:w-40 md:w-48 lg:w-56" in:fly={{ y: 20, duration: 500, delay: 150 }}>
             <div class="rounded-sm overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.6)] bg-muted aspect-[2/3] ring-1 ring-white/10">
-                <img
+
+                <SmartImage
                         src={meta?.coverImage}
                         alt={displayTitle}
-                        class="w-full h-full object-cover {shouldBlur ? 'blur-2xl scale-110' : ''}"
+                        {shouldBlur}
+                        class="w-full h-full object-cover"
                 />
             </div>
         </div>

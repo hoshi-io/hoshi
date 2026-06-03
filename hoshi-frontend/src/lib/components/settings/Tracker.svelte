@@ -239,7 +239,7 @@
                 <Label class="text-base font-bold cursor-pointer" for="syncOnStartup">{i18n.t("settings.trackers_section.sync_startup")}</Label>
                 <p class="text-sm text-muted-foreground">{i18n.t("settings.trackers_section.sync_startup_desc")}</p>
             </div>
-            <Switch id="syncOnStartup" bind:checked={config.syncOnStartup} onCheckedChange={onSave} class="shrink-0" />
+            <Switch id="syncOnStartup" bind:checked={config.syncOnStartup} onCheckedChange={onSave} class="shrink-0 scale-125" />
         </div>
 
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
@@ -247,7 +247,7 @@
                 <Label class="text-base font-bold cursor-pointer" for="privateByDefault">{i18n.t("settings.trackers_section.private")}</Label>
                 <p class="text-sm text-muted-foreground">{i18n.t("settings.trackers_section.private_desc")}</p>
             </div>
-            <Switch id="privateByDefault" bind:checked={config.privateByDefault} onCheckedChange={onSave} class="shrink-0" />
+            <Switch id="privateByDefault" bind:checked={config.privateByDefault} onCheckedChange={onSave} class="shrink-0 scale-125" />
         </div>
 
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
@@ -262,7 +262,7 @@
                         min="60"
                         bind:value={config.syncIntervalSeconds}
                         onchange={onSave}
-                        class="rounded-xl h-11 text-right w-full"
+                        class="rounded-sm h-11 text-right w-full"
                 />
             </div>
         </div>
@@ -278,7 +278,7 @@
                         bind:value={config.mergeStrategy}
                         onValueChange={onSave}
                         placeholder="Select strategy..."
-                        class="h-11 rounded-xl bg-muted/20 border-transparent hover:bg-muted/30 font-medium text-sm text-foreground transition-colors"
+                        class="h-11 rounded-sm bg-muted/20 border-transparent hover:bg-muted/30 font-medium text-sm text-foreground transition-colors"
                 />
             </div>
         </div>
@@ -294,7 +294,7 @@
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex items-start gap-4 min-w-0">
                             <div class="relative shrink-0">
-                                <div class="h-14 w-14 border border-border shadow-sm rounded-xl overflow-hidden bg-muted/10 flex items-center justify-center">
+                                <div class="h-14 w-14 border border-border shadow-sm rounded-sm overflow-hidden bg-muted/10 flex items-center justify-center">
                                     {#if tracker.connected && tracker.avatarUrl}
                                         <img src={tracker.avatarUrl} alt={tracker.displayName_user || tracker.displayName} class="h-full w-full object-cover" />
                                     {:else}
@@ -345,7 +345,7 @@
                                             id={`sync-${tracker.name}`}
                                             checked={tracker.syncEnabled}
                                             onCheckedChange={(v) => handleToggleSync(tracker.name, v)}
-                                            class="scale-75 origin-center h-4 w-7"
+                                            class="scale-125 origin-center h-4 w-7"
                                     />
                                 </span>
                                         {/if}
@@ -367,17 +367,17 @@
                         <div class="shrink-0 flex items-center gap-2">
                             {#if tracker.connected}
                                 {#if tracker.profileUrl}
-                                    <Button variant="ghost" size="icon" class="text-muted-foreground hover:text-foreground rounded-xl h-10 w-10 border border-border/40 bg-muted/5"
+                                    <Button variant="ghost" size="icon" class="text-muted-foreground hover:text-foreground rounded-sm h-10 w-10 border border-border/40 bg-muted/5"
                                             onclick={() => openUrl(tracker.profileUrl!)} title="View Profile">
                                         <ExternalLink class="h-4 w-4" />
                                     </Button>
                                 {/if}
-                                <Button variant="ghost" size="icon" class="text-muted-foreground hover:text-destructive rounded-xl h-10 w-10 border border-border/40 bg-muted/5"
+                                <Button variant="ghost" size="icon" class="text-muted-foreground hover:text-destructive rounded-sm h-10 w-10 border border-border/40 bg-muted/5"
                                         onclick={() => { trackerToRemove = tracker.name; showRemoveTrackerAlert = true; }}>
                                     <Trash2 class="h-4 w-4" />
                                 </Button>
                             {:else}
-                                <Button variant="outline" class="rounded-xl h-10 font-bold shadow-sm text-sm px-4"
+                                <Button variant="outline" class="rounded-sm h-10 font-bold shadow-sm text-sm px-4"
                                         onclick={() => openAddTrackerDialog(tracker)}>
                                     <Plus class="h-4 w-4 mr-1.5" />
                                     {i18n.t('settings.trackers_section.connect')}

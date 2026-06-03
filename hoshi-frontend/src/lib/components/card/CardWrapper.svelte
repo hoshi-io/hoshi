@@ -81,8 +81,8 @@
         top: 50%;
         left: 50%;
 
-        width: 120%;
-        height: 105%;
+        width: 125%;
+        height: 100%;
 
         transform: translate(-50%, -50%) scale(1);
         opacity: 0;

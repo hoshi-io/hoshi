@@ -127,6 +127,9 @@ impl MpvService {
             cmd.arg(format!("--chapters-file={}", path.display()));
         }
 
+        cmd.arg("--force-window=yes");
+        cmd.arg("--cache-pause=no");
+
         cmd.stdout(Stdio::null()).stderr(Stdio::null());
 
         let process = cmd.spawn().map_err(|e| {

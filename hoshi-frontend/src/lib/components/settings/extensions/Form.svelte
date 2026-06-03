@@ -62,7 +62,7 @@
                             onValueChange={(v) => settings[def.key] = v}
                     >
                         <Select.Trigger class="w-full bg-background rounded-lg border-border">
-                            {def.options.find(o => o.value === String(settings[def.key]))?.label || i18n.t('settings.extension_section.select_option', { defaultValue: 'Select an option' })}
+                            {def.options.find(o => o.value === String(settings[def.key]))?.label || i18n.t('settings.extension_section.select_option')}
                         </Select.Trigger>
                         <Select.Content>
                             {#each def.options as option}

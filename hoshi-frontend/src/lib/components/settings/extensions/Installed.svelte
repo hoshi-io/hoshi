@@ -72,7 +72,6 @@
         uninstallingIds = new Set(uninstallingIds).add(id);
         try {
             await extensions.uninstall(id);
-            toast.success(i18n.t('settings.extension_section.extension_uninstalled'));
         } catch (error: any) {
             const errorMessage = typeof error === 'string' ? error : error?.message || i18n.t('errors.unknown');
             toast.error(errorMessage);
@@ -92,7 +91,6 @@
                 if (index !== -1) {
                     extensions.installed[index].settings = { ...newSettings };
                 }
-                toast.success(i18n.t('settings.extension_section.changes_updated'));
                 return true;
             }
             return false;

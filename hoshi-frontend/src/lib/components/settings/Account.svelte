@@ -180,13 +180,13 @@
 
                 <div class="flex-1 w-full space-y-2 sm:pt-2">
                     <Label for="username" class="text-base font-bold">{i18n.t('settings.account_section.username')}</Label>
-                    <Input id="username" bind:value={username} class="rounded-xl h-11 w-full sm:max-w-md" required />
+                    <Input id="username" bind:value={username} class="rounded-sm h-11 w-full sm:max-w-md" required />
                     <p class="text-sm text-muted-foreground">{i18n.t('settings.account_section.username_desc')}</p>
                 </div>
             </div>
 
             <div class="flex justify-end pt-8">
-                <Button type="submit" disabled={!hasChanges || savingProfile} class="rounded-xl px-8 h-11 font-bold shadow-sm transition-all">
+                <Button type="submit" disabled={!hasChanges || savingProfile} class="rounded-sm px-8 h-11 font-bold shadow-sm transition-all">
                     {#if savingProfile}<Spinner class="mr-2 h-4 w-4" />{/if}
                     {hasChanges ? i18n.t('settings.account_section.save') : i18n.t('settings.account_section.saved')}
                 </Button>
@@ -207,7 +207,7 @@
                         <Label for="currentPassword" class="text-base font-bold">{i18n.t('settings.account_section.current_password')}</Label>
                         <p class="text-sm text-muted-foreground">{i18n.t('settings.account_section.current_password_desc')}</p>
                     </div>
-                    <Input id="currentPassword" type="password" bind:value={currentPassword} class="rounded-xl h-11 w-full sm:max-w-md" required />
+                    <Input id="currentPassword" type="password" bind:value={currentPassword} class="rounded-sm h-11 w-full sm:max-w-md" required />
                 </div>
             {/if}
 
@@ -216,7 +216,7 @@
                     <Label for="newPassword" class="text-base font-bold">{i18n.t('settings.account_section.new_password')}</Label>
                     <p class="text-sm text-muted-foreground">{i18n.t('settings.account_section.new_password_desc')}</p>
                 </div>
-                <Input id="newPassword" type="password" bind:value={newPassword} class="rounded-xl h-11 w-full sm:max-w-md" required />
+                <Input id="newPassword" type="password" bind:value={newPassword} class="rounded-sm h-11 w-full sm:max-w-md" required />
             </div>
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
@@ -224,11 +224,11 @@
                     <Label for="confirmPassword" class="text-base font-bold">{i18n.t('settings.account_section.confirm_password')}</Label>
                     <p class="text-sm text-muted-foreground">{i18n.t('settings.account_section.confirm_new_password')}</p>
                 </div>
-                <Input id="confirmPassword" type="password" bind:value={confirmPassword} class="rounded-xl h-11 w-full sm:max-w-md" required />
+                <Input id="confirmPassword" type="password" bind:value={confirmPassword} class="rounded-sm h-11 w-full sm:max-w-md" required />
             </div>
 
             <div class="flex justify-end pt-8">
-                <Button type="submit" disabled={!canSavePassword || savingPassword} variant="secondary" class="rounded-xl px-8 h-11 font-bold shadow-sm transition-all">
+                <Button type="submit" disabled={!canSavePassword || savingPassword} variant="secondary" class="rounded-sm px-8 h-11 font-bold shadow-sm transition-all">
                     {#if savingPassword}<Spinner class="mr-2 h-4 w-4" />{/if}
                     {i18n.t('settings.account_section.update_password')}
                 </Button>
@@ -248,7 +248,7 @@
                 <p class="text-sm text-muted-foreground">{i18n.t('settings.account_section.delete_account_desc')}</p>
             </div>
             <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto shrink-0">
-                <Button type="button" variant="destructive" class="rounded-xl h-11 font-bold w-full sm:w-auto shadow-sm" onclick={() => showDeleteAlert = true}>
+                <Button type="button" variant="destructive" class="rounded-sm h-11 font-bold w-full sm:w-auto shadow-sm" onclick={() => showDeleteAlert = true}>
                     <Trash2 class="mr-2 h-4 w-4" /> {i18n.t('settings.account_section.delete_account')}
                 </Button>
             </div>
@@ -257,7 +257,7 @@
 </div>
 
 <AlertDialog.Root bind:open={showDeleteAlert}>
-    <AlertDialog.Content class="border-destructive/20 sm:rounded-2xl">
+    <AlertDialog.Content class="border-destructive/20 sm:rounded-sm">
         <AlertDialog.Header>
             <AlertDialog.Title class="text-destructive flex items-center gap-2 text-xl">
                 <AlertTriangle class="h-6 w-6" /> {i18n.t('settings.account_section.are_you_sure')}
@@ -279,9 +279,9 @@
             </AlertDialog.Description>
         </AlertDialog.Header>
         <AlertDialog.Footer class="flex-col sm:flex-row gap-3 sm:gap-2 mt-6">
-            <AlertDialog.Cancel class="rounded-xl font-bold">{i18n.t('content.cancel')}</AlertDialog.Cancel>
+            <AlertDialog.Cancel class="rounded-sm font-bold">{i18n.t('content.cancel')}</AlertDialog.Cancel>
             <AlertDialog.Action
-                    class="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl font-bold"
+                    class="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-sm font-bold"
                     onclick={handleDeleteAccount}
                     disabled={user.hasPassword && !deletePassword}
             >

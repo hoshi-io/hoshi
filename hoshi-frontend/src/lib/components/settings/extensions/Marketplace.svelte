@@ -311,7 +311,6 @@
                 if (!manifest) { toast.error(i18n.t('marketplace.missing_manifest')); return; }
                 await extensions.install(manifest);
             }
-            toast.success(i18n.t('marketplace.installed'));
         } catch (error: any) {
             toast.error(error?.message || i18n.t('errors.unknown'));
         } finally {
@@ -334,7 +333,6 @@
                 if (!manifestUrl) return;
                 await extensions.update(item.id, manifestUrl);
             }
-            toast.success(i18n.t('marketplace.updated'));
         } catch (error: any) {
             toast.error(error?.message || i18n.t('errors.unknown'));
         } finally {

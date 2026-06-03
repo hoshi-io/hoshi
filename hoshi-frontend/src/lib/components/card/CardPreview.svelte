@@ -3,6 +3,7 @@
     import { fade } from 'svelte/transition';
     import ListEditorButton from "@/components/ListEditorButton.svelte";
     import {i18n} from "@/stores/i18n.svelte";
+    import SmartImage from "@/components/SmartImage.svelte";
 
     const YOUTUBE_REGEXP = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
 
@@ -55,7 +56,12 @@
 >
     <div class="banner">
         <div class="banner-media">
-            <img src={cover} alt="" class="media-img base-cover" />
+            <SmartImage
+                    src={bannerImage || cover}
+                    alt={title}
+                    {shouldBlur}
+                    class="absolute inset-0 w-full h-full object-cover {iframeReady ? 'opacity-0' : 'opacity-100'} transition-opacity duration-500"
+            />
 
             {#if isHovered}
                 <img

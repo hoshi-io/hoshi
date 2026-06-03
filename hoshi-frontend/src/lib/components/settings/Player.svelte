@@ -5,7 +5,6 @@
     import { Input } from "$lib/components/ui/input";
     import type { MpvConfig, PlayerConfig } from "@/api/config/types";
     import { i18n } from "@/stores/i18n.svelte.js";
-    import { toast } from "svelte-sonner";
     import { ExternalLink, CheckCircle2, Loader2, Circle, Download, Play, Cpu } from "lucide-svelte";
     import { platform } from "@tauri-apps/plugin-os";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
@@ -97,9 +96,7 @@
             await mpvApi.downloadOsc(id);
             mpvConfig.activeOsc = id;
             await onSave();
-            toast.success(`${OSC_LIST.find(o => o.id === id)?.name} applied`);
         } catch (e) {
-            toast.error(`Failed to download OSC: ${e}`);
             console.error(e);
         } finally {
             downloadingOsc = null;
@@ -136,9 +133,7 @@
             await mpvApi.downloadKnownScript(name);
             mpvConfig.enabledScripts = [...mpvConfig.enabledScripts, name];
             await onSave();
-            toast.success(`${name} enabled`);
         } catch (e) {
-            toast.error(`Failed to download script: ${e}`);
             console.error(e);
         } finally {
             downloadingScript = null;
@@ -153,7 +148,7 @@
     </div>
 
     <Tabs.Root value="player_general" class="w-full">
-        <Tabs.List class="grid w-full max-w-[400px] grid-cols-2 rounded-xl h-11 p-1 bg-muted/50">
+        <Tabs.List class="grid w-full max-w-[400px] grid-cols-2 rounded-sm h-11 p-1 bg-muted/50">
             <Tabs.Trigger value="player_general" class="rounded-lg font-bold flex items-center gap-2">
                 <Play class="size-4" /> {i18n.t("settings.general")}
             </Tabs.Trigger>
@@ -174,7 +169,7 @@
                             bind:value={playerConfig.preferredSubLang}
                             onchange={onSave}
                             placeholder="en, es, ja"
-                            class="rounded-xl h-11"
+                            class="rounded-sm h-11"
                     />
                 </div>
             </div>
@@ -189,7 +184,7 @@
                             bind:value={playerConfig.preferredDubLang}
                             onchange={onSave}
                             placeholder="ja, en"
-                            class="rounded-xl h-11"
+                            class="rounded-sm h-11"
                     />
                 </div>
             </div>
@@ -202,7 +197,7 @@
                 <ResponsiveSelect
                         value={playerConfig.seekStep.toString()}
                         items={seekSteps}
-                        class="rounded-xl h-11 w-full sm:max-w-md"
+                        class="rounded-sm h-11 w-full sm:max-w-md"
                         onValueChange={handleSeekStepChange}
                 />
             </div>
@@ -212,7 +207,7 @@
                     <Label class="text-base font-bold" for="autoNext">{i18n.t('settings.player_section.autoplay')}</Label>
                     <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.autoplay_desc')}</p>
                 </div>
-                <Switch id="autoNext" bind:checked={playerConfig.autoplayNextEpisode} onCheckedChange={onSave} class="shrink-0" />
+                <Switch id="autoNext" bind:checked={playerConfig.autoplayNextEpisode} onCheckedChange={onSave} class="shrink-0 scale-125" />
             </div>
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
@@ -220,7 +215,7 @@
                     <Label class="text-base font-bold" for="resumeFromLastPos">{i18n.t('settings.player_section.resume_playback')}</Label>
                     <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.resume_playback_desc')}</p>
                 </div>
-                <Switch id="resumeFromLastPos" bind:checked={playerConfig.resumeFromLastPos} onCheckedChange={onSave} class="shrink-0" />
+                <Switch id="resumeFromLastPos" bind:checked={playerConfig.resumeFromLastPos} onCheckedChange={onSave} class="shrink-0 scale-125" />
             </div>
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
@@ -228,7 +223,7 @@
                     <Label class="text-base font-bold" for="autoSkipIntro">{i18n.t('settings.player_section.auto_skip_intro')}</Label>
                     <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.auto_skip_intro_desc')}</p>
                 </div>
-                <Switch id="autoSkipIntro" bind:checked={playerConfig.autoSkipIntro} onCheckedChange={onSave} class="shrink-0" />
+                <Switch id="autoSkipIntro" bind:checked={playerConfig.autoSkipIntro} onCheckedChange={onSave} class="shrink-0 scale-125" />
             </div>
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
@@ -236,7 +231,7 @@
                     <Label class="text-base font-bold" for="autoSkipOutro">{i18n.t('settings.player_section.auto_skip_outro')}</Label>
                     <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.auto_skip_outro_desc')}</p>
                 </div>
-                <Switch id="autoSkipOutro" bind:checked={playerConfig.autoSkipOutro} onCheckedChange={onSave} class="shrink-0" />
+                <Switch id="autoSkipOutro" bind:checked={playerConfig.autoSkipOutro} onCheckedChange={onSave} class="shrink-0 scale-125" />
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 border-t border-border/40 mt-2">
@@ -265,7 +260,7 @@
                     <Label class="text-base font-bold" for="useMpv">{i18n.t("settings.player_section.use_mpv")}</Label>
                     <p class="text-sm text-muted-foreground">{i18n.t("settings.player_section.use_mpv_desc")}</p>
                 </div>
-                <Switch id="useMpv" bind:checked={mpvConfig.useMpv} onCheckedChange={onSave} class="shrink-0" />
+                <Switch id="useMpv" bind:checked={mpvConfig.useMpv} onCheckedChange={onSave} class="shrink-0 scale-125" />
             </div>
 
             {#if mpvConfig.useMpv && !isAndroid}
@@ -276,7 +271,7 @@
                             {i18n.t("settings.player_section.let_hoshi_desc")}
                         </p>
                     </div>
-                    <Switch id="useHoshiConfig" bind:checked={mpvConfig.useHoshiConfig} onCheckedChange={onSave} class="shrink-0" />
+                    <Switch id="useHoshiConfig" bind:checked={mpvConfig.useHoshiConfig} onCheckedChange={onSave} class="shrink-0 scale-125" />
                 </div>
 
                 {#if mpvConfig.useHoshiConfig}
@@ -294,7 +289,7 @@
                                 {@const isDownloading = downloadingOsc === osc.id}
 
                                 <button
-                                        class="relative text-left rounded-xl border p-4 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary
+                                        class="relative text-left rounded-sm border p-4 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary
                                         {isActive ? 'border-primary bg-primary/5' : 'border-border/40 bg-card hover:border-border hover:bg-muted/30'}
                                         {isDownloading ? 'opacity-70 pointer-events-none' : ''}"
                                         onclick={() => handleSelectOsc(osc.id)}
@@ -343,7 +338,7 @@
                                 {@const isEnabled = mpvConfig.enabledScripts.includes(script.name)}
                                 {@const isDownloading = downloadingScript === script.name}
 
-                                <div class="flex items-center justify-between rounded-xl border border-border/40 bg-card px-4 py-3 gap-4">
+                                <div class="flex items-center justify-between rounded-sm border border-border/40 bg-card px-4 py-3 gap-4">
                                     <div class="space-y-0.5 min-w-0">
                                         <p class="text-sm font-bold">{script.name}</p>
                                         <p class="text-xs text-muted-foreground">{script.description}</p>

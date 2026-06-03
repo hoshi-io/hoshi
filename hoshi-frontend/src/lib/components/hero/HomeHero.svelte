@@ -65,7 +65,7 @@
     {@const hasEntry = listStore.hasCid(cid)}
 
     <div
-            class="relative w-full h-[70vh] md:h-[85vh] min-h-[500px] overflow-hidden bg-background"
+            class="relative w-full h-[75vh] md:h-[90vh] min-h-[550px] overflow-hidden bg-background select-none"
             onmouseenter={pauseTimer}
             onmouseleave={resumeTimer}
             role="region"
@@ -73,90 +73,102 @@
     >
         {#key currentItem.href}
             <div
-                    class="absolute inset-0 w-full h-full"
-                    in:fade={{ duration: animate ? 900 : 0 }}
-                    out:fade={{ duration: animate ? 700 : 0 }}
+                    class="absolute inset-0 w-full h-full block-layer"
+                    in:fade={{ duration: animate ? 800 : 0 }}
+                    out:fade={{ duration: animate ? 600 : 0 }}
             >
                 {#if trailerId}
-                    <div class="absolute inset-0 w-full h-full pointer-events-none overflow-hidden flex items-center justify-center opacity-60">
+                    <div class="absolute inset-0 w-full h-full pointer-events-none overflow-hidden flex items-center justify-center opacity-85 scale-up-bg">
                         <img
                                 src={thumbnailSrc}
                                 alt=""
-                                class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 {shouldBlur ? 'blur-xl scale-110' : ''} {iframeReady ? 'opacity-0' : 'opacity-100'}"
+                                class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 {shouldBlur ? 'blur-2xl scale-110' : ''} {iframeReady ? 'opacity-0' : 'opacity-100'}"
                         />
                         <iframe
                                 src="https://www.youtube.com/embed/{trailerId}?autoplay=1&mute=1&controls=0&loop=1&playlist={trailerId}&enablejsapi=1&rel=0&modestbranding=1"
                                 title="Trailer"
-                                class="w-[110vw] h-[110vh] min-w-[1920px] min-h-[1080px] object-cover pointer-events-none {shouldBlur ? 'blur-xl scale-110' : ''}"
+                                class="w-[115vw] h-[115vh] min-w-[1920px] min-h-[1080px] object-cover pointer-events-none {shouldBlur ? 'blur-2xl scale-110' : ''}"
                                 frameborder="0"
                                 allow="autoplay; fullscreen; picture-in-picture"
                                 onload={onIframeLoad}
                         ></iframe>
                     </div>
                 {:else if currentItem.bannerImage}
-                    <img
-                            src={currentItem.bannerImage}
-                            alt={title}
-                            class="w-full h-full object-cover object-center opacity-50 {shouldBlur ? 'blur-xl scale-110' : ''}"
-                    />
+                    <div class="absolute inset-0 w-full h-full scale-up-bg">
+                        <img
+                                src={currentItem.bannerImage}
+                                alt={title}
+                                class="w-full h-full object-cover object-center opacity-75 {shouldBlur ? 'blur-2xl scale-110' : ''}"
+                        />
+                    </div>
                 {:else if currentItem.cover}
-                    <img
-                            src={currentItem.cover}
-                            alt={title}
-                            class="w-full h-full object-cover object-center opacity-30 blur-lg scale-110"
-                    />
+                    <div class="absolute inset-0 w-full h-full scale-up-bg">
+                        <img
+                                src={currentItem.cover}
+                                alt={title}
+                                class="w-full h-full object-cover object-center opacity-55 blur-xl scale-110"
+                        />
+                    </div>
                 {/if}
 
-                <div class="absolute inset-0 z-10 bg-[linear-gradient(to_top,var(--color-background),color-mix(in_srgb,var(--color-background)_30%,transparent),transparent),linear-gradient(to_right,var(--color-background),color-mix(in_srgb,var(--color-background)_10%,transparent),transparent)]"></div>
+                <div class="absolute inset-0 z-10 ambient-overlay"></div>
 
-                <div class="absolute inset-0 z-20 w-full h-full max-w-[2000px] mx-auto px-4 md:px-12 lg:pl-32 flex flex-col justify-end pb-16 md:pb-24 pt-40 pointer-events-none">
-                    <div class="max-w-3xl space-y-4 md:space-y-6 pointer-events-auto">
+                <div class="absolute inset-0 z-20 w-full h-full max-w-[2000px] mx-auto px-6 md:px-16 lg:pl-32 flex flex-col justify-end pb-16 md:pb-24 pt-44 pointer-events-none">
+                    <div class="max-w-3xl flex flex-col items-start text-layout pointer-events-auto">
 
-                        <h1
-                                class="font-black text-foreground tracking-tight drop-shadow-2xl text-3xl md:text-4xl lg:text-5xl leading-tight line-clamp-2 md:line-clamp-3"
-                                in:fly={{ y: animate ? 40 : 0, duration: animate ? 700 : 0, delay: animate ? 100 : 0 }}
-                        >
-                            {title}
-                        </h1>
-
-                        <div
-                                class="flex flex-wrap items-center gap-3 text-xs md:text-sm font-bold drop-shadow-md text-foreground"
-                                in:fly={{ y: animate ? 40 : 0, duration: animate ? 700 : 0, delay: animate ? 250 : 0 }}
-                        >
+                        <div class="flex flex-wrap items-center gap-2.5 text-xs font-bold text-foreground mb-4 item-stagger" style="--delay: 1">
                             {#if currentItem.contentTypeLabel}
-                                <span class="bg-secondary text-secondary-foreground px-2.5 py-1 rounded-md uppercase tracking-wider border border-border/50">
+                                <span class="bg-primary/10 text-primary px-2.5 py-0.5 rounded-md uppercase tracking-wider text-[11px] border border-primary/20 backdrop-blur-md">
                                     {currentItem.contentTypeLabel}
                                 </span>
                             {/if}
                             {#if currentItem.score}
-                                <span class="text-green-500 font-black">{currentItem.score}% {i18n.t('home.hero.rating')}</span>
+                                <span class="bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded-md text-[11px] border border-emerald-500/20 backdrop-blur-md font-black">
+                                    {currentItem.score}%
+                                </span>
                             {/if}
                             {#if currentItem.year}
-                                <span class="text-muted-foreground">{currentItem.year}</span>
+                                <span class="px-1.5 text-foreground/80 font-medium">{currentItem.year}</span>
                             {/if}
                             {#if currentItem.episodeCount}
-                                <span class="text-muted-foreground">
+                                <span class="text-muted-foreground/90 font-medium">
                                     • {currentItem.contentType === 'anime' ? i18n.t('home.hero.eps', {count: currentItem.episodeCount}) : i18n.t('home.hero.chapters', {count: currentItem.episodeCount})}
                                 </span>
                             {/if}
                         </div>
 
-                        <div
-                                class="text-muted-foreground text-sm md:text-base drop-shadow-lg font-medium leading-relaxed max-w-2xl line-clamp-3 md:line-clamp-4"
-                                in:fly={{ y: 30, duration: 700, delay: 400 }}
-                        >
-                            {currentItem.synopsis || i18n.t('home.hero.no_synopsis')}
+                        <div class="w-full flex flex-col gap-4">
+
+                            <div class="w-full item-stagger" style="--delay: 2">
+                                {#key currentIndex}
+                                    <h1
+                                            in:fly={{ y: 8, duration: 400, delay: 50 }}
+                                            class="font-black text-foreground tracking-tight fluid-hero-title line-clamp-2"
+                                    >
+                                        {title}
+                                    </h1>
+                                {/key}
+                            </div>
+
+                            <div class="w-full item-stagger mb-2" style="--delay: 4">
+                                {#key currentIndex}
+                                    <p
+                                            in:fly={{ y: 8, duration: 400, delay: 180 }}
+                                            class="text-muted-foreground/95 text-sm md:text-base font-medium leading-relaxed tracking-normal max-w-2xl text-justify text-justify-inter-word line-clamp-4 md:line-clamp-5"
+                                    >
+                                        {currentItem.synopsis || i18n.t('home.hero.no_synopsis')}
+                                    </p>
+                                {/key}
+                            </div>
+
                         </div>
 
-                        <div
-                                class="flex flex-wrap items-center gap-3 pt-4"
-                                in:fly={{ y: animate ? 40 : 0, duration: animate ? 700 : 0, delay: animate ? 550 : 0 }}
-                        >
+                        <div class="flex items-center gap-3 w-full sm:w-auto item-stagger" style="--delay: 3">
                             <a
                                     href={currentItem.href}
-                                    class="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 md:px-8 py-3 rounded-sm flex items-center gap-2.5 transition-all active:scale-95 shadow-lg border border-transparent"
+                                    class="flex-1 sm:flex-initial bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8 h-11 sm:h-12 rounded-lg flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] shadow-md hover:shadow-lg shadow-primary/10 hover:shadow-primary/20 text-sm tracking-wide group"
                             >
-                                <Play class="w-5 h-5 fill-current" />
+                                <Play class="w-4 h-4 fill-current transition-transform group-hover:scale-110" />
                                 {currentItem.contentType === 'anime' ? i18n.t('home.hero.watch') : i18n.t('home.hero.read')}
                             </a>
 
@@ -166,7 +178,7 @@
                                     contentType={currentItem.contentType}
                                     coverImage={currentItem.cover ?? undefined}
                                     size="icon"
-                                    class="h-12 w-12"
+                                    class="h-11 w-11 sm:h-12 sm:w-12 rounded-lg bg-secondary/40 border border-border/40 hover:bg-secondary/70 text-foreground transition-all active:scale-[0.98] hover:border-border/80"
                             />
                         </div>
                     </div>
@@ -175,13 +187,13 @@
         {/key}
 
         {#if items.length > 1}
-            <div class="absolute bottom-6 right-6 md:right-12 z-30 flex gap-2">
+            <div class="absolute bottom-8 right-6 md:right-16 z-30 flex gap-2 items-center">
                 {#each items as _, i}
                     <button
                             aria-label={`Ir a diapositiva ${i + 1}`}
-                            class="h-1.5 rounded-sm transition-all duration-300 shadow-sm {i === currentIndex
-                            ? 'w-8 bg-primary scale-110'
-                            : 'w-2 bg-primary/40 hover:bg-primary/80'}"
+                            class="h-1.5 rounded-full transition-all duration-300 {i === currentIndex
+                        ? 'w-6 bg-primary'
+                        : 'w-1.5 bg-foreground/30 hover:bg-foreground/60'}"
                             onclick={() => setSlide(i)}
                     ></button>
                 {/each}
@@ -189,3 +201,52 @@
         {/if}
     </div>
 {/if}
+
+<style>
+    .fluid-hero-title {
+        font-size: clamp(1.75rem, 4vw + 0.5rem, 3.25rem);
+        line-height: 1.1;
+    }
+
+    .text-justify-inter-word {
+        text-justify: inter-word;
+        text-align: justify;
+    }
+
+    .scale-up-bg {
+        animation: subtleScale 9s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    @keyframes subtleScale {
+        from { transform: scale(1.03); }
+        to { transform: scale(1); }
+    }
+
+    .item-stagger {
+        opacity: 0;
+        transform: translateY(10px);
+        animation: smoothFloatIn 0.5s cubic-bezier(0.215, 0.610, 0.355, 1) forwards;
+        animation-delay: calc(var(--delay) * 75ms);
+    }
+
+    @keyframes smoothFloatIn {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .ambient-overlay {
+        background: linear-gradient(
+                to right,
+                var(--color-background) 0%,
+                color-mix(in srgb, var(--color-background) 40%, transparent) 40%,
+                transparent 80%
+        ),
+        linear-gradient(
+                to top,
+                var(--color-background) 0%,
+                transparent 35%
+        );
+    }
+</style>

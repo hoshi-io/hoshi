@@ -122,7 +122,7 @@
             </div>
         </div>
 
-        <div class="bg-muted/30 border border-border/50 rounded-xl p-3 flex gap-3">
+        <div class="bg-muted/30 border border-border/50 rounded-sm p-3 flex gap-3">
             <Info class="size-4 text-muted-foreground shrink-0 mt-0.5"/>
             <p class="text-[11px] text-muted-foreground leading-relaxed italic">
                 Preview: <b>{config.layout.toUpperCase()}</b> + <b>{config.pagesPerView === 1 ? 'SINGLE' : 'DOUBLE'}</b>.
@@ -140,7 +140,7 @@
                     <p class="text-sm text-muted-foreground">{i18n.t('settings.readers_section.reading_mode_desc')}</p>
                 </div>
                 <Tabs.Root value={config.layout} onValueChange={changeLayout} class="w-full">
-                    <Tabs.List class="grid w-full grid-cols-2 rounded-xl h-12 p-1 bg-muted/50">
+                    <Tabs.List class="grid w-full grid-cols-2 rounded-sm h-12 p-1 bg-muted/50">
                         <Tabs.Trigger value="scroll" class="rounded-lg gap-2 font-bold">
                             <GalleryVertical class="size-4"/> {i18n.t('reader.scroll')}
                         </Tabs.Trigger>
@@ -154,7 +154,7 @@
             <div class="grid sm:grid-cols-2 gap-6">
                 <div class="space-y-3">
                     <Label class="font-bold">{i18n.t('settings.readers_section.direction')}</Label>
-                    <div class="flex bg-muted/50 p-1 rounded-xl h-11">
+                    <div class="flex bg-muted/50 p-1 rounded-sm h-11">
                         <Button variant={config.direction === 'ltr' ? 'secondary' : 'ghost'} class="flex-1 rounded-lg font-bold" onclick={() => { config.direction = 'ltr'; onSave(); }}>LTR</Button>
                         <Button variant={config.direction === 'rtl' ? 'secondary' : 'ghost'} class="flex-1 rounded-lg font-bold" onclick={() => { config.direction = 'rtl'; onSave(); }}>RTL</Button>
                     </div>
@@ -162,7 +162,7 @@
 
                 <div class="space-y-3">
                     <Label class="font-bold">{i18n.t('settings.readers_section.pages_per_view')}</Label>
-                    <div class="flex bg-muted/50 p-1 rounded-xl h-11">
+                    <div class="flex bg-muted/50 p-1 rounded-sm h-11">
                         <Button variant={config.pagesPerView === 1 ? 'secondary' : 'ghost'} class="flex-1 rounded-lg font-bold" onclick={() => { config.pagesPerView = 1; onSave(); }}>
                             {i18n.t('reader.single_page')}
                         </Button>
@@ -176,10 +176,10 @@
             <div class="space-y-3">
                 <Label class="font-bold">{i18n.t('reader.image_fit')}</Label>
                 <div class="grid grid-cols-2 gap-2">
-                    <Button variant={config.fitMode === 'width' ? 'secondary' : 'outline'} class="h-12 rounded-xl gap-2 font-bold" onclick={() => { config.fitMode = 'width'; onSave(); }}>
+                    <Button variant={config.fitMode === 'width' ? 'secondary' : 'outline'} class="h-12 rounded-sm gap-2 font-bold" onclick={() => { config.fitMode = 'width'; onSave(); }}>
                         <Maximize class="size-4 rotate-90"/> {i18n.t('reader.fit_width')}
                     </Button>
-                    <Button variant={config.fitMode === 'height' ? 'secondary' : 'outline'} class="h-12 rounded-xl gap-2 font-bold" onclick={() => { config.fitMode = 'height'; onSave(); }}>
+                    <Button variant={config.fitMode === 'height' ? 'secondary' : 'outline'} class="h-12 rounded-sm gap-2 font-bold" onclick={() => { config.fitMode = 'height'; onSave(); }}>
                         <Maximize class="size-4"/> {i18n.t('reader.fit_height')}
                     </Button>
                 </div>

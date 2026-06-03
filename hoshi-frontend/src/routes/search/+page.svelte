@@ -2,23 +2,20 @@
     import { untrack } from "svelte";
     import { extensionsApi } from "$lib/api/extensions/extensions";
     import { i18n } from "@/stores/i18n.svelte.js";
-    import { fade, fly } from "svelte/transition";
+    import { fade } from "svelte/transition";
     import { layoutState } from '@/stores/layout.svelte.js';
     import { searchState } from '@/app/search.svelte.js';
 
     import SearchFilters from "$lib/components/search/SearchFilters.svelte";
     import SearchSourceGrid from "$lib/components/search/SearchSourceGrid.svelte";
-    import * as Select from "$lib/components/ui/select";
     import * as Empty from "$lib/components/ui/empty";
     import * as Drawer from "$lib/components/ui/drawer";
-    import * as Popover from "$lib/components/ui/popover";
     import { Input } from "$lib/components/ui/input";
     import { Button } from "$lib/components/ui/button";
-    import { Spinner } from "$lib/components/ui/spinner";
-    import { Search, SearchX, Plug, SlidersHorizontal, Tv, Book, BookOpen, LayoutGrid, ListFilter, X, AlertCircle } from "lucide-svelte";
+    import { Search, SearchX, ListFilter, X, AlertCircle, Tv, Book, BookOpen } from "lucide-svelte";
     import CardWrapper from "@/components/card/CardWrapper.svelte";
+    import LazyCardGrid from "@/components/card/LazyCardGrid.svelte";
 
-    let isSourcePopoverOpen = $state(false);
     let isDrawerOpen = $state(false);
     let isMobileSearchActive = $state(false);
     let extFiltersSchema = $state<Record<string, any>>({});
@@ -31,16 +28,6 @@
             handleSearch();
         }, 450);
     };
-
-    function infiniteScroll(node: HTMLElement) {
-        const observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && !searchState.isLoading) {
-                searchState.nextPage();
-            }
-        }, { rootMargin: '400px' });
-        observer.observe(node);
-        return { destroy() { observer.disconnect(); } };
-    }
 
     $effect(() => {
         layoutState.title = isMobileSearchActive ? "" : i18n.t('search.title');
@@ -95,7 +82,6 @@
         else searchState.tracker = tracker;
 
         if (!isMobile) {
-            isSourcePopoverOpen = false;
             handleSearch();
         }
     };
@@ -119,7 +105,7 @@
                         id="mobile-search-input"
                         type="text"
                         placeholder={i18n.t('search.placeholder', { type: i18n.t(searchState.contentType).toLowerCase() })}
-                        class="pl-9 pr-3 h-9 text-sm rounded-full border-none bg-muted/30 focus-visible:ring-1 focus-visible:ring-primary/50 w-full shadow-inner"
+                        class="pl-9 pr-3 h-9 text-sm rounded-sm border-none bg-muted/30 focus-visible:ring-1 focus-visible:ring-primary/50 w-full shadow-inner"
                         bind:value={searchState.query}
                         oninput={debouncedSearch}
                 />
@@ -132,7 +118,6 @@
             </Button>
         </div>
     {:else}
-        <!-- ... (drawer se mantiene igual) ... -->
         <div class="flex items-center text-foreground gap-0.5" in:fade={{duration: 150}}>
             <Button variant="ghost" size="icon" class="h-10 w-10 rounded-full hover:bg-muted/50" onclick={() => {
                 isMobileSearchActive = true;
@@ -161,9 +146,9 @@
                             <div class="space-y-3">
                                 <h4 class="text-xs font-bold text-muted-foreground uppercase tracking-wider">{i18n.t('search.type')}</h4>
                                 <div class="bg-muted/20 p-1.5 rounded-xl grid grid-cols-3 gap-1">
-                                    <button onclick={() => searchState.contentType = 'anime'} class="h-10 rounded-lg text-sm font-bold transition-all {searchState.contentType === 'anime' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}">{i18n.t('search.anime')}</button>
-                                    <button onclick={() => searchState.contentType = 'manga'} class="h-10 rounded-lg text-sm font-bold transition-all {searchState.contentType === 'manga' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}">{i18n.t('search.manga')}</button>
-                                    <button onclick={() => searchState.contentType = 'novel'} class="h-10 rounded-lg text-sm font-bold transition-all {searchState.contentType === 'novel' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}">{i18n.t('search.novel')}</button>
+                                    <button onclick={() => { searchState.contentType = 'anime'; handleSearch(); }} class="h-10 rounded-lg text-sm font-bold transition-all {searchState.contentType === 'anime' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}">{i18n.t('search.anime')}</button>
+                                    <button onclick={() => { searchState.contentType = 'manga'; handleSearch(); }} class="h-10 rounded-lg text-sm font-bold transition-all {searchState.contentType === 'manga' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}">{i18n.t('search.manga')}</button>
+                                    <button onclick={() => { searchState.contentType = 'novel'; handleSearch(); }} class="h-10 rounded-lg text-sm font-bold transition-all {searchState.contentType === 'novel' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}">{i18n.t('search.novel')}</button>
                                 </div>
                             </div>
 
@@ -206,8 +191,67 @@
 
 <div class="bg-background px-4 md:px-8 lg:pl-32 lg:pr-12 lg:pt-20 w-full max-w-[2000px] mx-auto space-y-10 pt-5">
     <section class="flex flex-col lg:flex-row gap-8 lg:gap-10 w-full items-start">
-        <aside class="hidden lg:block w-[280px] sticky top-18">
-            <div class="pb-6">
+
+        <aside class="hidden lg:flex flex-col gap-5 w-[280px] shrink-0 sticky top-18 max-h-[calc(100vh-6rem)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden select-none">
+            <div class="space-y-1.5 p-0.5">
+                <form onsubmit={(e) => { e.preventDefault(); handleSearch(); }} class="relative w-full group">
+                    <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                    <Input
+                            type="text"
+                            placeholder={i18n.t('search.placeholder', { type: i18n.t(searchState.contentType).toLowerCase() })}
+                            class="pl-9 pr-9 h-10 text-sm rounded-md border border-border/40 bg-muted/10 focus-visible:ring-1 focus-visible:ring-primary/50 w-full shadow-sm"
+                            bind:value={searchState.query}
+                            oninput={debouncedSearch}
+                    />
+                    {#if searchState.query}
+                        <button
+                                type="button"
+                                onclick={clearQuery}
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            <X class="w-4 h-4" />
+                        </button>
+                    {/if}
+                </form>
+            </div>
+
+            <div class="space-y-1">
+                <div class="flex flex-col gap-0.5">
+                    <button
+                            onclick={() => { searchState.contentType = 'anime'; handleSearch(); }}
+                            class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-all w-full {searchState.contentType === 'anime' ? 'bg-muted/30 text-primary font-semibold shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/20'}"
+                    >
+                        <Tv class="w-4 h-4" />
+                        {i18n.t('search.anime')}
+                    </button>
+                    <button
+                            onclick={() => { searchState.contentType = 'manga'; handleSearch(); }}
+                            class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-all w-full {searchState.contentType === 'manga' ? 'bg-muted/30 text-primary font-semibold shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/20'}"
+                    >
+                        <Book class="w-4 h-4" />
+                        {i18n.t('search.manga')}
+                    </button>
+                    <button
+                            onclick={() => { searchState.contentType = 'novel'; handleSearch(); }}
+                            class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-all w-full {searchState.contentType === 'novel' ? 'bg-muted/30 text-primary font-semibold shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/20'}"
+                    >
+                        <BookOpen class="w-4 h-4" />
+                        {i18n.t('search.novel')}
+                    </button>
+                </div>
+            </div>
+
+            <div class="border-t border-border/40"></div>
+
+            <SearchSourceGrid
+                    isMobile={false}
+                    availableExtensions={searchState.availableExtensions}
+                    onSelectSource={selectSource}
+            />
+
+            <div class="border-t border-border/40"></div>
+
+            <div class="space-y-3">
                 <SearchFilters
                         searchMode={searchState.searchMode}
                         tracker={searchState.tracker}
@@ -224,75 +268,6 @@
         </aside>
 
         <div class="flex-1 min-w-0 w-full flex flex-col gap-6">
-            <div class="hidden md:flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between w-full">
-                <form onsubmit={(e) => { e.preventDefault(); handleSearch(); }} class="relative w-full xl:flex-1 group">
-                    <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input
-                            type="text"
-                            placeholder={i18n.t('search.placeholder', { type: i18n.t(searchState.contentType).toLowerCase() })}
-                            class="pl-12 pr-12 h-12 text-base rounded-xl border border-border/40 bg-muted/10 focus-visible:ring-1 focus-visible:ring-primary/50 w-full shadow-sm"
-                            bind:value={searchState.query}
-                            oninput={debouncedSearch}
-                    />
-                    {#if searchState.query}
-                        <button
-                                type="button"
-                                onclick={clearQuery}
-                                class="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                            <X class="w-5 h-5" />
-                        </button>
-                    {/if}
-                </form>
-
-                <div class="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
-                    <Select.Root type="single" bind:value={searchState.contentType}>
-                        <Select.Trigger class="w-[140px] h-12 min-h-[48px] px-4 flex items-center justify-center bg-muted/20 border-none rounded-xl text-base font-semibold">                            {#if searchState.contentType === "anime"}
-                                <Tv class="w-4 h-4 mr-2 text-primary" />
-                            {:else if searchState.contentType === "manga"}
-                                <Book class="w-4 h-4 mr-2 text-primary" />
-                            {:else}
-                                <BookOpen class="w-4 h-4 mr-2 text-primary" />
-                            {/if}
-                            {i18n.t(searchState.contentType)}
-                        </Select.Trigger>
-                        <Select.Content>
-                            <Select.Item value="anime">{i18n.t('search.anime')}</Select.Item>
-                            <Select.Item value="manga">{i18n.t('search.manga')}</Select.Item>
-                            <Select.Item value="novel">{i18n.t('search.novel')}</Select.Item>
-                        </Select.Content>
-                    </Select.Root>
-
-                    <Popover.Root bind:open={isSourcePopoverOpen}>
-                        <Popover.Trigger>
-                            {#snippet child({ props })}
-                                <Button {...props} variant="secondary" class="h-12 rounded-xl text-base font-semibold gap-2 border-none bg-muted/20 hover:bg-muted/30 px-4">
-                                    {#if searchState.searchMode === "tracker"}
-                                        {searchState.tracker === 'mal' ? 'MyAnimeList' : searchState.tracker === 'kitsu' ? 'Kitsu' : 'AniList'}
-                                    {:else}
-                                        {@const ext = searchState.availableExtensions.find(e => e.id === searchState.selectedExtension)}
-                                        {#if ext?.icon}
-                                            <img src={ext.icon} class="w-5 h-5 rounded-md object-cover" alt={ext?.name} />
-                                        {:else}
-                                            <Plug class="w-4 h-4 text-primary" />
-                                        {/if}
-                                        {ext?.name}
-                                    {/if}
-                                </Button>
-                            {/snippet}
-                        </Popover.Trigger>
-                        <Popover.Content align="start" class="w-[360px] p-5 rounded-2xl border-border/50 shadow-2xl bg-card">
-                            <h3 class="font-black text-xs text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <LayoutGrid class="w-4 h-4" /> {i18n.t('search.select_source')}
-                            </h3>
-                            <SearchSourceGrid isMobile={false} availableExtensions={searchState.availableExtensions} onSelectSource={selectSource} />
-                        </Popover.Content>
-                    </Popover.Root>
-                </div>
-            </div>
-
-            <div class="hidden md:block w-full border-t border-border/40 mt-2 mb-2"></div>
-
             <div class="w-full">
                 {#if searchState.isLoading && searchState.page === 1}
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-8 gap-x-4 gap-y-6 md:gap-x-5 md:gap-y-8">
@@ -329,22 +304,21 @@
                         </Empty.Header>
                     </Empty.Root>
                 {:else if searchState.displayResults.length > 0}
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-8 gap-x-4 gap-y-6 md:gap-x-5 md:gap-y-8">
-                        {#each searchState.displayResults as card, index (card.cid)}
-                            <div in:fly={{ y: 30, duration: 350, delay: Math.min(index * 35, 420) }}>
-                                <CardWrapper {...card} disablePreview={true} />
-                            </div>
-                        {/each}
-
-                    </div>
-
-                    {#if searchState.isLoading && searchState.page > 1}
-                        <div class="flex justify-center w-full py-8">
-                            <Spinner class="w-8 h-8 text-primary animate-spin" />
-                        </div>
-                    {/if}
-
-                    <div use:infiniteScroll class="h-10 w-full"></div>
+                    <LazyCardGrid
+                            items={searchState.displayResults}
+                            keyFn={(card) => card.cid}
+                            hasMore={true}
+                            isLoading={searchState.isLoading && searchState.page > 1}
+                            onLoadMore={() => {
+                                if (!searchState.isLoading) {
+                                    searchState.nextPage();
+                                }
+                            }}
+                    >
+                        {#snippet cardContent(card)}
+                            <CardWrapper {...card} disablePreview={true} />
+                        {/snippet}
+                    </LazyCardGrid>
                 {/if}
             </div>
         </div>

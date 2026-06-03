@@ -77,7 +77,7 @@
 
         <div class="flex items-center gap-3">
             <button
-                    class="flex items-center gap-2 h-11 px-4 rounded-xl border text-xs font-bold transition-colors {scheduleStore.myListOnly
+                    class="flex items-center gap-2 h-11 px-4 rounded-sm border text-xs font-bold transition-colors {scheduleStore.myListOnly
                     ? 'bg-primary text-primary-foreground border-primary'
                     : 'border-border/40 bg-muted/10 hover:bg-muted/30 text-foreground/70'}"
                     onclick={() => scheduleStore.toggleMyList()}
@@ -87,7 +87,7 @@
             </button>
 
             <button
-                    class="flex items-center justify-center h-11 w-11 rounded-xl border border-border/40 bg-muted/10 hover:bg-muted/30 transition-colors backdrop-blur-sm shadow-sm"
+                    class="flex items-center justify-center h-11 w-11 rounded-sm border border-border/40 bg-muted/10 hover:bg-muted/30 transition-colors backdrop-blur-sm shadow-sm"
                     onclick={() => scheduleStore.load(true)}
                     disabled={scheduleStore.isLoading}
             >

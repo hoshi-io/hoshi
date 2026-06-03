@@ -25,6 +25,7 @@
 
     import { listStore } from "@/app/list.svelte.js";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import SmartImage from "@/components/SmartImage.svelte";
 
     let {
         open = $bindable(false),
@@ -295,43 +296,42 @@
                 <p class="font-bold">{i18n.t('list.modal.loading')}</p>
             </div>
         {:else}
-            <div class="relative h-32 md:h-40 w-full overflow-hidden bg-muted flex items-end">
+            <div class="relative z-10 p-6 pb-1 flex items-center gap-5 w-full">
                 {#if coverImage}
-                    <img src={coverImage} alt={title} class="absolute inset-0 w-full h-full object-cover opacity-40 blur-sm" />
-                    <div class="absolute inset-0 bg-linear-to-t from-background via-background/80 to-transparent"></div>
-                {/if}
-                <div class="relative z-10 p-6 flex items-center gap-5 w-full">
-                    {#if coverImage}
-                        <img src={coverImage} alt={title} class="w-16 h-24 md:w-20 md:h-28 object-cover rounded-sm shadow-lg border border-border/50 hidden sm:block" />
-                    {/if}
-                    <div class="min-w-0">
-                        <h2 class="text-xl md:text-2xl font-black text-foreground line-clamp-2 leading-tight drop-shadow-md tracking-tight">{title}</h2>
-                        <p class="text-sm text-muted-foreground font-bold mt-1.5 uppercase tracking-wider">{isNew ? i18n.t('list.add_to_list') : i18n.t('list.modal.edit')}</p>
-
-                        {#if sources.length > 0}
-                            <div class="flex items-center gap-2 mt-2 flex-wrap">
-                                {#each sources as source}
-                                    {@const icon = trackerIcon(source.tracker)}
-                                    {@const label = trackerLabel(source.tracker)}
-                                    <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-black/50 border border-white/10">
-                                        {#if icon}
-                                            <img src={icon} alt={label} class="w-3.5 h-3.5 rounded-sm" />
-                                        {/if}
-                                        <span class="text-[11px] font-bold text-white/80">{label}</span>
-                                        {#if source.syncedAt}
-                                            <span class="text-[10px] text-white/40">· {formatChangeDate(source.syncedAt)}</span>
-                                        {/if}
-                                    </div>
-                                {/each}
-                                {#if hasConflicts}
-                                    <div class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-yellow-500/15 border border-yellow-500/30">
-                                        <AlertTriangle class="w-3 h-3 text-yellow-500" />
-                                        <span class="text-[11px] font-bold text-yellow-500">Conflicts</span>
-                                    </div>
-                                {/if}
-                            </div>
-                        {/if}
+                    <div class="aspect-auto w-30 object-cover">
+                        <SmartImage
+                                src={coverImage}
+                                alt={title}
+                                class="md:w-20 md:h-28 rounded-sm shadow-lg border border-border/50 hidden sm:block"
+                        />
                     </div>
+                {/if}
+                <div class="min-w-0">
+                    <h2 class="text-xl md:text-2xl font-black text-foreground line-clamp-2 leading-tight drop-shadow-md tracking-tight">{title}</h2>
+                    <p class="text-sm text-muted-foreground font-bold mt-1.5 uppercase tracking-wider">{isNew ? i18n.t('list.add_to_list') : i18n.t('list.modal.edit')}</p>
+
+                    {#if sources.length > 0}
+                        <div class="flex items-center gap-2 mt-2 flex-wrap">
+                            {#each sources as source}
+                                {@const icon = trackerIcon(source.tracker)}
+                                {@const label = trackerLabel(source.tracker)}
+                                <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-sm bg-black/30 border border-white/10">
+                                    {#if icon}
+                                        <img src={icon} alt={label} class="w-5.5 h-5.5 rounded-sm" />
+                                    {/if}
+                                    {#if source.syncedAt}
+                                        <span class="text-[10px] text-white">· {formatChangeDate(source.syncedAt)}</span>
+                                    {/if}
+                                </div>
+                            {/each}
+                            {#if hasConflicts}
+                                <div class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-yellow-500/15 border border-yellow-500/30">
+                                    <AlertTriangle class="w-3 h-3 text-yellow-500" />
+                                    <span class="text-[11px] font-bold text-yellow-500">Conflicts</span>
+                                </div>
+                            {/if}
+                        </div>
+                    {/if}
                 </div>
             </div>
 

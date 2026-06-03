@@ -11,15 +11,16 @@
     import { Skeleton } from "$lib/components/ui/skeleton";
     import { Button } from "$lib/components/ui/button";
     import {
-        Search, List, MoreVertical, CheckCircle2,
-        PlayCircle, Clock, PauseCircle, XCircle, Monitor, Library, AlertCircle, SlidersHorizontal, X
+        Search, List, MoreVertical, AlertCircle, SlidersHorizontal, X
     } from "lucide-svelte";
+
     import { fade } from "svelte/transition";
+
     import { i18n } from "@/stores/i18n.svelte.js";
     import { layoutState } from '@/stores/layout.svelte.js';
     import { appConfig } from "@/stores/config.svelte.js";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
-    import CardContainer from "@/components/card/CardContainer.svelte";
+    import LazyCardGrid from "@/components/card/LazyCardGrid.svelte";
 
     $effect(() => {
         layoutState.title = listStore.isMobileSearchActive ? "" : i18n.t('list.title');
@@ -48,27 +49,17 @@
 
     const PAGE_SIZE = 30;
     let visibleCount = $state(PAGE_SIZE);
-    let sentinel = $state<HTMLElement | null>(null);
 
     $effect(() => {
         listStore.sorted;
         visibleCount = PAGE_SIZE;
     });
 
-    $effect(() => {
-        if (!sentinel) return;
-
-        const observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting) {
-                visibleCount = Math.min(visibleCount + PAGE_SIZE, listStore.sorted.length);
-            }
-        }, { rootMargin: '200px' });
-
-        observer.observe(sentinel);
-        return () => observer.disconnect();
-    });
-
     const visibleItems = $derived(listStore.sorted.slice(0, visibleCount));
+
+    $effect(() => {
+        console.log("Visible count is now:", visibleCount, "out of:", listStore.sorted.length);
+    });
 </script>
 
 {#snippet statusSelect()}
@@ -213,7 +204,7 @@
 
 <main class="bg-background px-4 md:px-8 lg:pl-32 lg:pr-12 lg:pt-20 w-full max-w-[2000px] mx-auto space-y-10 pt-5">
     <header class="hidden lg:flex lg:flex-row lg:items-start justify-between gap-6 border-b border-border/40 pb-8 w-full">
-        <div class="flex items-start gap-5 w-full">
+        <div class="flex items-center gap-5 w-full">
             <Avatar.Root class="h-12 w-12 md:h-16 md:w-16 border border-border/50 shadow-sm shrink-0">
                 {#if auth.user?.avatar}
                     <Avatar.Image src={auth.user.avatar} alt={auth.user.username} class="object-cover" />
@@ -231,9 +222,9 @@
     </header>
 
     <div class="flex items-start gap-8 w-full pt-4">
-        <aside class="hidden lg:flex flex-col gap-8 w-64 shrink-0 sticky top-16 h-fit">
-            <div class="space-y-3">{@render searchBar()}</div>
-            <div class="space-y-6">
+        <aside class="hidden lg:flex flex-col gap-5 w-68 shrink-0 sticky top-24 h-[calc(100vh-8rem)] pb-4 overflow-y-auto hide-scrollbar">
+            <div class="space-y-2.5 p-0.5">{@render searchBar()}</div>
+            <div class="space-y-8 flex-1 flex flex-col justify-start">
                 <div class="space-y-2.5">
                     <h3 class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">{i18n.t("list.sort_by")}</h3>
                     {@render sortSelect()}
@@ -242,16 +233,18 @@
                     <h3 class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">{i18n.t("list.content_type")}</h3>
                     {@render desktopTypeList()}
                 </div>
-                <div class="space-y-2 border-t border-border/40 pt-6">
-                    <h3 class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">{i18n.t("list.status")}</h3>
-                    {@render desktopStatusList()}
+                <div class="space-y-2 border-t border-border/40 pt-5 flex-1 flex flex-col">
+                    <h3 class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1 mb-1">{i18n.t("list.status")}</h3>
+                    <div class="flex-1 overflow-y-auto hide-scrollbar pr-0.5">
+                        {@render desktopStatusList()}
+                    </div>
                 </div>
             </div>
         </aside>
 
         <section class="flex-1 min-w-0">
             {#if listStore.isLoading}
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-x-4 gap-y-6 md:gap-x-5 md:gap-y-8 mb-10 mb-10">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-x-4 gap-y-6 md:gap-x-5 md:gap-y-8 mb-10">
                     {#each Array(14) as _}
                         <Skeleton class="aspect-[2/3] w-full rounded-xl bg-muted/20" />
                     {/each}
@@ -275,47 +268,81 @@
                     </Empty.Header>
                 </Empty.Root>
             {:else}
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-x-4 gap-y-6 md:gap-x-5 md:gap-y-8 mb-10 mb-10">
-                    {#each visibleItems as item (item.original.cid)}
-                        <div in:fade={{ duration: 200 }} class="group">
-                            <CardWrapper {...item.card} disablePreview={true}>
-                                {#snippet overlay()}
-                                    <div class="flex items-start justify-between p-2 w-full mb-auto">
-                                        <div class="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-md shadow-sm border border-white/10 flex items-center gap-2">
-                                            <span class="text-xs font-black text-primary">{item.original.progress}</span>
-                                            <span class="text-[10px] font-bold text-white/60">/ {item.original.totalUnits || '?'}</span>
-                                            {#if item.original.score}
-                                                <div class="w-px h-3 bg-white/20"></div>
-                                                <span class="text-[11px] font-black text-yellow-500">★ {item.original.score}</span>
+                <LazyCardGrid
+                        items={visibleItems}
+                        keyFn={(item) => item.original.cid}
+                        hasMore={visibleCount < listStore.sorted.length}
+                        isLoading={listStore.isLoading} onLoadMore={() => {
+            visibleCount = Math.min(visibleCount + PAGE_SIZE, listStore.sorted.length);
+        }}
+                >
+                    {#snippet cardContent(item)}
+                        <CardWrapper {...item.card} disablePreview={true}>
+                            {#snippet overlay()}
+                                <div class="absolute inset-0 p-2 flex flex-col justify-between pointer-events-none select-none">
+                                    <!-- Top Row: Status, Privacy, and Actions -->
+                                    <div class="flex items-start justify-between w-full gap-2">
+                                        <!-- Status & Privacy Badges -->
+                                        <div class="flex flex-wrap gap-1.5 items-center max-w-[75%]">
+                                            <!-- Status Badge -->
+                                            <span class="inline-flex items-center gap-1.5 bg-zinc-950/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide text-zinc-200 border border-white/5 shadow-sm">
+                        <span class="h-1.5 w-1.5 rounded-full" class:bg-emerald-500={item.original.status === 'COMPLETED'} class:bg-sky-500={item.original.status === 'CURRENT'} class:bg-amber-500={item.original.status === 'PAUSED'} class:bg-rose-500={item.original.status === 'DROPPED'} class:bg-purple-500={item.original.status === 'REPEATING'} class:bg-zinc-400={item.original.status === 'PLANNING'}></span>
+                                                {item.original.status}
+                    </span>
+
+                                            <!-- Private Indicator -->
+                                            {#if item.original.isPrivate}
+                                                <div class="bg-zinc-950/70 backdrop-blur-md p-1 rounded-md text-zinc-400 border border-white/5 shadow-sm" title="Private Entry">
+                                                    <!-- Simple SVG Lock (Replace with your icon library lock if preferred) -->
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                                </div>
+                                            {/if}
+
+                                            <!-- Repeat Tracker -->
+                                            {#if item.original.repeatCount > 0}
+                        <span class="inline-flex items-center gap-1 bg-purple-950/50 backdrop-blur-md px-1.5 py-0.5 rounded-md text-[10px] font-bold text-purple-300 border border-purple-500/20 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+                            {item.original.repeatCount}
+                        </span>
                                             {/if}
                                         </div>
 
+                                        <!-- Action Button -->
                                         <button
-                                                class="pointer-events-auto opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-7 w-7 rounded-md bg-black/80 backdrop-blur-md text-white/90 border border-white/10 hover:bg-primary hover:text-primary-foreground shadow-sm flex items-center justify-center"
+                                                type="button"
+                                                class="pointer-events-auto opacity-100 lg:opacity-0 group-hover:opacity-100 transition-all duration-200 h-7 w-7 rounded-md bg-zinc-950/70 backdrop-blur-md text-zinc-300 border border-white/5 hover:bg-primary hover:text-primary-foreground hover:scale-105 shadow-sm flex items-center justify-center"
                                                 onclick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    listStore.openEdit(item.original);
-                }}
+                        e.preventDefault();
+                        e.stopPropagation();
+                        listStore.openEdit(item.original);
+                    }}
                                         >
                                             <MoreVertical class="h-4 w-4" />
                                         </button>
                                     </div>
-                                {/snippet}
-                            </CardWrapper>
-                        </div>
-                    {/each}
-                </div>
 
-                {#if visibleCount < listStore.sorted.length}
-                    <div bind:this={sentinel} class="h-10 flex items-center justify-center mt-4">
-                        <div class="flex gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:0ms]"></span>
-                            <span class="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:150ms]"></span>
-                            <span class="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:300ms]"></span>
-                        </div>
-                    </div>
-                {/if}
+                                    <!-- Bottom Row: Progress and Score Counters -->
+                                    <div class="flex items-center justify-between w-full mt-auto">
+                                        <!-- Progress Container -->
+                                        <div class="bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-md shadow-md border border-white/5 flex items-center gap-1.5 font-mono">
+                                            <span class="text-xs font-black text-primary">{item.original.progress}</span>
+                                            <span class="text-[10px] font-medium text-zinc-500">/</span>
+                                            <span class="text-[10px] font-bold text-zinc-400">{item.original.totalUnits || '—'}</span>
+                                        </div>
+
+                                        <!-- Score Container -->
+                                        {#if item.original.score}
+                                            <div class="bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-md shadow-md border border-white/5 flex items-center gap-1 font-mono text-xs font-black text-amber-400">
+                                                <span class="text-[10px] text-amber-500">★</span>
+                                                <span>{item.original.score}</span>
+                                            </div>
+                                        {/if}
+                                    </div>
+                                </div>
+                            {/snippet}
+                        </CardWrapper>
+                    {/snippet}
+                </LazyCardGrid>
             {/if}
         </section>
     </div>

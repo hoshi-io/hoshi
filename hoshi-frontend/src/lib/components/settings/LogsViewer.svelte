@@ -147,7 +147,7 @@
 <section class="flex flex-col w-full h-full bg-transparent font-mono overflow-hidden">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between pb-6 gap-4 w-full border-b border-border/20 mb-4 shrink-0">
         <div class="flex items-center gap-3">
-            <div class="p-2.5 bg-primary/5 rounded-xl border border-primary/10 text-primary">
+            <div class="p-2.5 bg-primary/5 rounded-sm border border-primary/10 text-primary">
                 <Terminal class="size-5" />
             </div>
             <div>
@@ -157,10 +157,10 @@
                 </p>
                 <div class="flex gap-4 mt-2">
                     <button class="text-[10px] font-black uppercase tracking-widest transition-colors {activeTab === 'live' ? 'text-primary' : 'text-muted-foreground/40 hover:text-muted-foreground'}" onclick={() => activeTab = 'live'}>
-                        {i18n.t('settings.logs.tabs.live', { defaultValue: 'Live' })}
+                        {i18n.t('settings.logs.tabs.live')}
                     </button>
                     <button class="text-[10px] font-black uppercase tracking-widest transition-colors {activeTab === 'files' ? 'text-primary' : 'text-muted-foreground/40 hover:text-muted-foreground'}" onclick={() => { activeTab = 'files'; fetchLogFiles(); }}>
-                        {i18n.t('settings.logs.tabs.files', { defaultValue: 'Files' })}
+                        {i18n.t('settings.logs.tabs.files')}
                     </button>
                 </div>
             </div>
@@ -170,10 +170,10 @@
             {#if activeTab === 'live'}
                 <div class="relative flex items-center w-full sm:w-auto flex-1 sm:flex-none">
                     <Search class="absolute left-3 size-4 text-muted-foreground/60" />
-                    <input type="text" bind:value={searchQuery} placeholder="..." class="h-10 w-full sm:w-48 lg:w-64 rounded-lg border-none bg-muted/30 pl-10 pr-3 py-1 text-sm ring-1 ring-border/50 focus:ring-2 focus:ring-primary/50 transition-all outline-none" />
+                    <input type="text" bind:value={searchQuery} placeholder="" class="h-9 w-full sm:w-48 lg:w-64 rounded-sm border-none bg-muted/30 pl-10 pr-3 py-1 text-sm ring-1 ring-border/50 focus:ring-2 focus:ring-primary/50 transition-all outline-none" />
                 </div>
                 <div class="w-full sm:w-32">
-                    <ResponsiveSelect bind:value={selectedLevel} items={logLevels} class="h-10 rounded-lg bg-muted/30 px-4 py-1 text-sm ring-1 ring-border/50" />
+                    <ResponsiveSelect bind:value={selectedLevel} items={logLevels} class="h-10 rounded-sm bg-muted/30 px-4 py-1 text-sm ring-1 ring-border/50" />
                 </div>
                 <Button variant="ghost" size="icon" onclick={fetchLogs} title={i18n.t('settings.logs.btn_refresh')}>
                     <RefreshCw class="size-4 {isLoading ? 'animate-spin' : ''}" />
@@ -228,7 +228,7 @@
         {:else if activeTab === 'files' && !selectedFileName}
             <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2">
                 {#each logFiles as file}
-                    <div class="flex items-center justify-between p-3 bg-muted/20 rounded-xl border border-border/50 hover:bg-muted/30 transition-all">
+                    <div class="flex items-center justify-between p-3 bg-muted/20 rounded-sm border border-border/50 hover:bg-muted/30 transition-all">
                         <div class="flex items-center gap-3">
                             <FileText class="size-5 text-muted-foreground/50" />
                             <div>

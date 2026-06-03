@@ -80,7 +80,7 @@
                     <Command.Item
                             value={lang.name}
                             onSelect={() => changeLanguage(lang.code as Language)}
-                            class="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg mx-1 my-0.5"
+                            class="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-sm mx-1 my-0.5"
                     >
                         <Check class="h-4 w-4 shrink-0 {i18n.locale === lang.code ? 'opacity-100' : 'opacity-0'}" />
                         <svelte:component this={lang.icon} class="w-5 h-5 rounded-sm shadow-sm object-cover" />
@@ -99,7 +99,7 @@
             {/snippet}
         </Popover.Trigger>
 
-        <Popover.Content class="min-w-[220px] p-0 rounded-xl shadow-xl border-border/50 overflow-hidden" align="end">
+        <Popover.Content class="min-w-[220px] p-0 rounded-sm shadow-xl border-border/50 overflow-hidden" align="end">
             {@render languageList()}
         </Popover.Content>
     </Popover.Root>

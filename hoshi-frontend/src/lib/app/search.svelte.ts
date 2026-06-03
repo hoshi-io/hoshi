@@ -37,7 +37,18 @@ class SearchState {
     displayResults = $derived(this.results);
 
     nextPage() {
+        const isTrending =
+            this.searchMode === "tracker" &&
+            !this.query.trim() &&
+            !this.status &&
+            !this.genre &&
+            !this.format &&
+            !this.nsfw;
+
+        if (isTrending) return;
+
         this.page += 1;
+
         if (this.searchMode === "tracker") {
             this.search();
         } else {

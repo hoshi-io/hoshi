@@ -31,8 +31,7 @@
 
 {#if visible}
     <div
-            class="status-overlay absolute inset-0 z-50 flex items-center justify-center backdrop-blur-md"
-            onclick={(e) => e.stopPropagation()}
+            class="status-overlay absolute inset-0 z-50 flex items-center justify-center backdrop-blur-md pointer-events-none"
             role="status"
     >
         {#if error}

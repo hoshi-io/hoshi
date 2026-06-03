@@ -353,14 +353,14 @@
                                 <div class="space-y-0.5">
                                     <Label class="text-base font-bold cursor-pointer" for="showAdultContent">{i18n.t('setup.content.show_nsfw')}</Label>
                                 </div>
-                                <Switch id="showAdultContent" bind:checked={showAdultContent} class="shrink-0" />
+                                <Switch id="showAdultContent" bind:checked={showAdultContent} class="shrink-0 scale-125" />
                             </div>
 
                             <div class="flex items-center justify-between gap-4 transition-opacity {!showAdultContent ? 'opacity-50' : ''}">
                                 <div class="space-y-0.5">
                                     <Label class="text-base font-bold {showAdultContent ? 'cursor-pointer' : 'cursor-not-allowed'}" for="blurAdultContent">{i18n.t('setup.content.blur_nsfw')}</Label>
                                 </div>
-                                <Switch id="blurAdultContent" bind:checked={blurAdultContent} disabled={!showAdultContent} class="shrink-0" />
+                                <Switch id="blurAdultContent" bind:checked={blurAdultContent} disabled={!showAdultContent} class="shrink-0 scale-125" />
                             </div>
                         </div>
                     </div>

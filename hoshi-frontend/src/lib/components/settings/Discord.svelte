@@ -34,7 +34,7 @@
                 id="discordEnabled"
                 bind:checked={config.enabled}
                 onCheckedChange={onSave}
-                class="shrink-0"
+                class="shrink-0 scale-125"
         />
     </div>
 
@@ -50,7 +50,7 @@
                 bind:checked={config.showTitle}
                 disabled={!config.enabled}
                 onCheckedChange={onSave}
-                class="shrink-0"
+                class="shrink-0 scale-125"
         />
     </div>
 
@@ -66,7 +66,7 @@
                 bind:checked={config.hideNsfw}
                 disabled={!config.enabled}
                 onCheckedChange={onSave}
-                class="shrink-0"
+                class="shrink-0 scale-125"
         />
     </div>
 </section>

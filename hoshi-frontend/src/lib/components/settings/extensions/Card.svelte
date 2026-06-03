@@ -75,7 +75,7 @@
     }
 </script>
 
-<div class="flex flex-col rounded-xl border {ext.nsfw ? 'border-destructive/60 shadow-destructive/10' : 'border-border/60'} bg-card overflow-hidden transition-all shadow-sm {mode === 'marketplace' ? 'hover:border-primary/40' : ''}">
+<div class="flex flex-col rounded-sm border {ext.nsfw ? 'border-destructive/60 shadow-destructive/10' : 'border-border/60'} bg-card overflow-hidden transition-all shadow-sm {mode === 'marketplace' ? 'hover:border-primary/40' : ''}">
     <div class="flex items-center p-3 gap-3">
         <Avatar.Root class="relative h-10 w-10 rounded-lg border border-border/50 shrink-0 bg-muted/30 overflow-hidden flex items-center justify-center">
             <div data-fallback class="bg-primary/10 text-primary font-black rounded-lg text-xs w-full h-full flex items-center justify-center absolute inset-0 z-0">
@@ -144,7 +144,7 @@
                     <Button
                             variant={isExpanded ? "default" : "secondary"}
                             size="sm"
-                            class="h-8 w-8 p-0 rounded-lg hidden md:flex"
+                            class="h-8 w-8 p-0 rounded-sm hidden md:flex"
                             onclick={() => isExpanded = !isExpanded}
                     >
                         {#if isExpanded}<X class="h-4 w-4" />{:else}<Settings2 class="h-4 w-4" />{/if}
@@ -154,7 +154,7 @@
                         <Drawer.Root open={isDrawerOpen} onOpenChange={(v) => isDrawerOpen = v}>
                             <Drawer.Trigger>
                                 {#snippet child({ props })}
-                                    <Button {...props} variant="secondary" size="sm" class="h-8 w-8 p-0 rounded-lg">
+                                    <Button {...props} variant="secondary" size="sm" class="h-8 w-8 p-0 rounded-sm">
                                         <Settings2 class="h-4 w-4" />
                                     </Button>
                                 {/snippet}
@@ -180,7 +180,7 @@
                 <Button
                         variant="destructive"
                         size="sm"
-                        class="h-8 w-8 p-0 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white"
+                        class="h-8 w-8 p-0 rounded-sm bg-destructive/10 text-destructive hover:bg-destructive hover:text-white"
                         onclick={() => onAction?.(ext.id)}
                         disabled={isActionLoading}
                 >
@@ -191,7 +191,7 @@
                     {#if hasUpdate}
                         <Button
                                 size="sm"
-                                class="rounded-lg h-8 px-4 text-xs font-bold shadow-sm bg-primary/90 hover:bg-primary"
+                                class="rounded-sm h-8 px-4 text-xs font-bold shadow-sm bg-primary/90 hover:bg-primary"
                                 onclick={() => onUpdate?.(ext)}
                                 disabled={isActionLoading}
                         >
@@ -203,12 +203,12 @@
                             {i18n.t('marketplace.update')}
                         </Button>
                     {:else}
-                        <Button variant="secondary" size="sm" class="rounded-lg h-8 px-4 text-xs font-bold bg-muted/40 text-muted-foreground" disabled>
+                        <Button variant="secondary" size="sm" class="rounded-sm h-8 px-4 text-xs font-bold bg-muted/40 text-muted-foreground" disabled>
                             {i18n.t('marketplace.installed')}
                         </Button>
                     {/if}
                 {:else}
-                    <Button size="sm" class="rounded-lg h-8 px-4 text-xs font-bold shadow-sm" onclick={() => onAction?.(ext)} disabled={isActionLoading}>
+                    <Button size="sm" class="rounded-sm h-8 px-4 text-xs font-bold shadow-sm" onclick={() => onAction?.(ext)} disabled={isActionLoading}>
                         {#if isActionLoading}
                             <Spinner class="h-3 w-3 mr-1.5 animate-spin" />
                         {:else}

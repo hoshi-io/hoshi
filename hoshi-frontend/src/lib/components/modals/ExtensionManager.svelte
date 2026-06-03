@@ -11,6 +11,7 @@
     import { Spinner } from "@/components/ui/spinner";
     import type { CoreError } from "@/api/client";
     import { slide, fade } from 'svelte/transition';
+    import SmartImage from "@/components/SmartImage.svelte";
 
     let {
         open = $bindable(false),
@@ -106,14 +107,20 @@
         <div class="relative w-full shrink-0 bg-muted/30">
             {#if metadata?.bannerImage}
                 <div class="absolute inset-0 overflow-hidden">
-                    <img src={metadata.bannerImage} class="w-full h-full object-cover opacity-30 blur-[2px]" alt="" />
+                    <SmartImage
+                            src={metadata.bannerImage}
+                            class="w-full h-full object-cover opacity-30 blur-[2px]"
+                    />
                 </div>
             {/if}
             <div class="absolute inset-0 bg-linear-to-b from-transparent via-card/60 to-card"></div>
 
             <div class="relative p-6 pt-10 flex items-center gap-4 sm:gap-6">
                 <div class="w-16 h-24 sm:w-20 sm:h-28 rounded-sm shadow-2xl border border-white/10 overflow-hidden bg-muted shrink-0">
-                    <img src={metadata?.coverImage} class="w-full h-full object-cover" alt="" />
+                    <SmartImage
+                            src={metadata?.coverImage}
+                            class="w-full h-full object-cover"
+                    />
                 </div>
                 <div class="flex flex-col min-w-0 pb-1">
                     <h2 class="text-lg sm:text-xl font-black line-clamp-1 text-foreground">{metadata?.title}</h2>
@@ -200,7 +207,10 @@
                                                 <div class="flex items-center gap-3 min-w-0">
                                                     <div class="w-9 h-12 rounded-sm overflow-hidden bg-muted shrink-0 border border-border/10">
                                                         {#if result.image}
-                                                            <img src={result.image} alt="" class="w-full h-full object-cover" />
+                                                            <SmartImage
+                                                                    src={result.image}
+                                                                    class="w-full h-full object-cover"
+                                                            />
                                                         {/if}
                                                     </div>
                                                     <div class="flex flex-col min-w-0">

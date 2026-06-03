@@ -264,15 +264,15 @@
                                 {filterDef.label || formatLabel(key)}
                             </Label>
 
-                            <div class="flex flex-wrap gap-2">
+                            <div class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-2 rounded-sm border border-border/40 bg-muted/5 [scrollbar-width:thin]">
                                 {#each filterDef.options || [] as opt}
                                     {@const isSelected = extFilterValues[key]?.includes(opt.value)}
                                     <button
                                             type="button"
                                             class="px-3 py-1.5 rounded-sm text-xs font-bold transition-all border
-                    {isSelected
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-muted/20 text-foreground/70 border-transparent hover:border-border'}"
+{isSelected
+    ? 'bg-primary text-primary-foreground border-primary'
+    : 'bg-muted/20 text-foreground/70 border-transparent hover:border-border'}"
                                             onclick={() => toggleMultiSelect(key, opt.value)}
                                     >
                                         {opt.label}

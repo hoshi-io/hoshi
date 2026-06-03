@@ -107,7 +107,7 @@
             </div>
         </div>
 
-        <div class="bg-muted/30 border border-border/50 rounded-xl p-3 flex gap-3">
+        <div class="bg-muted/30 border border-border/50 rounded-sm p-3 flex gap-3">
             <Info class="size-4 text-muted-foreground shrink-0 mt-0.5"/>
             <p class="text-[11px] text-muted-foreground leading-relaxed italic">
                 {i18n.t('settings.novel_preview_desc.novel_preview_desc', {width: localWidth})}
@@ -126,7 +126,7 @@
                     {#each Object.entries(themes) as [t, colors]}
                         <Button
                                 variant={config.theme === t ? 'default' : 'outline'}
-                                class="h-12 rounded-xl flex flex-col gap-0.5 relative overflow-hidden transition-colors"
+                                class="h-12 rounded-sm flex flex-col gap-0.5 relative overflow-hidden transition-colors"
                                 style="background-color: {config.theme === t ? '' : colors.bg}; color: {config.theme === t ? '' : colors.text};"
                                 onclick={() => { config.theme = t as NovelTheme; onSave(); }}
                         >
@@ -140,7 +140,7 @@
                 <div class="space-y-4">
                     <Label class="font-bold flex items-center gap-2"><Type class="size-4 text-primary"/> {i18n.t('reader.font_family')}</Label>
                     <Tabs.Root value={config.fontFamily} onValueChange={(v) => { config.fontFamily = v as FontFamily; onSave(); }}>
-                        <Tabs.List class="grid w-full grid-cols-3 rounded-xl h-11 p-1 bg-muted/50">
+                        <Tabs.List class="grid w-full grid-cols-3 rounded-sm h-11 p-1 bg-muted/50">
                             <Tabs.Trigger value="sans" class="rounded-lg font-sans font-bold">Sans</Tabs.Trigger>
                             <Tabs.Trigger value="serif" class="rounded-lg font-serif font-bold">Serif</Tabs.Trigger>
                             <Tabs.Trigger value="mono" class="rounded-lg font-mono font-bold">Mono</Tabs.Trigger>
@@ -150,7 +150,7 @@
 
                 <div class="space-y-4">
                     <Label class="font-bold flex items-center gap-2">{i18n.t('reader.alignment')}</Label>
-                    <div class="flex bg-muted/50 p-1 rounded-xl h-11">
+                    <div class="flex bg-muted/50 p-1 rounded-sm h-11">
                         <Button
                                 variant={config.textAlign === 'left' ? 'secondary' : 'ghost'}
                                 class="flex-1 rounded-lg font-bold"

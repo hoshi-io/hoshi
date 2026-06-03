@@ -80,7 +80,7 @@
                 <button
                         type="button"
                         onclick={() => changeTheme(theme.id)}
-                        class="relative flex items-center justify-center h-14 rounded-xl border-2 font-bold transition-all overflow-hidden {theme.classes}
+                        class="relative flex items-center justify-center h-14 rounded-sm border-2 font-bold transition-all overflow-hidden {theme.classes}
         {themeManager.theme === theme.id
             ? 'ring-2 ring-primary ring-offset-2 ring-offset-background border-transparent'
             : 'opacity-80 hover:opacity-100 border-transparent'}"
@@ -141,7 +141,7 @@
         <ResponsiveSelect
                 bind:value={config.titleLanguage}
                 items={titleLanguageItems}
-                class="rounded-xl h-11 w-full sm:max-w-md capitalize"
+                class="rounded-sm h-11 w-full sm:max-w-md capitalize"
                 onValueChange={onSave}
         />
     </div>
@@ -154,7 +154,7 @@
         <ResponsiveSelect
                 bind:value={config.defaultHomeSection}
                 items={homeSectionItems}
-                class="rounded-xl h-11 w-full sm:max-w-md capitalize"
+                class="rounded-sm h-11 w-full sm:max-w-md capitalize"
                 onValueChange={onSave}
         />
     </div>
