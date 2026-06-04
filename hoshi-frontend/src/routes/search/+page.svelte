@@ -280,19 +280,19 @@
                         {/each}
                     </div>
                 {:else if searchState.error}
-                    <Empty.Root class="border border-dashed border-destructive/40 py-24 rounded-2xl bg-destructive/5 min-h-[50vh] flex items-center justify-center">
-                        <Empty.Header>
-                            <Empty.Media variant="icon" class="bg-destructive/10 text-destructive mb-4 p-4 rounded-full">
-                                <AlertCircle class="w-10 h-10" />
-                            </Empty.Media>
-                            <Empty.Title class="text-xl font-bold text-destructive">
-                                {i18n.t(searchState.error.key)}
-                            </Empty.Title>
-                            <Button variant="outline" class="mt-6 border-destructive/20 hover:bg-destructive/10 text-destructive" onclick={handleSearch}>
-                                {i18n.t("content.retry")}
-                            </Button>
-                        </Empty.Header>
-                    </Empty.Root>
+                    <div class="flex min-h-[50vh] flex-col items-center justify-center text-center">
+                        <h2 class="text-xl font-medium">
+                            {i18n.t(searchState.error.key)}
+                        </h2>
+
+                        <Button
+                                variant="outline"
+                                class="mt-6"
+                                onclick={handleSearch}
+                        >
+                            {i18n.t("content.retry")}
+                        </Button>
+                    </div>
                 {:else if searchState.hasSearched && searchState.displayResults.length === 0}
                     <Empty.Root class="border border-dashed py-24 rounded-2xl bg-muted/5 min-h-[50vh] flex items-center justify-center">
                         <Empty.Header>

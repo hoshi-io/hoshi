@@ -230,16 +230,15 @@ async fn run_quickjs_local(
             };
 
             warn!(
-            error = %e,
-            line = line,
-            col = col,
-            source = source_label,
-            snippet = %snippet,
-            "Sandbox JS exception"
-        );
-            CoreError::BadRequest(format!(
-                "error.sandbox.execution_failed [{source_label} line {line}:{col}]\n{snippet}"
-            ).into())
+                error = %e,
+                line = line,
+                col = col,
+                source = source_label,
+                snippet = %snippet,
+                "Sandbox JS exception"
+            );
+
+            CoreError::Internal("error.sandbox.thread_panicked".into())
         })
         .map(|json_str| {
             let updated_state_json = {
