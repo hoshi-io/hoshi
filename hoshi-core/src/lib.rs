@@ -25,7 +25,6 @@ use state::AppState;
 use paths::AppPaths;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use librqbit::Session;
 use reqwest::Client;
 use tokio::sync::RwLock;
 use tracker::provider::build_registry;
