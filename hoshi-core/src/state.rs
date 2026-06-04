@@ -12,8 +12,9 @@ use crate::logs::LogStore;
 
 #[cfg(feature = "discord-rpc")]
 use crate::discord::DiscordRpcService;
-use crate::mpv::launch::MpvService;
+
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
+use crate::mpv::launch::MpvService;
 
 #[derive(Clone)]
 pub struct AppState {

@@ -25,6 +25,7 @@ use state::AppState;
 use paths::AppPaths;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use librqbit::Session;
 use reqwest::Client;
 use tokio::sync::RwLock;
 use tracker::provider::build_registry;
@@ -102,7 +103,6 @@ pub async fn build_app_state(
 
     HomeService::warmup(state.clone());
     StartupSyncService::run(state.clone());
-
     info!("Hoshi Core initialization completed successfully");
     Ok(state)
 }

@@ -1,10 +1,11 @@
 use hoshi_core::error::CoreError;
-#[cfg(not(mobile))]
 use hoshi_core::state::AppState;
 use std::sync::Arc;
 use tauri::State;
+#[cfg(not(mobile))]
 use hoshi_core::mpv::launch::{MpvLaunchOptions, MpvService};
 use hoshi_core::mpv::service::MpvConfigService;
+
 use crate::{require_auth, TauriSession};
 
 #[cfg(not(mobile))]

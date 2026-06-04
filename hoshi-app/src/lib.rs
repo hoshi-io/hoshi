@@ -153,7 +153,13 @@ pub fn run_inner() -> anyhow::Result<()> {
             list_trackers, add_integration, remove_integration, set_sync_enabled,
 
             #[cfg(not(mobile))]
-            launch_mpv, is_mpv_running, download_osc, download_known_script,
+            launch_mpv,
+            #[cfg(not(mobile))]
+            is_mpv_running,
+            #[cfg(not(mobile))]
+            download_osc,
+            #[cfg(not(mobile))]
+            download_known_script,
 
             #[cfg(feature = "discord-rpc")]
             set_activity,

@@ -303,16 +303,31 @@ fn build_sandbox_script(
 
                     eval(patched);
 
-                    const ExtClass = globalThis.__tachi_captured;
-
-                    if (!ExtClass)
-                        throw new Error("[tachi-compat] No class extending HttpSource found");
-
-                    const nameMatch = src.match(/class\s+([a-zA-Z0-9_$]+)\s+extends\s+(?:HttpSource|ParsedHttpSource|Manga)/);
-                    if (nameMatch) globalThis[nameMatch[1]] = ExtClass;
-
                     const lang = __settings.language ?? "en";
-                    const instance = new ExtClass(lang, lang);
+
+                    let instance;
+
+                    const FactoryClass = globalThis.__tachi_getFactoryClass();
+
+                    if (FactoryClass) {{
+                        const factory = new FactoryClass();
+
+                        const sources = factory.createSources();
+
+                        instance =
+                            sources.find?.(s => s.getLang?.() === lang)
+                            ?? sources[0];
+                    }} else {{
+                        const ExtClass = globalThis.__tachi_getCapturedClass();
+
+                        if (!ExtClass)
+                            throw new Error("[tachi-compat] No class extending HttpSource found");
+
+                        instance = new ExtClass(lang, lang);
+                    }}
+
+                    if (!instance)
+                        throw new Error("[tachi-compat] No source found for lang: " + lang);
 
                     const fn_name = "{fn}";
 
