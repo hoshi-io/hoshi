@@ -24,10 +24,37 @@ pub fn new_log_store() -> LogStore {
     Arc::new(RwLock::new(VecDeque::new()))
 }
 
-pub fn init_log_file(logs_dir: &PathBuf) {
-    if !logs_dir.exists() {
-        let _ = std::fs::create_dir_all(logs_dir);
+const MAX_LOG_FILES: usize = 20;
+
+fn cleanup_old_logs(logs_dir: &PathBuf) {
+    let mut files: Vec<_> = match std::fs::read_dir(logs_dir) {
+        Ok(entries) => entries
+            .filter_map(Result::ok)
+            .filter(|e| {
+                e.path()
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .is_some_and(|e| e == "log")
+            })
+            .collect(),
+        Err(_) => return,
+    };
+
+    files.sort_by_key(|f| {
+        f.metadata()
+            .and_then(|m| m.modified())
+            .ok()
+    });
+
+    let to_delete = files.len().saturating_sub(MAX_LOG_FILES);
+
+    for file in files.into_iter().take(to_delete) {
+        let _ = std::fs::remove_file(file.path());
     }
+}
+
+pub fn init_log_file(logs_dir: &PathBuf) {
+    cleanup_old_logs(logs_dir);
 
     if let Some(f) = new_log_file(logs_dir) {
         let _ = LOG_FILE.set(f);
