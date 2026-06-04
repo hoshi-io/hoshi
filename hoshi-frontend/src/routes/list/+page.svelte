@@ -113,10 +113,11 @@
     <ResponsiveSelect
             bind:value={listStore.activeType}
             items={[
-            { value: "anime", label: i18n.t('list.anime') },
-            { value: "manga", label: i18n.t('list.manga') },
-            { value: "novel", label: i18n.t('list.novel') }
-        ]}
+                { value: "ALL", label: i18n.t('list.all') },
+                { value: "anime", label: i18n.t('list.anime') },
+                { value: "manga", label: i18n.t('list.manga') },
+                { value: "novel", label: i18n.t('list.novel') }
+            ]}
             class="h-11 rounded-xl font-bold bg-card border border-border/40 shadow-sm"
     />
 {/snippet}
@@ -124,6 +125,7 @@
 {#snippet desktopTypeList()}
     <div class="flex flex-col gap-1 w-full">
         {#each [
+            { value: "ALL", label: i18n.t('list.all') },
             { value: "anime", label: i18n.t('list.anime') },
             { value: "manga", label: i18n.t('list.manga') },
             { value: "novel", label: i18n.t('list.novel') }

@@ -109,11 +109,19 @@ class SearchState {
                 normalizeTrackerMedia(item, this.tracker)
             );
 
+            const unique = Array.from(
+                new Map(normalized.map(item => [item.cid, item])).values()
+            );
+
             if (this.page === 1) {
-                this.results = normalized;
+                this.results = unique;
             } else {
                 const existingIds = new Set(this.results.map(i => i.cid));
-                this.results = [...this.results, ...normalized.filter(i => !existingIds.has(i.cid))];
+
+                this.results = [
+                    ...this.results,
+                    ...unique.filter(i => !existingIds.has(i.cid))
+                ];
             }
 
             this.hasSearched = true;

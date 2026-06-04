@@ -91,7 +91,7 @@ export function normalizeTrackerMedia(item: TrackerMedia, tracker: string): Norm
         trailerUrlRaw: item.trailerUrl ?? null,
         episodeCount: item.episodeCount ?? item.chapterCount ?? null,
         contentType: item.contentType,
-        href: `/c/${tracker}/${item.trackerId}`,
+        href: `/c/${tracker}/${btoa(item.trackerId)}`,
     };
 }
 

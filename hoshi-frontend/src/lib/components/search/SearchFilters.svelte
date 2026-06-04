@@ -181,7 +181,7 @@
         genre = "";
         format = "";
 
-        if (tracker !== "anilist") {
+        if (tracker == "kitsu") {
             nsfw = false;
         }
     });
@@ -232,7 +232,7 @@
                 />
             </div>
 
-            {#if tracker === 'anilist'}
+            {#if tracker === 'anilist' || tracker === 'mal'}
                 <div class="flex items-center space-x-3 pt-2">
                     <Switch id="nsfw-mode" bind:checked={nsfw} onCheckedChange={handleFilterChange} />
                     <Label for="nsfw-mode" class="text-sm font-bold text-foreground/90">{i18n.t('search.nsfw_only')}</Label>

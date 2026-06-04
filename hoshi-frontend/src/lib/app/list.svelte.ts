@@ -21,7 +21,7 @@ class ListStore {
     isInitialized = $state(false);
 
     activeStatus = $state<StatusFilter>("ALL");
-    activeType = $state<TypeFilter>("anime");
+    activeType = $state<TypeFilter>("ALL");
     searchQuery = $state("");
     activeSort = $state<SortOption>("SCORE_DESC");
     isMobileSearchActive = $state(false);
