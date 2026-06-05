@@ -71,6 +71,7 @@ export interface Extension {
     skip_default_processing: boolean;
     setting_definitions: SettingDefinition[];
     settings: Record<string, unknown>;
+    source?: string | null;
 }
 
 export interface ExtensionSettingsResponse {

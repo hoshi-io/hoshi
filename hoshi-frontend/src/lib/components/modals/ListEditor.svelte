@@ -32,13 +32,15 @@
         cid,
         title = i18n.t('list.modal.default_title'),
         contentType = "anime",
-        coverImage = ""
+        coverImage = "",
+        headers
     }: {
         open: boolean;
         cid: string;
         title?: string;
         contentType?: string;
         coverImage?: string;
+        headers?: any
     } = $props();
 
     const TRACKER_META: Record<string, { icon: string; label: string }> = {
@@ -267,7 +269,6 @@
         });
     }
 
-    // For the comparison table: local merged value per field
     function localValueFor(field: string): string {
         switch (field) {
             case "status":      return status;
@@ -302,6 +303,7 @@
                         <SmartImage
                                 src={coverImage}
                                 alt={title}
+                                imageHeaders={headers}
                                 class="md:w-20 md:h-28 rounded-sm shadow-lg border border-border/50 hidden sm:block"
                         />
                     </div>

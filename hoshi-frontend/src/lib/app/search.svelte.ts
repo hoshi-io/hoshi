@@ -4,6 +4,7 @@ import type { NormalizedCard } from "@/utils/normalize";
 import { contentApi } from "@/api/content/content";
 import { extensions } from "@/stores/extensions.svelte.js";
 import type { CoreError } from "@/api/client";
+import {extensionsApi} from "@/api/extensions/extensions";
 
 
 class SearchState {
@@ -160,11 +161,29 @@ class SearchState {
                 normalizeExtensionResult(item, this.selectedExtension, this.contentType)
             );
 
+            let imageHeaders: Record<string, string> | undefined;
+            const selectedExt = extensions.installed.find(e => e.id === this.selectedExtension);
+            if (selectedExt?.source === "tachiyomi" && normalized.length > 0) {
+                try {
+                    imageHeaders = await extensionsApi.getImageRequestHeaders(
+                        this.selectedExtension,
+                        normalized[0].cover
+                    );
+                    console.log(imageHeaders)
+                } catch (e) {
+                    console.warn("Could not fetch image headers", e);
+                }
+            }
+
+            const withHeaders = imageHeaders
+                ? normalized.map(card => ({ ...card, imageHeaders }))
+                : normalized;
+
             if (this.page === 1) {
-                this.results = normalized;
+                this.results = withHeaders;
             } else {
                 const existingIds = new Set(this.results.map(i => i.cid));
-                this.results = [...this.results, ...normalized.filter(i => !existingIds.has(i.cid))];
+                this.results = [...this.results, ...withHeaders.filter(i => !existingIds.has(i.cid))];
             }
 
             this.hasSearched = true;

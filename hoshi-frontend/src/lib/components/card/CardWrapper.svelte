@@ -36,6 +36,7 @@
                 {shouldBlur}
                 contentTypeLabel={contentTypeLabel}
                 {overlay}
+                imageHeaders={card.imageHeaders}
         />
     </a>
 

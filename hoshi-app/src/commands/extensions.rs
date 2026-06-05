@@ -121,3 +121,13 @@ pub async fn update_extension(
     let extension = manager.update_extension(state.inner(), &id, &manifest_url).await?;
     Ok(json!({ "ok": true, "extension": extension }))
 }
+
+#[tauri::command]
+pub async fn get_image_request_headers(
+    state: State<'_, Arc<AppState>>,
+    extension_id: String,
+    image_url: String,
+) -> Result<HashMap<String, String>, CoreError> {
+    let manager = state.inner().extension_manager.read().await;
+    manager.get_image_request_headers(&extension_id, &image_url).await
+}

@@ -11,6 +11,7 @@
         shouldBlur = false,
         contentTypeLabel,
         overlay,
+        imageHeaders = undefined,
     } = $props();
 </script>
 
@@ -22,6 +23,7 @@
                     src={cover}
                     alt={title}
                     {shouldBlur}
+                    {imageHeaders}
                     class="group-hover:scale-105 transition-transform duration-400 ease-out"
             />
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { fade, fly } from "svelte/transition";
+    import { fade } from "svelte/transition";
 
     import { i18n } from "@/stores/i18n.svelte.js";
     import { primaryMetadata } from "@/api/content/types";
@@ -23,7 +23,6 @@
     import type { AnimeProgress, ChapterProgress } from "@/api/progress/types";
     import MpvLauncher from "@/components/mpv/MpvLauncher.svelte";
 
-    // MPV Launcher state variables
     let mpvOpen = $state(false);
     let mpvEpNumber = $state(1);
     let mpvEpTitle = $state("");
@@ -132,6 +131,7 @@
                     title={displayTitle}
                     contentType={detail.fullContent.content.contentType}
                     coverImage={meta?.coverImage}
+                    headers={detail.headers}
                     size="icon"
                     variant="ghost"
             />
@@ -186,6 +186,7 @@
                 bind:showExtensionModal
                 watchUrl={isAnime ? watchUrl : null}
                 onWatchNow={handleWatchNowClick}
+                headers={detail.headers}
         />
 
         <div class="relative z-10 w-full max-w-[2000px] mx-auto px-4 md:px-8 lg:pl-32 lg:pr-12 mt-10 pb-24" in:fade={{ delay: 250, duration: 400 }}>

@@ -20,6 +20,7 @@
         isNsfw = false,
         extensions,
         contentType = "anime",
+        headers,
         onSuccess
     }: {
         open?: boolean;
@@ -28,6 +29,7 @@
         isNsfw: boolean;
         extensions: ExtensionSource[];
         contentType: "anime" | "manga" | "novel";
+        headers?: any;
         onSuccess?: () => void;
     } = $props();
 
@@ -109,6 +111,7 @@
                 <div class="absolute inset-0 overflow-hidden">
                     <SmartImage
                             src={metadata.bannerImage}
+                            imageHeaders={headers}
                             class="w-full h-full object-cover opacity-30 blur-[2px]"
                     />
                 </div>

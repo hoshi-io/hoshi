@@ -21,6 +21,7 @@ export type NormalizedCard = {
     episodeCount: number | null;
     contentType: string;
     href: string;
+    imageHeaders?: Record<string, string>;
 };
 
 export function getCardTitle(card: NormalizedCard): string {
@@ -122,6 +123,7 @@ export function normalizeExtensionResult(
         episodeCount: null,
         contentType,
         href: `/c/${extensionId}/${btoa(item.id)}`,
+        imageHeaders: undefined,
     };
 }
 

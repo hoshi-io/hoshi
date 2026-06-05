@@ -13,6 +13,7 @@
         coverImage,
         size = "icon",
         variant = "secondary",
+        headers,
         class: className = ""
     } = $props<{
         cid: string;
@@ -22,6 +23,7 @@
         size?: "default" | "sm" | "lg" | "icon" | null;
         variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | null;
         class?: string;
+        headers?: any
     }>();
 
     const isInList = $derived(listStore.hasCid(cid));
@@ -31,9 +33,11 @@
             cid,
             title,
             contentType,
-            coverImage
+            coverImage,
+            headers
         });
     }
+
 </script>
 
 <Button

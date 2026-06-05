@@ -129,6 +129,10 @@ class ExtensionsStore {
         const playRes = await contentApi.play(cid, extId, epNumber, opts) as any;
         return playRes.data;
     }
+
+    isTachiyomi(extId: string): boolean {
+        return this.installed.find(e => e.id === extId)?.source === "tachiyomi";
+    }
 }
 
 export const extensions = new ExtensionsStore();

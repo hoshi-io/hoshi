@@ -5,12 +5,14 @@
         src,
         alt = "",
         class: className = "",
-        shouldBlur = false
+        shouldBlur = false,
+        imageHeaders = undefined,
     }: {
         src: string | null | undefined;
         alt?: string;
         class?: string;
         shouldBlur?: boolean;
+        imageHeaders?: Record<string, string>;
     } = $props();
 
     let objectUrl = $state<string | null>(null);
@@ -27,6 +29,7 @@
         isLoaded = false;
 
         const tryDirect = () => new Promise<string>((resolve, reject) => {
+            if (imageHeaders) { reject(); return; }
             const img = new Image();
             img.onload = () => resolve(src);
             img.onerror = () => reject();
@@ -36,7 +39,12 @@
         tryDirect()
             .then(url => { if (!revoked) objectUrl = url; })
             .catch(() => {
-                proxyApi.fetch({ url: src })
+                proxyApi.fetch({
+                    url: src,
+                    referer: imageHeaders?.["referer"],
+                    origin: imageHeaders?.["origin"],
+                    userAgent: imageHeaders?.["user-agent"],
+                })
                     .then(blob => { if (!revoked) objectUrl = URL.createObjectURL(blob); })
                     .catch(() => { if (!revoked) objectUrl = src; });
             });

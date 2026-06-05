@@ -1,5 +1,11 @@
 const _cookieStore = new Map(Object.entries(state?.get?.("cookies") ?? {}));
 
+const _cfStateByOrigin = new Map(Object.entries(state?.get?.("cf_state") ?? {}));
+
+function _saveCfState() {
+    state.set("cf_state", Object.fromEntries(_cfStateByOrigin));
+}
+
 // Kotlin stdlib
 
 if (!Array.prototype.iterator) {
@@ -15,10 +21,9 @@ if (!Array.prototype.iterator) {
 Object.defineProperty(Array.prototype, 'firstInstance', {
     value: function(predicate) {
         const result = this.find(predicate);
-        // QuickJS / Dalvik usually expects strict null rather than undefined
         return result === undefined ? null : result;
     },
-    enumerable: false, // Keep it hidden from for...in loops
+    enumerable: false,
     writable: true,
     configurable: true
 });
@@ -67,39 +72,28 @@ Object.defineProperty(Number.prototype, 'booleanValue', {
 });
 
 globalThis.StringsKt = {
-    // ---------------------------------------------------------
-    // NEW & UPDATED METHODS
-    // ---------------------------------------------------------
 
-    // Updated to accept all 6 arguments: (str, delimiters, ignoreCase, limit, mask, marker)
     split$default(str, delimiters, ignoreCase, limit, mask, marker) {
-        if (str == null) return [];
+        if (str == null) return _makeKotlinList([]);
         const sep = Array.isArray(delimiters) ? delimiters[0] : delimiters;
-
-        // Note: A more robust split for multiple delimiters could use Regex,
-        // but this keeps your original logic intact while preventing arg-count crashes.
         const parts = str.split(sep);
-        return (limit && limit > 0) ? parts.slice(0, limit) : parts;
+        const result = (limit && limit > 0) ? parts.slice(0, limit) : parts;
+        return _makeKotlinList(result);
     },
 
-    // New: replaceFirst$default (str, oldValue, newValue, ignoreCase, mask, marker)
     replaceFirst$default(str, oldValue, newValue, ignoreCase, mask, marker) {
         if (str == null) return str;
         if (ignoreCase) {
-            // Escape RegExp special characters in oldValue to safely use it in a Regex
             const escapedOld = String(oldValue).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             return str.replace(new RegExp(escapedOld, 'i'), newValue);
         }
-        // standard string replace in JS naturally only replaces the first instance
         return str.replace(oldValue, newValue);
     },
 
-    // Updated: Returns 1 (true) or 0 (false) to be compatible with Dalvik `!== 0` branch checks
     isBlank(str) {
         return (str == null || typeof str !== "string" || str.trim().length === 0) ? 1 : 0;
     },
 
-    // New: strictly parses integers or returns null, matching Kotlin's behavior
     toIntOrNull(str) {
         if (str == null || typeof str !== "string") return null;
         const s = str.trim();
@@ -109,10 +103,6 @@ globalThis.StringsKt = {
         }
         return null;
     },
-
-    // ---------------------------------------------------------
-    // EXISTING METHODS (Expanded with mask/marker args)
-    // ---------------------------------------------------------
 
     removeSuffix(str, suffix) {
         if (str == null) return str;
@@ -488,12 +478,17 @@ globalThis.JsonDecoder = class JsonDecoder {
         return new JsonDecoder(json, descriptor);
     }
     endStructure(descriptor) {}
-    decodeSequentially() { return 0; }
-    decodeElementIndex(descriptor) {
-        if (this._index < descriptor._fields.length) return this._index++;
-        return -1;
+    decodeSequentially() {
+        return 0;
     }
+    decodeElementIndex(descriptor) {
+        const idx =
+            this._index < descriptor._fields.length
+                ? this._index++
+                : -1;
 
+        return idx;
+    }
     decodeStringElement(descriptor, index) {
         const key = descriptor._fields[index];
         return this._json[key] ?? null;
@@ -667,6 +662,52 @@ globalThis.LongSerializer = {
     }
 };
 
+globalThis.SetsKt = {
+    emptySet() {
+        return new Set();
+    },
+
+    hashSetOf(...items) {
+        // Kotlin hashSetOf(vararg)
+        if (items.length === 1 && Array.isArray(items[0])) {
+            return new Set(items[0]);
+        }
+        return new Set(items);
+    },
+
+    setOf(...items) {
+        return new Set(items);
+    },
+
+    mutableSetOf(...items) {
+        return new Set(items);
+    },
+
+    plus(set, value) {
+        const s = new Set(set);
+
+        if (value instanceof Set) {
+            for (const v of value) s.add(v);
+        } else {
+            s.add(value);
+        }
+
+        return s;
+    },
+
+    minus(set, value) {
+        const s = new Set(set);
+
+        if (value instanceof Set) {
+            for (const v of value) s.delete(v);
+        } else {
+            s.delete(value);
+        }
+
+        return s;
+    },
+};
+
 // Kotlin Pair / TuplesKt
 
 globalThis.TuplesKt = {
@@ -679,6 +720,12 @@ globalThis.TuplesKt = {
             component1() { return first; },
             component2() { return second; },
         };
+    }
+};
+
+globalThis.Long = class Long {
+    static valueOf(v, _unused) {
+        return Number(v);
     }
 };
 
@@ -759,6 +806,20 @@ globalThis.SimpleDateFormat = class SimpleDateFormat {
     }
     format(date) { return (date instanceof Date ? date : new Date(date)).toISOString(); }
     setTimeZone(tz) { this._tz = tz; }
+};
+
+globalThis.TimeZone = class TimeZone {
+    constructor(id) {
+        this.id = id;
+    }
+
+    getID() {
+        return this.id;
+    }
+
+    static getTimeZone(id) {
+        return new TimeZone(id);
+    }
 };
 
 // Kotlin ranges
@@ -855,9 +916,23 @@ globalThis.RangesKt = {
 // Kotlin Regex
 globalThis.Regex = class Regex {
     constructor(pattern, options) {
+        let flags = "";
+
+        if (options instanceof Set) {
+            for (const opt of options) {
+                flags += opt.flag ?? "";
+            }
+        } else if (Array.isArray(options)) {
+            for (const opt of options) {
+                flags += opt.flag ?? "";
+            }
+        } else if (typeof options === "string") {
+            flags = options;
+        }
+
         this._pattern = pattern;
-        this._flags   = options ?? "";
-        this._re      = new RegExp(pattern, this._flags);
+        this._flags = flags;
+        this._re = new RegExp(pattern, flags);
     }
     containsMatchIn(str)  { return this._re.test(str); }
     matches(str)          { return new RegExp(`^(?:${this._pattern})$`).test(str); }
@@ -883,6 +958,18 @@ globalThis.Regex = class Regex {
     split(str)                   { return str.split(this._re); }
     toString()                   { return this._pattern; }
 };
+
+globalThis.RegexOption = {
+    IGNORE_CASE: { flag: "i" },
+    MULTILINE: { flag: "m" },
+    DOT_MATCHES_ALL: { flag: "s" },
+    LITERAL: { flag: "" },
+    COMMENTS: { flag: "" },
+    UNIX_LINES: { flag: "" },
+    CANON_EQ: { flag: "" },
+};
+
+RegexOption.Companion = {};
 
 // Android Preferences stubs
 globalThis.SwitchPreferenceCompat = class SwitchPreferenceCompat {
@@ -1053,18 +1140,35 @@ const _makeOkHttpClientBuilder = (useCloudflare = false, interceptors = [], netw
     build() { return _makeOkHttpClient(this._useCloudflare); },
 });
 
-const _makeKotlinList = (arr) => ({
-    _arr: arr,
-    iterator() {
-        let i = 0; const a = arr;
-        return { hasNext() { return i < a.length; }, next() { return a[i++]; } };
-    },
-    indexOfFirst(pred) { return arr.findIndex(pred); },
-    removeAt(i)        { return arr.splice(i, 1)[0]; },
-    add(item)          { arr.push(item); return true; },
-    get size()         { return arr.length; },
-    [Symbol.iterator]() { return arr[Symbol.iterator](); },
-});
+const _makeKotlinList = (arr) => {
+    arr.iterator    = function() {
+        let i = 0;
+        return { hasNext() { return i < arr.length; }, next() { return arr[i++]; } };
+    };
+    arr.indexOfFirst = (pred) => arr.findIndex(pred);
+    arr.removeAt     = (i)    => arr.splice(i, 1)[0];
+    arr.add          = (item) => { arr.push(item); return true; };
+    Object.defineProperty(arr, 'size', { get: () => arr.length, configurable: true });
+
+    // Proxy to handle any obfuscated method name (e.g. .r(), .q(), .z())
+    return new Proxy(arr, {
+        get(target, prop) {
+            if (prop in target) return typeof target[prop] === 'function'
+                ? target[prop].bind(target)
+                : target[prop];
+
+            // Unknown prop — return a function that handles iterator/forEach patterns
+            if (typeof prop === 'string') {
+                return function(...args) {
+                    if (typeof args[0] === 'function') { target.forEach(args[0]); return; }
+                    if (args.length === 0)              return target; // iterator call
+                    if (typeof args[0] === 'number')    return target[args[0]]; // get(i)
+                    return target;
+                };
+            }
+        }
+    });
+};
 
 // BrotliInterceptor — no-op sentinel (the extension just looks for it by instanceof)
 class BrotliInterceptor {}
@@ -1870,14 +1974,8 @@ globalThis.Request = class Request {
     };
 };
 
-// PreferencesKt — Kotlin generates an inline class named
-// PreferencesKt$getPreferences$$inlined$get$1 at every call-site of
-// Injekt.get<Application>(). We register a global proxy so that
-// `new PreferencesKt$getPreferences$$inlined$get$1()` works and
-// getType() returns a token that InjektKt.getInstance() resolves to
-// the Application singleton (which itself delegates to __settings).
 (function() {
-    const _token = { _ctor: null }; // filled after Application is defined
+    const _token = { _ctor: null };
 
     function _makePrefsTypeToken() {
         // Lazily resolve Application so definition order doesn't matter.
@@ -1893,7 +1991,6 @@ globalThis.Request = class Request {
     _PrefsInlined.prototype.toString = function() { return "PreferencesKt$get$1"; };
 
     globalThis["PreferencesKt$getPreferences$$inlined$get$1"] = _PrefsInlined;
-    // Some builds use a shorter name; cover both.
     globalThis["PreferencesKt$get$1"] = _PrefsInlined;
     globalThis.PreferencesKt = globalThis.PreferencesKt ?? {
         getPreferences(context, name) {
@@ -1903,6 +2000,24 @@ globalThis.Request = class Request {
     };
 })();
 
+globalThis.Enum = class Enum {
+    constructor(name, ordinal) {
+        this.name = name;
+        this.ordinal = ordinal;
+    }
+
+    toString() {
+        return this.name;
+    }
+};
+
+globalThis.EnumEntriesKt = {
+    enumEntries(values) {
+        return values;
+    }
+};
+
+globalThis.Enum_2 = Enum;
 globalThis.InjektKt = class InjektKt {
     static getInjekt() {
         return {
@@ -2073,6 +2188,14 @@ globalThis.OkHttpExtensionsKt = {
     }
 };
 
+globalThis.RequestBody = {
+    Companion: {
+        create(_mediaType, content) {
+            return content;
+        }
+    }
+};
+
 const COROUTINE_SUSPENDED = Symbol("COROUTINE_SUSPENDED");
 globalThis.SuspendLambda = class SuspendLambda {
     constructor(arity, completion) {
@@ -2124,6 +2247,61 @@ globalThis.SuspendLambda = class SuspendLambda {
 
     invokeSuspend(result) {
         return Unit_INSTANCE;
+    }
+};
+
+globalThis.FunctionReferenceImpl = class FunctionReferenceImpl {
+    constructor(
+        arity,
+        owner,
+        name,
+        signature,
+        flags
+    ) {
+        this.arity = arity;
+        this.owner = owner;
+        this.name = name;
+        this.signature = signature;
+        this.flags = flags;
+    }
+};
+globalThis.FunctionReference = class FunctionReference {};
+
+globalThis.ContinuationImpl = class ContinuationImpl {
+    constructor(completion) {
+        this.completion = completion || null;
+        this.label = 0;
+    }
+
+    invokeSuspend(result) {
+        return result;
+    }
+
+    resumeWith(result) {
+        let current = this;
+        let param = result;
+
+        while (current) {
+            try {
+                const outcome = current.invokeSuspend(param);
+
+                if (outcome === COROUTINE_SUSPENDED) {
+                    return outcome;
+                }
+
+                param = outcome;
+            } catch (e) {
+                param = e;
+            }
+
+            current = current.completion;
+        }
+
+        return param;
+    }
+
+    create(value, completion) {
+        return this;
     }
 };
 
@@ -2215,6 +2393,25 @@ function _mergeCloudfareCookies(existingHeaders, cookies) {
     return out;
 }
 
+globalThis.Source = class Source {
+    get id() { return 0n; }
+    get name() { return ""; }
+    get lang() { return ""; }
+
+    async getMangaDetails(manga) { return manga; }
+    async getChapterList(manga) { return []; }
+    async getPageList(chapter) { return []; }
+
+    // Deprecated RxJava stubs — translated code may call these
+    fetchMangaDetails(manga) { throw new Error("Not used"); }
+    fetchChapterList(manga) { throw new Error("Not used"); }
+    fetchPageList(chapter) { throw new Error("Not used"); }
+};
+
+// eu.kanade.tachiyomi.source.SourceFactory
+globalThis.SourceFactory = class SourceFactory {
+    createSources() { return []; }
+};
 
 // Override in HttpSource to unwrap Headers and HttpUrl properly
 globalThis._origDoRequest = Manga.prototype._doRequest;
@@ -2254,6 +2451,11 @@ class HttpSource extends _SandboxManga {
         let id = BigInt("0x" + first64);
         id &= 0x7fffffffffffffffn;
         return id.toString();
+    }
+
+    async getImageHeaders() {
+        const h = this.headers?.toFetchHeaders?.() ?? this.headers ?? {};
+        return h;
     }
 
     //  sandbox API entry points
@@ -2326,8 +2528,6 @@ class HttpSource extends _SandboxManga {
 
     async search(query, filters, page) {
         page = page ?? 1;
-
-        console.log(filters)
 
         const filterList = this.getFilterList();
         const hasFilters = filters && typeof filters === "object" && Object.keys(filters).length > 0;
@@ -2432,6 +2632,23 @@ class HttpSource extends _SandboxManga {
     imageUrlParse(response)                          { throw new Error("not implemented"); }
     getFilterList()                                  { return new FilterList(); }
 
+    imageRequest(page) {
+        return GET(page.imageUrl, this.headers);
+    }
+
+    async getImageRequestHeaders(imageUrl) {
+        const page = new Page(0, imageUrl, imageUrl);
+        const req = this.imageRequest(page);
+        const r = req instanceof _Call ? req._req : req;
+        const h = new Headers(r.headers?.toFetchHeaders?.() ?? r.headers ?? {});
+
+        if (!h.has("referer")) {
+            h.set("referer", this.getBaseUrl() + "/");
+        }
+
+        return h.toFetchHeaders();
+    }
+
     //  internal 
 
     async _doRequest(req) {
@@ -2442,48 +2659,104 @@ class HttpSource extends _SandboxManga {
 
         const url    = r.url?.toString?.() ?? String(r.url);
         const method = r.method ?? "GET";
-        let headers  = r.headers?.toFetchHeaders?.() ?? r.headers ?? this.headers?.toFetchHeaders?.() ?? this.headers ?? {};
         const body   = r.body ?? undefined;
 
-        if (_cookieStore.size > 0) {
-            const h = headers instanceof Headers ? headers : new Headers(headers);
-            const existing = h.get("cookie") ?? "";
-            const stored = [..._cookieStore.entries()].map(([k, v]) => `${k}=${v}`).join("; ");
-            h.set("cookie", existing ? `${existing}; ${stored}` : stored);
-            headers = h;
-        }
+        const origin = new URL(url).origin;
+        const cfState = useCloudflare ? (_cfStateByOrigin.get(origin) ?? null) : false;
 
-        const res  = await fetch(url, { method, headers, body });
-        const text = await res.text();
+        // Helper: build headers with cookie jar merged in
+        const buildHeaders = (base, extraCookies = null) => {
+            const h = base instanceof Headers
+                ? new Headers(base)  // clone
+                : new Headers(base instanceof Object ? base : {});
 
-        if (useCloudflare && (res.status === 403 || res.status === 503) &&
-            (text.includes("challenge-error-title") || text.includes("challenge-error-text"))
-        ) {
-            const { cookies, userAgent } = await _resolveCloudflare(url);
-            const retryHeaders = _mergeCloudfareCookies(
-                headers instanceof Headers ? headers : new Headers(headers),
-                cookies
-            );
-            retryHeaders.set("user-agent", userAgent);
-            retryHeaders.set("referer", new URL(url).origin + "/");
-            retryHeaders.set("sec-fetch-site", "same-origin");
-            retryHeaders.set("sec-fetch-mode", "cors");
-            retryHeaders.set("sec-fetch-dest", "empty");
+            // Merge cookie jar
+            if (_cookieStore.size > 0) {
+                const stored = [..._cookieStore.entries()]
+                    .map(([k, v]) => `${k}=${v}`).join("; ");
+                const existing = h.get("cookie") ?? "";
+                h.set("cookie", existing ? `${existing}; ${stored}` : stored);
+            }
 
-            const fetchHeaders = retryHeaders.toFetchHeaders();
-            const retry = await headless.fetch(url, {
+            // Merge CF cookies if provided
+            if (extraCookies) {
+                _mergeCloudfareCookies(h, extraCookies);
+            }
+
+            return h;
+        };
+
+        const baseHeaders = r.headers?.toFetchHeaders?.() ?? r.headers
+            ?? this.headers?.toFetchHeaders?.() ?? this.headers ?? {};
+
+        // ── Path A: origin is known CF-protected, go straight to headless ────────
+        if (cfState && cfState !== false) {
+            const h = buildHeaders(baseHeaders, cfState.cookies);
+            h.set("user-agent",    cfState.userAgent);
+            h.set("referer",       origin + "/");
+            h.set("sec-fetch-site", "same-origin");
+            h.set("sec-fetch-mode", "cors");
+            h.set("sec-fetch-dest", "empty");
+
+            const res = await headless.fetch(url, {
                 method,
-                headers: Object.fromEntries(fetchHeaders.entries()),
+                headers: Object.fromEntries(
+                    (h.toFetchHeaders?.() ?? h).entries()
+                ),
                 body,
             });
 
-            if (!retry.ok) throw new Error(`HTTP ${retry.status}: ${url}`);
-            const retryText = await retry.text();
-            return new _SandboxResponse(retryText, retry.status, url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
+            return new _SandboxResponse(res.body ?? res.text ?? "", res.status, url);
         }
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
-        return new _SandboxResponse(text, res.status, url);
+        // ── Path B: origin unknown or known-clean, try plain fetch first ─────────
+        const headers = buildHeaders(baseHeaders);
+        const res  = await fetch(url, {
+            method,
+            headers: headers.toFetchHeaders?.() ?? headers,
+            body,
+        });
+        const text = await res.text();
+
+        const isCfChallenge = useCloudflare
+            && (res.status === 403 || res.status === 503)
+            && (text.includes("challenge-error-title") || text.includes("challenge-error-text"));
+
+        if (!isCfChallenge) {
+            if (cfState === null) _cfStateByOrigin.set(origin, false);
+            _saveCfState();
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
+            return new _SandboxResponse(text, res.status, url);
+        }
+
+        const { cookies, userAgent } = await _resolveCloudflare(url);
+        _cfStateByOrigin.set(origin, { cookies, userAgent });
+        _saveCfState();
+
+        const retryHeaders = buildHeaders(baseHeaders, cookies);
+        retryHeaders.set("user-agent",    userAgent);
+        retryHeaders.set("referer",       origin + "/");
+        retryHeaders.set("sec-fetch-site", "same-origin");
+        retryHeaders.set("sec-fetch-mode", "cors");
+        retryHeaders.set("sec-fetch-dest", "empty");
+
+        const cfSession = await headless.fetch(origin, {
+            waitFor: { selector: "body" },
+            capture: [url],
+            javascript: `
+        fetch(${JSON.stringify(url)}, {
+            method: ${JSON.stringify(method)},
+            headers: ${JSON.stringify(retryHeaders.toFetchHeaders())},
+            ${body ? `body: ${JSON.stringify(body)},` : ""}
+        }).then(r => r.text())
+    `,
+            timeout_ms: 20000,
+        });
+
+        const captured = cfSession.captured?.find(c => c.url.includes(url));
+        if (!captured) throw new Error(`CF capture failed for ${url}`);
+        return new _SandboxResponse(captured.body, captured.status, url);
     }
 
     _parsePage(page) {
@@ -2535,4 +2808,31 @@ globalThis.__tachi_getCapturedClass = function() {
     __tachi_captured = leaf ?? candidates[0];
     if (!__tachi_captured) throw new Error("[tachi-compat] No class extending HttpSource found");
     return __tachi_captured;
+};
+
+globalThis.__tachi_getFactoryClass = function() {
+    const candidates = [];
+
+    for (const key of Object.getOwnPropertyNames(globalThis)) {
+        try {
+            const v = globalThis[key];
+
+            if (
+                typeof v === "function" &&
+                v !== SourceFactory &&
+                v.prototype instanceof SourceFactory
+            ) {
+                candidates.push(v);
+            }
+        } catch (_) {}
+    }
+
+    const leaf = candidates.find(cls =>
+        !candidates.some(other =>
+            other !== cls &&
+            other.prototype instanceof cls
+        )
+    );
+
+    return leaf ?? candidates[0] ?? null;
 };

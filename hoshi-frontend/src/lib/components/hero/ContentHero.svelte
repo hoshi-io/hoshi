@@ -14,7 +14,8 @@
         isAnime,
         showTrackerModal = $bindable(),
         showExtensionModal = $bindable(),
-        onWatchNow
+        onWatchNow,
+        headers
     } = $props<{
         fullContent: any;
         meta: any;
@@ -23,6 +24,7 @@
         showTrackerModal: boolean;
         showExtensionModal: boolean;
         onWatchNow: () => void;
+        headers?: any
     }>();
 
     let trackersExpanded = $state(false);
@@ -68,6 +70,7 @@
             src={meta?.bannerImage || meta?.coverImage}
             alt={""}
             {shouldBlur}
+            imageHeaders={headers}
             class="w-full h-full object-cover opacity-45"
     />
     <div class="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background"></div>
@@ -84,6 +87,7 @@
                         src={meta?.coverImage}
                         alt={displayTitle}
                         {shouldBlur}
+                        imageHeaders={headers}
                         class="w-full h-full object-cover"
                 />
             </div>

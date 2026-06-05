@@ -8,6 +8,8 @@ import type { FullContent } from "@/api/content/types";
 import { layoutState } from '@/stores/layout.svelte.js';
 import { appConfig } from "@/stores/config.svelte.js";
 import { normalizeFullContent, type NormalizedCard } from "@/utils/normalize";
+import {extensions} from "@/stores/extensions.svelte";
+import {extensionsApi} from "@/api/extensions/extensions";
 
 export type NormalizedRelation = {
     targetCid: string;
@@ -31,14 +33,13 @@ export class ContentDetailState {
     source = $derived(this.pathParts.length === 2 ? this.pathParts[0] : "");
     id = $derived(this.pathParts.length === 2 ? atob(this.pathParts[1]) : "");
     cid = $derived(this.pathParts.length === 1 ? this.pathParts[0] : "");
+    headers: Record<string, string> | undefined;
 
     constructor() {
         $effect(() => {
             if (this.cid) {
                 this.loadContentByCid(this.cid);
             } else if (this.source && this.id) {
-                console.log("a")
-
                 this.loadContent(this.source, this.id);
             }
         });
@@ -52,7 +53,6 @@ export class ContentDetailState {
 
         try {
             const res = await contentApi.get_by_cid(cid);
-            console.log(res)
             await this.handleResponse(res);
         } catch (e) {
             this.handleError(e);
@@ -69,7 +69,23 @@ export class ContentDetailState {
 
         try {
             const res = await contentApi.get(src, entryId);
-            console.log(res)
+
+            if (extensions.isTachiyomi(this.source) ) {
+                try {
+                    const metadata = res.metadata.find(
+                        item => item.sourceName === this.source
+                    );
+
+                    if (metadata) {
+                        this.headers = await extensionsApi.getImageRequestHeaders(
+                            this.source,
+                            metadata.coverImage
+                        );
+                    }
+                } catch (e) {
+                    console.warn("Could not fetch tachiyomi image headers", e);
+                }
+            }
             await this.handleResponse(res);
         } catch (e) {
             this.handleError(e);

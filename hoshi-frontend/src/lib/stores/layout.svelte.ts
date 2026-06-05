@@ -5,6 +5,7 @@ export type ListEditorPayload = {
     title: string;
     contentType: string;
     coverImage?: string;
+    headers?: string;
 };
 
 export type MpvState = {

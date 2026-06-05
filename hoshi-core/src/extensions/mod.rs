@@ -289,7 +289,6 @@ impl ExtensionManager {
             "main": "index.js",
             "source": "tachiyomi",
             "nsfw": nsfw,
-            "skip_default_processing": nsfw,
             "settings": settings,
             "icon": icon_url,
         });
@@ -552,6 +551,26 @@ impl ExtensionManager {
             error!(ext = %extension_id, func = %function_name, error = ?e, "Failed to deserialize response");
             CoreError::Internal("error.content.invalid_extension_response".into())
         })
+    }
+
+    pub async fn get_image_request_headers(
+        &self,
+        ext_id: &str,
+        image_url: &str,
+    ) -> CoreResult<HashMap<String, String>> {
+        let extension = self.extensions.get(ext_id).ok_or_else(|| {
+            CoreError::NotFound("error.extension.not_found".into())
+        })?;
+
+        if extension.source.as_deref() != Some("tachiyomi") {
+            return Err(CoreError::BadRequest("error.extension.not_tachiyomi".into()));
+        }
+
+        self.call_typed_function(
+            ext_id,
+            "getImageRequestHeaders",
+            vec![json!(image_url)],
+        ).await
     }
 
     pub async fn get_settings(&self, ext_id: &str) -> CoreResult<ExtensionFeatures> {

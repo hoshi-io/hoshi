@@ -69,4 +69,10 @@ export const extensionsApi = {
             tauri: { cmd: "uninstall_extension", args: { id } },
         });
     },
+
+    getImageRequestHeaders: (extensionId: string, imageUrl: string) => {
+        return call<Record<string, string>>({
+            tauri: { cmd: "get_image_request_headers", args: { extensionId, imageUrl } },
+        });
+    },
 };
