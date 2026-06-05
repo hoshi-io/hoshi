@@ -15,6 +15,12 @@
     let trackersOpen = $state(true);
     let extensionsOpen = $state(false);
 
+    let sortedExtensions = $derived(
+        [...availableExtensions].sort((a, b) =>
+            (a.name || "").localeCompare(b.name || "")
+        )
+    );
+
     function getTrackerFavicon(trackerName: string) {
         const domains: Record<string, string> = {
             'anilist': 'anilist.co',
@@ -91,7 +97,7 @@
 
             {#if extensionsOpen}
                 <div class="space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent animate-in slide-in-from-top-2 fade-in duration-200">
-                    {#each availableExtensions as ext}
+                    {#each sortedExtensions as ext}
                         <button
                                 type="button"
                                 onclick={() => onSelectSource('extension', ext.id, 'anilist', isMobile)}
