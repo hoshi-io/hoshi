@@ -247,6 +247,31 @@ impl ExtensionManager {
         let ext_dir = self.extensions_dir.join(&prefixed_id);
         fs::create_dir_all(&ext_dir).await.map_err(CoreError::Io)?;
 
+        let js_path = ext_dir.join("index.js");
+        fs::write(&js_path, &translated.js).await.map_err(CoreError::Io)?;
+
+        let nsfw = entry.nsfw != 0;
+        let icon_url = entry.icon_url.clone().unwrap_or_else(|| {
+            format!("{}/icon/{}.png", entry.repo_url, entry.pkg)
+        });
+
+        let staging_extension = Extension {
+            id: prefixed_id.clone(),
+            name: entry.sources.first().map(|s| s.name.clone()).unwrap_or_else(|| entry.name.clone()),
+            version: entry.version.clone(),
+            author: "tachiyomi".to_string(),
+            icon: Option::from(icon_url.clone()),
+            ext_type: ExtensionType::Manga,
+            script_path: js_path.clone(),
+            language: entry.lang.clone(),
+            nsfw,
+            skip_default_processing: false,
+            setting_definitions: vec![],
+            settings: HashMap::new(),
+            source: Some("tachiyomi".to_string()),
+        };
+        self.extensions.insert(prefixed_id.clone(), staging_extension);
+
         let unique_langs: Vec<String> = {
             let mut seen = std::collections::HashSet::new();
             entry.sources.iter()
@@ -255,33 +280,52 @@ impl ExtensionManager {
                 .collect()
         };
 
-        let settings: Vec<Value> = if unique_langs.len() > 1 {
+        let mut settings: Vec<Value> = if unique_langs.len() > 1 {
             vec![json!({
-            "key": "language",
-            "label": "Language",
-            "type": "select",
-            "default": unique_langs[0],
-            "options": unique_langs.iter().map(|l| json!({
-                "value": l,
-                "label": l.to_uppercase()
-            })).collect::<Vec<_>>()
-        })]
+                "key": "language",
+                "label": "Language",
+                "type": "select",
+                "default": unique_langs[0],
+                "options": unique_langs.iter().map(|l| json!({
+                    "value": l,
+                    "label": l.to_uppercase()
+                })).collect::<Vec<_>>()
+            })]
         } else {
             vec![]
         };
 
-        let nsfw = entry.nsfw != 0;
+        match self.get_tachiyomi_settings(&prefixed_id).await {
+            Ok(discovered) => {
+                let existing_keys: std::collections::HashSet<String> = settings
+                    .iter()
+                    .filter_map(|s| {
+                        s.get("key")
+                            .and_then(|k| k.as_str())
+                            .map(String::from)
+                    })
+                    .collect();
 
-        let icon_url = entry.icon_url.clone().unwrap_or_else(|| {
-            format!("{}/icon/{}.png", entry.repo_url, entry.pkg)
-        });
+                for pref in discovered {
+                    if let Some(key) = pref.get("key").and_then(|k| k.as_str()) {
+                        if !existing_keys.contains(key) {
+                            settings.push(pref);
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                debug!(
+                    ext = %prefixed_id,
+                    error = ?e,
+                    "__getTachiyomiSettings failed; skipping preference discovery"
+                );
+            }
+        }
 
-        let manifest = json!({
+        let manifest_json = json!({
             "id": prefixed_id,
-            "name": entry.sources
-                .first()
-                .map(|s| s.name.clone())
-                .unwrap_or_else(|| entry.name),
+            "name": entry.sources.first().map(|s| s.name.clone()).unwrap_or_else(|| entry.name),
             "version": entry.version,
             "type": "manga",
             "language": entry.lang,
@@ -293,12 +337,10 @@ impl ExtensionManager {
             "icon": icon_url,
         });
 
-        let manifest_yaml = serde_yaml::to_string(&manifest)
+        let manifest_yaml = serde_yaml::to_string(&manifest_json)
             .map_err(|e| CoreError::Parse(e.to_string()))?;
 
         fs::write(ext_dir.join("manifest.yaml"), &manifest_yaml)
-            .await.map_err(CoreError::Io)?;
-        fs::write(ext_dir.join("index.js"), &translated.js)
             .await.map_err(CoreError::Io)?;
 
         let manifest: ExtensionManifest = serde_yaml::from_str(&manifest_yaml)
@@ -316,7 +358,7 @@ impl ExtensionManager {
             author: manifest.author.unwrap_or_else(|| "tachiyomi".to_string()),
             icon: manifest.icon,
             ext_type: manifest.ext_type,
-            script_path: ext_dir.join("index.js"),
+            script_path: js_path,
             language: manifest.language,
             nsfw: manifest.nsfw,
             skip_default_processing: manifest.skip_default_processing,
@@ -326,7 +368,7 @@ impl ExtensionManager {
         };
 
         self.extensions.insert(manifest.id.clone(), extension.clone());
-        info!(ext = %extension.id, "Tachiyomi extension installed successfully");
+        info!(ext = %extension.id, "Tachiyomi extension installed and settings reflected successfully");
 
         Ok(extension)
     }
@@ -571,6 +613,10 @@ impl ExtensionManager {
             "getImageRequestHeaders",
             vec![json!(image_url)],
         ).await
+    }
+
+    pub async fn get_tachiyomi_settings(&self, ext_id: &str) -> CoreResult<Vec<Value>> {
+        self.call_typed_function(ext_id, "__getTachiyomiSettings", vec![]).await
     }
 
     pub async fn get_settings(&self, ext_id: &str) -> CoreResult<ExtensionFeatures> {

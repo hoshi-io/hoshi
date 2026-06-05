@@ -274,11 +274,6 @@ globalThis.Pair = class Pair {
 
 globalThis.Pair_2 = Pair;
 
-// TODO: remove when settings collected
-globalThis.__settings = {
-    domain_pref: "0",
-};
-
 globalThis.Dispatchers = {
     getIO()      { return { type: "IO" }; },
     getMain()    { return { type: "Main" }; },
@@ -977,14 +972,20 @@ globalThis.SwitchPreferenceCompat = class SwitchPreferenceCompat {
     setKey(v)          { this._key     = v; return this; }
     setTitle(v)        { this._title   = v; return this; }
     setSummary(v)      { this._summary = v; return this; }
+    setSummaryOn(v)    { this._summaryOn = v; return this; }
+    setSummaryOff(v)   { this._summaryOff = v; return this; }
     setDefaultValue(v) { this._default = v; return this; }
-    setOnPreferenceChangeListener(l) { this._listener = l; return this; }
-    // called on the preference screen
-    key()     { return this._key; }
-    title()   { return this._title; }
+    setOnPreferenceChangeListener(l) { return this; }
+    _toManifest() {
+        return {
+            key:     this._key     ?? "",
+            label:   this._title   ?? this._key ?? "",
+            type:    "boolean",
+            default: this._default ?? false,
+        };
+    }
 };
 
-// Common preference types you'll likely hit too
 globalThis.ListPreference = class ListPreference {
     constructor(context) {}
     setKey(v)          { this._key     = v; return this; }
@@ -993,7 +994,43 @@ globalThis.ListPreference = class ListPreference {
     setEntries(v)      { this._entries = v; return this; }
     setEntryValues(v)  { this._values  = v; return this; }
     setDefaultValue(v) { this._default = v; return this; }
-    setOnPreferenceChangeListener(l) {}
+    setOnPreferenceChangeListener(l) { return this; }
+    _toManifest() {
+        const entries = this._entries ?? [];
+        const values  = this._values  ?? entries;
+        return {
+            key:     this._key     ?? "",
+            label:   this._title   ?? this._key ?? "",
+            type:    "select",
+            default: this._default ?? (values[0] ?? ""),
+            options: entries.map((label, i) => ({ label, value: values[i] ?? label })),
+        };
+    }
+};
+
+globalThis.MultiSelectListPreference = class MultiSelectListPreference {
+    constructor(context) {}
+    setKey(v)          { this._key     = v; return this; }
+    setTitle(v)        { this._title   = v; return this; }
+    setSummary(v)      { this._summary = v; return this; }
+    setEntries(v)      { this._entries = v; return this; }
+    setEntryValues(v)  { this._values  = v; return this; }
+    setDefaultValue(v) { this._default = v; return this; }
+    setOnPreferenceChangeListener(l) { return this; }
+    _toManifest() {
+        const entries = this._entries ?? [];
+        const values  = this._values  ?? entries;
+        const defaultVal = Array.isArray(this._default)
+            ? (this._default[0] ?? values[0] ?? "")
+            : (this._default    ?? values[0] ?? "");
+        return {
+            key:     this._key     ?? "",
+            label:   this._title   ?? this._key ?? "",
+            type:    "select",
+            default: defaultVal,
+            options: entries.map((label, i) => ({ label, value: values[i] ?? label })),
+        };
+    }
 };
 
 globalThis.EditTextPreference = class EditTextPreference {
@@ -1002,14 +1039,34 @@ globalThis.EditTextPreference = class EditTextPreference {
     setTitle(v)        { this._title   = v; return this; }
     setSummary(v)      { this._summary = v; return this; }
     setDefaultValue(v) { this._default = v; return this; }
-    setOnPreferenceChangeListener(l) {}
+    setOnPreferenceChangeListener(l) { return this; }
+    _toManifest() {
+        return {
+            key:     this._key     ?? "",
+            label:   this._title   ?? this._key ?? "",
+            type:    "string",
+            default: this._default ?? "",
+        };
+    }
 };
 
 // PreferenceScreen / PreferenceGroup
 globalThis.PreferenceScreen = class PreferenceScreen {
-    constructor() { this._prefs = []; }
-    addPreference(p) { this._prefs.push(p); }
-    getPreferences()  { return this._prefs; }
+    constructor() {
+        this._prefs = [];
+    }
+
+    getContext() {
+        return {};
+    }
+
+    addPreference(p) {
+        this._prefs.push(p);
+    }
+
+    getPreferences() {
+        return this._prefs;
+    }
 };
 
 globalThis.Application = class Application {
@@ -1034,7 +1091,6 @@ globalThis.SharedPreferences = class SharedPreferences {
 
     _get(key, def) {
         const v = __settings?.[key];
-        console.log("SharedPreferences._get:", key, "->", v, "(default:", def, ")");
         return v === undefined ? def : v;
     }
 
@@ -2456,6 +2512,24 @@ class HttpSource extends _SandboxManga {
     async getImageHeaders() {
         const h = this.headers?.toFetchHeaders?.() ?? this.headers ?? {};
         return h;
+    }
+
+    __getTachiyomiSettings() {
+        if (typeof this.setupPreferenceScreen !== "function") {
+            return [];
+        }
+
+        const screen = new PreferenceScreen();
+        try {
+            this.setupPreferenceScreen(screen);
+        } catch (e) {
+            const errorDetails = e instanceof Error ? `${e.message}\n${e.stack}` : String(e);
+            console.error("[tachiyomi] setupPreferenceScreen threw: " + errorDetails);
+        }
+
+        return screen._prefs
+            .filter(p => typeof p._toManifest === "function" && p._key)
+            .map(p => p._toManifest());
     }
 
     //  sandbox API entry points
