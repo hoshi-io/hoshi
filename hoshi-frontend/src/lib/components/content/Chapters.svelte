@@ -83,16 +83,30 @@
         });
     });
 
-    let availableExtensions = $derived(
-        contentType === "manga" ? extensions.manga.map(e => e.id) :
-            contentType === "novel" ? extensions.novel.map(e => e.id) : []
+    // Get active extensions for the given content type
+    let currentExtensions = $derived(
+        contentType === "manga" ? extensions.manga :
+            contentType === "novel" ? extensions.novel : []
     );
 
-    let extensionItems = $derived(availableExtensions.map(ext => ({ value: ext, label: ext })));
+    // Build unique display options and sort them alphabetically by their label
+    let extensionItems = $derived(
+        currentExtensions
+            .map(ext => {
+                const hasDuplicateName = currentExtensions.some(e => e.id !== ext.id && e.name === ext.name);
+                const label = hasDuplicateName && ext.source
+                    ? `${ext.name} (${ext.source})`
+                    : ext.name;
 
+                return { value: ext.id, label };
+            })
+            .sort((a, b) => a.label.localeCompare(b.label))
+    );
+
+    // Default to picking the first alphabetical item if nothing is selected yet
     $effect(() => {
-        if (!selectedExtensionName && availableExtensions.length > 0) {
-            selectedExtensionName = availableExtensions[0];
+        if (!selectedExtensionName && extensionItems.length > 0) {
+            selectedExtensionName = extensionItems[0].value;
         }
     });
 
@@ -100,11 +114,11 @@
         if (selectedExtensionName) loadChapters(selectedExtensionName);
     });
 
-    async function loadChapters(extName: string) {
+    async function loadChapters(extId: string) {
         loading = true;
         error = null;
         try {
-            const res = await contentApi.getItems(cid, extName);
+            const res = await contentApi.getItems(cid, extId);
             chapters = (Array.isArray(res) ? res : []).sort((a, b) =>
                 (a.number ?? a.unitNumber) - (b.number ?? b.unitNumber)
             );
@@ -137,7 +151,7 @@
             {/if}
         </div>
 
-        {#if availableExtensions.length > 1}
+        {#if extensionItems.length > 1}
             <div class="w-[180px] shrink-0">
                 <ResponsiveSelect
                         bind:value={selectedExtensionName}
@@ -158,7 +172,7 @@
         />
     {/if}
 
-    {#if availableExtensions.length === 0}
+    {#if extensionItems.length === 0}
         <div class="flex flex-col items-center justify-center gap-3 py-14 rounded-2xl border border-border/20 bg-muted/5">
             <BookOpen class="w-8 h-8 text-muted-foreground/20" />
             <div class="text-center space-y-0.5">
@@ -213,8 +227,8 @@
                         {isRead
                             ? 'border-border/10 bg-muted/5 opacity-45 hover:opacity-70 hover:bg-muted/15 hover:border-border/30'
                             : isResume
-                                ? 'border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50'
-                                : 'border-border/20 bg-muted/10 hover:bg-muted/25 hover:border-border/50'}"
+                            ? 'border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50'
+                            : 'border-border/20 bg-muted/10 hover:bg-muted/25 hover:border-border/50'}"
                 >
                     <div class="shrink-0 w-9 h-9 rounded-lg bg-muted/40 flex items-center justify-center border border-border/20 group-hover:border-border/40 transition-colors">
                         <span class="text-xs font-black text-muted-foreground/50 group-hover:text-muted-foreground/80 transition-colors">{num}</span>
