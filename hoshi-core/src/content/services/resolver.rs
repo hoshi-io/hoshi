@@ -178,7 +178,11 @@ impl ContentResolverService {
                 ContentType::Anime => "anime",
                 ContentType::Manga | ContentType::Novel => "manga",
             };
-            let prefixed = format!("{}:{}", prefix, id_str);
+            let prefixed = if id_str.starts_with(&format!("{}:", prefix)) {
+                id_str.clone()
+            } else {
+                format!("{}:{}", prefix, id_str)
+            };
             if let Ok(Some(cid)) = TrackerRepository::find_cid_by_tracker(
                 &state.pool, "mal", &prefixed
             ).await {
@@ -252,7 +256,11 @@ impl ContentResolverService {
                 ContentType::Anime => "anime",
                 ContentType::Manga | ContentType::Novel => "manga",
             };
-            let prefixed = format!("{}:{}", prefix, id_str);
+            let prefixed = if id_str.starts_with(&format!("{}:", prefix)) {
+                id_str.clone()
+            } else {
+                format!("{}:{}", prefix, id_str)
+            };
             if let Some(cid) = TrackerRepository::find_cid_by_tracker(pool, "mal", &prefixed).await? {
                 if cid == expected_cid { return Ok(true); }
                 warn!(found = %cid, expected = %expected_cid, "MAL ID matched wrong CID");
