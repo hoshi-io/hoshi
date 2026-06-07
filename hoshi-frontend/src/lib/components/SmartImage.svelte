@@ -28,8 +28,11 @@
         let revoked = false;
         isLoaded = false;
 
+        const hasHeaders = imageHeaders && Object.keys(imageHeaders).length > 0;
+
         const tryDirect = () => new Promise<string>((resolve, reject) => {
-            if (imageHeaders) { reject(); return; }
+            if (hasHeaders) { reject(); return; }
+
             const img = new Image();
             img.onload = () => resolve(src);
             img.onerror = () => reject();
@@ -41,9 +44,9 @@
             .catch(() => {
                 proxyApi.fetch({
                     url: src,
-                    referer: imageHeaders?.["referer"],
-                    origin: imageHeaders?.["origin"],
-                    userAgent: imageHeaders?.["user-agent"],
+                    referer: hasHeaders ? imageHeaders?.["referer"] : undefined,
+                    origin: hasHeaders ? imageHeaders?.["origin"] : undefined,
+                    userAgent: hasHeaders ? imageHeaders?.["user-agent"] : undefined,
                 })
                     .then(blob => { if (!revoked) objectUrl = URL.createObjectURL(blob); })
                     .catch(() => { if (!revoked) objectUrl = src; });

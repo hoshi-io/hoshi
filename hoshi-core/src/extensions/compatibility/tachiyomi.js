@@ -18,6 +18,13 @@ if (!Array.prototype.iterator) {
         };
     };
 }
+
+if (!Array.prototype.clone) {
+    Array.prototype.clone = function() { return [...this]; };
+}
+if (!Number.prototype.ordinal) {
+    Number.prototype.ordinal = function() { return this.valueOf(); };
+}
 Object.defineProperty(Array.prototype, 'firstInstance', {
     value: function(predicate) {
         const result = this.find(predicate);
@@ -30,12 +37,27 @@ Object.defineProperty(Array.prototype, 'firstInstance', {
 Array.prototype.get = function(i) { return this[i]; };
 
 // Polyfill to catch obfuscated Dalvik array lengths
-Object.defineProperty(Array.prototype, 'length_val', {
+let lastValidUrlString = "";
+Object.defineProperty(String.prototype, 'length_val', {
     get: function() {
+        if (this.startsWith("http://") || this.startsWith("https://")) {
+            lastValidUrlString = this.toString();
+            return this.length;
+        }
+        if (this.toString() === "" && lastValidUrlString !== "") {
+            return lastValidUrlString.length;
+        }
+
         return this.length;
     },
     enumerable: false,
     configurable: true
+});
+
+Object.defineProperty(Array.prototype, 'length_val', {
+    get() { return this.length; },
+    enumerable: false,
+    configurable: true,
 });
 
 if (!String.prototype.hashCode) {
@@ -71,6 +93,10 @@ Object.defineProperty(Number.prototype, 'booleanValue', {
     configurable: true
 });
 
+if (!Array.prototype.toArray) {
+    Array.prototype.toArray = function(target) { return [...this]; };
+}
+
 globalThis.StringsKt = {
 
     split$default(str, delimiters, ignoreCase, limit, mask, marker) {
@@ -79,6 +105,29 @@ globalThis.StringsKt = {
         const parts = str.split(sep);
         const result = (limit && limit > 0) ? parts.slice(0, limit) : parts;
         return _makeKotlinList(result);
+    },
+
+    startsWith$default(str, prefix, ignoreCase, mask, marker) {
+        if ((mask & 4) !== 0) {
+            ignoreCase = 0;
+        }
+
+        const isCaseIgnored = ignoreCase !== 0;
+
+        if (isCaseIgnored) {
+            return str.toLowerCase().startsWith(prefix.toLowerCase()) ? 1 : 0;
+        } else {
+            return str.startsWith(prefix) ? 1 : 0;
+        }
+    },
+
+    contains$default(str, other, ignoreCase, mask, marker) {
+        if (str == null) return 0;
+        if (mask & 1) ignoreCase = false;
+        if (ignoreCase) {
+            return str.toLowerCase().includes(String(other).toLowerCase()) ? 1 : 0;
+        }
+        return str.includes(String(other)) ? 1 : 0;
     },
 
     replaceFirst$default(str, oldValue, newValue, ignoreCase, mask, marker) {
@@ -169,11 +218,12 @@ globalThis.CollectionsKt = {
     },
     joinToString$default(collection, separator, prefix, postfix, limit, truncated, transform, flags, marker) {
         if (!collection) return "";
-        separator = separator ?? ", ";
-        prefix    = prefix    ?? "";
-        postfix   = postfix   ?? "";
-        limit     = limit     ?? -1;
-        truncated = truncated ?? "...";
+        if (!flags || (flags & 1))  separator = ", ";
+        if (!flags || (flags & 2))  prefix    = "";
+        if (!flags || (flags & 4))  postfix   = "";
+        if (!flags || (flags & 8))  limit     = -1;
+        if (!flags || (flags & 16)) truncated = "...";
+        if (!flags || (flags & 32)) transform = null;
         let items;
         if (Array.isArray(collection)) {
             items = collection.map(_wrapKotlinObject);
@@ -184,14 +234,21 @@ globalThis.CollectionsKt = {
         }
         let over = false;
         if (limit >= 0 && items.length > limit) { items = items.slice(0, limit); over = true; }
-        const parts = items.map(x => transform ? transform(x) : String(x));
+        const parts = items.map(x => {
+            return transform ? transform(x) : String(x);
+        });
         if (over) parts.push(truncated);
         return prefix + parts.join(separator) + postfix;
     },
     throwIndexOverflow() { throw new RangeError("Index overflow"); },
     listOf(...args) { return args.length === 1 && Array.isArray(args[0]) ? args[0] : Array.from(args); },
     toList(collection) { return Array.from(collection); },
-    listOfNotNull(...args) { return args.flat().filter(x => x != null); },
+    listOfNotNull(arr) {
+        if (Array.isArray(arr)) {
+            return arr.filter(x => x !== null && x !== undefined && x !== 0);
+        }
+        return arr != null && arr !== 0 ? [arr] : [];
+    },
     collectionSizeOrDefault(collection, default_) {
         if (!collection) return 0;
         return collection.length ?? default_;
@@ -206,6 +263,12 @@ globalThis.CollectionsKt = {
             }
         }
         return true;
+    },
+    randomOrNull(collection, random) {
+        const arr = Array.isArray(collection) ? collection
+            : collection?._a ?? collection?._arr ?? [];
+        if (!arr || arr.length === 0) return 0;
+        return arr[Math.floor(Math.random() * arr.length)];
     },
 
     emptyMap:     () => new LinkedHashMap(),
@@ -363,7 +426,10 @@ globalThis.ArraysKt = {
 
 globalThis.ArrayList = class ArrayList {
     constructor() { this._a = []; }
-    push(item) { if (item !== 0 && item != null) this._a.push(item); return this; }
+    push(item) {
+        if (item !== undefined) this._a.push(item);
+        return this;
+    }
     add(item)    { this._a.push(item); return true; }
     get(i)       { return this._a[i]; }
     toArray()    { return [...this._a]; }
@@ -381,11 +447,15 @@ globalThis.ArrayList = class ArrayList {
     isEmpty() { return this._a.length === 0 ? 1 : 0; }  // 1=true, 0=false
     size()    { return this._a.length; }
 
+    forEach(cb)        { this._a.forEach(cb); }
+    filter(cb)         { return this._a.filter(cb); }
+    [Symbol.iterator](){ return this._a[Symbol.iterator](); }
+
     get length() { return this._a.length; }
     get length_val() { return this._a.length; }
 };
 
-globalThis.kotlin = { Unit: { INSTANCE: undefined } };
+globalThis.kotlin = Object.assign(globalThis.kotlin ?? {}, { Unit: { INSTANCE: undefined } });
 globalThis.Unit = { INSTANCE: { toString() { return "kotlin.Unit"; } } };
 
 globalThis.java = {
@@ -521,6 +591,7 @@ globalThis.ArrayListSerializer = class ArrayListSerializer {
     }
     deserialize(decoder) {
         let raw = decoder._json;
+
         if (raw?.__isJsonArray) raw = raw._arr;
         const arr = Array.isArray(raw) ? raw : [];
         const list = new ArrayList();
@@ -548,14 +619,18 @@ kotlin.LazyThreadSafetyMode = {
 globalThis.LazyThreadSafetyMode = kotlin.LazyThreadSafetyMode;
 
 globalThis.LazyKt = {
-    lazy(mode, initializer) {
+    lazy(modeOrInitializer, initializer) {
+        const init = typeof modeOrInitializer === 'function'
+            ? modeOrInitializer
+            : initializer;
+
         let value;
         let initialized = false;
         return {
             getValue() {
                 if (!initialized) {
                     try {
-                        value = initializer();
+                        value = init();
                     } catch(e) {
                         console.log("lazy getValue error:", e.message);
                     }
@@ -565,6 +640,10 @@ globalThis.LazyKt = {
             }
         };
     }
+};
+
+globalThis.ContextKt$special$$inlined$get$1 = class ContextKt$special$$inlined$get$1 {
+    getType() { return null; }
 };
 
 globalThis.Intrinsics = {
@@ -952,6 +1031,11 @@ globalThis.Regex = class Regex {
     replaceAll(str, replacement) { return str.replaceAll(new RegExp(this._pattern, "g"), replacement); }
     split(str)                   { return str.split(this._re); }
     toString()                   { return this._pattern; }
+
+    static find$default(regex, input, startIndex, flags, marker) {
+        if (flags & 1) startIndex = 0;
+        return regex.find(input, startIndex);
+    }
 };
 
 globalThis.RegexOption = {
@@ -1292,12 +1376,13 @@ globalThis.Request = class Request {
 };
 
 globalThis.JsoupDocument = class JsoupDocument {
-    constructor(html) {
+    constructor(html, baseUri = "") {
         this._html = html;
         this._$ = parseHTML(html);
+        this._baseUri = baseUri || "";
     }
 
-    select(selector)              { return new JsoupElements(this._$(selector)); }
+    select(selector)              { return new JsoupElements(this._$(selector), this._baseUri); }
     text()                        { return this._$("body").text(); }
     html()                        { return this._html; }
     outerHtml()                   { return this._html; }
@@ -1309,19 +1394,30 @@ globalThis.JsoupDocument = class JsoupDocument {
     getElementsByClass(cls)       { return this.select(`.${cls}`); }
 
     selectFirst(selector) {
+        if (!selector) return 0;
         return this.select(selector).first();
     }
 
     wholeText() { return this._$("body").text(); }
+
+    absUrl(attributeKey) {
+        return this.body()?.absUrl(attributeKey) ?? "";
+    }
 };
 
 globalThis.JsoupElements = class JsoupElements {
-    constructor(raw) {
-        this._els = raw.map(item => new JsoupElement(item._raw));
+    constructor(raw, baseUri = "") {
+        this._baseUri = baseUri;
+        this._els = raw.map(item => new JsoupElement(item._raw, this._baseUri));
     }
 
-    get(i)      { return this._els[i] ?? null; }
-    first()     { return this._els[0] ?? null; }
+    get(i) {
+        return this._els[i] ?? 0;
+    }
+    first() {
+        if (this._els.length === 0) return 0;
+        return this._els[0];
+    }
     last()      { return this._els[this._els.length - 1] ?? null; }
     size()      { return this._els.length; }
     isEmpty()   { return this._els.length === 0; }
@@ -1329,18 +1425,31 @@ globalThis.JsoupElements = class JsoupElements {
     html()      { return this._els[0]?.html() ?? ""; }
     outerHtml() { return this._els[0]?.outerHtml() ?? ""; }
     attr(name)  { return this._els[0]?.attr(name) ?? null; }
-    select(sel) { return this._els[0] ? this._els[0].select(sel) : new JsoupElements([]); }
+    select(sel) { return this._els[0] ? this._els[0].select(sel) : new JsoupElements([], this._baseUri); }
 
     forEach(fn) { this._els.forEach(fn); }
     map(fn)     { return this._els.map(fn); }
     filter(fn)  { return this._els.filter(fn); }
 
-    selectFirst(selector) { return this.select(selector).first(); }
+    selectFirst(selector) {
+        if (!selector) return 0;
+        return this.select(selector).first();
+    }
+
+    absUrl(attributeKey) {
+        return this._els[0]?.absUrl(attributeKey) ?? "";
+    }
+
+    get length_val() { return this.size(); }
+    get size_val()   { return this.size(); }
+
+    [Symbol.iterator]() { return this._els[Symbol.iterator](); }
 };
 
 globalThis.JsoupElement = class JsoupElement {
-    constructor(raw) {
+    constructor(raw, baseUri = "") {
         this._raw = raw;
+        this._baseUri = baseUri;
     }
 
     text()        { return this._raw.text; }
@@ -1354,33 +1463,91 @@ globalThis.JsoupElement = class JsoupElement {
 
     select(selector) {
         const $ = parseHTML(this._raw.html);
-        return new JsoupElements($(selector));
+        return new JsoupElements($(selector), this._baseUri);
     }
 
     wholeText() { return this._raw.text; }
 
-    selectFirst(selector) { return this.select(selector).first(); }
+    selectFirst(selector) {
+        if (!selector) return 0;
+        return this.select(selector).first();
+    }
 
     data() { return this._raw.text; }
+
+    absUrl(attributeKey) {
+        let relUrl = this.attr(attributeKey);
+        if (!relUrl) return "";
+        relUrl = relUrl.trim();
+
+        let fullUrl = relUrl;
+        if (this._baseUri && !/^[a-z][a-z0-9+.-]*:/i.test(relUrl)) {
+            try {
+                fullUrl = new URL(relUrl, this._baseUri).href;
+            } catch (e) {
+                fullUrl = relUrl;
+            }
+        }
+
+        if (attributeKey === "href" || attributeKey === "src") {
+            globalThis.__lastExtractedUrl = fullUrl;
+        }
+
+        return fullUrl;
+    }
 };
 
 globalThis["JsoupExtensionsKt"] = {
     ["asJsoup$default"]: function(body, baseUri, charset, flags) {
         const html = typeof body?.string === "function" ? body.string() : body._text;
-        return new JsoupDocument(html);
+        return new JsoupDocument(html, baseUri);
     },
     ["asJsoup"]: function(body, baseUri, charset) {
-        return new JsoupDocument(body.string());
+        return new JsoupDocument(body.string(), baseUri);
     },
 };
 
 globalThis.Jsoup = {
-    parseBodyFragment(html) {
-        return new JsoupDocument(html);
+    parseBodyFragment(html, baseUri = "") {
+        return new JsoupDocument(html, baseUri);
     },
-    parse(html) {
-        return new JsoupDocument(html);
+    parse(html, baseUri = "") {
+        return new JsoupDocument(html, baseUri);
     },
+};
+
+
+
+
+globalThis.RateLimitInterceptorKt = {
+    rateLimit(builder, permits, period, timeUnit) {
+        // Convert the given period into milliseconds using our TimeUnit helper
+        let periodMs = 1000; // default fallback to 1 second
+        if (timeUnit && typeof timeUnit.toMillis === 'function') {
+            periodMs = timeUnit.toMillis(period);
+        } else if (typeof period === 'number') {
+            periodMs = period * 1000;
+        }
+
+        // Calculate a safe minimum spacing delay between individual requests
+        const delayBetweenRequests = Math.ceil(periodMs / (permits || 1));
+
+        // Inject the timing constraints into the custom client builder instance config
+        if (builder) {
+            builder._rateLimitDelay = delayBetweenRequests;
+        }
+
+        return builder;
+    },
+
+    // Handle standard structural compiler variants ($default variations)
+    rateLimit$default(builder, permits, period, timeUnit, mask, obj) {
+        // Handle Kotlin default arguments bitmask mapping
+        if ((mask & 2) !== 0) period = 1;
+        if ((mask & 4) !== 0) timeUnit = globalThis.TimeUnit?.SECONDS;
+
+        return this.rateLimit(builder, permits, period, timeUnit);
+    }
 };
 
 function _wrapKotlinObject(obj) {
@@ -1444,6 +1611,42 @@ function _wrapKotlinObject(obj) {
         }
     });
 }
+
+globalThis.Exception = class Exception extends Error {
+    constructor(msg) { super(msg ?? "Exception"); this.name = "Exception"; }
+};
+
+globalThis.Null = class Null extends Error {
+    constructor(msg) { super(msg ?? "null"); this.name = "Null"; }
+};
+
+globalThis.NullPointerException = class NullPointerException extends Error {
+    constructor(msg) { super(msg ?? "NullPointerException"); this.name = "NullPointerException"; }
+};
+
+globalThis.IllegalStateException = class IllegalStateException extends Error {
+    constructor(msg) { super(msg ?? "IllegalStateException"); this.name = "IllegalStateException"; }
+};
+
+globalThis.IllegalArgumentException = class IllegalArgumentException extends Error {
+    constructor(msg) { super(msg ?? "IllegalArgumentException"); this.name = "IllegalArgumentException"; }
+};
+
+globalThis.RuntimeException = class RuntimeException extends Error {
+    constructor(msg) { super(msg ?? "RuntimeException"); this.name = "RuntimeException"; }
+};
+
+globalThis.UnsupportedOperationException = class UnsupportedOperationException extends Error {
+    constructor(msg) { super(msg ?? "UnsupportedOperationException"); this.name = "UnsupportedOperationException"; }
+};
+
+globalThis.IndexOutOfBoundsException = class IndexOutOfBoundsException extends Error {
+    constructor(msg) { super(msg ?? "IndexOutOfBoundsException"); this.name = "IndexOutOfBoundsException"; }
+};
+
+globalThis.NoSuchElementException = class NoSuchElementException extends Error {
+    constructor(msg) { super(msg ?? "NoSuchElementException"); this.name = "NoSuchElementException"; }
+};
 
 globalThis.JsonArray = class JsonArray {
     constructor(list) {
@@ -1860,6 +2063,8 @@ globalThis.FilterList = class FilterList extends Array {
         };
     }
 
+    getList() { return [...this]; }
+
     equals() { return false; }
 };
 
@@ -2059,12 +2264,15 @@ globalThis.Request = class Request {
 globalThis.Enum = class Enum {
     constructor(name, ordinal) {
         this.name = name;
-        this.ordinal = ordinal;
+        this._ordinal = ordinal ?? 0;
     }
+    ordinal()  { return this._ordinal; }
+    name()     { return this.name; }
+    toString() { return this.name; }
+};
 
-    toString() {
-        return this.name;
-    }
+globalThis.HelperKt$special$$inlined$get$1 = class HelperKt$special$$inlined$get$1 {
+    getType() { return null; }
 };
 
 globalThis.EnumEntriesKt = {
@@ -2093,22 +2301,43 @@ globalThis.InjektKt = class InjektKt {
 
                     // OkHttpClient
                     newCall(request) { return new OkHttpCall(request); },
+
+                    getClient() {
+                        return _networkHelper.client;
+                    },
                 };
             }
         };
     }
 };
 // RequestsKt
+globalThis.__lastExtractedUrl = "";
+
 globalThis.RequestsKt = {
     GET(url, headers, cache) {
+        if ((!url || url === "") && globalThis.__lastExtractedUrl) {
+            url = globalThis.__lastExtractedUrl;
+        }
+        globalThis.__lastExtractedUrl = "";
+
         const h = typeof headers?.build === 'function' ? headers.build() : headers;
         return new Request.Builder().url(url).headers(h ?? new Headers()).cacheControl(cache ?? null).build();
     },
     GET$default(url, headers, cache, flags, mask) {
+        if ((!url || url === "") && globalThis.__lastExtractedUrl) {
+            url = globalThis.__lastExtractedUrl;
+        }
+        globalThis.__lastExtractedUrl = "";
+
         const h = typeof headers?.build === 'function' ? headers.build() : headers;
         return new Request.Builder().url(url).headers(h ?? new Headers()).cacheControl(cache ?? null).build();
     },
     POST$default(url, headers, body) {
+        if ((!url || url === "") && globalThis.__lastExtractedUrl) {
+            url = globalThis.__lastExtractedUrl;
+        }
+        globalThis.__lastExtractedUrl = "";
+
         const h = typeof headers?.build === 'function' ? headers.build() : headers;
         return new Request.Builder().url(url).headers(h ?? new Headers()).post(body).build();
     },
@@ -2152,10 +2381,33 @@ globalThis.HttpUrl = class HttpUrl {
             this._url += `${sep}${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
             return this;
         }
+        addPathSegment(v)  { this._url += `/${v}`; return this; }
+        addPathSegments(v) {
+            const parts = v.split("/").filter(p => p.length > 0);
+            for (const part of parts) this._url += `/${part}`;
+            return this;
+        }
+        removeAllQueryParameters(k) {
+            try {
+                const u = new URL(this._url);
+                u.searchParams.delete(k);
+                this._url = u.toString();
+            } catch {}
+            return this;
+        }
+        setQueryParameter(k, v) {
+            try {
+                const u = new URL(this._url);
+                u.searchParams.set(k, v);
+                this._url = u.toString();
+            } catch {
+                this.addQueryParameter(k, v);
+            }
+            return this;
+        }
         fragment(v) { this._url += `#${v}`; return this; }
-        addPathSegment(v) { this._url += `/${v}`; return this; }
-        build()           { return new HttpUrl(this._url); }
-        toString()        { return this._url; }
+        build()     { return new HttpUrl(this._url); }
+        toString()  { return this._url; }
     };
 };
 
@@ -2163,36 +2415,58 @@ HttpUrl.Companion = {
     get(url) {
         return new HttpUrl(url?.toString?.() ?? url);
     },
+
+    parse(url) {
+        if (!url) return new HttpUrl("");
+        try {
+            new URL(url.toString());
+            return new HttpUrl(url.toString());
+        } catch {
+            return new HttpUrl("");
+        }
+    }
 };
 
 // String.toHttpUrl() extension
 globalThis.toHttpUrl = (str) => new HttpUrl(str.toString());
 
-// OkHttpClient — newCall() returns a fake Call that _doRequest handles
+// OkHttpClient, newCall() returns a fake Call that _doRequest handles
 globalThis.OkHttpClient = class OkHttpClient {
     constructor(useCloudflare = false) {
         this._useCloudflare = useCloudflare;
     }
     newCall(request) {
-        return new _Call(request, this._useCloudflare);
+        return new globalThis._Call(request, false, this);
     }
 };
 globalThis._Call = class _Call {
-    constructor(req, useCloudflare = false) {
+    constructor(req, useCloudflare = false, clientInstance = null) {
         this._req = req;
         this._useCloudflare = useCloudflare;
+        this._client = clientInstance;
     }
 
     execute() {
-        const url    = this._req.url?.toString?.() ?? String(this._req.url);
+        let url = this._req.url?.toString?.() ?? String(this._req.url);
         const method = this._req.method ?? "GET";
         const headers = this._req.headers?.toFetchHeaders?.() ?? {};
         const body   = this._req.body ?? undefined;
 
+        if ((!url || url === "") && globalThis.__lastExtractedUrl) {
+            url = globalThis.__lastExtractedUrl;
+        }
+        globalThis.__lastExtractedUrl = "";
+
+        const targetedDelay = this._client?._rateLimitDelay ?? 1000;
+
         const now = Date.now();
-        const elapsed = now - globalThis.__lastFetchTime;
-        if (elapsed < 1000 && globalThis.__lastFetchTime !== 0) {
-            __native_sleep(1000 - elapsed);
+        const elapsed = now - (globalThis.__lastFetchTime ?? 0);
+
+        if (elapsed < targetedDelay && globalThis.__lastFetchTime !== 0) {
+            const sleepTime = targetedDelay - elapsed;
+            if (typeof __native_sleep === 'function') {
+                __native_sleep(sleepTime);
+            }
         }
         globalThis.__lastFetchTime = Date.now();
 
@@ -2532,6 +2806,34 @@ class HttpSource extends _SandboxManga {
             .map(p => p._toManifest());
     }
 
+    getUrlWithoutDomain(orig) {
+        if (!orig) return "";
+        try {
+            const safeUrl = orig.replace(/ /g, "%20");
+
+            const parsed = safeUrl.includes("://") || safeUrl.startsWith("//")
+                ? new URL(safeUrl)
+                : new URL(safeUrl, "http://localhost");
+
+            let out = parsed.pathname;
+            if (parsed.search) {
+                out += parsed.search;
+            }
+            if (parsed.hash) {
+                out += parsed.hash;
+            }
+            return out;
+        } catch (e) {
+            return orig;
+        }
+    }
+
+    setUrlWithoutDomain(obj, url) {
+        if (obj && typeof obj.setUrl === "function") {
+            obj.setUrl(this.getUrlWithoutDomain(url));
+        }
+    }
+
     //  sandbox API entry points
 
     async getFilters() {
@@ -2633,7 +2935,6 @@ class HttpSource extends _SandboxManga {
             }
         }
 
-        // Only fall back to popular if there's truly nothing to search by
         if (!query && !hasFilters) {
             const res = await this._doRequest(this.popularMangaRequest(page));
             return this._parsePage(this.popularMangaParse(res));
@@ -2841,6 +3142,14 @@ class HttpSource extends _SandboxManga {
             url:   m.url,
             nsfw:  false,
         }));
+    }
+
+    get client() {
+        return _networkHelper.client;
+    }
+
+    getClient() {
+        return _networkHelper.client;
     }
 }
 

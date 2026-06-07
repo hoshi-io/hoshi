@@ -70,22 +70,6 @@ export class ContentDetailState {
         try {
             const res = await contentApi.get(src, entryId);
 
-            if (extensions.isTachiyomi(this.source) ) {
-                try {
-                    const metadata = res.metadata.find(
-                        item => item.sourceName === this.source
-                    );
-
-                    if (metadata) {
-                        this.headers = await extensionsApi.getImageRequestHeaders(
-                            this.source,
-                            metadata.coverImage
-                        );
-                    }
-                } catch (e) {
-                    console.warn("Could not fetch tachiyomi image headers", e);
-                }
-            }
             await this.handleResponse(res);
         } catch (e) {
             this.handleError(e);
@@ -104,7 +88,18 @@ export class ContentDetailState {
             layoutState.title = title;
         }
 
-        const [, ] = await Promise.all([
+        if (meta && extensions.isTachiyomi(meta.sourceName) && meta.coverImage) {
+            try {
+                this.headers = await extensionsApi.getImageRequestHeaders(
+                    meta.sourceName,
+                    meta.coverImage
+                );
+            } catch (e) {
+                console.warn("Could not fetch tachiyomi image headers", e);
+            }
+        }
+
+        const [,] = await Promise.all([
             this.loadRelations(res.relations),
         ]);
     }
