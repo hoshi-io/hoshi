@@ -54,13 +54,37 @@
 
     function getTrackerLink(tracker: any) {
         if (tracker.trackerUrl) return tracker.trackerUrl;
+
         const id = tracker.trackerId;
+        const mediaType = isAnime ? 'anime' : 'manga';
+        console.log(isAnime)
+
         switch (tracker.trackerName.toLowerCase()) {
-            case 'anilist': return `https://anilist.co/anime/${id}`;
-            case 'anidb': return `https://anidb.net/anime/${id}`;
-            case 'animeplanet': return `https://www.anime-planet.com/anime/${id}`;
-            case 'myanimelist': return `https://myanimelist.net/anime/${id}`;
-            default: return '#';
+            case 'anilist':
+                return `https://anilist.co/${mediaType}/${id}`;
+
+            case 'anidb':
+                return `https://anidb.net/${mediaType}/${id}`;
+
+            case 'animeplanet':
+            case 'anime-planet':
+                return `https://www.anime-planet.com/${mediaType}/${id}`;
+
+            case 'myanimelist':
+            case 'mal':
+                return `https://myanimelist.net/${id.replace(':', '/')}`;
+
+            case 'simkl':
+                return `https://simkl.com/${mediaType}/${id}`;
+
+            case 'kitsu':
+                return `https://kitsu.io/${mediaType}/${id}`;
+
+            case 'shikimori':
+                return `https://shikimori.one/${mediaType}s/${id}`;
+
+            default:
+                return '#';
         }
     }
 </script>
