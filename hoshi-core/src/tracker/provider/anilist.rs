@@ -328,11 +328,6 @@ impl AniListProvider {
     fn media_to_tracker_media(&self, data: &Value) -> Option<TrackerMedia> {
         let tracker_id = data.get("id")?.as_i64()?.to_string();
 
-        let mut cross_ids = HashMap::new();
-        if let Some(mal_id) = data.get("idMal").and_then(|v| v.as_i64()) {
-            cross_ids.insert("myanimelist".to_string(), mal_id.to_string());
-        }
-
         let format_str = data.get("format").and_then(|v| v.as_str());
 
         let content_type = match data.get("type").and_then(|v| v.as_str()) {
@@ -340,6 +335,19 @@ impl AniListProvider {
             Some("MANGA") => ContentType::Manga,
             _ => ContentType::Anime,
         };
+
+        let mut cross_ids = HashMap::new();
+        if let Some(mal_id) = data.get("idMal").and_then(|v| v.as_i64()) {
+            let prefix = match content_type {
+                ContentType::Anime => "anime",
+                ContentType::Manga | ContentType::Novel => "manga",
+            };
+
+            cross_ids.insert(
+                "mal".to_string(),
+                format!("{}:{}", prefix, mal_id),
+            );
+        }
 
         let titles_obj = data.get("title");
 

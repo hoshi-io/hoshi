@@ -318,10 +318,8 @@ impl ContentService {
                             continue;
                         }
                         if let Some(mal_id) = item.cross_ids.get("mal") {
-                            let key = mal_id.clone();
-                            if seen_mal_ids.insert(key.clone()) {
-                                let prefix = match content_type { ContentType::Anime => "anime", _ => "manga" };
-                                candidates.push(("mal".into(), format!("{}:{}", prefix, key)));
+                            if seen_mal_ids.insert(mal_id.clone()) {
+                                candidates.push(("mal".into(), mal_id.clone()));
                             }
                         }
                         candidates.push(("anilist".into(), item.tracker_id.clone()));
@@ -339,8 +337,10 @@ impl ContentService {
                             continue;
                         }
                         if !seen_mal_ids.contains(&item.tracker_id) {
-                            let prefix = match content_type { ContentType::Anime => "anime", _ => "manga" };
-                            candidates.push(("mal".into(), format!("{}:{}", prefix, &item.tracker_id)));
+                            candidates.push((
+                                "mal".into(),
+                                item.tracker_id.clone()
+                            ));
                         }
                     }
                 }
