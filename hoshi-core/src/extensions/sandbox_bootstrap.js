@@ -136,7 +136,10 @@ globalThis.fetchSync = function(url, options) {
     let body = "";
     let headersObj = options.headers || {};
 
-    if (options.body !== undefined && options.body !== null) {
+    if (options.body instanceof FormData) {
+        body = options.body.__serialize();
+        headersObj["Content-Type"] = "application/x-www-form-urlencoded";
+    } else if (options.body !== undefined && options.body !== null) {
         body = String(options.body);
     }
 
@@ -331,17 +334,27 @@ if (typeof setTimeout === "undefined") {
         __timers.delete(id);
     };
     globalThis.setInterval = (fn, ms, ...args) => {
-        const id = __timer_id++;
-        __timers.set(id, true);
-        while (__timers.has(id)) {
-            __native_sleep(Number(ms) || 0);
-            if (!__timers.has(id)) {
-                break;
-            }
-            fn(...args);
-        }
-        return id;
+        throw new Error(
+            "setInterval is not supported in this sandbox. " +
+            "Use waitUntil(conditionFn, { interval, timeout }) for polling."
+        );
     };
+
+    globalThis.waitUntil = async function(conditionFn, opts = {}) {
+        const interval = opts.interval ?? 500;
+        const timeout  = opts.timeout  ?? 10_000;
+        const deadline = Date.now() + timeout;
+
+        while (Date.now() < deadline) {
+            const result = await conditionFn();
+            if (result !== undefined && result !== null && result !== false)
+                return result;
+            await new Promise(r => setTimeout(r, interval));
+        }
+
+        throw new Error(`waitUntil: timed out after ${timeout}ms`);
+    };
+
     globalThis.clearInterval = (id) => {
         __timers.delete(id);
     };
@@ -394,47 +407,29 @@ function _normalizeBlock(arr) {
     });
 }
 
-// ─── Volatile Extension State ────────────────────────────────────────────────
-// Backed by __native_state_get / __native_state_set / __native_state_delete /
-// __native_state_keys registered in Rust.  Lives only while the process runs.
-
 globalThis.state = {
-    /**
-     * Retrieve a value previously stored with state.set().
-     * Returns `defaultValue` (default: undefined) when the key doesn't exist.
-     */
     get(key, defaultValue = undefined) {
         const raw = __native_state_get(String(key));
         const val = JSON.parse(raw);
         return (val === null && defaultValue !== undefined) ? defaultValue : val;
     },
 
-    /** Persist any JSON-serialisable value under `key`. */
     set(key, value) {
         __native_state_set(String(key), JSON.stringify(value ?? null));
     },
 
-    /** Remove a key from the state. No-op if the key doesn't exist. */
     delete(key) {
         __native_state_delete(String(key));
     },
 
-    /** Returns true when the key is present (even if its value is null). */
     has(key) {
-        const raw = __native_state_get(String(key));
-        return raw !== "null";
+        return __native_state_has(String(key));
     },
 
-    /** Returns an array of all stored keys. */
     keys() {
         return JSON.parse(__native_state_keys());
     },
 
-    /**
-     * Convenience: read an object, apply a mutator function, write it back.
-     *
-     *   state.update("counters", c => { c.views = (c.views || 0) + 1; return c; });
-     */
     update(key, fn, defaultValue = {}) {
         const current = this.get(key, defaultValue);
         const next    = fn(current);

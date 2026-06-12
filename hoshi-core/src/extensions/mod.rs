@@ -32,16 +32,18 @@ pub struct ExtensionManager {
     extensions_dir: PathBuf,
     headless: HeadlessHandle,
     extension_state: ExtensionStateStore,
+    http_client: reqwest::Client,
 }
 
 impl ExtensionManager {
-    pub fn new(paths: &AppPaths) -> CoreResult<Self> {
+    pub fn new(paths: &AppPaths, http_client: reqwest::Client) -> CoreResult<Self> {
         let extensions_dir = paths.base_dir.join("extensions");
         Ok(Self {
             extensions: HashMap::new(),
             extensions_dir,
             headless: noop_headless(),
             extension_state: Arc::new(Mutex::new(HashMap::new())),
+            http_client
         })
     }
 
@@ -549,6 +551,7 @@ impl ExtensionManager {
         extension_id: &str,
         function_name: &str,
         args: Vec<Value>,
+        http_client: reqwest::Client,
     ) -> CoreResult<Value> {
         let extension = self.extensions.get(extension_id).ok_or_else(|| {
             error!(ext = %extension_id, func = %function_name, "Attempted to call function on unloaded extension");
@@ -576,7 +579,8 @@ impl ExtensionManager {
             extension.settings.clone(),
             extension_id.to_string(),
             Arc::clone(&self.extension_state),
-            compat
+            compat,
+            http_client
         ).await
     }
 
@@ -586,8 +590,9 @@ impl ExtensionManager {
         extension_id: &str,
         function_name: &str,
         args: Vec<Value>,
+        http_client: reqwest::Client,
     ) -> CoreResult<T> {
-        let raw_value = self.call_extension_function(extension_id, function_name, args).await?;
+        let raw_value = self.call_extension_function(extension_id, function_name, args, http_client).await?;
 
         serde_json::from_value(raw_value).map_err(|e| {
             error!(ext = %extension_id, func = %function_name, error = ?e, "Failed to deserialize response");
@@ -612,36 +617,37 @@ impl ExtensionManager {
             ext_id,
             "getImageRequestHeaders",
             vec![json!(image_url)],
+            self.http_client.clone()
         ).await
     }
 
     pub async fn get_tachiyomi_settings(&self, ext_id: &str) -> CoreResult<Vec<Value>> {
-        self.call_typed_function(ext_id, "__getTachiyomiSettings", vec![]).await
+        self.call_typed_function(ext_id, "__getTachiyomiSettings", vec![], self.http_client.clone()).await
     }
 
     pub async fn get_settings(&self, ext_id: &str) -> CoreResult<ExtensionFeatures> {
-        self.call_typed_function(ext_id, "getStreamingSettings", vec![]).await
+        self.call_typed_function(ext_id, "getStreamingSettings", vec![], self.http_client.clone()).await
     }
 
     pub async fn get_filters(&self, ext_id: &str) -> CoreResult<ExtensionFilters> {
-        self.call_typed_function(ext_id, "getFilters", vec![]).await
+        self.call_typed_function(ext_id, "getFilters", vec![], self.http_client.clone()).await
     }
 
     pub async fn search(&self, ext_id: &str, query: &str, filters: Value, page: u32) -> CoreResult<Vec<ExtensionSearchResult>> {
 
-        self.call_typed_function(ext_id, "search", vec![json!(query), filters, json!(page)]).await
+        self.call_typed_function(ext_id, "search", vec![json!(query), filters, json!(page)], self.http_client.clone()).await
     }
 
     pub async fn get_metadata(&self, ext_id: &str, content_id: &str) -> CoreResult<ExtensionMetadata> {
-        self.call_typed_function(ext_id, "getMetadata", vec![json!(content_id)]).await
+        self.call_typed_function(ext_id, "getMetadata", vec![json!(content_id)], self.http_client.clone()).await
     }
 
     pub async fn find_episodes(&self, ext_id: &str, content_id: &str) -> CoreResult<Vec<Episode>> {
-        self.call_typed_function(ext_id, "findEpisodes", vec![json!(content_id)]).await
+        self.call_typed_function(ext_id, "findEpisodes", vec![json!(content_id)], self.http_client.clone()).await
     }
 
     pub async fn find_chapters(&self, ext_id: &str, content_id: &str) -> CoreResult<Vec<Chapter>> {
-        self.call_typed_function(ext_id, "findChapters", vec![json!(content_id)]).await
+        self.call_typed_function(ext_id, "findChapters", vec![json!(content_id)], self.http_client.clone()).await
     }
 
     pub async fn find_episode_server(
@@ -654,16 +660,16 @@ impl ExtensionManager {
         self.call_typed_function(
             ext_id,
             "findEpisodeServer",
-            vec![json!(content_id), json!(server), json!(category)]
+            vec![json!(content_id), json!(server), json!(category)], self.http_client.clone()
         ).await
     }
 
     pub async fn find_manga_pages(&self, ext_id: &str, chapter_id: &str) -> CoreResult<Vec<Page>> {
-        self.call_typed_function(ext_id, "findChapterPages", vec![json!(chapter_id)]).await
+        self.call_typed_function(ext_id, "findChapterPages", vec![json!(chapter_id)], self.http_client.clone()).await
     }
 
     pub async fn find_novel_html(&self, ext_id: &str, chapter_id: &str) -> CoreResult<String> {
-        self.call_typed_function(ext_id, "findChapterPages", vec![json!(chapter_id)]).await
+        self.call_typed_function(ext_id, "findChapterPages", vec![json!(chapter_id)], self.http_client.clone()).await
     }
 }
 

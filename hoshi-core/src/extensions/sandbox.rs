@@ -5,6 +5,7 @@ use rquickjs::{
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use regex::Regex;
 use tracing::{debug, error, instrument, warn};
 
 use crate::error::{CoreError, CoreResult};
@@ -22,6 +23,7 @@ pub(crate) async fn execute_in_quickjs(
     extension_id: String,
     state_store: ExtensionStateStore,
     compat_layer: Option<CompatLayer>,
+    http_client: reqwest::Client,
 ) -> CoreResult<Value> {
     let base_classes = format!("{}\n{}\n{}\n{}", BASE, ANIME, MANGA, NOVEL);
 
@@ -89,7 +91,7 @@ pub(crate) async fn execute_in_quickjs(
                 })?;
             tokio::task::LocalSet::new().block_on(
                 &rt,
-                run_quickjs_local(full_script, extension_code, headless_available, req_tx, state_json, extension_id),
+                run_quickjs_local(full_script, extension_code, headless_available, req_tx, state_json, extension_id, http_client),
             )
         }
     })
@@ -129,6 +131,7 @@ async fn run_quickjs_local(
     req_tx: std::sync::mpsc::SyncSender<HeadlessRequest>,
     state_json: String,
     extension_id: String,
+    http_client: reqwest::Client,
 ) -> CoreResult<(String, String)> {
     unsafe {
         let locale = std::ffi::CString::new("C").unwrap();
@@ -157,7 +160,7 @@ async fn run_quickjs_local(
     let state_map_for_output = Arc::clone(&state_map);
 
     let result: Result<String, String> = async_with!(ctx => |ctx| {
-        register_native_apis(&ctx, headless_available, req_tx, Arc::clone(&state_map), extension_id)
+        register_native_apis(&ctx, headless_available, req_tx, Arc::clone(&state_map), extension_id, http_client)
             .catch(&ctx)
             .map_err(|e| e.to_string())?;
 
@@ -400,12 +403,20 @@ globalThis.__settings = Object.freeze({settings});
     )
 }
 
+fn sanitize_selector(selector: &str) -> String {
+    // Match attribute selectors with unquoted values containing /
+    // e.g. [href*=/d/] → [href*="/d/"]
+    let re = Regex::new(r#"\[([a-zA-Z0-9_-]+(?:\*=|\|=|\^=|\$=|~=|=))([^"'\]]*?/[^"'\]]*?)\]"#).unwrap();
+    re.replace_all(selector, r#"[$1"$2"]"#).into_owned()
+}
+
 fn register_native_apis(
     ctx: &rquickjs::Ctx<'_>,
     headless_available: bool,
     req_tx: Arc<std::sync::mpsc::SyncSender<HeadlessRequest>>,
     state_map: Arc<Mutex<HashMap<String, Value>>>,
     extension_id: String,
+    http_client: reqwest::Client,
 ) -> rquickjs::Result<()> {
     let globals = ctx.globals();
 
@@ -420,59 +431,57 @@ fn register_native_apis(
         })?,
     )?;
 
-    globals.set("__native_fetch", Function::new(ctx.clone(),
-        |url: String, method: String, headers_json: String, body: String| {
-            let headers: HashMap<String, String> = serde_json::from_str(&headers_json).unwrap_or_default();
+    globals.set("__native_fetch", Function::new(ctx.clone(), {
+        let client = http_client.clone();
+        move |url: String, method: String, headers_json: String, body: String| {
+            let headers: HashMap<String, String> =
+                serde_json::from_str(&headers_json).unwrap_or_default();
             let body_opt = if body.is_empty() { None } else { Some(body) };
 
-            debug!(method = %method, url = %url, "Native fetch called from sandbox");
-
-            let result = std::thread::spawn(move || -> String {
-                let client = match reqwest::blocking::Client::builder()
-                    .timeout(std::time::Duration::from_secs(15))
-                    .connect_timeout(std::time::Duration::from_secs(5))
-                    .user_agent("Mozilla/5.0 (X11; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0")
+            let client = client.clone();
+            let result = std::thread::spawn(move || {
+                tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
                     .build()
-                {
-                    Ok(c)  => c,
-                    Err(e) => return error_json(e.to_string()),
-                };
+                    .map(|rt| rt.block_on(async move {
+                        let mut req = match method.to_uppercase().as_str() {
+                            "POST"   => client.post(&url),
+                            "PUT"    => client.put(&url),
+                            "DELETE" => client.delete(&url),
+                            "PATCH"  => client.patch(&url),
+                            _        => client.get(&url),
+                        };
 
-                let mut req = match method.to_uppercase().as_str() {
-                    "POST"   => client.post(&url),
-                    "PUT"    => client.put(&url),
-                    "DELETE" => client.delete(&url),
-                    "PATCH"  => client.patch(&url),
-                    _        => client.get(&url),
-                };
-
-                for (k, v) in &headers {
-                    req = req.header(k.as_str(), v.as_str());
-                }
-
-                if let Some(b) = body_opt {
-                    req = req.body(b);
-                }
-
-                match req.send() {
-                    Err(e)   => {
-                        warn!(error = %e, url = %url, "Native fetch request failed");
-                        error_json(e.to_string())
-                    },
-                    Ok(resp) => {
-                        let status = resp.status().as_u16();
-                        let ok     = resp.status().is_success();
-                        match resp.text() {
-                            Err(e)   => error_json(e.to_string()),
-                            Ok(text) => serde_json::json!({ "ok": ok, "status": status, "body": text }).to_string(),
+                        for (k, v) in &headers {
+                            req = req.header(k.as_str(), v.as_str());
                         }
-                    }
-                }
-            }).join().unwrap_or_else(|_| error_json("fetch thread panicked".into()));
+
+                        if let Some(b) = body_opt {
+                            req = req.body(b);
+                        }
+
+                        match req.send().await {
+                            Err(e) => error_json(e.to_string()),
+                            Ok(resp) => {
+                                let status = resp.status().as_u16();
+                                let ok     = resp.status().is_success();
+                                match resp.text().await {
+                                    Err(e)   => error_json(e.to_string()),
+                                    Ok(text) => serde_json::json!({
+                            "ok": ok, "status": status, "body": text
+                        }).to_string(),
+                                }
+                            }
+                        }
+                    }))
+                    .unwrap_or_else(|e| error_json(e.to_string()))
+            })
+                .join()
+                .unwrap_or_else(|_| error_json("fetch thread panicked".into()));
 
             Ok::<String, rquickjs::Error>(result)
-        },
-    )?)?;
+        }
+    })?)?;
 
     globals.set("__native_sleep", Function::new(ctx.clone(), |ms: u64| {
         std::thread::sleep(std::time::Duration::from_millis(ms));
@@ -483,9 +492,12 @@ fn register_native_apis(
         |html: String, selector: String| -> rquickjs::Result<String> {
             use scraper::{Html, Selector};
             let document = Html::parse_document(&html);
-            let sel = match Selector::parse(&selector) {
+            let sanitized = sanitize_selector(&selector);
+            let sel = match Selector::parse(&sanitized) {
                 Ok(s)  => s,
-                Err(e) => return Ok(serde_json::json!({ "error": format!("Invalid selector: {:?}", e) }).to_string()),
+                Err(e) => return Ok(serde_json::json!({
+        "error": format!("Invalid selector {:?}: {:?}", selector, e)
+    }).to_string()),
             };
 
             let results: Vec<Value> = document.select(&sel).map(|el| {
@@ -598,6 +610,17 @@ fn register_native_apis(
                 Ok(serde_json::to_string(&keys).unwrap_or_else(|_| "[]".to_string()))
             })?,
         )?;
+    }
+
+    {
+        let state_map = Arc::clone(&state_map);
+        globals.set("__native_state_has", Function::new(ctx.clone(), {
+            let state_map = Arc::clone(&state_map);
+            move |key: String| -> rquickjs::Result<bool> {
+                let guard = state_map.lock().unwrap_or_else(|p| p.into_inner());
+                Ok(guard.contains_key(&key))
+            }
+        })?)?;
     }
 
     globals.set("__native_crypto_hash", Function::new(ctx.clone(),

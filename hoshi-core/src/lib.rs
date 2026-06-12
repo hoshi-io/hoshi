@@ -52,8 +52,16 @@ pub async fn build_app_state(
     let pool = db_manager.pool().clone();
     let db = Arc::new(db_manager);
 
+    let http_client = Client::builder()
+        .timeout(Duration::from_secs(15))
+        .connect_timeout(Duration::from_secs(5))
+        .pool_idle_timeout(Duration::from_secs(90))
+        .pool_max_idle_per_host(10)
+        .build()
+        .map_err(|e| CoreError::Internal(format!("Failed to create HTTP client: {}", e)))?;
+
     info!("Loading extensions from disk...");
-    let mut extension_manager = extensions::ExtensionManager::new(&paths).map_err(|e| {
+    let mut extension_manager = extensions::ExtensionManager::new(&paths, http_client.clone()).map_err(|e| {
         error!("Failed to initialize extension manager: {}", e);
         CoreError::Internal("error.system.setup_failed".into())
     })?;
@@ -71,14 +79,6 @@ pub async fn build_app_state(
         info!("Initializing Discord Rich Presence...");
         Arc::new(crate::discord::DiscordRpcService::new("1486110945452228719"))
     };
-
-    let http_client = Client::builder()
-        .timeout(Duration::from_secs(15))
-        .connect_timeout(Duration::from_secs(5))
-        .pool_idle_timeout(Duration::from_secs(90))
-        .pool_max_idle_per_host(10)
-        .build()
-        .map_err(|e| CoreError::Internal(format!("Failed to create HTTP client: {}", e)))?;
 
     info!("Building tracker registry");
     let tracker_registry = Arc::new(build_registry(http_client.clone()));
