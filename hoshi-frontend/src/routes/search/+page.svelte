@@ -54,7 +54,15 @@
     $effect(() => {
         if (searchState.searchMode === "extension" && searchState.selectedExtension) {
             extensionsApi.getFilters(searchState.selectedExtension)
-                .then(res => { extFiltersSchema = res.filters || {}; })
+                .then(res => {
+                    extFiltersSchema = res.filters || {};
+
+                    Object.entries(extFiltersSchema).forEach(([key, filterDef]) => {
+                        if (filterDef.type === 'boolean' && searchState.extFilterValues[key] === undefined) {
+                            searchState.extFilterValues[key] = false;
+                        }
+                    });
+                })
                 .catch(() => { extFiltersSchema = {}; });
         } else {
             extFiltersSchema = {};

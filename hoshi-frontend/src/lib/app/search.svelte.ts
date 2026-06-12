@@ -169,7 +169,6 @@ class SearchState {
                         this.selectedExtension,
                         normalized[0].cover
                     );
-                    console.log(imageHeaders)
                 } catch (e) {
                     console.warn("Could not fetch image headers", e);
                 }

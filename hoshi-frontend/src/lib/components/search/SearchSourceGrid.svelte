@@ -1,6 +1,8 @@
 <script lang="ts">
     import { Plug, Database, Blocks, ChevronRight } from "lucide-svelte";
     import { searchState } from "@/app/search.svelte.js";
+    import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import {extensionsApi} from "@/api/extensions/extensions";
 
     let {
         isMobile = false,
@@ -28,6 +30,7 @@
             'kitsu': 'kitsu.io',
             'simkl': 'simkl.com'
         };
+
         const domain = domains[trackerName.toLowerCase()] || 'google.com';
         return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
     }
@@ -83,37 +86,63 @@
     </div>
 
     {#if availableExtensions.length > 0}
-        <div class="space-y-1">
-            <button
-                    type="button"
-                    onclick={() => extensionsOpen = !extensionsOpen}
-                    class="flex items-center justify-between w-full px-1 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wider"
-            >
+        {#if availableExtensions.length > 0}
+            <div class="space-y-1">
+                <button
+                        type="button"
+                        onclick={() => extensionsOpen = !extensionsOpen}
+                        class="flex items-center justify-between w-full px-1 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wider"
+                >
                 <span class="flex items-center gap-2">
                     <Blocks class="w-3.5 h-3.5" /> Extensions
                 </span>
-                <ChevronRight class="w-4 h-4 transition-transform duration-200 {extensionsOpen ? 'rotate-90' : ''}" />
-            </button>
+                    <ChevronRight class="w-4 h-4 transition-transform duration-200 {extensionsOpen ? 'rotate-90' : ''}" />
+                </button>
 
-            {#if extensionsOpen}
-                <div class="space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent animate-in slide-in-from-top-2 fade-in duration-200">
-                    {#each sortedExtensions as ext}
-                        <button
-                                type="button"
-                                onclick={() => onSelectSource('extension', ext.id, 'anilist', isMobile)}
-                                class="{rowClasses} {searchState.searchMode === 'extension' && searchState.selectedExtension === ext.id ? activeRow : inactiveRow}"
-                        >
-                            {#if ext.icon}
-                                <img src={ext.icon} class="w-5 h-5 rounded-sm object-contain {searchState.searchMode === 'extension' && searchState.selectedExtension === ext.id ? '' : 'grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100'}" alt={ext.name} />
-                            {:else}
-                                <Plug class="w-5 h-5 {searchState.searchMode === 'extension' && searchState.selectedExtension === ext.id ? 'text-primary' : 'text-muted-foreground'}" />
-                            {/if}
-                            <span class="truncate">{ext.name}</span>
-                        </button>
-                    {/each}
-                </div>
-            {/if}
-        </div>
+                {#if extensionsOpen}
+                    <div class="space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent animate-in slide-in-from-top-2 fade-in duration-200">
+                        {#each sortedExtensions as ext}
+                            <div class="{rowClasses} pr-1.5 justify-between {searchState.searchMode === 'extension' && searchState.selectedExtension === ext.id ? activeRow : inactiveRow}">
+
+                                <button
+                                        type="button"
+                                        onclick={() => onSelectSource('extension', ext.id, 'anilist', isMobile)}
+                                        class="flex items-center gap-3 flex-1 min-w-0 outline-none text-left"
+                                >
+                                    {#if ext.icon}
+                                        <img src={ext.icon} class="w-5 h-5 shrink-0 rounded-sm object-contain {searchState.searchMode === 'extension' && searchState.selectedExtension === ext.id ? '' : 'grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100'}" alt={ext.name} />
+                                    {:else}
+                                        <Plug class="w-5 h-5 shrink-0 {searchState.searchMode === 'extension' && searchState.selectedExtension === ext.id ? 'text-primary' : 'text-muted-foreground'}" />
+                                    {/if}
+                                    <span class="truncate">{ext.name}</span>
+                                </button>
+
+                                {#if ext.source === 'tachiyomi' && ext.settings}
+                                    {@const langDef = ext.setting_definitions?.find(s => s.id === 'language' || s.key === 'language')}
+                                    {#if langDef}
+                                        <div class="w-[85px] shrink-0 ml-2" onclick={(e) => e.stopPropagation()}>
+                                            <ResponsiveSelect
+                                                    value={ext.settings.language as string}
+                                                    items={langDef.options || []}
+                                                    placeholder="Lang"
+                                                    class="h-7 text-xs px-2 py-0 bg-transparent border-0 border-transparent shadow-none focus:ring-0 focus:ring-offset-0 hover:bg-muted/50 transition-colors"
+                                                    onValueChange={(newVal) => {
+                                                    ext.settings.language = newVal;
+                                                    extensionsApi.updateSettings(ext.id, {
+                                                        ...ext.settings,
+                                                        language: newVal
+                                                    });
+                                                }}
+                                            />
+                                        </div>
+                                    {/if}
+                                {/if}
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+            </div>
+        {/if}
     {/if}
 </div>
 
