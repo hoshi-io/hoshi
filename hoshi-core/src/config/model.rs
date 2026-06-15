@@ -88,6 +88,7 @@ impl Default for UiConfig {
 pub struct ContentConfig {
     pub preferred_metadata_provider: String,
     pub auto_update_progress: bool,
+    pub score_format: ScoreFormat,
 }
 
 impl Default for ContentConfig {
@@ -95,7 +96,23 @@ impl Default for ContentConfig {
         Self {
             preferred_metadata_provider: "anilist".into(),
             auto_update_progress: true,
+            score_format: ScoreFormat::default(),
         }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum ScoreFormat {
+    Point10,        // 0–10 (default, matches internal)
+    Point100,       // 0–100
+    Point10Decimal, // 0.0–10.0 (1 decimal)
+    Point5Stars,    // ★★★★☆
+}
+
+impl Default for ScoreFormat {
+    fn default() -> Self {
+        Self::Point10
     }
 }
 

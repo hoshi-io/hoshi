@@ -135,7 +135,7 @@ impl TrackerService {
                 .ok_or_else(|| CoreError::Internal("error.tracker.missing_token_url".into()))?;
             let client_id = auth_config.client_id.as_deref().unwrap_or_default();
 
-            let res = reqwest::Client::new()
+            let res = state.http_client
                 .post(token_url)
                 .form(&[
                     ("grant_type", "password"),
@@ -169,6 +169,7 @@ impl TrackerService {
             token_data.display_name.as_deref(),
             token_data.avatar_url.as_deref(),
             token_data.profile_url.as_deref(),
+            token_data.score_format.as_deref()
         ).await?;
         TrackerRepository::set_sync_enabled(pool, user_id, &body.tracker_name, false).await?;
 
@@ -241,7 +242,7 @@ async fn import_from_tracker(
     let pool = state.pool();
 
     let remote_entries = provider
-        .get_user_list(&integration.access_token, &integration.tracker_user_id)
+        .get_user_list(&integration.access_token, &integration.tracker_user_id, integration.score_format.as_deref())
         .await?;
 
     let needs_anime = remote_entries.iter().any(|e| e.content_type == ContentType::Anime);

@@ -515,13 +515,33 @@ impl TrackerProvider for AniListProvider {
         }
     }
 
+    async fn refresh_score_format(&self, access_token: &str) -> CoreResult<Option<String>> {
+        let res = self.graphql(Some(access_token), &json!({
+        "query": "query { Viewer { mediaListOptions { scoreFormat } } }"
+    })).await?;
+
+        Ok(res.get("data")
+            .and_then(|d| d.get("Viewer"))
+            .and_then(|v| v.get("mediaListOptions"))
+            .and_then(|o| o.get("scoreFormat"))
+            .and_then(|v| v.as_str())
+            .map(str::to_string))
+    }
+
     async fn validate_and_store_token(&self, access_token: &str, token_type: &str) -> CoreResult<TokenData> {
         let res = self.graphql(Some(access_token), &json!({
-            "query": "query { Viewer { id name avatar { large } siteUrl } }"
+            "query": "query { Viewer { id name avatar { large } siteUrl mediaListOptions { scoreFormat } } }"
         })).await?;
 
         let viewer = res.get("data").and_then(|d| d.get("Viewer"))
             .ok_or_else(|| CoreError::AuthError("error.tracker.invalid_credentials".into()))?;
+
+        let score_format = viewer
+            .get("mediaListOptions")
+            .and_then(|o| o.get("scoreFormat"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("POINT_10")
+            .to_string();
 
         let user_id = viewer.get("id").and_then(|v| v.as_i64())
             .ok_or_else(|| CoreError::AuthError("error.tracker.invalid_credentials".into()))?;
@@ -540,6 +560,7 @@ impl TrackerProvider for AniListProvider {
             display_name: viewer.get("name").and_then(|v| v.as_str()).map(str::to_string),
             avatar_url:   viewer.get("avatar").and_then(|a| a.get("large")).and_then(|v| v.as_str()).map(str::to_string),
             profile_url:  viewer.get("siteUrl").and_then(|v| v.as_str()).map(str::to_string),
+            score_format: Some(score_format)
         })
     }
 
@@ -657,7 +678,7 @@ impl TrackerProvider for AniListProvider {
         Ok(sections)
     }
 
-    async fn get_user_list(&self, access_token: &str, tracker_user_id: &str) -> CoreResult<Vec<UserListEntry>> {
+    async fn get_user_list(&self, access_token: &str, tracker_user_id: &str, score_format: Option<&str>,) -> CoreResult<Vec<UserListEntry>> {
         let user_id    = tracker_user_id.parse::<i64>().unwrap_or(0);
         let full_query = format!("{}\n{}", USER_LIST_QUERY, MEDIA_FRAGMENT);
         let res = self.graphql(
@@ -719,7 +740,7 @@ impl TrackerProvider for AniListProvider {
                                 format:       format.map(String::from),
                                 status:       entry.get("status").and_then(|s| s.as_str()).map(String::from),
                                 progress:     entry.get("progress").and_then(|i| i.as_i64()).unwrap_or(0) as i32,
-                                score:        entry.get("score").and_then(|f| f.as_f64()),
+                                score:        entry.get("score").and_then(|f| f.as_f64()).map(|s| normalize_score(s, score_format.unwrap())),
                                 start_date:   entry.get("startedAt").and_then(|d| Self::parse_date(d)),
                                 end_date:     entry.get("completedAt").and_then(|d| Self::parse_date(d)),
                                 repeat_count: entry.get("repeat").and_then(|i| i.as_i64()).unwrap_or(0) as i32,
@@ -751,12 +772,14 @@ impl TrackerProvider for AniListProvider {
             }
         "#;
 
+        let fmt = params.score_format.as_deref().unwrap_or("POINT_10");
+
         let media_id: i64 = params.media_id.parse().unwrap_or(0);
         let variables = json!({
             "mediaId":     media_id,
             "status":      params.status,
             "progress":    params.progress,
-            "score":       params.score,
+            "score":       params.score.map(|s| denormalize_score(s, fmt)),
             "startedAt":   Self::to_fuzzy_date(params.start_date.as_deref()),
             "completedAt": Self::to_fuzzy_date(params.end_date.as_deref()),
             "repeat":      params.repeat_count,
@@ -882,5 +905,27 @@ impl TrackerProvider for AniListProvider {
         }
 
         Ok(all_episodes)
+    }
+}
+
+fn normalize_score(score: f64, format: &str) -> f64 {
+    match format {
+        "POINT_100"         => score / 10.0,
+        "POINT_10_DECIMAL"  => score,           // already 0–10
+        "POINT_10"          => score,           // already 0–10
+        "POINT_5"           => score * 2.0,     // 0–5 → 0–10
+        "POINT_3"           => score * (10.0 / 3.0), // 0–3 → 0–10
+        _                   => score,
+    }
+}
+
+fn denormalize_score(score: f64, format: &str) -> f64 {
+    match format {
+        "POINT_100"         => (score * 10.0).round(),
+        "POINT_10_DECIMAL"  => (score * 10.0).round() / 10.0, // 1 decimal
+        "POINT_10"          => score.round(),
+        "POINT_5"           => (score / 2.0).round(),
+        "POINT_3"           => (score / (10.0 / 3.0)).round(),
+        _                   => score.round(),
     }
 }

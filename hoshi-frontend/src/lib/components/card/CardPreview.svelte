@@ -11,14 +11,14 @@
         cid, title, cover, bannerImage, trailerUrl,
         score, status, synopsis, episodeCount,
         contentType, contentTypeLabel, shouldBlur,
-        href
+        href, isStar
     }: {
         cid: string;
         title: string;
         cover: string;
         bannerImage?: string | null;
         trailerUrl?: string | null;
-        score?: number | null;
+        score?: any | null;
         status?: string | null;
         synopsis?: string | null;
         episodeCount?: number | null;
@@ -26,6 +26,7 @@
         contentTypeLabel?: string | null;
         shouldBlur?: boolean;
         href: string;
+        isStar: boolean;
     } = $props();
 
     let isHovered = $state(false);
@@ -106,7 +107,7 @@
             </div>
 
             <div class="meta-row">
-                {#if score}<span class="score"><Star size="0.7rem" fill="currentColor" /> {score}%</span>{/if}
+                {#if score}<span class="score">{#if !isStar} <Star size="0.7rem" fill="currentColor" /> {/if} {score}</span>{/if}
                 <span class="badge">{contentTypeLabel || contentType}</span>
                 {#if episodeCount}<span class="badge">{episodeCount} Ep</span>{/if}
                 {#if status}<span class="status-text {status.toLowerCase()}">{status}</span>{/if}

@@ -123,7 +123,7 @@ struct HeadlessRequest {
     reply:   std::sync::mpsc::SyncSender<String>,
 }
 
-#[instrument(skip(full_script, extension_code, req_tx, state_json))]
+#[instrument(skip(full_script, extension_code, req_tx, state_json, http_client))]
 async fn run_quickjs_local(
     full_script: String,
     extension_code: String,

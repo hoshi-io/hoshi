@@ -109,6 +109,7 @@ impl TrackerProvider for MalProvider {
             display_name: user_data.name,
             avatar_url:   user_data.picture,
             profile_url:  Some(format!("https://myanimelist.net/profile/{}", user_data.id)),
+            score_format: None,
         })
     }
 
@@ -269,6 +270,7 @@ impl TrackerProvider for MalProvider {
         &self,
         access_token: &str,
         _tracker_user_id: &str,
+        score_format: Option<&str>,
     ) -> CoreResult<Vec<UserListEntry>> {
         let anime_url = format!(
             "{}/users/@me/animelist?fields=list_status,node.id,node.title,node.main_picture,node.alternative_titles,node.start_date,node.end_date,node.synopsis,node.mean,node.rank,node.popularity,node.num_list_users,node.num_scoring_users,node.nsfw,node.genres,node.media_type,node.status,node.num_episodes,node.start_season,node.broadcast,node.source,node.average_episode_duration,node.rating,node.studios,node.related_anime,node.related_manga,node.recommendations&limit=1000",

@@ -6,6 +6,7 @@
     import { Star, Calendar, Tv, BookMarked, Building2, Play, BookOpen, Link, Plug } from "lucide-svelte";
     import ListEditorButton from "@/components/ListEditorButton.svelte";
     import SmartImage from "@/components/SmartImage.svelte";
+    import {formatScore, getCardScore} from "@/utils/normalize";
 
     let {
         fullContent,
@@ -30,7 +31,7 @@
     let trackersExpanded = $state(false);
     const TRACKERS_LIMIT = 50;
 
-    const score = $derived(meta?.rating ? Math.round(meta.rating * 10) : null);
+    const score = $derived(meta?.rating ? formatScore(meta.rating) : null);
     const isAdultContent = $derived(fullContent.content.nsfw || meta?.genres?.some((g: string) => ['hentai', 'adult'].includes(g.toLowerCase())));
     const shouldBlur = $derived(isAdultContent && (appConfig.data?.general?.blurAdultContent ?? true));
 
@@ -125,7 +126,7 @@
             <div class="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1.5 text-[11px] sm:text-xs text-muted-foreground font-medium">
                 {#if score}
         <span class="flex items-center gap-1 bg-green-500/15 text-green-400 border border-green-500/25 px-2 sm:px-2.5 py-1 rounded-lg font-bold">
-            <Star class="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" />{score}%
+            {score}
         </span>
                 {/if}
                 {#if meta?.releaseDate}

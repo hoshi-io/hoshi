@@ -19,6 +19,12 @@ export type MergeStrategy =
     | 'malFirst'
     | 'kitsuFirst';
 
+export type ScoreFormat =
+    | 'point10'
+    | 'point100'
+    | 'point10Decimal'
+    | 'point5Stars';
+
 export interface GeneralConfig {
     showAdultContent: boolean;
     blurAdultContent: boolean;
@@ -35,6 +41,7 @@ export interface UiConfig {
 export interface ContentConfig {
     preferredMetadataProvider: MetadataProvider;
     autoUpdateProgress: boolean;
+    scoreFormat: ScoreFormat;
 }
 
 export interface ExtensionsConfig {

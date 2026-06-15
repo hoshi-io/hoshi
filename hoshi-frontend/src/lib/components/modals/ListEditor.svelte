@@ -26,6 +26,8 @@
     import { listStore } from "@/app/list.svelte.js";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import SmartImage from "@/components/SmartImage.svelte";
+    import {appConfig} from "@/stores/config.svelte";
+    import type {ScoreFormat} from "@/api/config/types";
 
     let {
         open = $bindable(false),
@@ -50,6 +52,48 @@
         kitsu:       { icon: "https://kitsu.app/favicon.ico",                          label: "Kitsu" },
         simkl:       { icon: "https://simkl.com/favicon.ico",                          label: "Simkl" },
     };
+
+    let scoreFormat = $derived(appConfig.data?.content?.scoreFormat ?? 'point10' as ScoreFormat);
+
+    // Convert 0-10 stored score → display value for the input
+    function toDisplayScore(raw: number | string): number | string {
+        if (raw === "" || raw === null || raw === undefined) return "";
+        const n = typeof raw === "string" ? parseFloat(raw) : raw;
+        if (isNaN(n)) return "";
+        switch (scoreFormat) {
+            case 'point100':      return Math.round(n * 10);
+            case 'point5Stars':   return Math.round(n / 2);
+            case 'point10Decimal': return n;
+            case 'point10':
+            default:              return Math.round(n);
+        }
+    }
+
+    // Convert display value → 0-10 for backend
+    function toStoredScore(display: number | string): number | undefined {
+        if (display === "" || display === null || display === undefined) return undefined;
+        const n = typeof display === "string" ? parseFloat(display) : display;
+        if (isNaN(n)) return undefined;
+        switch (scoreFormat) {
+            case 'point100':      return n / 10;
+            case 'point5Stars':   return n * 2;
+            case 'point10Decimal':
+            case 'point10':
+            default:              return n;
+        }
+    }
+
+    function scoreMax(): number {
+        switch (scoreFormat) {
+            case 'point100':    return 100;
+            case 'point5Stars': return 5;
+            default:            return 10;
+        }
+    }
+
+    function scoreStep(): number {
+        return scoreFormat === 'point10Decimal' ? 0.1 : 1;
+    }
 
     function trackerIcon(tracker: string): string {
         return TRACKER_META[tracker.toLowerCase()]?.icon ?? "";
@@ -149,7 +193,7 @@
                 isNew = false;
                 status = existing.status;
                 progress = existing.progress;
-                score = existing.score ?? "";
+                score = existing.score != null ? toDisplayScore(existing.score) : "";
                 startValue = existing.startDate ? parseDate(existing.startDate.split('T')[0]) : undefined;
                 endValue = existing.endDate ? parseDate(existing.endDate.split('T')[0]) : undefined;
                 repeatCount = existing.repeatCount ?? 0;
@@ -226,7 +270,7 @@
                 updatedAt:     now,
                 status,
                 progress:      body.progress    ?? 0,
-                score:         body.score       ?? null,
+                score: toStoredScore(score),
                 startDate:     body.startDate   ?? null,
                 endDate:       body.endDate     ?? null,
                 repeatCount:   body.repeatCount ?? 0,
@@ -273,7 +317,7 @@
         switch (field) {
             case "status":      return status;
             case "progress":    return String(progress);
-            case "score":       return score !== "" ? String(score) : "—";
+            case "score": return score !== "" ? String(toStoredScore(score) ?? "—") : "—";
             case "startDate":   return startValue?.toString() ?? "—";
             case "endDate":     return endValue?.toString() ?? "—";
             case "repeatCount": return String(repeatCount);
@@ -350,10 +394,33 @@
 
                     <div class="col-span-1 space-y-2">
                         <Label for="score" class="font-bold text-foreground/90">{i18n.t('list.modal.score')}</Label>
-                        <div class="relative flex items-center">
-                            <Star class="absolute left-3.5 h-4 w-4 text-muted-foreground" />
-                            <Input id="score" type="number" step="0.1" min="0" max="10" bind:value={score} class="pl-10 h-11 rounded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-semibold" />
-                        </div>
+                        {#if scoreFormat === 'point5Stars'}
+                            <div class="flex items-center gap-1 h-11">
+                                {#each [1, 2, 3, 4, 5] as star}
+                                    <button
+                                            type="button"
+                                            class="text-2xl transition-colors {Number(score) >= star ? 'text-amber-400' : 'text-muted-foreground/30'} hover:text-amber-300"
+                                            onclick={() => score = score === star ? "" : star}
+                                    >★</button>
+                                {/each}
+                                {#if score !== ""}
+                                    <button type="button" class="text-xs text-muted-foreground ml-1 hover:text-foreground" onclick={() => score = ""}>✕</button>
+                                {/if}
+                            </div>
+                        {:else}
+                            <div class="relative flex items-center">
+                                <Star class="absolute left-3.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                        id="score"
+                                        type="number"
+                                        step={scoreStep()}
+                                        min="0"
+                                        max={scoreMax()}
+                                        bind:value={score}
+                                        class="pl-10 h-11 rounded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-semibold"
+                                />
+                            </div>
+                        {/if}
                     </div>
 
                     <div class="col-span-1 space-y-2">

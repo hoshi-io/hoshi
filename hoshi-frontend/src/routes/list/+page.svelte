@@ -21,6 +21,7 @@
     import { appConfig } from "@/stores/config.svelte.js";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import LazyCardGrid from "@/components/card/LazyCardGrid.svelte";
+    import {getCardScore, getCardScoreIsStars} from "@/utils/normalize";
 
     $effect(() => {
         layoutState.title = listStore.isMobileSearchActive ? "" : i18n.t('list.title');
@@ -335,8 +336,10 @@
                                         <!-- Score Container -->
                                         {#if item.original.score}
                                             <div class="bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-md shadow-md border border-white/5 flex items-center gap-1 font-mono text-xs font-black text-amber-400">
-                                                <span class="text-[10px] text-amber-500">★</span>
-                                                <span>{item.original.score}</span>
+                                                {#if !getCardScoreIsStars(item.card)}
+                                                    <span class="text-[10px] text-amber-500">★</span>
+                                                {/if}
+                                                <span>{getCardScore(item.card)}</span>
                                             </div>
                                         {/if}
                                     </div>

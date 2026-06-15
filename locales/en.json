@@ -595,7 +595,8 @@
       "metadata_provider": "Preferred Metadata Provider",
       "metadata_provider_desc": "Select the primary source used for titles, descriptions, and cover images.",
       "auto_update_progress": "Auto-Update Progress",
-      "auto_update_progress_desc": "Automatically update your list progress when you near the end of an episode or chapter."
+      "score_format": "Score format",
+      "score_format_desc": "Choose how scores are displayed on hoshi."
     },
 
     "extension_section": {

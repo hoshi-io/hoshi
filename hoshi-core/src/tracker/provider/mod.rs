@@ -79,6 +79,7 @@ pub struct TokenData {
     pub display_name:    Option<String>,
     pub avatar_url:      Option<String>,
     pub profile_url:     Option<String>,
+    pub score_format: Option<String>
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -92,6 +93,7 @@ pub struct UpdateEntryParams {
     pub repeat_count: Option<i32>,
     pub notes: Option<String>,
     pub is_private: Option<bool>,
+    pub score_format: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -141,6 +143,7 @@ pub trait TrackerProvider: Send + Sync {
         &self,
         access_token: &str,
         tracker_user_id: &str,
+        score_format: Option<&str>,
     ) -> CoreResult<Vec<UserListEntry>>;
 
     async fn update_entry(
@@ -163,6 +166,10 @@ pub trait TrackerProvider: Send + Sync {
         to_ts: i64,
     ) -> CoreResult<Vec<AiringEpisode>> {
         Err(CoreError::NotFound("Airing schedule not supported".into()))
+    }
+
+    async fn refresh_score_format(&self, _access_token: &str) -> CoreResult<Option<String>> {
+        Ok(None)
     }
 }
 

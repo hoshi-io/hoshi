@@ -93,9 +93,26 @@ Object.defineProperty(Number.prototype, 'booleanValue', {
     configurable: true
 });
 
+Object.defineProperty(Boolean, "valueOf", {
+    value(v) {
+        return !!v;
+    },
+    writable: true,
+    configurable: true
+});
+
 if (!Array.prototype.toArray) {
     Array.prototype.toArray = function(target) { return [...this]; };
 }
+
+function _serializeBody(body, headers) {
+    if (body instanceof FormBody) {
+        headers?.set?.("content-type", "application/x-www-form-urlencoded");
+        return body.toString();
+    }
+    return body;
+}
+
 
 globalThis.StringsKt = {
 
@@ -175,6 +192,21 @@ globalThis.StringsKt = {
         return result ? 1 : 0; // Return Dalvik boolean format
     },
 
+    replace$default(str, oldValue, newValue, ignoreCase, mask, marker) {
+        if (str == null) return str;
+
+        if ((mask & 4) !== 0) {
+            ignoreCase = false;
+        }
+
+        if (ignoreCase) {
+            const escapedOld = String(oldValue).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return str.replace(new RegExp(escapedOld, 'gi'), newValue);
+        }
+
+        return str.split(oldValue).join(newValue);
+    },
+
     trim(str) {
         return (typeof str === "string") ? str.trim() : str;
     },
@@ -186,7 +218,36 @@ globalThis.StringsKt = {
             sb.append(parts);
         }
         return sb;
-    }
+    },
+
+    contains(str, other, ignoreCase) {
+        if (str == null) return 0;
+        ignoreCase = ignoreCase ? true : false;
+        if (ignoreCase) {
+            return str.toLowerCase().includes(String(other).toLowerCase()) ? 1 : 0;
+        }
+        return str.includes(String(other)) ? 1 : 0;
+    },
+
+    // substringAfter$default(str, delimiter, missingDelimiterValue, mask, marker)
+    // mask bit 0 → use str itself as the missingDelimiterValue default
+    substringAfter$default(str, delimiter, missingDelimiterValue, mask, marker) {
+        if (str == null) return str;
+        if ((mask & 4) !== 0) missingDelimiterValue = str; // default: return whole string
+        const idx = str.indexOf(delimiter);
+        return idx === -1
+            ? (missingDelimiterValue ?? str)
+            : str.slice(idx + delimiter.length);
+    },
+
+    // Also expose as plain substringAfter for direct calls
+    substringAfter(str, delimiter, missingDelimiterValue) {
+        if (str == null) return str;
+        const idx = str.indexOf(delimiter);
+        return idx === -1
+            ? (missingDelimiterValue ?? str)
+            : str.slice(idx + delimiter.length);
+    },
 };
 
 globalThis.kotlin = globalThis.kotlin || {};
@@ -216,6 +277,13 @@ globalThis.CollectionsKt = {
     build(builder) {
         return builder;
     },
+    reversed(collection) {
+        const arr = Array.isArray(collection)
+            ? [...collection]
+            : Array.from(collection);
+
+        return _makeKotlinList(arr.reverse());
+    },
     joinToString$default(collection, separator, prefix, postfix, limit, truncated, transform, flags, marker) {
         if (!collection) return "";
         if (!flags || (flags & 1))  separator = ", ";
@@ -239,6 +307,21 @@ globalThis.CollectionsKt = {
         });
         if (over) parts.push(truncated);
         return prefix + parts.join(separator) + postfix;
+    },
+    last(collection) {
+        if (collection == null) {
+            throw new Error("NoSuchElementException");
+        }
+
+        const arr = Array.isArray(collection)
+            ? collection
+            : Array.from(collection);
+
+        if (arr.length === 0) {
+            throw new Error("NoSuchElementException");
+        }
+
+        return arr[arr.length - 1];
     },
     throwIndexOverflow() { throw new RangeError("Index overflow"); },
     listOf(...args) { return args.length === 1 && Array.isArray(args[0]) ? args[0] : Array.from(args); },
@@ -265,10 +348,17 @@ globalThis.CollectionsKt = {
         return true;
     },
     randomOrNull(collection, random) {
-        const arr = Array.isArray(collection) ? collection
-            : collection?._a ?? collection?._arr ?? [];
-        if (!arr || arr.length === 0) return 0;
-        return arr[Math.floor(Math.random() * arr.length)];
+        const arr =
+            Array.isArray(collection)
+                ? collection
+                : collection?._a
+                ?? collection?._arr
+                ?? 0;
+
+        if (arr === 0 || arr.length === 0)
+            return 0;
+
+        return arr[Math.floor(Math.random() * arr.length)] ?? 0;
     },
 
     emptyMap:     () => new LinkedHashMap(),
@@ -286,6 +376,23 @@ globalThis.CollectionsKt = {
     toMutableList: (col) => _mutableList(col?.[Symbol.iterator] ? [...col] : []),
     mutableListOf: (...args) => _mutableList(args.length === 1 && Array.isArray(args[0]) ? args[0] : args),
     createListBuilder: () => _mutableList(),
+    getOrNull(collection, index) {
+        if (collection == null) return null;
+        const arr = Array.isArray(collection) ? collection : Array.from(collection);
+        return (index >= 0 && index < arr.length) ? arr[index] : null;
+    },
+
+    first(collection, predicate) {
+        if (collection == null) throw new Error("NoSuchElementException");
+        const arr = Array.isArray(collection) ? collection : Array.from(collection);
+        if (predicate) {
+            const found = arr.find(predicate);
+            if (found === undefined) throw new Error("NoSuchElementException");
+            return found;
+        }
+        if (arr.length === 0) throw new Error("NoSuchElementException");
+        return arr[0];
+    },
 };
 
 function _mutableList(items = []) {
@@ -387,20 +494,76 @@ globalThis.CoroutineScopeKt = {
 globalThis.LinkedHashMap = class LinkedHashMap extends Map {
     constructor(init) {
         super();
-        if (init) {
-            for (const [k, v] of init) this.set(k, v);
+
+        // Kotlin LinkedHashMap(capacity)
+        if (typeof init === "number" || init == null) {
+            return;
+        }
+
+        // LinkedHashMap(existingMap)
+        if (init instanceof Map) {
+            for (const [k, v] of init.entries()) {
+                this.set(k, v);
+            }
+            return;
+        }
+
+        // Iterable<Entry<K,V>>
+        if (Symbol.iterator in Object(init)) {
+            for (const [k, v] of init) {
+                this.set(k, v);
+            }
         }
     }
-    get(key)            { return super.get(key) ?? null; }
-    put(key, value)     { this.set(key, value); return null; }
-    containsKey(key)    { return this.has(key); }
-    containsValue(val)  { for (const v of this.values()) if (v === val) return true; return false; }
-    remove(key)         { const v = this.get(key); this.delete(key); return v; }
-    isEmpty()           { return this.size === 0; }
-    entrySet()          { return [...this.entries()].map(([k,v]) => ({ getKey: () => k, getValue: () => v })); }
-    keySet()            { return new Set(this.keys()); }
-    values()            { return [...super.values()]; }
-    putAll(map)         { for (const [k,v] of map) this.set(k,v); return this; }
+
+    get(key) { return super.get(key) ?? null; }
+    put(key, value) { this.set(key, value); return null; }
+    containsKey(key) { return this.has(key) ? 1 : 0; }
+    containsValue(val) {
+        for (const v of super.values()) {
+            if (v === val) return 1;
+        }
+        return 0;
+    }
+    remove(key) {
+        const v = this.get(key);
+        this.delete(key);
+        return v;
+    }
+    isEmpty() { return this.size === 0 ? 1 : 0; }
+    size() { return super.size; }
+    entrySet() {
+        const entries = [...super.entries()].map(([k, v]) => ({
+            getKey: () => k,
+            getValue: () => v,
+        }));
+
+        entries.iterator = function() {
+            let i = 0;
+            return {
+                hasNext: () => (i < entries.length ? 1 : 0),
+                next: () => entries[i++],
+            };
+        };
+
+        return entries;
+    }
+    keySet() {
+        return [...super.keys()];
+    }
+
+    values() {
+        return [...super.values()];
+    }
+
+    putAll(map) {
+        if (map instanceof Map) {
+            for (const [k, v] of map) {
+                this.set(k, v);
+            }
+        }
+        return this;
+    }
 };
 
 globalThis.HashMap = LinkedHashMap;
@@ -422,6 +585,47 @@ globalThis.ArraysKt = {
         const a = Array.isArray(arr) ? arr : Array.from(arr ?? []);
         return Array.isArray(element) ? [...a, ...element] : [...a, element];
     },
+};
+
+globalThis.FormBody_Builder = class FormBody_Builder {
+    constructor() {
+        this._params = [];
+    }
+
+    add(key, value) {
+        this._params.push([String(key), String(value)]);
+        return this;
+    }
+
+    push(key, value) {
+        this._params.push([String(key), String(value)]);
+        return this;
+    }
+
+    build() {
+        return new FormBody(this._params);
+    }
+};
+
+globalThis.FormBody = class FormBody {
+    constructor(params = []) {
+        this._params = params;
+    }
+
+    toRequestBody() {
+        return this;
+    }
+
+    contentType() {
+        return "application/x-www-form-urlencoded";
+    }
+
+    toString() {
+        return this._params
+            .map(([k, v]) =>
+                encodeURIComponent(k) + "=" + encodeURIComponent(v))
+            .join("&");
+    }
 };
 
 globalThis.ArrayList = class ArrayList {
@@ -471,12 +675,6 @@ globalThis.Locale = {
     getDefault() { return "en"; },
 };
 
-globalThis.FormBody_Builder = class FormBody_Builder {
-    constructor() { this._p = []; }
-    add(k, v) { this._p.push([k, v]); return this; }
-    build()   { return Object.fromEntries(this._p); }
-};
-
 globalThis.JsonTransformingSerializer = class JsonTransformingSerializer {
     constructor(tSerializer) {
         this.tSerializer = tSerializer;
@@ -508,6 +706,8 @@ globalThis.PluginGeneratedSerialDescriptor = class PluginGeneratedSerialDescript
         this._name = name;
         this._serializer = serializer;
         this._fields = [];
+        this._annotations = [];
+        this._elementAnnotations = [];
     }
     addElement(name, isOptional) {
         this._fields.push(name);
@@ -517,6 +717,14 @@ globalThis.PluginGeneratedSerialDescriptor = class PluginGeneratedSerialDescript
     }
     getElementName(index) {
         return this._fields[index];
+    }
+
+    pushAnnotation(annotation) {
+        this._annotations.push(annotation);
+    }
+
+    getAnnotations() {
+        return this._annotations;
     }
 };
 
@@ -536,6 +744,18 @@ globalThis.JsonDecoder = class JsonDecoder {
             return serializer.deserialize(new JsonDecoder(val, childDescriptor));
         }
         return val;
+    }
+
+    decodeLongElement(descriptor, index) {
+        let value;
+
+        if (Array.isArray(this._json)) {
+            value = this._json[index];
+        } else {
+            value = this._json[descriptor.getElementName(index)];
+        }
+
+        return value;
     }
 
     beginStructure(descriptor) {
@@ -642,7 +862,7 @@ globalThis.LazyKt = {
     }
 };
 
-globalThis.ContextKt$special$$inlined$get$1 = class ContextKt$special$$inlined$get$1 {
+globalThis.ContextKt_special__inlined_get_1 = class ContextKt_special__inlined_get_1 {
     getType() { return null; }
 };
 
@@ -736,9 +956,41 @@ globalThis.LongSerializer = {
     }
 };
 
+globalThis.Lambda = class Lambda {
+    constructor(arity) {
+        this.arity = arity ?? 0;
+    }
+
+    // invoke() is overridden by every concrete lambda subclass;
+    // the base just forwards up to 4 positional args
+    invoke(p0, p1, p2, p3) {
+        return undefined;
+    }
+
+    toString() {
+        return `Lambda/${this.arity}`;
+    }
+};
+
+// Kotlin also emits FunctionN base types; alias them all to Lambda
+globalThis.Function0  = Lambda;
+globalThis.Function1  = Lambda;
+globalThis.Function2  = Lambda;
+globalThis.Function3  = Lambda;
+globalThis.Function4  = Lambda;
+globalThis.FunctionN  = Lambda;
+
 globalThis.SetsKt = {
     emptySet() {
         return new Set();
+    },
+
+    contains(set, value) {
+        if (set == null) return 0;
+        // Works for native Set and any array-like
+        if (set instanceof Set) return set.has(value) ? 1 : 0;
+        if (Array.isArray(set)) return set.includes(value) ? 1 : 0;
+        return 0;
     },
 
     hashSetOf(...items) {
@@ -1060,6 +1312,12 @@ globalThis.SwitchPreferenceCompat = class SwitchPreferenceCompat {
     setSummaryOff(v)   { this._summaryOff = v; return this; }
     setDefaultValue(v) { this._default = v; return this; }
     setOnPreferenceChangeListener(l) { return this; }
+
+    setVisible(v) {
+        this._visible = v;
+        return this;
+    }
+
     _toManifest() {
         return {
             key:     this._key     ?? "",
@@ -1119,16 +1377,29 @@ globalThis.MultiSelectListPreference = class MultiSelectListPreference {
 
 globalThis.EditTextPreference = class EditTextPreference {
     constructor(context) {}
-    setKey(v)          { this._key     = v; return this; }
-    setTitle(v)        { this._title   = v; return this; }
+
+    setKey(v)          { this._key = v; return this; }
+    setTitle(v)        { this._title = v; return this; }
     setSummary(v)      { this._summary = v; return this; }
     setDefaultValue(v) { this._default = v; return this; }
-    setOnPreferenceChangeListener(l) { return this; }
+    setDialogTitle(v) { this._dialogTitle = v; return this; }
+    setDialogMessage(v) { this._dialogMessage = v; return this; }
+
+    setOnPreferenceChangeListener(l) {
+        this._changeListener = l;
+        return this;
+    }
+
+    setOnBindEditTextListener(l) {
+        this._bindListener = l;
+        return this;
+    }
+
     _toManifest() {
         return {
-            key:     this._key     ?? "",
-            label:   this._title   ?? this._key ?? "",
-            type:    "string",
+            key: this._key ?? "",
+            label: this._title ?? this._key ?? "",
+            type: "string",
             default: this._default ?? "",
         };
     }
@@ -1441,6 +1712,9 @@ globalThis.JsoupElements = class JsoupElements {
     }
 
     get length_val() { return this.size(); }
+    get length() {
+        return this._els.length;
+    }
     get size_val()   { return this.size(); }
 
     [Symbol.iterator]() { return this._els[Symbol.iterator](); }
@@ -1953,7 +2227,7 @@ globalThis.UpdateStrategy = {
 
 globalThis.Filter = class Filter {
     constructor(name, state) {
-        this.name  = name;
+        this.name = name;
         this.state = state;
     }
 
@@ -1980,6 +2254,14 @@ Filter.Separator = class Separator extends Filter {
 Filter.Select = class Select extends Filter {
     constructor(name, values, state = 0) {
         super(name, state);
+        this.values = values;
+    }
+
+    getValues() {
+        return this.values;
+    }
+
+    setValues(values) {
         this.values = values;
     }
 };
@@ -2029,15 +2311,15 @@ Filter.Sort.Selection = class Selection {
     component2()   { return this.ascending; }
 };
 
-globalThis["Filter$Header"]    = Filter.Header;
-globalThis["Filter$Separator"] = Filter.Separator;
-globalThis["Filter$Select"]    = Filter.Select;
-globalThis["Filter$Text"]      = Filter.Text;
-globalThis["Filter$CheckBox"]  = Filter.CheckBox;
-globalThis["Filter$TriState"]  = Filter.TriState;
-globalThis["Filter$Group"]     = Filter.Group;
-globalThis["Filter$Sort"]           = Filter.Sort;
-globalThis["Filter$Sort$Selection"] = Filter.Sort.Selection;
+globalThis["Filter_Header"]    = Filter.Header;
+globalThis["Filter_Separator"] = Filter.Separator;
+globalThis["Filter_Select"]    = Filter.Select;
+globalThis["Filter_Text"]      = Filter.Text;
+globalThis["Filter_CheckBox"]  = Filter.CheckBox;
+globalThis["Filter_TriState"]  = Filter.TriState;
+globalThis["Filter_Group"]     = Filter.Group;
+globalThis["Filter_Sort"]           = Filter.Sort;
+globalThis["Filter_Sort_Selection"] = Filter.Sort.Selection;
 
 // FilterList
 
@@ -2061,6 +2343,10 @@ globalThis.FilterList = class FilterList extends Array {
                 return arr[i++];
             }
         };
+    }
+
+    isEmpty() {
+        return this.length === 0 ? 1 : 0;
     }
 
     getList() { return [...this]; }
@@ -2244,15 +2530,15 @@ globalThis.Request = class Request {
         return _token;
     }
 
-    const _PrefsInlined = function PreferencesKt$getPreferences$$inlined$get$1() {
+    const _PrefsInlined = function PreferencesKt_getPreferences__inlined_get_1() {
         this._token = _makePrefsTypeToken();
     };
     _PrefsInlined.prototype.getType  = function() { return _makePrefsTypeToken(); };
     _PrefsInlined.prototype.invoke   = function() { return _makePrefsTypeToken(); };
-    _PrefsInlined.prototype.toString = function() { return "PreferencesKt$get$1"; };
+    _PrefsInlined.prototype.toString = function() { return "PreferencesKt_get_1"; };
 
-    globalThis["PreferencesKt$getPreferences$$inlined$get$1"] = _PrefsInlined;
-    globalThis["PreferencesKt$get$1"] = _PrefsInlined;
+    globalThis["PreferencesKt_getPreferences__inlined_get_1"] = _PrefsInlined;
+    globalThis["PreferencesKt_get_1"] = _PrefsInlined;
     globalThis.PreferencesKt = globalThis.PreferencesKt ?? {
         getPreferences(context, name) {
             const app = globalThis.__appInstance ||= new Application();
@@ -2271,8 +2557,52 @@ globalThis.Enum = class Enum {
     toString() { return this.name; }
 };
 
-globalThis.HelperKt$special$$inlined$get$1 = class HelperKt$special$$inlined$get$1 {
+globalThis.HelperKt_special__inlined_get_1 = class HelperKt_special__inlined_get_1 {
     getType() { return null; }
+};
+
+globalThis.DurationUnit = {
+    NANOSECONDS: 'NANOSECONDS',
+    MICROSECONDS: 'MICROSECONDS',
+    MILLISECONDS: 'MILLISECONDS',
+    SECONDS: 'SECONDS',
+    MINUTES: 'MINUTES',
+    HOURS: 'HOURS',
+    DAYS: 'DAYS',
+};
+
+globalThis.Duration = class Duration {
+    static Companion = {
+        getZERO() {
+            return 0;
+        },
+
+        getINFINITE() {
+            return Number.MAX_SAFE_INTEGER;
+        }
+    };
+};
+globalThis.DurationKt = {
+    toDuration(value, unit) {
+        return {
+            value,
+            unit,
+
+            inWholeMilliseconds() {
+                switch (unit) {
+                    case DurationUnit.SECONDS: return value * 1000;
+                    case DurationUnit.MINUTES: return value * 60_000;
+                    case DurationUnit.HOURS: return value * 3_600_000;
+                    case DurationUnit.DAYS: return value * 86_400_000;
+                    default: return value;
+                }
+            },
+
+            toString() {
+                return `${value} ${unit}`;
+            }
+        };
+    }
 };
 
 globalThis.EnumEntriesKt = {
@@ -2281,7 +2611,6 @@ globalThis.EnumEntriesKt = {
     }
 };
 
-globalThis.Enum_2 = Enum;
 globalThis.InjektKt = class InjektKt {
     static getInjekt() {
         return {
@@ -2359,17 +2688,45 @@ globalThis.HttpUrl = class HttpUrl {
     encodedPath(){ try { return new URL(this._url).pathname; } catch { return "/"; } }
     newBuilder() { return new HttpUrl.Builder(this._url); }
 
-    pathSegments() {
+    queryParameter(name) {
         try {
-            const segs = new URL(this._url).pathname
-                .split("/")
-                .filter(s => s.length > 0);
-            segs.get = (i) => segs[i];
-            return segs;
+            return new URL(this._url).searchParams.get(name);
         } catch {
-            const segs = this._url.split("/").filter(s => s.length > 0);
+            return null;
+        }
+    }
+
+
+    pathSegments() {
+        const makeList = (segs) => {
             segs.get = (i) => segs[i];
+            segs.contains = (v) => segs.includes(v) ? 1 : 0;
+            segs.isEmpty = () => segs.length === 0 ? 1 : 0;
+            segs.size = () => segs.length;
+
+            segs.iterator = () => {
+                let i = 0;
+                return {
+                    hasNext: () => i < segs.length ? 1 : 0,
+                    next: () => segs[i++]
+                };
+            };
+
             return segs;
+        };
+
+        try {
+            return makeList(
+                new URL(this._url).pathname
+                    .split("/")
+                    .filter(s => s.length > 0)
+            );
+        } catch {
+            return makeList(
+                this._url
+                    .split("/")
+                    .filter(s => s.length > 0)
+            );
         }
     }
 
@@ -2408,8 +2765,52 @@ globalThis.HttpUrl = class HttpUrl {
         fragment(v) { this._url += `#${v}`; return this; }
         build()     { return new HttpUrl(this._url); }
         toString()  { return this._url; }
+        setEncodedQueryParameter(k, v) {
+            try {
+                const u = new URL(this._url);
+                // delete all existing occurrences then re-add raw
+                u.searchParams.delete(k);
+                this._url = u.toString();
+            } catch {}
+            const sep = this._url.includes("?") ? "&" : "?";
+            this._url += `${sep}${k}=${v}`;
+            return this;
+        }
+
+        addEncodedQueryParameter(k, v) {
+            if (v === null || v === undefined) return this;
+            const sep = this._url.includes("?") ? "&" : "?";
+            this._url += `${sep}${k}=${v}`;
+            return this;
+        }
+
+        addEncodedPathSegments(v) {
+            // v is already percent-encoded; append verbatim after stripping a
+            // leading slash so we don't double-slash
+            const segment = String(v).replace(/^\//, "");
+            this._url = this._url.replace(/\/$/, "") + "/" + segment;
+            return this;
+        }
     };
 };
+
+globalThis.AppInfo = {
+    INSTANCE: {
+        // Tachiyomi extensions call these to read app metadata
+        getVersionName()  { return "1.0.0"; },
+        getVersionCode()  { return 1; },
+        getPackageName()  { return "eu.kanade.tachiyomi"; },
+        getApplicationId(){ return "eu.kanade.tachiyomi"; },
+
+        // Kotlin object — make it look like a companion/singleton
+        versionName:  "1.0.0",
+        versionCode:  1,
+        packageName:  "eu.kanade.tachiyomi",
+
+        toString() { return "AppInfo"; },
+    }
+};
+
 
 HttpUrl.Companion = {
     get(url) {
@@ -2450,7 +2851,7 @@ globalThis._Call = class _Call {
         let url = this._req.url?.toString?.() ?? String(this._req.url);
         const method = this._req.method ?? "GET";
         const headers = this._req.headers?.toFetchHeaders?.() ?? {};
-        const body   = this._req.body ?? undefined;
+        const body = _serializeBody(this._req.body ?? undefined);
 
         if ((!url || url === "") && globalThis.__lastExtractedUrl) {
             url = globalThis.__lastExtractedUrl;
@@ -2577,6 +2978,70 @@ globalThis.SuspendLambda = class SuspendLambda {
 
     invokeSuspend(result) {
         return Unit_INSTANCE;
+    }
+};
+
+globalThis.MapsKt = {
+    mapCapacity(expectedSize) {
+        expectedSize = Number(expectedSize) || 0;
+
+        if (expectedSize < 3) {
+            return expectedSize + 1;
+        }
+
+        if (expectedSize < 1073741824) {
+            return expectedSize + Math.floor(expectedSize / 3);
+        }
+
+        return 2147483647;
+    },
+
+    mapOf(...pairs) {
+        // Called as MapsKt.mapOf() with zero args → empty map
+        // Called as MapsKt.mapOf(pair1, pair2, ...) where each pair
+        // is a TuplesKt.to() object: { first, second } or [k, v]
+        const map = new LinkedHashMap();
+        for (const pair of pairs) {
+            if (pair == null) continue;
+            if (Array.isArray(pair)) {
+                map.put(pair[0], pair[1]);
+            } else if (pair.first !== undefined && pair.second !== undefined) {
+                map.put(pair.first, pair.second);
+            } else if (typeof pair.getFirst === "function") {
+                map.put(pair.getFirst(), pair.getSecond());
+            }
+        }
+        return map;
+    },
+
+    toMap(source) {
+        if (source == null) {
+            return new LinkedHashMap();
+        }
+
+        if (source instanceof Map) {
+            return new LinkedHashMap(source);
+        }
+
+        const map = new LinkedHashMap();
+
+        for (const entry of source) {
+            if (Array.isArray(entry)) {
+                map.put(entry[0], entry[1]);
+            } else if (entry?.getFirst && entry?.getSecond) {
+                map.put(entry.getFirst(), entry.getSecond());
+            } else if (entry?.first !== undefined && entry?.second !== undefined) {
+                map.put(entry.first, entry.second);
+            }
+        }
+
+        return map;
+    },
+
+    toMutableMap(source) {
+        return source instanceof Map
+            ? new LinkedHashMap(source)
+            : this.toMap(source);
     }
 };
 
@@ -2750,6 +3215,14 @@ globalThis._origDoRequest = Manga.prototype._doRequest;
 
 globalThis._SandboxManga = Manga;
 class HttpSource extends _SandboxManga {
+
+    getClass() {
+        return {
+            getClassLoader: () => null,
+            getName: () => this.constructor?.name ?? "Object",
+            getSimpleName: () => this.constructor?.name ?? "Object",
+        };
+    }
 
     get lang()      { return "en"; }
     get name()      { return "Unknown"; }
@@ -3034,7 +3507,7 @@ class HttpSource extends _SandboxManga {
 
         const url    = r.url?.toString?.() ?? String(r.url);
         const method = r.method ?? "GET";
-        const body   = r.body ?? undefined;
+        const body = _serializeBody(r.body ?? undefined);
 
         const origin = new URL(url).origin;
         const cfState = useCloudflare ? (_cfStateByOrigin.get(origin) ?? null) : false;

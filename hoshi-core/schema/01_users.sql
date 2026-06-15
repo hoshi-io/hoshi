@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS UserIntegration (
     profile_url TEXT,
     total_entries INTEGER,
     last_synced_at DATETIME,
+    score_format TEXT,
     sync_interval INTEGER NOT NULL DEFAULT 3600,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

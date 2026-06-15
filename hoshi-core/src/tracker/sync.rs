@@ -46,9 +46,27 @@ impl StartupSyncService {
                             None => { warn!(tracker = %integration.tracker_name, "Not in registry, skipping"); return; }
                         };
 
+                        let score_format = match provider.refresh_score_format(&integration.access_token).await {
+                            Ok(fmt) => {
+                                if fmt.is_some() {
+                                    if let Err(e) = TrackerRepository::update_score_format(
+                                        &state.pool, integration.user_id, &integration.tracker_name, fmt.as_deref(),
+                                    ).await {
+                                        warn!(error = ?e, "Failed to update score_format");
+                                    }
+                                }
+                                fmt.or(integration.score_format.clone())
+                            }
+                            Err(e) => {
+                                warn!(error = ?e, "Failed to refresh score_format, using stored");
+                                integration.score_format.clone()
+                            }
+                        };
+
                         let entries = match provider.get_user_list(
                             &integration.access_token,
                             &integration.tracker_user_id,
+                            score_format.as_deref(),
                         ).await {
                             Ok(e) => e,
                             Err(e) => { warn!(error = ?e, tracker = %integration.tracker_name, user_id = integration.user_id, "Failed to fetch remote list"); return; }

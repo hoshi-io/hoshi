@@ -5,14 +5,13 @@ import type {
     MangaConfig,
     NovelConfig,
     ContentConfig,
-    UiConfig, NotificationsConfig, ExtensionsConfig, PlayerConfig
+    UiConfig, ExtensionsConfig, PlayerConfig
 } from "@/api/config/types";
 
 type ConfigSection = {
     general?: Partial<GeneralConfig>;
     ui?: Partial<UiConfig>;
     content?: Partial<ContentConfig>;
-    notifications?: Partial<NotificationsConfig>;
     extensions?: Partial<ExtensionsConfig>;
     player?: Partial<PlayerConfig>;
     manga?: Partial<MangaConfig>;

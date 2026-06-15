@@ -61,6 +61,7 @@ pub struct TrackerIntegration {
     pub last_synced_at: Option<i64>,
     pub created_at: i64,
     pub updated_at: i64,
+    pub score_format: Option<String>
 }
 
 #[derive(Debug, serde::Deserialize, Clone)]

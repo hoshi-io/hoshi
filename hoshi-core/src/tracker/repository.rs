@@ -19,24 +19,26 @@ impl TrackerRepository {
         display_name: Option<&str>,
         avatar_url: Option<&str>,
         profile_url: Option<&str>,
+        score_format: Option<&str>,
     ) -> CoreResult<()> {
         sqlx::query(
             r#"
-        INSERT INTO UserIntegration
-            (user_id, tracker_name, tracker_user_id, access_token, refresh_token,
-             token_type, expires_at, display_name, avatar_url, profile_url)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(user_id, tracker_name) DO UPDATE SET
-            tracker_user_id = excluded.tracker_user_id,
-            access_token    = excluded.access_token,
-            refresh_token   = excluded.refresh_token,
-            token_type      = excluded.token_type,
-            expires_at      = excluded.expires_at,
-            display_name    = excluded.display_name,
-            avatar_url      = excluded.avatar_url,
-            profile_url     = excluded.profile_url,
-            updated_at      = strftime('%s', 'now')
-        "#,
+    INSERT INTO UserIntegration
+        (user_id, tracker_name, tracker_user_id, access_token, refresh_token,
+         token_type, expires_at, display_name, avatar_url, profile_url, score_format)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(user_id, tracker_name) DO UPDATE SET
+        tracker_user_id = excluded.tracker_user_id,
+        access_token    = excluded.access_token,
+        refresh_token   = excluded.refresh_token,
+        token_type      = excluded.token_type,
+        expires_at      = excluded.expires_at,
+        display_name    = excluded.display_name,
+        avatar_url      = excluded.avatar_url,
+        profile_url     = excluded.profile_url,
+        score_format    = excluded.score_format,
+        updated_at      = strftime('%s', 'now')
+    "#,
         )
             .bind(user_id)
             .bind(tracker_name)
@@ -48,6 +50,7 @@ impl TrackerRepository {
             .bind(display_name)
             .bind(avatar_url)
             .bind(profile_url)
+            .bind(score_format)
             .execute(pool)
             .await?;
 
@@ -110,14 +113,16 @@ impl TrackerRepository {
             Option<i64>,
             Option<String>,
             Option<String>,
+            Option<String>,
         )> = sqlx::query_as(
             "SELECT user_id, tracker_name, tracker_user_id, access_token, refresh_token,
-                token_type, expires_at, sync_enabled,
-                display_name, avatar_url, profile_url, total_entries,
-                CAST(last_synced_at AS INTEGER) as last_synced_at,
-                CAST(created_at AS TEXT) as created_at,
-                CAST(updated_at AS TEXT) as updated_at
-         FROM UserIntegration WHERE user_id = ?",
+            token_type, expires_at, sync_enabled,
+            display_name, avatar_url, profile_url, total_entries,
+            CAST(last_synced_at AS INTEGER) as last_synced_at,
+            CAST(created_at AS TEXT) as created_at,
+            CAST(updated_at AS TEXT) as updated_at,
+            score_format
+     FROM UserIntegration WHERE user_id = ?",
         )
             .bind(user_id)
             .fetch_all(pool)
@@ -141,6 +146,7 @@ impl TrackerRepository {
                       last_synced_at,
                       created_at,
                       updated_at,
+                      score_format,
                   )| {
                 TrackerIntegration {
                     user_id,
@@ -158,6 +164,7 @@ impl TrackerRepository {
                     last_synced_at,
                     created_at: created_at.and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
                     updated_at: updated_at.and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
+                    score_format,
                 }
             })
             .collect())
@@ -325,6 +332,24 @@ impl TrackerRepository {
             .execute(pool)
             .await?;
 
+        Ok(())
+    }
+
+    pub async fn update_score_format(
+        pool: &SqlitePool,
+        user_id: i32,
+        tracker_name: &str,
+        score_format: Option<&str>,
+    ) -> CoreResult<()> {
+        sqlx::query(
+            "UPDATE UserIntegration SET score_format = ?, updated_at = strftime('%s', 'now')
+         WHERE user_id = ? AND tracker_name = ?"
+        )
+            .bind(score_format)
+            .bind(user_id)
+            .bind(tracker_name)
+            .execute(pool)
+            .await?;
         Ok(())
     }
 }

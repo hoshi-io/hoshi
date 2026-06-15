@@ -360,6 +360,7 @@ impl ListService {
             repeat_count: Some(entry.repeat_count),
             notes:        entry.notes,
             is_private:   Some(entry.is_private),
+            score_format: integration.score_format.clone(),
         };
 
         provider.update_entry(&integration.access_token, params).await?;

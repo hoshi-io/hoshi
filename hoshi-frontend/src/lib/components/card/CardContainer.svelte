@@ -12,6 +12,7 @@
         contentTypeLabel,
         overlay,
         imageHeaders = undefined,
+        isStars,
     } = $props();
 </script>
 
@@ -34,11 +35,13 @@
             {/if}
         </AspectRatio>
 
-        {#if score && !overlay}
-            <div class="score-badge">
+        {#if !overlay}
+        <div class="score-badge" class:stars={isStars}>
+            {#if !isStars}
                 <Star class="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
-                {score}%
-            </div>
+            {/if}
+            <span class={isStars ? 'text-amber-400' : ''}>{score}</span>
+        </div>
         {/if}
     </div>
 
@@ -80,6 +83,13 @@
         padding: 0.2rem 0.45rem;
         border-radius: 0.25rem;
         z-index: 10;
+        letter-spacing: 0.05em;
+    }
+
+    .score-badge.stars {
+        font-size: 0.55rem;
+        letter-spacing: -0.05em; /* tighten stars together */
+        padding: 0.2rem 0.35rem;
     }
 
     .card-footer { padding: 0 0.15rem; }

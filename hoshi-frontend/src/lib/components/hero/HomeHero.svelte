@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { NormalizedCard } from '@/utils/normalize';
+    import {getCardScore, getCardScoreIsStars, type NormalizedCard} from '@/utils/normalize';
     import { getCardTitle, getCardShouldBlur, getCardTrailerUrl } from '@/utils/normalize';
     import { Button } from '@/components/ui/button';
     import { Play, Plus, Check } from 'lucide-svelte';
@@ -23,6 +23,7 @@
     let title      = $derived(currentItem ? getCardTitle(currentItem) : "");
     let trailerUrl = $derived(currentItem ? getCardTrailerUrl(currentItem) : null);
     let shouldBlur = $derived(currentItem ? getCardShouldBlur(currentItem) : false);
+    let score      = $derived(getCardScore(currentItem));
 
     function getYoutubeId(url: string | null | undefined): string | null {
         if (!url) return null;
@@ -122,9 +123,9 @@
                                     {currentItem.contentTypeLabel}
                                 </span>
                             {/if}
-                            {#if currentItem.score}
+                            {#if score}
                                 <span class="bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded-md text-[11px] border border-emerald-500/20 backdrop-blur-md font-black">
-                                    {currentItem.score}%
+                                    {score}
                                 </span>
                             {/if}
                             {#if currentItem.year}

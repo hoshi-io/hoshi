@@ -765,6 +765,7 @@ impl TrackerProvider for KitsuProvider {
             display_name: attrs.and_then(|a| a.get("name")).and_then(|v| v.as_str()).map(str::to_string),
             avatar_url:   attrs.and_then(|a| a.get("avatar")).and_then(|a| a.get("original")).and_then(|v| v.as_str()).map(str::to_string),
             profile_url:  None,
+            score_format: None,
         })
     }
 
@@ -925,6 +926,7 @@ impl TrackerProvider for KitsuProvider {
         &self,
         access_token: &str,
         tracker_user_id: &str,
+        score_format: Option<&str>,
     ) -> CoreResult<Vec<UserListEntry>> {
         let (anime, manga) = tokio::try_join!(
             self.fetch_all_library(access_token, tracker_user_id, "anime"),

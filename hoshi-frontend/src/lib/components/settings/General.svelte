@@ -23,6 +23,13 @@
         { value: "myanimelist", label: "MyAnimeList" },
         { value: "kitsu", label: "Kitsu" }
     ];
+
+    const scoreFormats = [
+        { value: "point10",        label: "0 - 10" },
+        { value: "point100",       label: "0 - 100" },
+        { value: "point10Decimal", label: "0.0 - 10.0" },
+        { value: "point5Stars",    label: "★★★★★  (5 Stars)" },
+    ];
 </script>
 
 <section class="space-y-2">
@@ -52,7 +59,7 @@
             <Label class="text-base font-bold cursor-pointer" for="showAdultContent">{i18n.t('settings.general_section.show_nsfw')}</Label>
             <p class="text-sm text-muted-foreground">{i18n.t('settings.general_section.show_nsfw_desc')}</p>
         </div>
-        <Switch id="showAdultContent" bind:checked={config.showAdultContent} onCheckedChange={onSave} class="shrink-0" />
+        <Switch id="showAdultContent" bind:checked={config.showAdultContent} onCheckedChange={onSave} class="shrink-0 scale-125" />
     </div>
 
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 transition-opacity { !config.showAdultContent ? 'opacity-50' : '' }">
@@ -67,7 +74,7 @@
                 bind:checked={config.blurAdultContent}
                 disabled={!config.showAdultContent}
                 onCheckedChange={onSave}
-                class="shrink-0"
+                class="shrink-0 scale-125"
         />
     </div>
 
@@ -86,9 +93,22 @@
 
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
         <div class="space-y-1 pr-4">
+            <Label class="text-base font-bold">{i18n.t('settings.content_section.score_format')}</Label>
+            <p class="text-sm text-muted-foreground">{i18n.t('settings.content_section.score_format_desc')}</p>
+        </div>
+        <ResponsiveSelect
+                bind:value={contentConfig.scoreFormat}
+                items={scoreFormats}
+                class="rounded-sm h-11 w-full sm:max-w-md"
+                onValueChange={onSave}
+        />
+    </div>
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
+        <div class="space-y-1 pr-4">
             <Label class="text-base font-bold" for="autoUpdateProgress">{i18n.t('settings.content_section.auto_update_progress')}</Label>
             <p class="text-sm text-muted-foreground">{i18n.t('settings.content_section.auto_update_progress_desc')}</p>
         </div>
-        <Switch id="autoUpdateProgress" bind:checked={contentConfig.autoUpdateProgress} onCheckedChange={onSave} class="shrink-0" />
+        <Switch id="autoUpdateProgress" bind:checked={contentConfig.autoUpdateProgress} onCheckedChange={onSave} class="shrink-0 scale-125" />
     </div>
 </section>

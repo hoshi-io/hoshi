@@ -1,7 +1,7 @@
 <script lang="ts">
     import CardContainer from '@/components/card/CardContainer.svelte';
     import CardPreview from '@/components/card/CardPreview.svelte';
-    import {getCardContentTypeLabel, type NormalizedCard} from "@/utils/normalize";
+    import {getCardContentTypeLabel, getCardScore, getCardScoreIsStars, type NormalizedCard} from "@/utils/normalize";
     import { getCardTitle, getCardShouldBlur, getCardTrailerUrl } from "@/utils/normalize";
     import { layoutState } from "@/stores/layout.svelte";
     import type { Snippet } from "svelte";
@@ -19,6 +19,8 @@
     let shouldBlur = $derived(getCardShouldBlur(card));
     let trailerUrl = $derived(getCardTrailerUrl(card));
     let isMobile   = $derived(layoutState.isMobile);
+    let score      = $derived(getCardScore(card));
+    let isStars    = $derived(getCardScoreIsStars(card));
 
     let contentTypeLabel = $derived(getCardContentTypeLabel(card));
 </script>
@@ -32,11 +34,12 @@
                 {title}
                 cover={card.cover}
                 year={card.year}
-                score={card.score}
+                score={score}
                 {shouldBlur}
                 contentTypeLabel={contentTypeLabel}
                 {overlay}
                 imageHeaders={card.imageHeaders}
+                isStars={isStars}
         />
     </a>
 
@@ -48,7 +51,7 @@
                     cover={card.cover}
                     bannerImage={card.bannerImage}
                     {trailerUrl}
-                    score={card.score}
+                    score={score}
                     status={card.status}
                     synopsis={card.synopsis}
                     episodeCount={card.episodeCount}
@@ -56,6 +59,7 @@
                     contentTypeLabel={card.contentTypeLabel}
                     {shouldBlur}
                     href={card.href}
+                    isStar={isStars}
             />
         </div>
     {/if}

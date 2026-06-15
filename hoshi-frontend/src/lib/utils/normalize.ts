@@ -41,10 +41,44 @@ export function getCardTrailerUrl(card: NormalizedCard): string | null {
     return card.trailerUrlRaw;
 }
 
+export function getCardScore(card: NormalizedCard): string | null {
+    if (card.score === null) return null;
+    const format = appConfig.data?.content?.scoreFormat;
+
+    switch (format) {
+        case 'point100':
+            return String(Math.round(card.score * 10));
+        case 'point10Decimal':
+            return card.score.toFixed(1);
+        case 'point5Stars':
+            return '★'.repeat(Math.round(card.score / 2));
+        case 'point10':
+        default:
+            return String(Math.round(card.score));
+    }
+}
+
+export function formatScore(rating: number | null): string | null {
+    if (rating === null || rating === undefined) return null;
+    const format = appConfig.data?.content?.scoreFormat;
+
+    switch (format) {
+        case 'point100':      return String(Math.round(rating * 10));
+        case 'point10Decimal': return rating.toFixed(1);
+        case 'point5Stars':   return '★'.repeat(Math.round(rating / 2));
+        case 'point10':
+        default:              return String(Math.round(rating));
+    }
+}
+
+export function getCardScoreIsStars(card: NormalizedCard): boolean {
+    return appConfig.data?.content?.scoreFormat === 'point5Stars';
+}
+
 export function normalizeFullContent(item: FullContent): NormalizedCard {
     const meta = primaryMetadata(item, appConfig.data?.content?.preferredMetadataProvider);
     const formatKey = meta?.subtype?.toUpperCase();
-    const score = meta?.rating ? Math.round(meta.rating * (meta.rating <= 10 ? 10 : 1)) : null;
+    const score = meta?.rating ?? null;
     const hasAdultGenre = meta?.genres?.some(
         g => g.toLowerCase() === "hentai" || g.toLowerCase() === "adult"
     ) ?? false;
@@ -71,7 +105,7 @@ export function normalizeFullContent(item: FullContent): NormalizedCard {
 
 export function normalizeTrackerMedia(item: TrackerMedia, tracker: string): NormalizedCard {
     const formatKey = item.format?.toUpperCase();
-    const score = item.rating ? Math.round(item.rating * (item.rating <= 10 ? 10 : 1)) : null;
+    const score = item?.rating ?? null;
     const hasAdultGenre = item.genres?.some(
         g => g.toLowerCase() === "hentai" || g.toLowerCase() === "adult"
     ) ?? false;
