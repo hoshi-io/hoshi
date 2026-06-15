@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, warn};
 use crate::content::models::ContentType;
+use crate::content::repositories::cache::CacheRepository;
 use crate::content::repositories::extension::ExtensionRepository;
 use crate::content::repositories::content::ContentRepository;
 use crate::content::services::resolver::ContentResolverService;
@@ -46,6 +47,14 @@ impl ExtensionService {
         cid: &str,
         ext_name: &str,
     ) -> CoreResult<ContentItems> {
+        let cache_key = format!("items:{}:{}", ext_name, cid);
+
+        if let Ok(Some(cached_val)) = CacheRepository::get(&state.pool, &cache_key).await {
+            if let Ok(items) = serde_json::from_value::<ContentItems>(cached_val) {
+                return Ok(items);
+            }
+        }
+
         let (content_type, ext_id) =
             ContentResolverService::ensure_extension_link(state, cid, ext_name).await?;
 
@@ -61,6 +70,15 @@ impl ExtensionService {
                 ContentItems::Chapters(ch)
             }
         };
+
+        let ttl = match content_type {
+            ContentType::Anime => 10800,
+            _ => 86400,
+        };
+
+        if let Ok(val) = serde_json::to_value(&items) {
+            let _ = CacheRepository::set(&state.pool, &cache_key, ext_name, "content_items", &val, ttl).await;
+        }
 
         Ok(items)
     }
@@ -116,6 +134,13 @@ impl ExtensionService {
             ContentType::Anime => {
                 let srv = server.unwrap_or_else(|| "default".into());
                 let cat = category.unwrap_or_else(|| "sub".into());
+                let cache_key = format!("play:anime:{}:{}:{}:{}", ext_name, real_id, srv, cat);
+
+                if let Ok(Some(cached_val)) = CacheRepository::get(&state.pool, &cache_key).await {
+                    if let Ok(res) = serde_json::from_value::<PlayContentResult>(cached_val) {
+                        return Ok(res);
+                    }
+                }
 
                 debug!(ext = %ext_name, id = %real_id, server = %srv, "Fetching video servers");
 
@@ -174,21 +199,56 @@ impl ExtensionService {
                     }
                 }
 
-                Ok(PlayContentResult::Video(data))
+                let result = PlayContentResult::Video(data);
+
+                // Cache stream links with a low TTL (30 minutes)
+                if let Ok(val) = serde_json::to_value(&result) {
+                    let _ = CacheRepository::set(&state.pool, &cache_key, ext_name, "play_anime", &val, 1800).await;
+                }
+
+                Ok(result)
             }
 
             ContentType::Manga => {
+                let cache_key = format!("play:manga:{}:{}", ext_name, real_id);
+
+                if let Ok(Some(cached_val)) = CacheRepository::get(&state.pool, &cache_key).await {
+                    if let Ok(res) = serde_json::from_value::<PlayContentResult>(cached_val) {
+                        return Ok(res);
+                    }
+                }
+
                 debug!(ext = %ext_name, id = %real_id, "Fetching chapter pages");
 
                 let data = manager.find_manga_pages(ext_name, &real_id).await?;
-                Ok(PlayContentResult::Reader(data))
+                let result = PlayContentResult::Reader(data);
+
+                if let Ok(val) = serde_json::to_value(&result) {
+                    let _ = CacheRepository::set(&state.pool, &cache_key, ext_name, "play_manga", &val, 86400).await;
+                }
+
+                Ok(result)
             }
 
             ContentType::Novel => {
+                let cache_key = format!("play:novel:{}:{}", ext_name, real_id);
+
+                if let Ok(Some(cached_val)) = CacheRepository::get(&state.pool, &cache_key).await {
+                    if let Ok(res) = serde_json::from_value::<PlayContentResult>(cached_val) {
+                        return Ok(res);
+                    }
+                }
+
                 debug!(ext = %ext_name, id = %real_id, "Fetching novel HTML");
 
                 let html = manager.find_novel_html(ext_name, &real_id).await?;
-                Ok(PlayContentResult::Novel(html))
+                let result = PlayContentResult::Novel(html);
+
+                if let Ok(val) = serde_json::to_value(&result) {
+                    let _ = CacheRepository::set(&state.pool, &cache_key, ext_name, "play_novel", &val, 86400).await;
+                }
+
+                Ok(result)
             }
         }
     }

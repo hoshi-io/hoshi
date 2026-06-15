@@ -196,11 +196,10 @@
                                 disabled={isActionLoading}
                         >
                             {#if isActionLoading}
-                                <Spinner class="h-3 w-3 mr-1.5 animate-spin" />
+                                <Spinner class="h-3 w-3 animate-spin" />
                             {:else}
-                                <RefreshCw class="h-3 w-3 mr-1.5" />
+                                <RefreshCw class="h-3 w-3" />
                             {/if}
-                            {i18n.t('marketplace.update')}
                         </Button>
                     {:else}
                         <Button variant="secondary" size="sm" class="rounded-sm h-8 px-4 text-xs font-bold bg-muted/40 text-muted-foreground" disabled>

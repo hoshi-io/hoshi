@@ -203,7 +203,7 @@ pub struct Page {
     pub index: Option<f64>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum PlayContentResult {
     Video(EpisodeSource),
