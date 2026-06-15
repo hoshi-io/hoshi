@@ -108,7 +108,6 @@
                     return an - bn;
                 });
 
-            console.log(trackers)
         } catch (error: any) {
             toast.error(i18n.t(error.key));
         } finally {
@@ -242,6 +241,7 @@
             <Switch id="syncOnStartup" bind:checked={config.syncOnStartup} onCheckedChange={onSave} class="shrink-0 scale-125" />
         </div>
 
+        <!--
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
             <div class="space-y-1 pr-4">
                 <Label class="text-base font-bold cursor-pointer" for="privateByDefault">{i18n.t("settings.trackers_section.private")}</Label>
@@ -249,6 +249,7 @@
             </div>
             <Switch id="privateByDefault" bind:checked={config.privateByDefault} onCheckedChange={onSave} class="shrink-0 scale-125" />
         </div>
+
 
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
             <div class="space-y-1 pr-4 flex-1">
@@ -266,6 +267,7 @@
                 />
             </div>
         </div>
+                -->
 
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6">
             <div class="space-y-1 pr-4 flex-1">
