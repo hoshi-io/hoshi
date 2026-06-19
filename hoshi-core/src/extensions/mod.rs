@@ -268,7 +268,7 @@ impl ExtensionManager {
             name: entry.sources.first().map(|s| s.name.clone()).unwrap_or_else(|| entry.name.clone()),
             version: entry.version.clone(),
             icon: Option::from(icon_url.clone()),
-            ext_type: ExtensionType::Manga,
+            ext_type: if source == "aniyomi" { ExtensionType::Anime } else { ExtensionType::Manga },
             script_path: js_path.clone(),
             language: entry.lang.clone(),
             nsfw,
@@ -335,14 +335,14 @@ impl ExtensionManager {
             "id": prefixed_id,
             "name": entry.sources.first().map(|s| s.name.clone()).unwrap_or_else(|| entry.name),
             "version": entry.version,
-            "type": "manga",
+            "type": if source == "aniyomi" { "anime" } else { "manga" },
             "language": entry.lang,
             "main": "index.js",
-            "source": "tachiyomi",
+            "source": source,
+            "author": source,
             "nsfw": nsfw,
             "settings": settings,
-            "author": source,
-            "source": source,
+            "icon": icon_url,
         });
 
         let manifest_yaml = serde_yaml::to_string(&manifest_json)

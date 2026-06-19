@@ -25,15 +25,16 @@
     let selectedSource = $state("all");
 
     const sourceItems = [
-        { value: "all",       label: "All Sources"  },
+        { value: "all",       label: "All Sources" },
         { value: "native",    label: "Hoshi"       },
-        { value: "lnreader",  label: "LNReader"     },
-        { value: "tachiyomi", label: "Tachiyomi"    },
+        { value: "lnreader",  label: "LNReader"    },
+        { value: "tachiyomi", label: "Tachiyomi"   },
+        { value: "aniyomi",   label: "Aniyomi"     },
     ];
 
-    function getSource(ext: { id: string }): "lnreader" | "tachiyomi" | "native" {
+    function getSource(ext: { id: string; source?: string }): "lnreader" | "tachiyomi" | "aniyomi" | "native" {
         if (ext.id.startsWith("lnr_"))   return "lnreader";
-        if (ext.id.startsWith("tachi_")) return "tachiyomi";
+        if (ext.id.startsWith("tachi_")) return ext.source === "aniyomi" ? "aniyomi" : "tachiyomi";
         return "native";
     }
 

@@ -2738,14 +2738,31 @@ Filter.Sort.Selection = class Selection {
 };
 
 globalThis["Filter_Header"]    = Filter.Header;
+globalThis["AnimeFilter_Header"] = Filter.Header;
+
 globalThis["Filter_Separator"] = Filter.Separator;
+globalThis["AnimeFilter_Separator"] = Filter.Separator;
+
 globalThis["Filter_Select"]    = Filter.Select;
+globalThis["AnimeFilter_Select"] = Filter.Select;
+
 globalThis["Filter_Text"]      = Filter.Text;
+globalThis["AnimeFilter_Text"] = Filter.Text;
+
 globalThis["Filter_CheckBox"]  = Filter.CheckBox;
+globalThis["AnimeFilter_CheckBox"] = Filter.CheckBox;
+
 globalThis["Filter_TriState"]  = Filter.TriState;
+globalThis["AnimeFilter_TriState"] = Filter.TriState;
+
 globalThis["Filter_Group"]     = Filter.Group;
-globalThis["Filter_Sort"]           = Filter.Sort;
+globalThis["AnimeFilter_Group"] = Filter.Group;
+
+globalThis["Filter_Sort"]      = Filter.Sort;
+globalThis["AnimeFilter_Sort"] = Filter.Sort;
+
 globalThis["Filter_Sort_Selection"] = Filter.Sort.Selection;
+globalThis["AnimeFilter_Sort_Selection"] = Filter.Sort.Selection;
 
 // FilterList
 
@@ -4094,6 +4111,622 @@ _networkHelper.getCloudflareClient = function() { return _makeOkHttpClient(true)
 _networkHelper.getClient            = function() { return _makeOkHttpClient(true); };
 _networkHelper.getNonCloudflareClient = function() { return _makeOkHttpClient(false); };
 
+
+// ─── Aniyomi models ──────────────────────────────────────────────────────────
+
+globalThis.SAnime = class SAnime {
+    static UNKNOWN             = 0;
+    static ONGOING             = 1;
+    static COMPLETED           = 2;
+    static LICENSED            = 3;
+    static PUBLISHING_FINISHED = 4;
+    static CANCELLED           = 5;
+    static ON_HIATUS           = 6;
+
+    static create() { return new SAnime(); }
+
+    constructor() {
+        this.url             = "";
+        this.title           = "";
+        this.artist          = null;
+        this.author          = null;
+        this.description     = null;
+        this.genre           = null;
+        this.status          = 0;
+        this.thumbnail_url   = null;
+        this.background_url  = null;
+        this.season_number   = 0;
+        this.fetch_type      = 0;
+        this.update_strategy = 0;
+        this.initialized     = false;
+    }
+
+    // setters
+    setUrl(v)            { this.url            = v; }
+    setTitle(v)          { this.title          = v; }
+    setArtist(v)         { this.artist         = v; }
+    setAuthor(v)         { this.author         = v; }
+    setDescription(v)    { this.description    = v; }
+    setGenre(v)          { this.genre          = v; }
+    setStatus(v)         { this.status         = v; }
+    setThumbnail_url(v)  { this.thumbnail_url  = v; }
+    setBackground_url(v) { this.background_url = v; }
+    setSeason_number(v)  { this.season_number  = v; }
+    setInitialized(v)    { this.initialized    = v; }
+
+    // getters
+    getUrl()            { return this.url; }
+    getTitle()          { return this.title; }
+    getArtist()         { return this.artist; }
+    getAuthor()         { return this.author; }
+    getDescription()    { return this.description; }
+    getGenre()          { return this.genre; }
+    getStatus()         { return this.status; }
+    getThumbnail_url()  { return this.thumbnail_url; }
+    getBackground_url() { return this.background_url; }
+    getSeason_number()  { return this.season_number; }
+    getInitialized()    { return this.initialized; }
+
+    getGenres() {
+        if (!this.genre) return null;
+        return [...new Set(
+            this.genre.split(", ").map(s => s.trim()).filter(s => s.length > 0)
+        )];
+    }
+
+    copy() {
+        const c = SAnime.create();
+        c.url             = this.url;
+        c.title           = this.title;
+        c.artist          = this.artist;
+        c.author          = this.author;
+        c.description     = this.description;
+        c.genre           = this.genre;
+        c.status          = this.status;
+        c.thumbnail_url   = this.thumbnail_url;
+        c.background_url  = this.background_url;
+        c.season_number   = this.season_number;
+        c.initialized     = this.initialized;
+        return c;
+    }
+};
+
+SAnime.Companion = {
+    UNKNOWN:             0,
+    ONGOING:             1,
+    COMPLETED:           2,
+    LICENSED:            3,
+    PUBLISHING_FINISHED: 4,
+    CANCELLED:           5,
+    ON_HIATUS:           6,
+    create() { return new SAnime(); },
+};
+
+globalThis.SEpisode = class SEpisode {
+    static create() { return new SEpisode(); }
+
+    constructor() {
+        this.url            = "";
+        this.name           = "";
+        this.date_upload    = 0;
+        this.episode_number = -1;
+        this.scanlator      = null;
+        this.summary        = null;
+        this.preview_url    = null;
+        this.fillermark     = false;
+    }
+
+    // setters
+    setUrl(v)            { this.url            = v; }
+    setName(v)           { this.name           = v; }
+    setDate_upload(v)    { this.date_upload    = v; }
+    setEpisode_number(v) { this.episode_number = v; }
+    setScanlator(v)      { this.scanlator      = v; }
+    setSummary(v)        { this.summary        = v; }
+    setPreview_url(v)    { this.preview_url    = v; }
+    setFillermark(v)     { this.fillermark     = v; }
+
+    // getters
+    getUrl()            { return this.url; }
+    getName()           { return this.name; }
+    getDate_upload()    { return this.date_upload; }
+    getEpisode_number() { return this.episode_number; }
+    getScanlator()      { return this.scanlator; }
+    getSummary()        { return this.summary; }
+    getPreview_url()    { return this.preview_url; }
+    getFillermark()     { return this.fillermark; }
+};
+
+SEpisode.Companion = {
+    create() { return new SEpisode(); },
+};
+
+// Track — used inside Video for subtitles and audio tracks
+globalThis.Track = class Track {
+    constructor(url, lang) {
+        this.url  = url  ?? "";
+        this.lang = lang ?? "";
+    }
+};
+
+// TimeStamp — used inside Video
+globalThis.TimeStamp = class TimeStamp {
+    constructor(startMs, endMs, title) {
+        this.startMs = startMs ?? 0;
+        this.endMs   = endMs   ?? 0;
+        this.title   = title   ?? "";
+    }
+};
+
+// Video — the actual stream object extensions produce
+globalThis.Video = class Video {
+    // Legacy 3-arg constructor: Video(url, quality, videoUrl, headers?, subtitleTracks?, audioTracks?)
+    // Modern constructor:       Video(videoUrl, videoTitle, resolution?, bitrate?, headers?, ...)
+    constructor(
+        videoUrlOrUrl,
+        videoTitleOrQuality,
+        videoUrlOrResolution,
+        headersOrBitrate,
+        subtitleTracksOrHeaders,
+        audioTracksOrSubtitles,
+        timestamps,
+        mpvArgs,
+        ffmpegStreamArgs,
+        ffmpegVideoArgs,
+        internalData,
+        initialized,
+    ) {
+        // Detect legacy constructor: 3rd arg is a string (videoUrl) or null
+        if (typeof videoUrlOrResolution === "string" || videoUrlOrResolution === null) {
+            // legacy: (url, quality, videoUrl, headers?, subtitleTracks?, audioTracks?)
+            this.videoUrl       = videoUrlOrResolution ?? videoUrlOrUrl ?? "";
+            this.videoTitle     = videoTitleOrQuality  ?? "";
+            this.resolution     = null;
+            this.bitrate        = null;
+            this.headers        = headersOrBitrate         ?? null;
+            this.subtitleTracks = subtitleTracksOrHeaders  ?? [];
+            this.audioTracks    = audioTracksOrSubtitles   ?? [];
+            this.timestamps     = [];
+            this.mpvArgs        = [];
+            this.ffmpegStreamArgs = [];
+            this.ffmpegVideoArgs  = [];
+            this.internalData   = "";
+            this.initialized    = false;
+            // legacy `url` field (some extensions read it back)
+            this.url            = videoUrlOrUrl ?? "";
+            this.quality        = videoTitleOrQuality ?? "";
+        } else {
+            // modern: (videoUrl, videoTitle, resolution?, bitrate?, headers?, ...)
+            this.videoUrl         = videoUrlOrUrl          ?? "";
+            this.videoTitle       = videoTitleOrQuality    ?? "";
+            this.resolution       = videoUrlOrResolution   ?? null;
+            this.bitrate          = headersOrBitrate       ?? null;
+            this.headers          = subtitleTracksOrHeaders ?? null;
+            this.preferred        = false;
+            this.subtitleTracks   = audioTracksOrSubtitles ?? [];
+            this.audioTracks      = timestamps             ?? [];
+            this.timestamps       = mpvArgs                ?? [];
+            this.mpvArgs          = ffmpegStreamArgs       ?? [];
+            this.ffmpegStreamArgs = ffmpegVideoArgs        ?? [];
+            this.ffmpegVideoArgs  = internalData           ?? [];
+            this.internalData     = initialized            ?? "";
+            this.initialized      = false;
+            this.url              = this.videoUrl;
+            this.quality          = this.videoTitle;
+        }
+    }
+
+    getVideoUrl()   { return this.videoUrl; }
+    getVideoTitle() { return this.videoTitle; }
+    getHeaders()    { return this.headers; }
+    getSubtitleTracks() { return this.subtitleTracks; }
+    getAudioTracks()    { return this.audioTracks; }
+    getTimestamps()     { return this.timestamps; }
+};
+
+// Hoster — intermediate object between episode and video list
+globalThis.Hoster = class Hoster {
+    constructor(hosterUrl = "", hosterName = "", videoList = null, internalData = "", lazy = false) {
+        this.hosterUrl    = hosterUrl;
+        this.hosterName   = hosterName;
+        this.videoList    = videoList;
+        this.internalData = internalData;
+        this.lazy         = lazy;
+    }
+
+    getHosterUrl()    { return this.hosterUrl; }
+    getHosterName()   { return this.hosterName; }
+    getVideoList()    { return this.videoList; }
+    getInternalData() { return this.internalData; }
+    getLazy()         { return this.lazy; }
+};
+
+Hoster.Companion = {
+    NO_HOSTER_LIST: "__NO_HOSTER_LIST__",
+    // List<Video>.toHosterList() — wraps each video in its own Hoster
+    toHosterList(videos) {
+        return videos.map(v => new Hoster(
+            v.videoUrl ?? "",
+            v.videoTitle ?? v.quality ?? "",
+            [v],
+        ));
+    },
+};
+
+// Also expose as extension method on Array (compiled Kotlin extension calls)
+Array.prototype.toHosterList = function() {
+    return Hoster.Companion.toHosterList(this);
+};
+
+// ─── AnimeHttpSource ──────────────────────────────────────────────────────────
+
+globalThis._SandboxAnime = _SandboxManga;
+
+class AnimeHttpSource extends _SandboxManga {
+
+    getClass() {
+        return {
+            getClassLoader: () => ({ getResourceAsStream: () => null }),
+            getName:        () => this.constructor?.name ?? "Object",
+            getSimpleName:  () => this.constructor?.name ?? "Object",
+        };
+    }
+
+    get lang()      { return "en"; }
+    get name()      { return "Unknown"; }
+    get versionId() { return 1; }
+
+    headersBuilder() {
+        return new Headers.Builder()
+            .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
+    }
+
+    getId() {
+        if (this.__id == null) {
+            this.__id = this.generateId(this.name, this.lang, this.versionId);
+        }
+        return this.__id;
+    }
+
+    generateId(name, lang, versionId) {
+        const key    = `${name.toLowerCase()}/${lang}/${versionId}`;
+        const md5hex = crypto.md5(key);
+        let id = BigInt("0x" + md5hex.slice(0, 16));
+        id &= 0x7fffffffffffffffn;
+        return id.toString();
+    }
+
+    // ── Tachiyomi preference discovery (same as manga) ────────────────────────
+
+    __getTachiyomiSettings() {
+        if (typeof this.setupPreferenceScreen !== "function") return [];
+        const screen = new PreferenceScreen();
+        try {
+            this.setupPreferenceScreen(screen);
+        } catch (e) {
+            console.error("[aniyomi] setupPreferenceScreen threw: " + e);
+        }
+        return screen._prefs
+            .filter(p => typeof p._toManifest === "function" && p._key)
+            .map(p => p._toManifest());
+    }
+
+    // ── URL helpers ───────────────────────────────────────────────────────────
+
+    getUrlWithoutDomain(orig) {
+        if (!orig) return "";
+        try {
+            const safeUrl = orig.replace(/ /g, "%20");
+            const parsed  = safeUrl.includes("://") || safeUrl.startsWith("//")
+                ? new URL(safeUrl)
+                : new URL(safeUrl, "http://localhost");
+            let out = parsed.pathname;
+            if (parsed.search) out += parsed.search;
+            if (parsed.hash)   out += parsed.hash;
+            return out;
+        } catch (e) {
+            return orig;
+        }
+    }
+
+    setUrlWithoutDomain(obj, url) {
+        if (obj && typeof obj.setUrl === "function") {
+            obj.setUrl(this.getUrlWithoutDomain(url));
+        }
+    }
+
+    // ── Network (same _doRequest as HttpSource) ───────────────────────────────
+
+    get client() { return _networkHelper.client; }
+    getClient()  { return _networkHelper.client; }
+    getNetwork() { return _networkHelper; }
+
+    // ── Sandbox API entry points ──────────────────────────────────────────────
+
+    // getFilters() — identical filter mapping to manga
+    async getFilters() {
+        const filterList = this.getFilterList();
+        const result = {};
+
+        for (const filter of filterList) {
+            if (filter instanceof Filter.Header || filter instanceof Filter.Separator) continue;
+
+            if (filter instanceof Filter.Select) {
+                result[filter.name] = {
+                    label: filter.name,
+                    type: "select",
+                    options: filter.values.map((v, i) => {
+                        const label = typeof v === "string" ? v : v?.first ?? v?.toString?.() ?? String(i);
+                        return { label, value: String(i) };
+                    }),
+                };
+            } else if (filter instanceof Filter.Text) {
+                result[filter.name] = { label: filter.name, type: "text" };
+            } else if (filter instanceof Filter.CheckBox) {
+                result[filter.name] = { label: filter.name, type: "boolean" };
+            } else if (filter instanceof Filter.TriState) {
+                result[filter.name] = {
+                    label: filter.name,
+                    type: "select",
+                    options: [
+                        { label: "Any",     value: "0" },
+                        { label: "Include", value: "1" },
+                        { label: "Exclude", value: "2" },
+                    ],
+                };
+            } else if (filter instanceof Filter.Group) {
+                const state = Array.isArray(filter.state) ? filter.state : [...(filter.state ?? [])];
+                if (state.length > 0 && (state[0] instanceof Filter.CheckBox || state[0] instanceof Filter.TriState)) {
+                    result[filter.name] = {
+                        label: filter.name,
+                        type: "multiselect",
+                        options: state.map(f => ({
+                            label: typeof f.name === "string" ? f.name : f.name?.first ?? String(f.name),
+                            value: typeof f.name === "string" ? f.name : f.name?.first ?? String(f.name),
+                        })),
+                    };
+                }
+            } else if (filter instanceof Filter.Sort) {
+                result[filter.name] = {
+                    label: filter.name,
+                    type: "select",
+                    options: filter.values.map((v, i) => ({
+                        label: typeof v === "string" ? v : v?.first ?? String(v),
+                        value: String(i),
+                    })),
+                };
+            }
+        }
+
+        return result;
+    }
+
+    // search() — popular anime when no query/filters, search otherwise
+    async search(query, filters, page) {
+        page = page ?? 1;
+
+        const filterList = this.getFilterList();
+        const hasFilters = filters && typeof filters === "object" && Object.keys(filters).length > 0;
+
+        if (hasFilters) {
+            for (const filter of filterList) {
+                const incoming = filters[filter.name];
+                if (incoming === undefined || incoming === null) continue;
+
+                if (filter instanceof Filter.Select || filter instanceof Filter.Sort) {
+                    filter.state = parseInt(incoming, 10) || 0;
+                } else if (filter instanceof Filter.Text) {
+                    filter.state = incoming;
+                } else if (filter instanceof Filter.CheckBox) {
+                    filter.state = incoming === true || incoming === "true" || incoming === 1;
+                } else if (filter instanceof Filter.TriState) {
+                    filter.state = parseInt(incoming, 10) || 0;
+                } else if (filter instanceof Filter.Group) {
+                    const state = Array.isArray(filter.state) ? filter.state : [...(filter.state ?? [])];
+                    const selectedValues = Array.isArray(incoming) ? incoming : [incoming];
+                    for (const child of state) {
+                        if (child instanceof Filter.CheckBox || child instanceof Filter.TriState) {
+                            child.state = selectedValues.includes(child.name)
+                                ? (child instanceof Filter.TriState ? 1 : true)
+                                : (child instanceof Filter.TriState ? 0 : false);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!query && !hasFilters) {
+            const res = await this._doRequest(this.popularAnimeRequest(page));
+            return this._parseAnimePage(this.popularAnimeParse(res));
+        }
+
+        const res = await this._doRequest(this.searchAnimeRequest(page, query, filterList));
+        return this._parseAnimePage(this.searchAnimeParse(res));
+    }
+
+    // getMetadata() — fetch anime details
+    async getMetadata(id) {
+        const anime = SAnime.create();
+        anime.url   = id;
+        const res   = await this._doRequest(this.animeDetailsRequest(anime));
+        const a     = this.animeDetailsParse(res);
+        return {
+            title:           a.title,
+            synopsis:        a.description   ?? null,
+            image:           a.thumbnail_url ?? null,
+            eps_or_chapters: null,
+            rating:          null,
+            year:            null,
+            genres:          a.genre ? a.genre.split(", ").map(s => s.trim()).filter(Boolean) : [],
+            nsfw:            false,
+            anilist_id:      null,
+            mal_id:          null,
+            external_ids:    {},
+        };
+    }
+
+    // findEpisodes() — episode list
+    async findEpisodes(contentId) {
+        const anime = SAnime.create();
+        anime.url   = contentId;
+        const res   = await this._doRequest(this.episodeListRequest(anime));
+        const list  = this.episodeListParse(res);
+        const arr   = Array.isArray(list) ? list : [...list];
+        return arr.map((ep, i) => ({
+            id:     ep.url              ?? ep.getUrl?.(),
+            number: (ep.episode_number  ?? ep.getEpisode_number?.() ?? -1) >= 0
+                ? (ep.episode_number    ?? ep.getEpisode_number?.())
+                : arr.length - i,
+            title:  ep.name             ?? ep.getName?.() ?? null,
+            url:    ep.preview_url      ?? ep.getPreview_url?.() ?? null,
+            image:  null,
+        }));
+    }
+
+    // getStreamingSettings() — pass through to extension, with safe default
+    getStreamingSettings() {
+        return { episodeServers: [], supportsDub: false };
+    }
+
+    // findEpisodeServer() — hoster→video two-step collapsed into one call
+    async findEpisodeServer(episodeId, server, category = "sub") {
+        const ep  = SEpisode.create();
+        ep.url    = episodeId;
+
+        // Step 1: hosters
+        const hosters     = await this.getHosterList(ep);
+        const hosterArr   = Array.isArray(hosters) ? hosters : [...hosters];
+        if (hosterArr.length === 0) throw new Error("[aniyomi] no hosters returned");
+
+        // Pick by server name if specified, otherwise first
+        const hoster = (server && server !== "")
+            ? (hosterArr.find(h => (h.hosterName ?? h.name ?? "").toLowerCase() === server.toLowerCase()) ?? hosterArr[0])
+            : hosterArr[0];
+
+        // Step 2: videos — may already be on hoster.videoList (non-lazy)
+        let videos;
+        if (hoster.videoList && hoster.videoList.length > 0) {
+            videos = hoster.videoList;
+        } else {
+            const vList = await this.getVideoList(hoster);
+            videos = Array.isArray(vList) ? vList : [...vList];
+        }
+
+        if (videos.length === 0) throw new Error("[aniyomi] no videos returned from hoster");
+
+        // For dub/sub: extensions that supportsDub tend to put "dub"/"sub" in videoTitle
+        const isDub = category === "dub";
+        const video = (isDub
+                ? videos.find(v => (v.videoTitle ?? v.quality ?? "").toLowerCase().includes("dub"))
+                : videos.find(v => !(v.videoTitle ?? v.quality ?? "").toLowerCase().includes("dub"))
+        ) ?? videos[0];
+
+        // Normalise headers — OkHttp Headers object or plain object
+        let headersObj = {};
+        if (video.headers) {
+            if (typeof video.headers.toFetchHeaders === "function") {
+                headersObj = video.headers.toFetchHeaders();
+            } else if (typeof video.headers === "object") {
+                headersObj = { ...video.headers };
+            }
+        }
+
+        const subtitles = (video.subtitleTracks ?? []).map((t, i) => ({
+            id:         t.lang ?? String(i),
+            url:        t.url  ?? "",
+            language:   t.lang ?? "",
+            is_default: i === 0,
+        }));
+
+        const chapters = (video.timestamps ?? []).map(ts => ({
+            start: (ts.startMs ?? 0) / 1000,
+            end:   (ts.endMs   ?? 0) / 1000,
+            title: ts.title ?? "",
+        }));
+
+        return {
+            headers: headersObj,
+            source: {
+                url:       video.videoUrl ?? video.url ?? "",
+                subtitles,
+                chapters,
+            },
+        };
+    }
+
+
+    _parseAnimePage(page) {
+        // AnimesPage has .animes (list of SAnime) and .hasNextPage
+        const list = page?.animes ?? page ?? [];
+        const arr  = Array.isArray(list) ? list : [...list];
+        return arr.map(a => ({
+            id:    a.url           ?? a.getUrl?.(),
+            title: a.title         ?? a.getTitle?.(),
+            image: a.thumbnail_url ?? a.getThumbnail_url?.() ?? null,
+            url:   a.url           ?? null,
+            nsfw:  false,
+        }));
+    }
+
+    // ── Default stubs (subclasses override) ───────────────────────────────────
+
+    popularAnimeRequest(page)                        { throw new Error("not implemented"); }
+    popularAnimeParse(response)                      { throw new Error("not implemented"); }
+    searchAnimeRequest(page, query, filters)         { throw new Error("not implemented"); }
+    searchAnimeParse(response)                       { throw new Error("not implemented"); }
+    latestUpdatesRequest(page)                       { throw new Error("not implemented"); }
+    latestUpdatesParse(response)                     { throw new Error("not implemented"); }
+    animeDetailsRequest(anime)                       { return GET(this.getBaseUrl() + anime.url, this.headers); }
+    animeDetailsParse(response)                      { throw new Error("not implemented"); }
+    episodeListRequest(anime)                        { return GET(this.getBaseUrl() + anime.url, this.headers); }
+    episodeListParse(response)                       { throw new Error("not implemented"); }
+    hosterListParse(response)                        { throw new Error("not implemented"); }
+    videoListParse(response, hoster)                 { throw new Error("not implemented"); }
+    getFilterList()                                  { return new FilterList(); }
+
+    // getHosterList / getVideoList — extensions override these or the *Parse variants
+    async getHosterList(episode) {
+        const req = this.hosterListRequest(episode);
+        const res = await this._doRequest(req);
+        return this.hosterListParse(res);
+    }
+
+    hosterListRequest(episode) {
+        return GET(this.getBaseUrl() + episode.url, this.headers);
+    }
+
+    async getVideoList(hoster) {
+        const req = this.videoListRequest(hoster);
+        const res = await this._doRequest(req);
+        return this.videoListParse(res, hoster);
+    }
+
+    videoListRequest(hoster) {
+        return GET(hoster.hosterUrl, this.headers);
+    }
+}
+
+// AnimesPage — returned by popularAnimeParse / searchAnimeParse
+globalThis.AnimesPage = class AnimesPage {
+    constructor(animes, hasNextPage) {
+        this.animes      = animes      ?? [];
+        this.hasNextPage = hasNextPage ?? false;
+    }
+};
+
+globalThis.AnimeHttpSource       = AnimeHttpSource;
+globalThis.ParsedAnimeHttpSource = AnimeHttpSource;
+globalThis.Anime                 = AnimeHttpSource;
+
+AnimeHttpSource.prototype.getHeaders = function() {
+    const builder = this.headersBuilder();
+    return typeof builder?.build === "function" ? builder.build() : new Headers(builder ?? {});
+};
+
+
+globalThis.AnimeFilter = Filter;
+globalThis.AnimeFilterList = FilterList;
+
 globalThis.__tachi_getCapturedClass = function() {
     if (__tachi_captured) return __tachi_captured;
 
@@ -4101,7 +4734,7 @@ globalThis.__tachi_getCapturedClass = function() {
     for (const key of Object.getOwnPropertyNames(globalThis)) {
         try {
             const v = globalThis[key];
-            if (typeof v === "function" && v !== HttpSource && v.prototype instanceof HttpSource) {
+            if (typeof v === "function" && v !== HttpSource && (v.prototype instanceof HttpSource || v.prototype instanceof AnimeHttpSource)) {
                 candidates.push(v);
             }
         } catch (_) {}
