@@ -6,6 +6,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use regex::Regex;
+use scraper::{Html, Selector};
 use tracing::{debug, error, instrument, warn};
 
 use crate::error::{CoreError, CoreResult};
@@ -403,11 +404,115 @@ globalThis.__settings = Object.freeze({settings});
     )
 }
 
+fn execute_selector(document: &Html, selector_str: &str, base_uri: &str) -> Vec<Value> {
+    let parts: Vec<&str> = selector_str.split(',').map(|s| s.trim()).collect();
+    let mut results = vec![];
+
+
+    for part in parts {
+        if part.contains(":contains(") {
+            if let Some(contains_results) = handle_contains_selector(document, part, base_uri) {
+                results.extend(contains_results);
+            } else {
+            }
+        } else {
+            let sanitized = sanitize_selector(part);
+            let sel = Selector::parse(&sanitized);
+            match sel {
+                Ok(sel) => {
+                    let count = document.select(&sel).count();
+                    for el in document.select(&sel) {
+                        results.push(element_to_json(el, base_uri));
+                    }
+                }
+                Err(e) => eprintln!("[SELECTOR] parse error: {:?}", e),
+            }
+        }
+    }
+
+    results
+}
+
+fn handle_contains_selector(document: &Html, selector: &str, base_uri: &str) -> Option<Vec<Value>> {
+    // Match pattern like: "div.summary-heading:contains(Status) + div"
+    let re = regex::Regex::new(r"^(.*?):contains\(([^)]+)\)\s*(\+\s*\S+)?$").unwrap();
+    let caps = re.captures(selector)?;
+
+    let base_sel = caps.get(1).map_or("*", |m| m.as_str()).trim();
+    let contains_text = caps.get(2).map_or("", |m| m.as_str()).trim();
+    let sibling = caps.get(3).map_or("", |m| m.as_str());
+
+    let base_sel = if base_sel.is_empty() { "*" } else { base_sel };
+    let sanitized = sanitize_selector(base_sel);
+    let sel = Selector::parse(&sanitized).ok()?;
+
+    let mut results = vec![];
+
+    for el in document.select(&sel) {
+        let text: String = el.text().collect();
+        if text.contains(contains_text) {
+            if sibling.is_empty() {
+                results.push(element_to_json(el, base_uri));
+            } else {
+                // Get adjacent sibling (+ selector)
+                let sibling_tag = sibling.trim_start_matches('+').trim();
+                let sanitized_sib = sanitize_selector(sibling_tag);
+                let sib_sel = Selector::parse(&sanitized_sib);
+                if let Ok(sib_sel) = sib_sel {
+                    // Find next sibling element matching the selector
+                    let mut next = el.next_sibling();
+                    while let Some(n) = next {
+                        if let Some(el) = Html::parse_fragment(
+                            &scraper::ElementRef::wrap(n)
+                                .map(|e| e.html())
+                                .unwrap_or_default()
+                        ).select(&sib_sel).next() {
+                            results.push(element_to_json(el, base_uri));
+                            break;
+                        }
+                        next = n.next_sibling();
+                    }
+                }
+            }
+        }
+    }
+
+    Some(results)
+}
+
+fn element_to_json(el: scraper::ElementRef, base_uri: &str) -> Value {
+    let attrs: HashMap<String, String> = el.value().attrs()
+        .map(|(k, v)| (k.to_string(), v.to_string()))
+        .collect();
+
+    let own_text: String = el.children()
+        .filter_map(|child| child.value().as_text().map(|t| t.to_string()))
+        .collect::<Vec<_>>()
+        .join("")
+        .trim()
+        .to_string();
+
+    serde_json::json!({
+        "text": el.text().collect::<Vec<_>>().join(""),
+        "own_text": own_text,
+        "html": el.inner_html(),
+        "outer": el.html(),
+        "attrs": attrs,
+    })
+}
+
 fn sanitize_selector(selector: &str) -> String {
-    // Match attribute selectors with unquoted values containing /
-    // e.g. [href*=/d/] → [href*="/d/"]
-    let re = Regex::new(r#"\[([a-zA-Z0-9_-]+(?:\*=|\|=|\^=|\$=|~=|=))([^"'\]]*?/[^"'\]]*?)\]"#).unwrap();
-    re.replace_all(selector, r#"[$1"$2"]"#).into_owned()
+    let re = Regex::new(r":not\(\s*:has\([^)]*\)\s*\)").unwrap();
+    let s = re.replace_all(selector, "").to_string();
+
+    let re2 = Regex::new(r":has\([^)]*\)").unwrap();
+    let s = re2.replace_all(&s, "").to_string();
+
+    let re3 = Regex::new(r":not\(\s*\)").unwrap();
+    let s = re3.replace_all(&s, "").to_string();
+
+    let re4 = Regex::new(r"\s*[+~>]\s*$").unwrap();
+    re4.replace_all(&s, "").to_string()
 }
 
 fn register_native_apis(
@@ -489,31 +594,12 @@ fn register_native_apis(
     })?)?;
 
     globals.set("__native_html_query", Function::new(ctx.clone(),
-        |html: String, selector: String| -> rquickjs::Result<String> {
-            use scraper::{Html, Selector};
-            let document = Html::parse_document(&html);
-            let sanitized = sanitize_selector(&selector);
-            let sel = match Selector::parse(&sanitized) {
-                Ok(s)  => s,
-                Err(e) => return Ok(serde_json::json!({
-        "error": format!("Invalid selector {:?}: {:?}", selector, e)
-    }).to_string()),
-            };
-
-            let results: Vec<Value> = document.select(&sel).map(|el| {
-                let attrs: HashMap<String, String> = el.value().attrs()
-                    .map(|(k, v)| (k.to_string(), v.to_string()))
-                    .collect();
-                serde_json::json!({
-                    "text":  el.text().collect::<Vec<_>>().join(""),
-                    "html":  el.inner_html(),
-                    "outer": el.html(),
-                    "attrs": attrs,
-                })
-            }).collect();
-
-            Ok(serde_json::to_string(&results).unwrap_or_default())
-        },
+     |html: String, selector: String| -> rquickjs::Result<String> {
+         use scraper::Html;
+         let document = Html::parse_document(&html);
+         let results = execute_selector(&document, &selector, "");
+         Ok(serde_json::to_string(&results).unwrap_or_default())
+     },
     )?)?;
 
     globals.set("__headless_available", headless_available)?;

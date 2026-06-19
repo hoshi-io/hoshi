@@ -41,6 +41,7 @@ pub struct ProxyService;
 impl ProxyService {
     #[instrument(skip(state, params, range_header), fields(url = %params.url, range = ?range_header))]
     pub async fn handle_request(state: &AppState, params: ProxyQuery, range_header: Option<String>) -> CoreResult<ProxyResponse> {
+        let normalized_url = normalize_url(&params.url);
         if params.url.is_empty() {
             warn!("Proxy request rejected: No URL provided");
             return Err(CoreError::BadRequest("error.proxy.no_url_provided".into()));
@@ -57,7 +58,7 @@ impl ProxyService {
         for attempt in 0..max_retries {
             match tokio::time::timeout(
                 Duration::from_secs(15),
-                state.http_client.get(&params.url).headers(req_headers.clone()).send()
+                state.http_client.get(&normalized_url).headers(req_headers.clone()).send()
             ).await {
                 Err(_) => {
                     warn!("Upstream request timed out (attempt {})", attempt + 1);
@@ -342,5 +343,13 @@ impl ProxyService {
         let qs = params.finish();
 
         format!("{}?{}", Self::proxy_base_url(), qs)
+    }
+}
+
+fn normalize_url(url: &str) -> String {
+    if let Some(rest) = url.strip_prefix("//") {
+        format!("https://{rest}")
+    } else {
+        url.to_string()
     }
 }

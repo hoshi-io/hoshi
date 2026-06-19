@@ -98,12 +98,11 @@ pub fn handle_async<R: Runtime>(
         match ProxyService::handle_request(&state, params, effective_range).await {
             Err(e) => {
                 let msg = format!("{e:?}");
-                responder.respond(
-                    tauri::http::Response::builder()
-                        .status(502)
-                        .body(msg.into_bytes())
-                        .unwrap(),
-                );
+                let mut builder = tauri::http::Response::builder().status(502);
+                for (k, v) in cors_headers() {
+                    builder = builder.header(k, v);
+                }
+                responder.respond(builder.body(msg.into_bytes()).unwrap());
             }
             Ok(proxy_resp) => {
                 let status = proxy_resp.status.as_u16();
