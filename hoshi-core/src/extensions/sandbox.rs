@@ -512,6 +512,11 @@ fn sanitize_selector(selector: &str) -> String {
     let s = re3.replace_all(&s, "").to_string();
 
     let re4 = Regex::new(r"\s*[+~>]\s*$").unwrap();
+    let re5 = Regex::new(r"\[([^\]]*):([^\]]*)\]").unwrap();
+    let s = re5.replace_all(&s, |caps: &regex::Captures| {
+        format!("[{}\\:{}]", &caps[1], &caps[2])
+    }).to_string();
+
     re4.replace_all(&s, "").to_string()
 }
 
@@ -570,11 +575,29 @@ fn register_native_apis(
                             Ok(resp) => {
                                 let status = resp.status().as_u16();
                                 let ok     = resp.status().is_success();
+
+                                // extract Set-Cookie headers
+                                let cookies: HashMap<String, String> = resp.headers()
+                                    .get_all("set-cookie")
+                                    .iter()
+                                    .filter_map(|v| v.to_str().ok())
+                                    .filter_map(|s| {
+                                        let pair = s.split(';').next()?;
+                                        let mut kv = pair.splitn(2, '=');
+                                        let k = kv.next()?.trim().to_string();
+                                        let v = kv.next()?.trim().to_string();
+                                        Some((k, v))
+                                    })
+                                    .collect();
+
                                 match resp.text().await {
                                     Err(e)   => error_json(e.to_string()),
                                     Ok(text) => serde_json::json!({
-                            "ok": ok, "status": status, "body": text
-                        }).to_string(),
+                                        "ok": ok,
+                                        "status": status,
+                                        "body": text,
+                                        "cookies": cookies,
+                                    }).to_string(),
                                 }
                             }
                         }
