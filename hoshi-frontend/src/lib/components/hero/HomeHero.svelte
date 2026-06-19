@@ -157,7 +157,7 @@
                                 {#key currentIndex}
                                     <p
                                             in:fly={{ y: 8, duration: 400, delay: 180 }}
-                                            class="text-muted-foreground/95 text-sm md:text-base font-medium leading-relaxed tracking-normal max-w-2xl text-justify text-justify-inter-word line-clamp-4 md:line-clamp-5"
+                                            class="text-muted-foreground/95 text-sm md:text-base font-medium leading-relaxed tracking-normal w-full text-justify text-justify-inter-word line-clamp-4 md:line-clamp-5"
                                     >
                                         {currentItem.synopsis || i18n.t('home.hero.no_synopsis')}
                                     </p>

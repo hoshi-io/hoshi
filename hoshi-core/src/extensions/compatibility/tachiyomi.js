@@ -156,6 +156,11 @@ String.prototype.getBytes = function(charset) {
     return bytes;
 };
 
+Map.prototype.put = function(k, v) { this.set(k, v); return null; };
+Map.prototype.containsKey = function(k) { return this.has(k); };
+Map.prototype.remove = function(k) { const v = this.get(k); this.delete(k); return v ?? null; };
+Map.prototype.getOrDefault = function(k, def) { return this.has(k) ? this.get(k) : def; };
+
 function _serializeBody(body, headers) {
     if (body instanceof FormBody) {
         headers?.set?.("content-type", "application/x-www-form-urlencoded");
@@ -1500,10 +1505,11 @@ java.util.Calendar = {
 
 java.util.concurrent = {
     TimeUnit: {
-        SECONDS:      { toMillis(v) { return v * 1000; } },
-        MINUTES:      { toMillis(v) { return v * 60000; } },
-        HOURS:        { toMillis(v) { return v * 3600000; } },
-        MILLISECONDS: { toMillis(v) { return v; } },
+        SECONDS:      { toMillis(v) { return v * 1000; },    toSeconds(v) { return v; } },
+        MINUTES:      { toMillis(v) { return v * 60000; },   toSeconds(v) { return v * 60; } },
+        HOURS:        { toMillis(v) { return v * 3600000; },  toSeconds(v) { return v * 3600; } },
+        MILLISECONDS: { toMillis(v) { return v; },            toSeconds(v) { return Math.floor(v / 1000); } },
+        DAYS:         { toMillis(v) { return v * 86400000; }, toSeconds(v) { return v * 86400; } },
     },
 };
 
@@ -2038,6 +2044,13 @@ globalThis.Request = class Request {
     };
 };
 
+globalThis._JsoupNull = new Proxy({}, {
+    get(_, prop) {
+        if (prop === "then") return undefined;
+        return (...args) => _JsoupNull;
+    }
+});
+
 globalThis.JsoupDocument = class JsoupDocument {
     constructor(html, baseUri = "") {
         this._html = html;
@@ -2057,7 +2070,7 @@ globalThis.JsoupDocument = class JsoupDocument {
     getElementsByClass(cls)       { return this.select(`.${cls}`); }
 
     selectFirst(selector) {
-        if (!selector) return 0;
+        if (!selector) return _JsoupNull;
         return this.select(selector).first();
     }
 
@@ -2074,22 +2087,18 @@ globalThis.JsoupElements = class JsoupElements {
         this._els = raw.map(item => new JsoupElement(item._raw, this._baseUri));
     }
 
-    get(i) {
-        return this._els[i] ?? 0;
-    }
-    first() {
-        if (this._els.length === 0) return 0;
-        return this._els[0];
-    }
-    last()      { return this._els[this._els.length - 1] ?? null; }
+    first()  { return this._els.length === 0 ? _JsoupNull : this._els[0]; }
+    get(i)   { return this._els[i] ?? _JsoupNull; }
+    last()   { return this._els[this._els.length - 1] ?? _JsoupNull; }
     size()      { return this._els.length; }
     isEmpty()   { return this._els.length === 0; }
     text()      { return this._els.map(el => el.text()).join(""); }
     html()      { return this._els[0]?.html() ?? ""; }
     outerHtml() { return this._els[0]?.outerHtml() ?? ""; }
     attr(name)  { return this._els[0]?.attr(name) ?? null; }
-    select(sel) { return this._els[0] ? this._els[0].select(sel) : new JsoupElements([], this._baseUri); }
-
+    select(sel) {
+        return this._els[0] ? this._els[0].select(sel) : new JsoupElements([], this._baseUri);
+    }
     forEach(fn) { this._els.forEach(fn); }
     map(fn)     { return this._els.map(fn); }
     filter(fn)  { return this._els.filter(fn); }
@@ -2099,7 +2108,7 @@ globalThis.JsoupElements = class JsoupElements {
     }
 
     selectFirst(selector) {
-        if (!selector) return 0;
+        if (!selector) return _JsoupNull;
         return this.select(selector).first();
     }
 
@@ -2169,9 +2178,10 @@ globalThis.JsoupElement = class JsoupElement {
     wholeText() { return this._raw.text; }
 
     selectFirst(selector) {
-        if (!selector) return 0;
+        if (!selector) return _JsoupNull;
         return this.select(selector).first();
     }
+
 
     data() { return this._raw.text; }
 
@@ -2348,68 +2358,104 @@ globalThis.NoSuchElementException = class NoSuchElementException extends Error {
     constructor(msg) { super(msg ?? "NoSuchElementException"); this.name = "NoSuchElementException"; }
 };
 
+// 1. Primitives first
+globalThis.JsonPrimitive = class JsonPrimitive {
+    constructor(value) { this._value = value; }
+    toString()     { return String(this._value); }
+    toJsonString() { return JSON.stringify(this._value); }
+};
+
+// 2. Then collections
 globalThis.JsonArray = class JsonArray {
-    constructor(list) {
-        this._arr = Array.isArray(list) ? list : (list ? [...list] : []);
-        this.__isJsonArray = true;
-    }
-    values()  { return this._arr; }
-    size()    { return this._arr.length; }
-    isEmpty() { return this._arr.length === 0 ? 1 : 0; }
-    get(i)    { return this._arr[i]; }
-    iterator() {
-        let i = 0; const a = this._arr;
-        return { hasNext() { return i < a.length ? 1 : 0; }, next() { return a[i++]; } };
-    }
+    constructor(arr) { this._arr = arr ?? []; }
+    get(i)         { return this._arr[i] ?? null; }
     [Symbol.iterator]() { return this._arr[Symbol.iterator](); }
-
-    static [Symbol.hasInstance](instance) {
-        if (instance === null || instance === undefined) return false;
-        return instance.__isJsonArray === true || Array.isArray(instance);
-    }
 };
 
-const _JsonObject = class JsonObject {
-    static [Symbol.hasInstance](instance) {
-        return instance !== null && typeof instance === 'object'
-            && !Array.isArray(instance) && !instance.__isJsonArray;
-    }
+globalThis.JsonObject = class JsonObject {
+    constructor(map) { this._map = map ?? {}; }
+    get(key)       { return this._map[key] ?? null; }
 };
 
-// Kotlin's JsonObject.values is a property returning the map's values collection.
-// Since plain JS objects are used as JsonObject at runtime, we patch Object.prototype
-// carefully so any plain object gets a values() method.
-// We do it on _JsonObject.prototype but since instanceof is faked, actual objects
-// won't have it — so we need to inject it differently.
+// 3. deepSerialize AFTER classes are defined
+function deepSerialize(value) {
+    if (value instanceof JsonObject) {
+        const out = {};
+        for (const [k, v] of Object.entries(value._map)) {
+            out[k] = deepSerialize(v);
+        }
+        return out;
+    }
+    if (value instanceof JsonArray) {
+        return value._arr.map(deepSerialize);
+    }
+    if (value instanceof JsonPrimitive) {
+        return value._value;
+    }
+    if (Array.isArray(value)) {
+        return value.map(deepSerialize);
+    }
+    return value;
+}
 
-// The cleanest approach: wrap values() as a global helper that works on plain objects.
-// But since the translated code calls it as v2_1.values(), we need it on the object itself.
-// Patch Object.prototype as a last resort, guarded to avoid breaking arrays/primitives:
-Object.defineProperty(Object.prototype, 'values', {
-    value: function() {
-        return Object.values(this);
-    },
-    writable: true,
-    configurable: true,
-    enumerable: false,  // non-enumerable so it doesn't show up in for..in loops
+// 4. NOW add the methods that use deepSerialize
+Object.assign(JsonArray.prototype, {
+    toString()     { return JSON.stringify(deepSerialize(this)); },
+    toJsonString() { return JSON.stringify(deepSerialize(this)); },
 });
 
-const _JsonPrimitive = class JsonPrimitive {
-    static [Symbol.hasInstance](instance) {
-        return typeof instance === 'string' || typeof instance === 'number' || typeof instance === 'boolean';
-    }
+Object.assign(JsonObject.prototype, {
+    toString()     { return JSON.stringify(deepSerialize(this)); },
+    toJsonString() { return JSON.stringify(deepSerialize(this)); },
+    toJsonRequestBody() {
+        return {
+            contentType: "application/json",
+            content: JSON.stringify(deepSerialize(this)),
+        };
+    },
+});
+
+// 5. Builders
+globalThis.JsonArrayBuilder = class JsonArrayBuilder {
+    constructor() { this._arr = []; }
+    add(value) { this._arr.push(value); }
+    build() { return new JsonArray(this._arr); }
 };
 
-globalThis.kotlinx = {
-    serialization: {
-        json: {
-            JsonObject:    _JsonObject,
-            JsonArray:     JsonArray,
-            JsonPrimitive: _JsonPrimitive,
-            JsonElement:   _JsonObject,
-            JsonNull:      { INSTANCE: null },
-        }
+globalThis.JsonObjectBuilder = class JsonObjectBuilder {
+    constructor() { this._map = {}; }
+    put(key, value) {
+        this._map[key] = value instanceof JsonPrimitive ? value._value : value;
     }
+    build() { return new JsonObject(this._map); }
+};
+
+globalThis.JsonElementBuildersKt = {
+    put(builder, key, value) {
+        if (builder instanceof JsonObjectBuilder) {
+            builder.put(key, value);
+        }
+    },
+    buildJsonObject(block) {
+        const builder = new JsonObjectBuilder();
+        block(builder);
+        return builder.build();
+    },
+    putJsonArray(builder, key, block) {
+        const arr = new JsonArrayBuilder();
+        block(arr);
+        builder.put(key, arr.build());
+    },
+    addJsonObject(builder, block) {
+        const obj = new JsonObjectBuilder();
+        block(obj);
+        builder.add(obj.build());
+    },
+    buildJsonArray(block) {
+        const arr = new JsonArrayBuilder();
+        block(arr);
+        return arr.build();
+    },
 };
 
 globalThis.OkioStreamsKt = {
@@ -2764,6 +2810,58 @@ globalThis["AnimeFilter_Sort"] = Filter.Sort;
 globalThis["Filter_Sort_Selection"] = Filter.Sort.Selection;
 globalThis["AnimeFilter_Sort_Selection"] = Filter.Sort.Selection;
 
+globalThis.CacheControl_Builder = class CacheControl_Builder {
+    constructor() {
+        this._maxAgeSeconds = -1;
+        this._noCache = false;
+        this._noStore = false;
+        this._onlyIfCached = false;
+    }
+
+    maxAge(value, unit) {
+        // unit is a TimeUnit-like object or string; normalize to seconds
+        if (unit && typeof unit.toSeconds === "function") {
+            this._maxAgeSeconds = unit.toSeconds(value);
+        } else if (typeof unit === "string") {
+            switch (unit.toUpperCase()) {
+                case "SECONDS":      this._maxAgeSeconds = value; break;
+                case "MINUTES":      this._maxAgeSeconds = value * 60; break;
+                case "HOURS":        this._maxAgeSeconds = value * 3600; break;
+                case "DAYS":         this._maxAgeSeconds = value * 86400; break;
+                default:             this._maxAgeSeconds = value; break;
+            }
+        } else {
+            this._maxAgeSeconds = value;
+        }
+        return this;
+    }
+
+    noCache()      { this._noCache = true;      return this; }
+    noStore()      { this._noStore = true;       return this; }
+    onlyIfCached() { this._onlyIfCached = true;  return this; }
+
+    build() {
+        return {
+            maxAgeSeconds: this._maxAgeSeconds,
+            noCache:       this._noCache,
+            noStore:       this._noStore,
+            onlyIfCached:  this._onlyIfCached,
+            toString() {
+                const parts = [];
+                if (this.maxAgeSeconds >= 0) parts.push(`max-age=${this.maxAgeSeconds}`);
+                if (this.noCache)            parts.push("no-cache");
+                if (this.noStore)            parts.push("no-store");
+                if (this.onlyIfCached)       parts.push("only-if-cached");
+                return parts.join(", ");
+            },
+        };
+    }
+}
+
+globalThis.CacheControl = {
+    Builder: CacheControl_Builder,
+};
+
 // FilterList
 
 globalThis.FilterList = class FilterList extends Array {
@@ -3114,6 +3212,16 @@ globalThis.RequestsKt = {
         const h = typeof headers?.build === 'function' ? headers.build() : headers;
         return new Request.Builder().url(url).headers(h ?? new Headers()).post(body).build();
     },
+
+    POST(url, headers, body) {
+        if ((!url || url === "") && globalThis.__lastExtractedUrl) {
+            url = globalThis.__lastExtractedUrl;
+        }
+        globalThis.__lastExtractedUrl = "";
+
+        const h = typeof headers?.build === 'function' ? headers.build() : headers;
+        return new Request.Builder().url(url).headers(h ?? new Headers()).post(body).build();
+    },
 };
 
 globalThis.GET  = (url, headers, cache) => RequestsKt.GET(url, headers, cache);
@@ -3440,10 +3548,21 @@ globalThis.MapsKt = {
         return 2147483647;
     },
 
+    mutableMapOf(...args) {
+        const map = new Map();
+        if (args.length === 1 && Array.isArray(args[0])) {
+            for (const pair of args[0]) {
+                if (pair && pair.first !== undefined) {
+                    map.set(pair.first, pair.second);
+                } else if (Array.isArray(pair)) {
+                    map.set(pair[0], pair[1]);
+                }
+            }
+        }
+        return map;
+    },
+
     mapOf(...pairs) {
-        // Called as MapsKt.mapOf() with zero args → empty map
-        // Called as MapsKt.mapOf(pair1, pair2, ...) where each pair
-        // is a TuplesKt.to() object: { first, second } or [k, v]
         const map = new LinkedHashMap();
         for (const pair of pairs) {
             if (pair == null) continue;
@@ -4652,6 +4771,131 @@ class AnimeHttpSource extends _SandboxManga {
                 chapters,
             },
         };
+    }
+
+    async _doRequest(req) {
+        const r = req instanceof _Call ? req._req : req;
+
+        const useCloudflare = req instanceof _Call
+            ? req._useCloudflare
+            : (this.client?._useCloudflare ?? true);
+
+        const url    = r.url?.toString?.() ?? String(r.url);
+        const method = r.method ?? "GET";
+        const body = _serializeBody(r.body ?? undefined);
+
+        const origin = new URL(url).origin;
+        const cfState = useCloudflare ? (_cfStateByOrigin.get(origin) ?? null) : false;
+
+        const buildHeaders = (base, extraCookies = null) => {
+            const h = base instanceof Headers
+                ? new Headers(base)
+                : new Headers(base instanceof Object ? base : {});
+
+            // Merge cookie jar
+            if (_cookieStore.size > 0) {
+                const stored = [..._cookieStore.entries()]
+                    .map(([k, v]) => `${k}=${v}`).join("; ");
+                const existing = h.get("cookie") ?? "";
+                h.set("cookie", existing ? `${existing}; ${stored}` : stored);
+            }
+
+            const xsrf = _cookieStore.get("XSRF-TOKEN");
+            if (xsrf && !h.has("X-XSRF-TOKEN")) {
+                h.set("X-XSRF-TOKEN", decodeURIComponent(xsrf));
+            }
+
+            if (extraCookies) {
+                _mergeCloudfareCookies(h, extraCookies);
+            }
+
+            return h;
+        };
+
+        const baseHeaders = r.headers?.toFetchHeaders?.() ?? r.headers
+            ?? this.headers?.toFetchHeaders?.() ?? this.headers ?? {};
+
+        // ── Path A: origin is known CF-protected, go straight to headless ────────
+        if (cfState && cfState !== false) {
+            const h = buildHeaders(baseHeaders, cfState.cookies);
+            h.set("user-agent",    cfState.userAgent);
+            h.set("referer",       origin + "/");
+            h.set("sec-fetch-site", "same-origin");
+            h.set("sec-fetch-mode", "cors");
+            h.set("sec-fetch-dest", "empty");
+
+            const headersObj = h.toFetchHeaders?.() ?? {};
+            const res = await headless.fetch(url, {
+                method,
+                headers: headersObj,
+                body,
+            });
+
+            if (res.status < 200 || res.status >= 300) throw new Error(`HTTP ${res.status}: ${url}`);
+            return new _SandboxResponse(res.html ?? res.body ?? res.text ?? "", res.status, url);
+        }
+
+        // ── Path B: origin unknown or known-clean, try plain fetch first ─────────
+        const headers = buildHeaders(baseHeaders);
+        const res  = await fetch(url, {
+            method,
+            headers: headers.toFetchHeaders?.() ?? headers,
+            body,
+        });
+        const text = await res.text();
+
+        if (res.cookies) {
+            for (const [k, v] of Object.entries(res.cookies)) {
+                _cookieStore.set(k, v);
+            }
+        }
+
+        const isCfChallenge = useCloudflare
+            && (res.status === 403 || res.status === 503)
+            && (
+                text.includes("challenge-error-title") ||
+                text.includes("challenge-error-text") ||
+                text.includes("Attention Required") ||
+                text.includes("cdn-cgi/content") ||
+                text.includes("cf_styles-css") ||
+                text.includes("cloudflare")
+            );
+
+        if (!isCfChallenge) {
+            if (cfState === null) _cfStateByOrigin.set(origin, false);
+            _saveCfState();
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
+            return new _SandboxResponse(text, res.status, url);
+        }
+
+        const { cookies, userAgent } = await _resolveCloudflare(url);
+        _cfStateByOrigin.set(origin, { cookies, userAgent });
+        _saveCfState();
+
+        const retryHeaders = buildHeaders(baseHeaders, cookies);
+        retryHeaders.set("user-agent",    userAgent);
+        retryHeaders.set("referer",       origin + "/");
+        retryHeaders.set("sec-fetch-site", "same-origin");
+        retryHeaders.set("sec-fetch-mode", "cors");
+        retryHeaders.set("sec-fetch-dest", "empty");
+
+        const cfSession = await headless.fetch(origin, {
+            waitFor: { selector: "body" },
+            capture: [url],
+            javascript: `
+        fetch(${JSON.stringify(url)}, {
+            method: ${JSON.stringify(method)},
+            headers: ${JSON.stringify(retryHeaders.toFetchHeaders())},
+            ${body ? `body: ${JSON.stringify(body)},` : ""}
+        }).then(r => r.text())
+    `,
+            timeout_ms: 20000,
+        });
+
+        const captured = cfSession.captured?.find(c => c.url.includes(url));
+        if (!captured) throw new Error(`CF capture failed for ${url}`);
+        return new _SandboxResponse(captured.body, captured.status, url);
     }
 
 
