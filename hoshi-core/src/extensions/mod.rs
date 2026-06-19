@@ -245,6 +245,12 @@ impl ExtensionManager {
             .map_err(|e| CoreError::Internal(e.to_string()))?
             .map_err(|e| CoreError::Parse(e.to_string()))?;
 
+        let source = if entry.pkg.contains("animeextension") {
+            "aniyomi"
+        } else {
+            "tachiyomi"
+        };
+
         let prefixed_id = format!("tachi_{}", entry.pkg);
         let ext_dir = self.extensions_dir.join(&prefixed_id);
         fs::create_dir_all(&ext_dir).await.map_err(CoreError::Io)?;
@@ -261,7 +267,6 @@ impl ExtensionManager {
             id: prefixed_id.clone(),
             name: entry.sources.first().map(|s| s.name.clone()).unwrap_or_else(|| entry.name.clone()),
             version: entry.version.clone(),
-            author: "tachiyomi".to_string(),
             icon: Option::from(icon_url.clone()),
             ext_type: ExtensionType::Manga,
             script_path: js_path.clone(),
@@ -270,7 +275,8 @@ impl ExtensionManager {
             skip_default_processing: false,
             setting_definitions: vec![],
             settings: HashMap::new(),
-            source: Some("tachiyomi".to_string()),
+            author: source.to_string(),
+            source: Some(source.to_string()),
         };
         self.extensions.insert(prefixed_id.clone(), staging_extension);
 
@@ -331,12 +337,12 @@ impl ExtensionManager {
             "version": entry.version,
             "type": "manga",
             "language": entry.lang,
-            "author": "tachiyomi",
             "main": "index.js",
             "source": "tachiyomi",
             "nsfw": nsfw,
             "settings": settings,
-            "icon": icon_url,
+            "author": source,
+            "source": source,
         });
 
         let manifest_yaml = serde_yaml::to_string(&manifest_json)
@@ -568,6 +574,7 @@ impl ExtensionManager {
         let compat = match extension.source.as_deref() {
             Some("lnreader") => Some(CompatLayer::Lnreader(LNREADER.to_string())),
             Some("tachiyomi") => Some(CompatLayer::Tachiyomi(TACHIYOMI.to_string())),
+            Some("aniyomi") => Some(CompatLayer::Aniyomi(TACHIYOMI.to_string())),
             _ => None,
         };
 

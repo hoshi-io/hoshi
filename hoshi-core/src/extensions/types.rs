@@ -6,8 +6,8 @@ use serde_json::Value;
 pub enum CompatLayer {
     Lnreader(String),
     Tachiyomi(String),
+    Aniyomi(String),
 }
-
 #[derive(Debug, Deserialize)]
 pub struct TachiyomiMarketplaceEntry {
     pub name: String,

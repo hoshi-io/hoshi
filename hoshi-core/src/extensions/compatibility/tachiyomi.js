@@ -54,6 +54,22 @@ Object.defineProperty(String.prototype, 'length_val', {
     configurable: true
 });
 
+String.prototype.compareTo = function(other) {
+    if (this < other) return -1;
+    if (this > other) return 1;
+    return 0;
+};
+
+String.prototype.substringBefore = function(delimiter) {
+    const idx = this.indexOf(delimiter);
+    return idx === -1 ? this.toString() : this.slice(0, idx);
+};
+
+String.prototype.substringAfter = function(delimiter) {
+    const idx = this.indexOf(delimiter);
+    return idx === -1 ? "" : this.slice(idx + delimiter.length);
+};
+
 Object.defineProperty(Array.prototype, 'length_val', {
     get() { return this.length; },
     enumerable: false,
@@ -105,6 +121,41 @@ if (!Array.prototype.toArray) {
     Array.prototype.toArray = function(target) { return [...this]; };
 }
 
+Set.prototype.contains = function(value) {
+    return this.has(value) ? 1 : 0;
+};
+
+Array.prototype.contains = function(value) {
+    return this.includes(value) ? 1 : 0;
+};
+
+String.prototype.contains = function(value) {
+    return this.includes(value) ? 1 : 0;
+};
+
+Function.prototype.invoke = function(...args) {
+    return this(...args);
+};
+
+String.prototype.getBytes = function(charset) {
+    const str = this;
+    const bytes = [];
+    for (let i = 0; i < str.length; i++) {
+        const code = str.charCodeAt(i);
+        if (code < 128) {
+            bytes.push(code);
+        } else if (code < 2048) {
+            bytes.push((code >> 6) | 192);
+            bytes.push((code & 63) | 128);
+        } else {
+            bytes.push((code >> 12) | 224);
+            bytes.push(((code >> 6) & 63) | 128);
+            bytes.push((code & 63) | 128);
+        }
+    }
+    return bytes;
+};
+
 function _serializeBody(body, headers) {
     if (body instanceof FormBody) {
         headers?.set?.("content-type", "application/x-www-form-urlencoded");
@@ -113,6 +164,53 @@ function _serializeBody(body, headers) {
     return body;
 }
 
+globalThis.Character = {
+    isLetterOrDigit(ch) {
+        if (typeof ch === "number") {
+            ch = String.fromCharCode(ch);
+        }
+        return /[a-zA-Z0-9]/.test(ch) ? 1 : 0;
+    },
+    isLetter(ch) {
+        if (typeof ch === "number") ch = String.fromCharCode(ch);
+        return /[a-zA-Z]/.test(ch) ? 1 : 0;
+    },
+    isDigit(ch) {
+        if (typeof ch === "number") ch = String.fromCharCode(ch);
+        return /[0-9]/.test(ch) ? 1 : 0;
+    },
+    isWhitespace(ch) {
+        if (typeof ch === "number") ch = String.fromCharCode(ch);
+        return /\s/.test(ch) ? 1 : 0;
+    },
+    isUpperCase(ch) {
+        if (typeof ch === "number") ch = String.fromCharCode(ch);
+        return ch === ch.toUpperCase() && /[a-zA-Z]/.test(ch) ? 1 : 0;
+    },
+    isLowerCase(ch) {
+        if (typeof ch === "number") ch = String.fromCharCode(ch);
+        return ch === ch.toLowerCase() && /[a-zA-Z]/.test(ch) ? 1 : 0;
+    },
+    toUpperCase(ch) {
+        if (typeof ch === "number") return String.fromCharCode(ch).toUpperCase().charCodeAt(0);
+        return ch.toUpperCase();
+    },
+    toLowerCase(ch) {
+        if (typeof ch === "number") return String.fromCharCode(ch).toLowerCase().charCodeAt(0);
+        return ch.toLowerCase();
+    },
+    toString(ch) {
+        if (typeof ch === "number") return String.fromCharCode(ch);
+        return String(ch);
+    },
+};
+
+globalThis.Charsets = {
+    UTF_8: "UTF-8",
+    UTF_16: "UTF-16",
+    US_ASCII: "US-ASCII",
+    ISO_8859_1: "ISO-8859-1",
+};
 
 globalThis.StringsKt = {
 
@@ -122,6 +220,21 @@ globalThis.StringsKt = {
         const parts = str.split(sep);
         const result = (limit && limit > 0) ? parts.slice(0, limit) : parts;
         return _makeKotlinList(result);
+    },
+
+    startsWith(str, prefix, startIndex = 0) {
+        return str.startsWith(prefix, startIndex) ? 1 : 0;
+    },
+
+    "substringAfterLast$default"(str, delimiter, missingDelimiterValue, mask, marker) {
+        if (mask & 2) missingDelimiterValue = str;
+        const idx = str.lastIndexOf(delimiter);
+        return idx === -1 ? missingDelimiterValue : str.slice(idx + delimiter.length);
+    },
+    substringAfterLast(str, delimiter, missingDelimiterValue) {
+        if (missingDelimiterValue === undefined) missingDelimiterValue = str;
+        const idx = str.lastIndexOf(delimiter);
+        return idx === -1 ? missingDelimiterValue : str.slice(idx + delimiter.length);
     },
 
     startsWith$default(str, prefix, ignoreCase, mask, marker) {
@@ -136,6 +249,13 @@ globalThis.StringsKt = {
         } else {
             return str.startsWith(prefix) ? 1 : 0;
         }
+    },
+
+    endsWith(str, suffix, ignoreCase = false) {
+        if (ignoreCase) {
+            return str.toLowerCase().endsWith(suffix.toLowerCase()) ? 1 : 0;
+        }
+        return str.endsWith(suffix) ? 1 : 0;
     },
 
     contains$default(str, other, ignoreCase, mask, marker) {
@@ -161,13 +281,21 @@ globalThis.StringsKt = {
     },
 
     toIntOrNull(str) {
-        if (str == null || typeof str !== "string") return null;
+        if (str == null || typeof str !== "string") return 0;
         const s = str.trim();
-        // Kotlin toIntOrNull strictly expects digits (optional +/-), no trailing garbage
         if (/^[+-]?\d+$/.test(s)) {
-            return parseInt(s, 10);
+            const n = parseInt(s, 10);
+            return {
+                _value: n,
+                intValue() { return n; },
+                longValue() { return n; },
+                floatValue() { return n; },
+                doubleValue() { return n; },
+                toString() { return String(n); },
+                valueOf() { return n; },
+            };
         }
-        return null;
+        return 0;
     },
 
     removeSuffix(str, suffix) {
@@ -254,6 +382,130 @@ globalThis.kotlin = globalThis.kotlin || {};
 globalThis.kotlin.text = globalThis.kotlin.text || {};
 
 globalThis.kotlin.text.StringsKt = globalThis.StringsKt;
+
+globalThis.ArrayDeque = class ArrayDeque {
+    constructor(initial) {
+        this._data = [];
+
+        if (initial != null) {
+            if (Array.isArray(initial)) {
+                this._data.push(...initial);
+            } else if (typeof initial[Symbol.iterator] === "function") {
+                this._data.push(...initial);
+            }
+        }
+    }
+
+    add(v)            { this._data.push(v); return true; }
+    addLast(v)        { this._data.push(v); }
+    addFirst(v)       { this._data.unshift(v); }
+
+    offer(v)          { this._data.push(v); return true; }
+    offerLast(v)      { return this.offer(v); }
+    offerFirst(v)     { this._data.unshift(v); return true; }
+
+    push(v)           { this._data.unshift(v); }
+    pop()             { return this._data.shift(); }
+
+    remove()          { return this._data.shift(); }
+    removeFirst()     { return this._data.shift(); }
+    removeLast()      { return this._data.pop(); }
+
+    poll()            { return this._data.shift() ?? null; }
+    pollFirst()       { return this.poll(); }
+    pollLast() {
+        return this._data.length ? this._data.pop() : null;
+    }
+
+    getFirst()        { return this._data[0]; }
+    getLast()         { return this._data[this._data.length - 1]; }
+
+    peek()            { return this._data[0] ?? null; }
+    peekFirst()       { return this.peek(); }
+    peekLast() {
+        return this._data.length
+            ? this._data[this._data.length - 1]
+            : null;
+    }
+
+    clear()           { this._data.length = 0; }
+    size()            { return this._data.length; }
+    isEmpty()         { return this._data.length === 0; }
+
+    contains(v)       { return this._data.includes(v); }
+
+    iterator() {
+        let i = 0;
+        const arr = this._data;
+        return {
+            hasNext() { return i < arr.length; },
+            next()    { return arr[i++]; }
+        };
+    }
+
+    [Symbol.iterator]() {
+        return this._data[Symbol.iterator]();
+    }
+
+    toArray() {
+        return this._data.slice();
+    }
+};
+
+globalThis.ReentrantLock = class ReentrantLock {
+    constructor(fair = false) {
+        this._fair = !!fair;
+        this._holdCount = 0;
+        this._owner = null;
+    }
+
+    lock() {
+        const me = Symbol.for("__js_thread__");
+
+        if (this._owner === null || this._owner === me) {
+            this._owner = me;
+            this._holdCount++;
+            return;
+        }
+
+        throw new Error("ReentrantLock shim does not support contention");
+    }
+
+    unlock() {
+        if (this._holdCount > 0) {
+            this._holdCount--;
+
+            if (this._holdCount === 0) {
+                this._owner = null;
+            }
+        }
+    }
+
+    tryLock() {
+        try {
+            this.lock();
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    isLocked() {
+        return this._holdCount > 0;
+    }
+
+    getHoldCount() {
+        return this._holdCount;
+    }
+
+    isFair() {
+        return this._fair;
+    }
+
+    newCondition() {
+        return {};
+    }
+};
 
 globalThis.ParsePosition = class ParsePosition {
     constructor(index) {
@@ -653,10 +905,100 @@ globalThis.ArrayList = class ArrayList {
 
     forEach(cb)        { this._a.forEach(cb); }
     filter(cb)         { return this._a.filter(cb); }
+
+    contains(item) {
+        return this._a.includes(item) ? 1 : 0;
+    }
     [Symbol.iterator](){ return this._a[Symbol.iterator](); }
 
     get length() { return this._a.length; }
     get length_val() { return this._a.length; }
+};
+
+globalThis.HashSet = class HashSet {
+    constructor(iterable) {
+        this._s = new Set();
+        if (iterable) {
+            for (const item of iterable) {
+                this._s.add(item);
+            }
+        }
+    }
+
+    push(item) {
+        this._s.add(item);
+        return this;
+    }
+
+    add(item) {
+        this._s.add(item);
+        return this;
+    }
+
+    remove(item) {
+        return this._s.delete(item) ? 1 : 0;
+    }
+
+    contains(item) {
+        return this._s.has(item) ? 1 : 0;
+    }
+
+    size() {
+        return this._s.size;
+    }
+
+    isEmpty() {
+        return this._s.size === 0 ? 1 : 0;
+    }
+
+    clear() {
+        this._s.clear();
+    }
+
+    toArray() {
+        return Array.from(this._s);
+    }
+
+    forEach(fn) {
+        this._s.forEach(fn);
+    }
+
+    [Symbol.iterator]() {
+        return this._s[Symbol.iterator]();
+    }
+
+    get length_val() {
+        return this._s.size;
+    }
+
+    get size_val() {
+        return this._s.size;
+    }
+
+    addAll(items) {
+        for (const item of items) {
+            this._s.add(item);
+        }
+        return this;
+    }
+
+    removeAll(items) {
+        for (const item of items) {
+            this._s.delete(item);
+        }
+        return this;
+    }
+
+    containsAll(items) {
+        for (const item of items) {
+            if (!this._s.has(item)) return 0;
+        }
+        return 1;
+    }
+
+    toList() {
+        return Array.from(this._s);
+    }
 };
 
 globalThis.kotlin = Object.assign(globalThis.kotlin ?? {}, { Unit: { INSTANCE: undefined } });
@@ -673,6 +1015,38 @@ globalThis.Locale = {
     ROOT:    "root",
     US:      "en-US",
     getDefault() { return "en"; },
+    forLanguageTag(tag) { return tag; },
+};
+
+globalThis.Collator = {
+    getInstance(locale) {
+        return {
+            locale,
+            compare(a, b) {
+                return a.localeCompare(b, locale);
+            },
+        };
+    },
+};
+
+globalThis.PropertyResourceBundle = class PropertyResourceBundle {
+    constructor(reader) {
+        this._data = {};
+        // Can't load .properties files in JS, fallback to empty
+        // Intl will return [key] for missing keys which is fine
+    }
+
+    containsKey(key) {
+        return 0; // always miss, fall through to [key] fallback
+    }
+
+    getString(key) {
+        return `[${key}]`;
+    }
+};
+
+globalThis.InputStreamReader = class InputStreamReader {
+    constructor(stream, encoding) {}
 };
 
 globalThis.JsonTransformingSerializer = class JsonTransformingSerializer {
@@ -852,7 +1226,8 @@ globalThis.LazyKt = {
                     try {
                         value = init();
                     } catch(e) {
-                        console.log("lazy getValue error:", e.message);
+                        console.log("lazy getValue error:", e.message, "| init:", String(init).slice(0, 100));
+                        console.log("lazy getValue stack:", e.stack);
                     }
                     initialized = true;
                 }
@@ -1049,9 +1424,21 @@ globalThis.TuplesKt = {
     }
 };
 
-globalThis.Long = class Long {
-    static valueOf(v, _unused) {
-        return Number(v);
+globalThis.Long = {
+    valueOf(value, ignored) {
+        const n = typeof value === "number" ? value : parseInt(value) || 0;
+        return {
+            _value: n,
+            longValue() { return n; },
+            intValue() { return n; },
+            floatValue() { return n; },
+            doubleValue() { return n; },
+            toString() { return String(n); },
+            valueOf() { return n; },
+            selectFirst() { return 0; },  // guard against register reuse
+            text() { return ""; },
+            attr() { return ""; },
+        };
     }
 };
 
@@ -1267,7 +1654,7 @@ globalThis.Regex = class Regex {
         re.lastIndex = start;
         const m = re.exec(str);
         if (!m) return null;
-        return { value: m[0], groupValues: m, destructured: { component1: () => m[1] } };
+        return { value: m[0], groupValues: m, destructured: { component1: () => m[1] }, getValue() { return this; }, };
     }
     findAll(str, start = 0) {
         const re = new RegExp(this._pattern, "g" + this._flags.replace("g",""));
@@ -1283,6 +1670,8 @@ globalThis.Regex = class Regex {
     replaceAll(str, replacement) { return str.replaceAll(new RegExp(this._pattern, "g"), replacement); }
     split(str)                   { return str.split(this._re); }
     toString()                   { return this._pattern; }
+
+    test(str) { return this._re.test(str); }
 
     static find$default(regex, input, startIndex, flags, marker) {
         if (flags & 1) startIndex = 0;
@@ -1552,9 +1941,12 @@ const _makeOkHttpClientBuilder = (useCloudflare = false, interceptors = [], netw
 });
 
 const _makeKotlinList = (arr) => {
-    arr.iterator    = function() {
+    arr.iterator = function() {
         let i = 0;
-        return { hasNext() { return i < arr.length; }, next() { return arr[i++]; } };
+        return {
+            hasNext() { return i < arr.length ? 1 : 0; },
+            next() { return arr[i++]; }
+        };
     };
     arr.indexOfFirst = (pred) => arr.findIndex(pred);
     arr.removeAt     = (i)    => arr.splice(i, 1)[0];
@@ -1702,6 +2094,10 @@ globalThis.JsoupElements = class JsoupElements {
     map(fn)     { return this._els.map(fn); }
     filter(fn)  { return this._els.filter(fn); }
 
+    eachText() {
+        return this._els.map(el => el.text());
+    }
+
     selectFirst(selector) {
         if (!selector) return 0;
         return this.select(selector).first();
@@ -1717,6 +2113,8 @@ globalThis.JsoupElements = class JsoupElements {
     }
     get size_val()   { return this.size(); }
 
+    ownText() { return this._els[0]?.ownText() ?? ""; }
+
     [Symbol.iterator]() { return this._els[Symbol.iterator](); }
 };
 
@@ -1729,8 +2127,32 @@ globalThis.JsoupElement = class JsoupElement {
     text()        { return this._raw.text; }
     html()        { return this._raw.html; }
     outerHtml()   { return this._raw.outer; }
-    attr(name)    { return this._raw.attrs?.[name] ?? null; }
-    hasAttr(name) { return name in (this._raw.attrs ?? {}); }
+    attr(name) {
+        if (name.startsWith("abs:")) {
+            const realAttr = name.slice(4);
+            const val = this._raw.attrs?.[realAttr] ?? null;
+            if (!val) return "";
+            if (/^https?:\/\//i.test(val)) return val;
+            try {
+                return new URL(val, this._baseUri).href;
+            } catch(e) {
+                return val;
+            }
+        }
+        return this._raw.attrs?.[name] ?? null;
+    }
+
+    eachText() {
+        const $ = parseHTML(this._raw.html);
+        const results = [];
+        $(this._raw.tag ?? "*").each((_, el) => {
+            results.push($(el).text());
+        });
+        return results;
+    }
+    hasAttr(name) {
+        return (name in (this._raw.attrs ?? {})) ? 1 : 0;
+    }
     id()          { return this.attr("id") ?? ""; }
     className()   { return this.attr("class") ?? ""; }
     tagName()     { return this._raw.tag ?? ""; }
@@ -1738,6 +2160,10 @@ globalThis.JsoupElement = class JsoupElement {
     select(selector) {
         const $ = parseHTML(this._raw.html);
         return new JsoupElements($(selector), this._baseUri);
+    }
+
+    ownText() {
+        return this._raw.own_text ?? "";
     }
 
     wholeText() { return this._raw.text; }
@@ -2476,6 +2902,7 @@ globalThis.Headers = class Headers {
         }
     };
 };
+globalThis.Headers_Builder = Headers.Builder;
 
 // CacheControl
 globalThis.CacheControl = {
@@ -3042,7 +3469,19 @@ globalThis.MapsKt = {
         return source instanceof Map
             ? new LinkedHashMap(source)
             : this.toMap(source);
-    }
+    },
+
+    toList(source) {
+        if (source == null) return [];
+        if (source instanceof LinkedHashMap) {
+            return Array.from(source.entries()).map(([k, v]) => TuplesKt.to(k, v));
+        }
+        if (source instanceof Map) {
+            return Array.from(source.entries()).map(([k, v]) => TuplesKt.to(k, v));
+        }
+        if (Array.isArray(source)) return source;
+        return Array.from(source);
+    },
 };
 
 globalThis.FunctionReferenceImpl = class FunctionReferenceImpl {
@@ -3218,7 +3657,9 @@ class HttpSource extends _SandboxManga {
 
     getClass() {
         return {
-            getClassLoader: () => null,
+            getClassLoader: () => ({
+                getResourceAsStream: (path) => null,
+            }),
             getName: () => this.constructor?.name ?? "Object",
             getSimpleName: () => this.constructor?.name ?? "Object",
         };
@@ -3230,7 +3671,7 @@ class HttpSource extends _SandboxManga {
 
     headersBuilder() {
         return new Headers.Builder()
-            .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
+            .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
     }
 
     getId() {
@@ -3320,10 +3761,11 @@ class HttpSource extends _SandboxManga {
                 result[filter.name] = {
                     label: filter.name,
                     type: "select",
-                    options: filter.values.map((v, i) => ({
-                        label: typeof v === "string" ? v : v?.toString?.() ?? String(i),
-                        value: String(i),
-                    })),
+                    options: filter.values.map((v, i) => {
+                        const label = typeof v === "string" ? v
+                            : v?.first ?? v?.toString?.() ?? String(i);
+                        return { label, value: String(i) };
+                    }),
                 };
             } else if (filter instanceof Filter.Text) {
                 result[filter.name] = {
@@ -3351,7 +3793,10 @@ class HttpSource extends _SandboxManga {
                     result[filter.name] = {
                         label: filter.name,
                         type: "multiselect",
-                        options: state.map(f => ({ label: f.name, value: f.name })),
+                        options: state.map(f => ({
+                            label: typeof f.name === "string" ? f.name : f.name?.first ?? String(f.name),
+                            value: typeof f.name === "string" ? f.name : f.name?.first ?? String(f.name),
+                        })),
                     };
                 } else if (state.length > 0 && state[0] instanceof Filter.TriState) {
                     result[filter.name] = {
@@ -3365,7 +3810,7 @@ class HttpSource extends _SandboxManga {
                     label: filter.name,
                     type: "select",
                     options: filter.values.map((v, i) => ({
-                        label: typeof v === "string" ? v : String(v),
+                        label: typeof v === "string" ? v : v?.first ?? String(v),
                         value: String(i),
                     })),
                 };
@@ -3546,16 +3991,15 @@ class HttpSource extends _SandboxManga {
             h.set("sec-fetch-mode", "cors");
             h.set("sec-fetch-dest", "empty");
 
+            const headersObj = h.toFetchHeaders?.() ?? {};
             const res = await headless.fetch(url, {
                 method,
-                headers: Object.fromEntries(
-                    (h.toFetchHeaders?.() ?? h).entries()
-                ),
+                headers: headersObj,
                 body,
             });
 
-            if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
-            return new _SandboxResponse(res.body ?? res.text ?? "", res.status, url);
+            if (res.status < 200 || res.status >= 300) throw new Error(`HTTP ${res.status}: ${url}`);
+            return new _SandboxResponse(res.html ?? res.body ?? res.text ?? "", res.status, url);
         }
 
         // ── Path B: origin unknown or known-clean, try plain fetch first ─────────
@@ -3567,9 +4011,17 @@ class HttpSource extends _SandboxManga {
         });
         const text = await res.text();
 
+
         const isCfChallenge = useCloudflare
             && (res.status === 403 || res.status === 503)
-            && (text.includes("challenge-error-title") || text.includes("challenge-error-text"));
+            && (
+                text.includes("challenge-error-title") ||
+                text.includes("challenge-error-text") ||
+                text.includes("Attention Required") ||
+                text.includes("cdn-cgi/content") ||
+                text.includes("cf_styles-css") ||
+                text.includes("cloudflare")
+            );
 
         if (!isCfChallenge) {
             if (cfState === null) _cfStateByOrigin.set(origin, false);
@@ -3627,11 +4079,9 @@ class HttpSource extends _SandboxManga {
 }
 
 HttpSource.prototype.getHeaders = function() {
-    if (!this._headers) {
-        const h = this.headersBuilder();
-        this._headers = typeof h?.build === 'function' ? h.build() : (h instanceof Headers ? h : new Headers(h));
-    }
-    return this._headers;
+    const builder = this.headersBuilder();
+    const result = typeof builder?.build === 'function' ? builder.build() : new Headers(builder ?? {});
+    return result;
 };
 
 let __tachi_captured = null;

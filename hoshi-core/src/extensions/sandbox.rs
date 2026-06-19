@@ -283,7 +283,7 @@ fn build_sandbox_script(
             (js.clone(), runner)
         }
 
-        Some(CompatLayer::Tachiyomi(js)) => {
+        Some(CompatLayer::Tachiyomi(js)) | Some(CompatLayer::Aniyomi(js)) => {
             let runner = format!(
                 r#"(async () => {{
                     globalThis.__tachi_captured = null;
