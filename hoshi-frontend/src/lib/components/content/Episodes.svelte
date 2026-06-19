@@ -2,7 +2,7 @@
     import type { ContentUnit } from "$lib/api/content/types";
     import type { AnimeProgress } from "@/api/progress/types";
     import { i18n } from "@/stores/i18n.svelte.js";
-    import { CheckCircle2 } from "lucide-svelte";
+    import { CheckCircle2, Play } from "lucide-svelte";
     import ResponsiveSelect from "$lib/components/ResponsiveSelect.svelte";
     import MpvLauncher from "@/components/mpv/MpvLauncher.svelte";
     import {appConfig} from "@/stores/config.svelte";
@@ -18,7 +18,7 @@
         progress?: AnimeProgress[],
     } = $props();
 
-    const ARC_SIZE = 24;
+    const ARC_SIZE = 12;
     const progressMap = $derived(
         new Map(progress.map(p => [p.episode, p]))
     );
@@ -153,17 +153,26 @@
     }
 </script>
 
-<div class="flex flex-col h-full space-y-4">
-    {#if arcs}
-        <ResponsiveSelect
-                bind:value={selectedArc}
-                items={arcItems}
-                placeholder="..."
-                class="w-auto min-w-[7rem]"
-        />
-    {/if}
+<div class="space-y-4">
+    <div class="flex items-center justify-between gap-3">
+        <h2 class="text-base md:text-lg font-bold tracking-tight">
+            {i18n.t('content.episodes_title', { default: 'Episodes' })}
+            {#if epsOrChapters}
+                <span class="text-muted-foreground/50 font-medium">· {epsOrChapters}</span>
+            {/if}
+        </h2>
 
-    <div class="flex-1 overflow-y-auto pr-2 space-y-3 hide-scrollbar">
+        {#if arcs}
+            <ResponsiveSelect
+                    bind:value={selectedArc}
+                    items={arcItems}
+                    placeholder="..."
+                    class="w-auto min-w-[7rem] h-8 text-xs rounded-sm"
+            />
+        {/if}
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-3 gap-y-6">
         {#each visibleEpisodes as ep (ep.number)}
             {@const prog = progressMap.get(ep.number)}
             {@const isCompleted = prog?.completed ?? false}
@@ -180,40 +189,44 @@
                     use:scrollIfResume={isResume}
                     {href}
                     onclick={(e) => handleEpisodeClick(e, ep)}
-                    class="group relative flex gap-4 border transition-all duration-200
-                        {isCompleted
-                        ? 'border-white/5 bg-white/[0.02] opacity-40 hover:opacity-70 hover:bg-white/[0.04] hover:border-white/8'
-                        : isResume
-                            ? 'border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 ring-1 ring-primary/20'
-                            : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10'}"
+                    class="group flex flex-col"
             >
-                <div class="relative shrink-0 w-48 aspect-video overflow-hidden bg-muted/20">
+                <div class="relative w-full aspect-video overflow-hidden rounded-sm bg-muted/20
+                    {isResume ? 'ring-1 ring-primary/60' : ''}">
                     {#if ep.thumbnail}
                         <img
                                 src={ep.thumbnail}
                                 alt={ep.title ?? `EP ${ep.number}`}
-                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 {isCompleted ? 'opacity-40' : ''}"
                         />
                     {:else}
-                        <div class="w-full h-full flex items-center justify-center">
-                            <span class="text-4xl font-black text-white/5">{ep.number}</span>
+                        <div class="w-full h-full flex items-center justify-center bg-muted/10">
+                            <span class="text-3xl font-black text-white/10">{ep.number}</span>
                         </div>
                     {/if}
 
+                    <div class="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-black/70 to-transparent pointer-events-none"></div>
+
                     {#if ep.duration}
-                        <div class="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/80 text-[10px] font-medium text-white rounded">
+                        <div class="absolute top-2 left-2.5 text-[13px] font-bold text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]">
                             {formatDuration(ep.duration)}
                         </div>
                     {/if}
 
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors duration-200">
+                        <div class="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-200">
+                            <Play class="w-4 h-4 text-black fill-black ml-0.5" />
+                        </div>
+                    </div>
+
                     {#if isCompleted}
-                        <div class="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <CheckCircle2 class="w-8 h-8 text-primary/70" />
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <CheckCircle2 class="w-7 h-7 text-primary/80" />
                         </div>
                     {/if}
 
                     {#if progressPct !== null}
-                        <div class="absolute bottom-0 inset-x-0 h-1 bg-white/10">
+                        <div class="absolute bottom-0 inset-x-0 h-1 bg-white/15">
                             <div
                                     class="h-full bg-primary transition-all duration-300"
                                     style="width: {progressPct}%"
@@ -222,37 +235,28 @@
                     {/if}
                 </div>
 
-                <div class="flex-1 min-w-0 py-3 pr-4 flex flex-col justify-between">
-                    <div class="space-y-1">
-                        <div class="flex justify-between items-start gap-2">
-                            <p class="font-bold text-[15px] leading-tight line-clamp-1 group-hover:text-primary transition-colors">
-                                {#if isRich && ep.title}
-                                    {ep.number}. {ep.title}
-                                {:else}
-                                    {i18n.t('content.episode_title', { num: ep.number })}
-                                {/if}
-                            </p>
-                        </div>
-                        {#if ep.description}
-                            <p class="text-[11px] text-muted-foreground/60 line-clamp-2 leading-relaxed">
-                                {ep.description}
-                            </p>
-                        {/if}
-                    </div>
-
-                    <div class="flex items-center gap-2 mt-2">
+                <div class="pt-2.5 space-y-0.5">
+                    <div class="flex items-center gap-2">
+                        <p class="text-[11px] font-bold uppercase tracking-wide text-muted-foreground/60">
+                            {i18n.t('content.episode_title', { num: ep.number })}
+                        </p>
                         {#if isResume && !isCompleted}
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-primary/80 bg-primary/10 px-2 py-0.5 rounded-sm">
-                                {isInProgress ? i18n.t('content.resume') : i18n.t('home.hero.watch')}
-                            </span>
-                        {/if}
-                        {#if isInProgress && prog?.timestampSeconds}
-                            <span class="text-[10px] text-muted-foreground/40 font-mono tabular-nums">
-                                {formatTimestamp(prog.timestampSeconds)}
-                                {#if progressPct !== null}· {progressPct}%{/if}
+                            <span class="text-[10px] font-bold uppercase tracking-wide text-primary/80">
+                                {isInProgress ? `· ${i18n.t('content.resume')}` : `· ${i18n.t('home.hero.watch')}`}
                             </span>
                         {/if}
                     </div>
+                    {#if isRich && ep.title}
+                        <p class="text-sm font-semibold leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                            {ep.title}
+                        </p>
+                    {/if}
+                    {#if isInProgress && prog?.timestampSeconds}
+                        <p class="text-[10px] text-muted-foreground/40 font-mono tabular-nums pt-0.5">
+                            {formatTimestamp(prog.timestampSeconds)}
+                            {#if progressPct !== null}· {progressPct}%{/if}
+                        </p>
+                    {/if}
                 </div>
             </a>
         {/each}
@@ -272,8 +276,3 @@
             bind:open={mpvOpen}
     />
 {/if}
-
-<style>
-    .hide-scrollbar::-webkit-scrollbar { display: none; }
-    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-</style>

@@ -55,7 +55,8 @@
         iframeReady = false;
     }}
 >
-    <div class="banner">
+    <!-- Turned the banner container into a clickable link -->
+    <a {href} class="banner">
         <div class="banner-media">
             <SmartImage
                     src={bannerImage || cover}
@@ -84,11 +85,14 @@
             {/if}
         </div>
         <div class="banner-overlay"></div>
-    </div>
+    </a>
 
     <div class="content">
         <div class="info-wrapper">
-            <h3 class="title">{title}</h3>
+            <!-- Added href link to the title as well for better accessibility -->
+            <a {href} class="title-link">
+                <h3 class="title">{title}</h3>
+            </a>
 
             <div class="actions">
                 <a {href} class="play-btn">
@@ -135,11 +139,13 @@
     }
 
     .banner {
+        display: block; /* Added block display for anchor layout */
         position: relative;
         aspect-ratio: 16 / 11;
         background: var(--card);
         flex-shrink: 0;
         overflow: hidden;
+        cursor: pointer;
     }
 
     .media-img {
@@ -203,6 +209,14 @@
         to   { opacity: 1; transform: translateY(0); }
     }
 
+    .title-link {
+        text-decoration: none;
+    }
+
+    .title-link:hover .title {
+        color: var(--primary);
+    }
+
     .title {
         font-size: 1rem;
         font-weight: 700;
@@ -213,6 +227,7 @@
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        transition: color 0.15s ease;
     }
 
     .actions {

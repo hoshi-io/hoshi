@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { Character, StaffMember } from "$lib/api/content/types";
-    import { Mic2, User, Users } from "lucide-svelte";
+    import { Mic2, User, ChevronDown, ChevronUp } from "lucide-svelte";
     import { i18n } from "@/stores/i18n.svelte.js";
+    import { Button } from "$lib/components/ui/button";
 
     const formatRole = (role: string | undefined | null) => {
         if (!role) return '';
@@ -13,52 +14,47 @@
     };
 
     let { characters, staff }: { characters: Character[], staff: StaffMember[] } = $props();
+
+    const CHAR_LIMIT = 12;
+    const STAFF_LIMIT = 12;
+
+    let showAllChars = $state(false);
+    let showAllStaff = $state(false);
+
+    const visibleCharacters = $derived(showAllChars ? characters : characters.slice(0, CHAR_LIMIT));
+    const visibleStaff = $derived(showAllStaff ? staff : staff.slice(0, STAFF_LIMIT));
 </script>
 
-<div class="space-y-6">
-    {#if staff && staff.length > 0}
-        <section class="space-y-3">
-            <h3 class="text-sm font-bold uppercase tracking-wider text-muted-foreground/70 px-1">
-                {i18n.t('content.staff')}
-            </h3>
-
-            <div class="flex overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory hide-scrollbar gap-2">
-                {#each staff as person}
-                    <div class="flex items-center gap-2 bg-muted/5 pl-1.5 pr-3 py-1.5 rounded-full border border-border/20 shrink-0 snap-start hover:bg-muted/10 transition-colors">
-                        {#if person.image && !person.image.includes('default.jpg')}
-                            <img src={person.image} alt={person.name} class="w-7 h-7 object-cover rounded-full bg-card shrink-0" />
-                        {:else}
-                            <div class="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
-                                <User class="h-3 w-3 text-muted-foreground" />
-                            </div>
-                        {/if}
-                        <div class="flex flex-col overflow-hidden max-w-[120px]">
-                            <span class="font-medium text-[11px] text-foreground truncate leading-tight">{person.name}</span>
-                            <span class="text-[9px] text-muted-foreground truncate uppercase opacity-70">{formatRole(person.role)}</span>
-                        </div>
-                    </div>
-                {/each}
-            </div>
-        </section>
-    {/if}
-
+<div class="space-y-8">
     {#if characters && characters.length > 0}
         <section class="space-y-3">
-            <h3 class="text-sm font-bold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-2 px-1">
-                <Users class="h-4 w-4" /> {i18n.t('content.characters')}
+            <h3 class="text-base md:text-lg font-bold tracking-tight">
+                {i18n.t('content.characters')}
             </h3>
 
-            <div class="flex overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory hide-scrollbar gap-3">
-                {#each characters as char}
-                    <div class="flex gap-2.5 bg-muted/5 p-2 rounded-lg border border-border/20 shrink-0 w-[200px] snap-start hover:bg-muted/10 transition-colors">
-                        <img src={char.image} alt={char.name} class="w-10 h-14 object-cover rounded bg-card border border-border/40 shrink-0" />
+            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                {#each visibleCharacters as char}
+                    <div class="group relative rounded-sm overflow-hidden border border-border/20 bg-card hover:border-border/50 transition-colors">
+                        <div class="aspect-[3/4] w-full overflow-hidden bg-muted/20">
+                            {#if char.image}
+                                <img
+                                        src={char.image}
+                                        alt={char.name}
+                                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
+                            {:else}
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <User class="h-6 w-6 text-muted-foreground/30" />
+                                </div>
+                            {/if}
+                        </div>
 
-                        <div class="flex flex-col justify-center overflow-hidden w-full">
-                            <span class="font-medium text-xs text-foreground truncate">{char.name}</span>
-                            <span class="text-[10px] text-muted-foreground capitalize truncate">{formatRole(char.role)}</span>
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/55 to-transparent pt-8 p-2">
+                            <p class="font-semibold text-[11px] text-white leading-tight truncate">{char.name}</p>
+                            <p class="text-[9px] text-white/60 capitalize truncate">{formatRole(char.role)}</p>
                             {#if char.actor}
-                                <div class="mt-1 flex items-center gap-1 text-[9px] font-medium text-primary/80">
-                                    <Mic2 class="h-2.5 w-2.5 shrink-0" />
+                                <div class="mt-0.5 flex items-center gap-1 text-[9px] font-medium text-primary">
+                                    <Mic2 class="h-2 w-2 shrink-0" />
                                     <span class="truncate">{char.actor}</span>
                                 </div>
                             {/if}
@@ -66,11 +62,24 @@
                     </div>
                 {/each}
             </div>
+
+            {#if characters.length > CHAR_LIMIT}
+                <div class="flex justify-center pt-1">
+                    <Button
+                            variant="outline"
+                            size="sm"
+                            class="rounded-sm px-5 text-xs font-semibold bg-muted/20 hover:bg-muted/50 transition-colors"
+                            onclick={() => showAllChars = !showAllChars}
+                    >
+                        {#if showAllChars}
+                            <ChevronUp class="w-3.5 h-3.5 mr-1.5" />
+                        {:else}
+                            <ChevronDown class="w-3.5 h-3.5 mr-1.5" />
+                            ({characters.length - CHAR_LIMIT})
+                        {/if}
+                    </Button>
+                </div>
+            {/if}
         </section>
     {/if}
 </div>
-
-<style>
-    .hide-scrollbar::-webkit-scrollbar { display: none; }
-    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-</style>

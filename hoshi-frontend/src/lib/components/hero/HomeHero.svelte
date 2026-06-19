@@ -142,12 +142,14 @@
 
                             <div class="w-full item-stagger" style="--delay: 2">
                                 {#key currentIndex}
-                                    <h1
-                                            in:fly={{ y: 8, duration: 400, delay: 50 }}
-                                            class="font-black text-foreground tracking-tight fluid-hero-title line-clamp-2"
-                                    >
-                                        {title}
-                                    </h1>
+                                    <a href={currentItem.href} class="block group/title max-w-max no-underline">
+                                        <h1
+                                                in:fly={{ y: 8, duration: 400, delay: 50 }}
+                                                class="font-black text-foreground tracking-tight fluid-hero-title line-clamp-2 cursor-pointer transition-opacity duration-200 group-hover/title:opacity-85"
+                                        >
+                                            {title}
+                                        </h1>
+                                    </a>
                                 {/key}
                             </div>
 

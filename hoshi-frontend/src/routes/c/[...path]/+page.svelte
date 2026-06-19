@@ -13,7 +13,7 @@
 
     import { Button } from "@/components/ui/button";
     import { Spinner } from "@/components/ui/spinner";
-    import { AlertCircle, ChevronDown, ChevronUp } from "lucide-svelte";
+    import { AlertCircle } from "lucide-svelte";
 
     import { ContentDetailState } from "@/app/content.svelte";
     import { layoutState } from "@/stores/layout.svelte";
@@ -62,18 +62,11 @@
 
     let showTrackerModal = $state(false);
     let showExtensionModal = $state(false);
-    let synopsisExpanded = $state(false);
 
     // Progress state — fetched once when fullContent becomes available
     let animeProgress = $state<AnimeProgress[]>([]);
     let chapterProgress = $state<ChapterProgress[]>([]);
     let progressLoaded = $state(false);
-
-    $effect(() => {
-        if (detail.synopsisElement && !synopsisExpanded) {
-            detail.canTruncate = detail.synopsisElement.scrollHeight > detail.synopsisElement.clientHeight;
-        }
-    });
 
     $effect(() => {
         layoutState.showBack = true;
@@ -189,72 +182,41 @@
                 headers={detail.headers}
         />
 
-        <div class="relative z-10 w-full max-w-[2000px] mx-auto px-4 md:px-8 lg:pl-32 lg:pr-12 mt-10 pb-24" in:fade={{ delay: 250, duration: 400 }}>
-            <div class="flex flex-col xl:flex-row gap-8 xl:gap-12 items-start">
+        <div class="relative z-10 w-full max-w-[1800px] mx-auto px-4 md:px-8 lg:pl-32 lg:pr-12 mt-10 pb-24 space-y-10" in:fade={{ delay: 250, duration: 400 }}>
 
-                <div class="w-full xl:flex-1 min-w-0 space-y-10">
-
-                    {#if meta?.synopsis}
-                        <div class="space-y-1.5">
-                            <p
-                                    bind:this={detail.synopsisElement}
-                                    class="text-muted-foreground leading-relaxed {synopsisExpanded ? '' : 'line-clamp-3'}"
-                            >
-                                {@html meta.synopsis.replace(/<[^>]*>?/gm, '')}
-                            </p>
-
-                            {#if detail.canTruncate || synopsisExpanded}
-                                <button
-                                        onclick={() => synopsisExpanded = !synopsisExpanded}
-                                        class="flex items-center gap-1 text-xs font-bold text-primary/80 hover:text-primary transition-colors"
-                                >
-                                    {#if synopsisExpanded}
-                                        <ChevronUp class="w-3 h-3" />
-                                    {:else}
-                                        <ChevronDown class="w-3 h-3" />
-                                    {/if}
-                                </button>
-                            {/if}
-                        </div>
+            {#if !isMovie}
+                <section class="space-y-4">
+                    {#if isAnime}
+                        <Episodes
+                                cid={detail.fullContent.content.cid}
+                                epsOrChapters={meta?.epsOrChapters}
+                                contentUnits={detail.fullContent.contentUnits}
+                                duration={meta?.episodeDuration}
+                                progress={animeProgress}
+                                animeTitle={meta?.titleI18n?.[pref] || meta?.title || ''}
+                                isNsfw={detail.fullContent.content.nsfw || meta?.genres?.some(g => ['hentai', 'adult'].includes(g.toLowerCase()))}
+                                coverImage={meta?.coverImage}
+                        />
+                    {:else}
+                        <Chapters
+                                cid={detail.fullContent.content.cid}
+                                contentType={detail.fullContent.content.contentType}
+                                progress={chapterProgress}
+                        />
                     {/if}
+                </section>
+            {/if}
 
-                    {#if hasCastOrStaff}
-                        <CastAndStaff characters={meta?.characters || []} staff={meta?.staff || []} />
-                    {/if}
+            {#if hasCastOrStaff}
+                <CastAndStaff characters={meta?.characters || []} staff={meta?.staff || []} />
+            {/if}
 
-                    {#if hasRelations}
-                        <div class="pt-2 border-t border-border/20">
-                            <Relations relations={detail.relations} loading={detail.relationsLoading} />
-                        </div>
-                    {/if}
-
+            {#if hasRelations}
+                <div class="pt-2 border-t border-border/20">
+                    <Relations relations={detail.relations} loading={detail.relationsLoading} />
                 </div>
+            {/if}
 
-                {#if !isMovie}
-                    <div class="w-full xl:w-[540px] 2xl:w-[540px] shrink-0 xl:-mt-64 relative z-20">
-                        <div class="xl:sticky xl:top-8 xl:h-[calc(100vh-2rem)]">
-                            {#if isAnime}
-                                <Episodes
-                                        cid={detail.fullContent.content.cid}
-                                        epsOrChapters={meta?.epsOrChapters}
-                                        contentUnits={detail.fullContent.contentUnits}
-                                        duration={meta?.episodeDuration}
-                                        progress={animeProgress}
-                                        animeTitle={meta?.titleI18n?.[pref] || meta?.title || ''}
-                                        isNsfw={detail.fullContent.content.nsfw || meta?.genres?.some(g => ['hentai', 'adult'].includes(g.toLowerCase()))}
-                                        coverImage={meta?.coverImage}
-                                />
-                            {:else}
-                                <Chapters
-                                        cid={detail.fullContent.content.cid}
-                                        contentType={detail.fullContent.content.contentType}
-                                        progress={chapterProgress}
-                                />
-                            {/if}
-                        </div>
-                    </div>
-                {/if}
-            </div>
         </div>
 
         <TrackerManager bind:open={showTrackerModal} cid={detail.fullContent.content.cid} trackers={detail.fullContent.trackerMappings} metadata={meta} />

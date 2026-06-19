@@ -83,13 +83,11 @@
         });
     });
 
-    // Get active extensions for the given content type
     let currentExtensions = $derived(
         contentType === "manga" ? extensions.manga :
             contentType === "novel" ? extensions.novel : []
     );
 
-    // Build unique display options and sort them alphabetically by their label
     let extensionItems = $derived(
         currentExtensions
             .map(ext => {
@@ -103,7 +101,6 @@
             .sort((a, b) => a.label.localeCompare(b.label))
     );
 
-    // Default to picking the first alphabetical item if nothing is selected yet
     $effect(() => {
         if (!selectedExtensionName && extensionItems.length > 0) {
             selectedExtensionName = extensionItems[0].value;
@@ -139,39 +136,40 @@
 </script>
 
 <div class="space-y-4">
-    <div class="flex items-center justify-between gap-3">
-        <div class="flex items-center gap-2">
-            <h2 class="text-base font-bold tracking-tight">
-                {i18n.t('content.chapters_title')}
-            </h2>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-base md:text-lg font-bold tracking-tight">
+            {i18n.t('content.chapters_title', { default: 'Chapters' })}
             {#if chapters.length > 0}
-                <span class="text-[11px] font-semibold text-muted-foreground/60 bg-muted/40 px-2 py-0.5 rounded-full">
-                    {chapters.length}
-                </span>
+                <span class="text-muted-foreground/50 font-medium">· {chapters.length}</span>
             {/if}
-        </div>
+        </h2>
 
-        {#if extensionItems.length > 1}
-            <div class="w-[180px] shrink-0">
-                <ResponsiveSelect
-                        bind:value={selectedExtensionName}
-                        items={extensionItems}
-                        placeholder={i18n.t('content.select_extension')}
-                        class="bg-muted/30 border-border/20 hover:bg-muted/50 transition-colors rounded-xl font-medium capitalize text-xs h-8"
-                />
+        {#if extensionItems.length > 1 || (arcs && !loading && !error)}
+            <div class="flex items-center gap-3">
+                {#if extensionItems.length > 1}
+                    <div class="w-[180px] shrink-0">
+                        <ResponsiveSelect
+                                bind:value={selectedExtensionName}
+                                items={extensionItems}
+                                placeholder={i18n.t('content.select_extension')}
+                                class="bg-muted/30 border-border/20 hover:bg-muted/50 transition-colors rounded-xl font-medium capitalize text-xs h-8"
+                        />
+                    </div>
+                {/if}
+
+                {#if arcs && !loading && !error}
+                    <ResponsiveSelect
+                            bind:value={selectedArc}
+                            items={arcItems}
+                            placeholder="..."
+                            class="w-auto min-w-[7rem] bg-muted/30 border-border/20 hover:bg-muted/50 transition-colors rounded-xl font-medium text-xs h-8"
+                    />
+                {/if}
             </div>
         {/if}
     </div>
 
-    {#if arcs && !loading && !error}
-        <ResponsiveSelect
-                bind:value={selectedArc}
-                items={arcItems}
-                placeholder="..."
-                class="w-auto min-w-[7rem]"
-        />
-    {/if}
-
+    <!-- Content Area -->
     {#if extensionItems.length === 0}
         <div class="flex flex-col items-center justify-center gap-3 py-14 rounded-2xl border border-border/20 bg-muted/5">
             <BookOpen class="w-8 h-8 text-muted-foreground/20" />
@@ -211,7 +209,7 @@
             </div>
         </div>
     {:else}
-        <div class="flex flex-col gap-1.5 xl:max-h-[calc(100vh-16rem)] xl:overflow-y-auto xl:pr-1 hide-scrollbar">
+        <div class="flex flex-col gap-1.5 xl:max-h-[calc(100vh-32rem)] xl:overflow-y-auto xl:pr-1 hide-scrollbar">
             {#each visibleChapters as chapter (chapter.id || (chapter.number ?? chapter.unitNumber))}
                 {@const num = chapter.number ?? chapter.unitNumber}
                 {@const prog = progressMap.get(num)}

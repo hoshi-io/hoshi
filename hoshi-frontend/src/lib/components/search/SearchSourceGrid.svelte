@@ -99,15 +99,18 @@
                     <ChevronRight class="w-4 h-4 transition-transform duration-200 {extensionsOpen ? 'rotate-90' : ''}" />
                 </button>
 
+                <!-- SearchSourceGrid.svelte -->
+
                 {#if extensionsOpen}
                     <div class="space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent animate-in slide-in-from-top-2 fade-in duration-200">
                         {#each sortedExtensions as ext}
-                            <div class="{rowClasses} pr-1.5 justify-between {searchState.searchMode === 'extension' && searchState.selectedExtension === ext.id ? activeRow : inactiveRow}">
+                            <!-- 1. Enforced a rigid layout row height (h-9 min-h-[36px] max-h-[36px]) so it never expands -->
+                            <div class="{rowClasses} pr-1.5 justify-between h-9 min-h-[36px] max-h-[36px] {searchState.searchMode === 'extension' && searchState.selectedExtension === ext.id ? activeRow : inactiveRow}">
 
                                 <button
                                         type="button"
                                         onclick={() => onSelectSource('extension', ext.id, 'anilist', isMobile)}
-                                        class="flex items-center gap-3 flex-1 min-w-0 outline-none text-left"
+                                        class="flex items-center gap-3 flex-1 min-w-0 h-full outline-none text-left"
                                 >
                                     {#if ext.icon}
                                         <img src={ext.icon} class="w-5 h-5 shrink-0 rounded-sm object-contain {searchState.searchMode === 'extension' && searchState.selectedExtension === ext.id ? '' : 'grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100'}" alt={ext.name} />
@@ -120,19 +123,21 @@
                                 {#if ext.source === 'tachiyomi' && ext.settings}
                                     {@const langDef = ext.setting_definitions?.find(s => s.id === 'language' || s.key === 'language')}
                                     {#if langDef}
-                                        <div class="w-[85px] shrink-0 ml-2" onclick={(e) => e.stopPropagation()}>
+                                        <!-- 2. Replaced w-[85px] with strict height capping (!h-6) to ensure the select stays compact -->
+                                        <div class="w-[85px] shrink-0 ml-2 h-6 flex items-center" onclick={(e) => e.stopPropagation()}>
                                             <ResponsiveSelect
                                                     value={ext.settings.language as string}
                                                     items={langDef.options || []}
                                                     placeholder="Lang"
-                                                    class="h-7 text-xs px-2 py-0 bg-transparent border-0 border-transparent shadow-none focus:ring-0 focus:ring-offset-0 hover:bg-muted/50 transition-colors"
+                                                    data-size="sm"
+                                                    class="!h-6 text-xs px-2 py-0 bg-transparent border-0 border-transparent shadow-none focus:ring-0 focus:ring-offset-0 hover:bg-muted/50 transition-colors"
                                                     onValueChange={(newVal) => {
-                                                    ext.settings.language = newVal;
-                                                    extensionsApi.updateSettings(ext.id, {
-                                                        ...ext.settings,
-                                                        language: newVal
-                                                    });
-                                                }}
+                                        ext.settings.language = newVal;
+                                        extensionsApi.updateSettings(ext.id, {
+                                            ...ext.settings,
+                                            language: newVal
+                                        });
+                                    }}
                                             />
                                         </div>
                                     {/if}

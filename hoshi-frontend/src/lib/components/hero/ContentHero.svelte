@@ -3,10 +3,10 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { appConfig } from "@/stores/config.svelte";
     import { Button } from "@/components/ui/button";
-    import { Star, Calendar, Tv, BookMarked, Building2, Play, BookOpen, Link, Plug } from "lucide-svelte";
+    import { Star, Calendar, Tv, BookMarked, Building2, Play, BookOpen, Link, Plug, ChevronDown, ChevronUp } from "lucide-svelte";
     import ListEditorButton from "@/components/ListEditorButton.svelte";
     import SmartImage from "@/components/SmartImage.svelte";
-    import {formatScore, getCardScore} from "@/utils/normalize";
+    import { formatScore } from "@/utils/normalize";
 
     let {
         fullContent,
@@ -29,7 +29,17 @@
     }>();
 
     let trackersExpanded = $state(false);
-    const TRACKERS_LIMIT = 50;
+    const TRACKERS_LIMIT = 6;
+
+    let synopsisExpanded = $state(false);
+    let synopsisElement = $state<HTMLElement | undefined>();
+    let canTruncateSynopsis = $state(false);
+
+    $effect(() => {
+        if (synopsisElement && !synopsisExpanded) {
+            canTruncateSynopsis = synopsisElement.scrollHeight > synopsisElement.clientHeight;
+        }
+    });
 
     const score = $derived(meta?.rating ? formatScore(meta.rating) : null);
     const isAdultContent = $derived(fullContent.content.nsfw || meta?.genres?.some((g: string) => ['hentai', 'adult'].includes(g.toLowerCase())));
@@ -55,167 +65,167 @@
 
     function getTrackerLink(tracker: any) {
         if (tracker.trackerUrl) return tracker.trackerUrl;
-
         const id = tracker.trackerId;
         const mediaType = isAnime ? 'anime' : 'manga';
-        console.log(isAnime)
 
         switch (tracker.trackerName.toLowerCase()) {
-            case 'anilist':
-                return `https://anilist.co/${mediaType}/${id}`;
-
-            case 'anidb':
-                return `https://anidb.net/${mediaType}/${id}`;
-
+            case 'anilist': return `https://anilist.co/${mediaType}/${id}`;
+            case 'anidb': return `https://anidb.net/${mediaType}/${id}`;
             case 'animeplanet':
-            case 'anime-planet':
-                return `https://www.anime-planet.com/${mediaType}/${id}`;
-
+            case 'anime-planet': return `https://www.anime-planet.com/${mediaType}/${id}`;
             case 'myanimelist':
-            case 'mal':
-                return `https://myanimelist.net/${id.replace(':', '/')}`;
-
-            case 'simkl':
-                return `https://simkl.com/${mediaType}/${id}`;
-
-            case 'kitsu':
-                return `https://kitsu.io/${mediaType}/${id}`;
-
-            case 'shikimori':
-                return `https://shikimori.one/${mediaType}s/${id}`;
-
-            default:
-                return '#';
+            case 'mal': return `https://myanimelist.net/${id.replace(':', '/')}`;
+            case 'simkl': return `https://simkl.com/${mediaType}/${id}`;
+            case 'kitsu': return `https://kitsu.io/${mediaType}/${id}`;
+            case 'shikimori': return `https://shikimori.one/${mediaType}s/${id}`;
+            default: return '#';
         }
     }
 </script>
 
-<div class="absolute top-0 inset-x-0 h-[62vh] md:h-[72vh] overflow-hidden pointer-events-none" in:fade={{ duration: 1000 }}>
+<div class="absolute top-0 inset-x-0 h-[55vh] md:h-[65vh] overflow-hidden pointer-events-none" in:fade={{ duration: 1000 }}>
     <SmartImage
             src={meta?.bannerImage || meta?.coverImage}
             alt={""}
             {shouldBlur}
             imageHeaders={headers}
-            class="w-full h-full object-cover opacity-45"
+            class="w-full h-full object-cover opacity-35 dark:opacity-30 scale-[1.01]"
     />
-    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background"></div>
-    <div class="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-background/60 to-transparent"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-background/5 via-background/40 to-background"></div>
+    <div class="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-background/70 to-transparent"></div>
 </div>
 
-<div class="relative z-10 w-full max-w-[2000px] mx-auto px-4 md:px-8 lg:pl-32 lg:pr-12 pt-56 md:pt-72 lg:pt-80" in:fade={{ delay: 100, duration: 400 }}>
-    <div class="flex gap-4 sm:gap-6 md:gap-10 items-start">
+<div class="relative z-10 w-full max-w-[1800px] mx-auto px-4 md:px-8 lg:pl-32 lg:pr-12 pt-40 md:pt-48 lg:pt-52" in:fade={{ delay: 100, duration: 400 }}>
+    <div class="flex flex-col sm:flex-row gap-6 md:gap-10 items-center sm:items-start text-center sm:text-left">
 
-        <div class="shrink-0 w-32 sm:w-40 md:w-48 lg:w-56" in:fly={{ y: 20, duration: 500, delay: 150 }}>
-            <div class="rounded-sm overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.6)] bg-muted aspect-[2/3] ring-1 ring-white/10">
-
+        <div class="shrink-0 w-36 sm:w-40 md:w-48 lg:w-52" in:fly={{ y: 25, duration: 500, delay: 150 }}>
+            <div class="rounded-sm overflow-hidden shadow-[0_12px_50px_rgba(0,0,0,0.7)] bg-muted aspect-[2/3] ring-1 ring-white/10 group relative">
                 <SmartImage
                         src={meta?.coverImage}
                         alt={displayTitle}
                         {shouldBlur}
                         imageHeaders={headers}
-                        class="w-full h-full object-cover"
+                        class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105 will-change-transform"
                 />
             </div>
         </div>
 
-        <div class="flex-1 min-w-0 pb-2 md:pb-0 space-y-4 md:space-y-5" in:fly={{ y: 20, duration: 500, delay: 200 }}>
-            <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black leading-tight tracking-tight line-clamp-3">
+        <div class="flex-1 min-w-0 space-y-4" in:fly={{ y: 20, duration: 500, delay: 200 }}>
+
+            <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] line-clamp-2">
                 {displayTitle}
             </h1>
 
-            <div class="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1.5 text-[11px] sm:text-xs text-muted-foreground font-medium">
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 text-xs text-muted-foreground font-semibold">
                 {#if score}
-        <span class="flex items-center gap-1 bg-green-500/15 text-green-400 border border-green-500/25 px-2 sm:px-2.5 py-1 rounded-lg font-bold">
-            {score}
-        </span>
+                    <span class="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md font-bold shadow-sm">
+                        <Star class="w-3 h-3 fill-current" /> {score}
+                    </span>
                 {/if}
                 {#if meta?.releaseDate}
-        <span class="flex items-center gap-1">
-            <Calendar class="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-60" />{formatDate(meta.releaseDate)}
-        </span>
+                    <span class="flex items-center gap-1.5 bg-muted/30 px-2 py-0.5 rounded-md border border-border/10">
+                        <Calendar class="w-3 h-3 text-primary/70" />{formatDate(meta.releaseDate)}
+                    </span>
                 {/if}
                 {#if meta?.subtype}
-        <span class="flex items-center gap-1">
-            <Tv class="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-60" />{meta.subtype}
-        </span>
+                    <span class="flex items-center gap-1.5 bg-muted/30 px-2 py-0.5 rounded-md border border-border/10 uppercase text-[10px] tracking-wider">
+                        <Tv class="w-3 h-3 text-primary/70" />{meta.subtype}
+                    </span>
                 {/if}
                 {#if meta?.epsOrChapters}
-        <span class="flex items-center gap-1">
-            <BookMarked class="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-60" />
-            {meta.epsOrChapters} {isAnime ? i18n.t('content.eps_short') : i18n.t('content.ch_short')}
-        </span>
+                    <span class="flex items-center gap-1.5 bg-muted/30 px-2 py-0.5 rounded-md border border-border/10">
+                        <BookMarked class="w-3 h-3 text-primary/70" />
+                        {meta.epsOrChapters} {isAnime ? i18n.t('content.eps_short') : i18n.t('content.ch_short')}
+                    </span>
                 {/if}
                 {#if meta?.studio}
-        <span class="flex items-center gap-1">
-            <Building2 class="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-60" />{meta.studio}
-        </span>
+                    <span class="flex items-center gap-1.5 text-foreground/80">
+                        <Building2 class="w-3 h-3 text-muted-foreground/60" />{meta.studio}
+                    </span>
                 {/if}
             </div>
 
             {#if meta?.genres?.length}
-                <div class="hidden sm:flex flex-wrap gap-1.5">
-                    {#each meta.genres.slice(0, 6) as genre}
-            <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-muted/50 text-muted-foreground border border-border/30">
-                {genre}
-            </span>
+                <div class="flex flex-wrap justify-center sm:justify-start gap-1.5">
+                    {#each meta.genres.slice(0, 5) as genre}
+                        <span class="text-[10px] font-bold tracking-wide uppercase px-2.5 py-0.5 rounded-md bg-muted/40 text-foreground/70 border border-border/20 backdrop-blur-sm">
+                            {genre}
+                        </span>
                     {/each}
                 </div>
             {/if}
 
-            <div class="flex items-center gap-2 flex-wrap pt-1">
-                <Button onclick={onWatchNow} class="rounded-sm px-6 h-10 font-bold shadow-lg gap-2">
-                    {#if isAnime}
-                        <Play class="w-4 h-4 fill-current" />{i18n.t('content.watch_now')}
-                    {:else}
-                        <BookOpen class="w-4 h-4 fill-current" />{i18n.t('content.read_now')}
-                    {/if}
-                </Button>
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-2">
 
-                <div class="hidden sm:block">
+                <div class="flex items-center bg-muted/20 p-1 rounded-md border border-border/10 backdrop-blur-md gap-1">
                     <ListEditorButton
                             cid={fullContent.content.cid}
                             title={displayTitle}
                             contentType={fullContent.content.contentType}
                             coverImage={meta?.coverImage}
                             size="icon"
-                            class="h-10 w-10"
+                            class="h-8 w-8 rounded-sm bg-transparent border-0 hover:bg-muted/40 text-foreground"
                     />
+
+                    <div class="w-[1px] h-4 bg-border/40 mx-0.5"></div>
+
+                    <Button size="icon" variant="ghost" class="rounded-sm w-8 h-8 hover:bg-muted/40 text-muted-foreground hover:text-foreground" onclick={() => showTrackerModal = true} title="Trackers">
+                        <Link class="w-4 h-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" class="rounded-sm w-8 h-8 hover:bg-muted/40 text-muted-foreground hover:text-foreground" onclick={() => showExtensionModal = true} title="Extensions">
+                        <Plug class="w-4 h-4" />
+                    </Button>
                 </div>
 
-                <Button size="icon" variant="secondary" class="rounded-sm w-10 h-10" onclick={() => showTrackerModal = true}>
-                    <Link class="w-4 h-4" />
-                </Button>
-                <Button size="icon" variant="secondary" class="rounded-sm w-10 h-10" onclick={() => showExtensionModal = true}>
-                    <Plug class="w-4 h-4" />
-                </Button>
+                {#if trackers.length > 0}
+                    <div class="flex items-center gap-1.5 ml-0 sm:ml-3 bg-muted/10 px-2 py-1 rounded-md border border-border/5">
+                        {#each visibleTrackers as tracker}
+                            <a
+                                    href={getTrackerLink(tracker)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="group flex items-center justify-center w-6 h-6 rounded-md hover:bg-muted/50 transition-all"
+                                    title={`${tracker.trackerName}: #${tracker.trackerId}`}
+                            >
+                                <img
+                                        src={getTrackerFavicon(tracker.trackerName)}
+                                        alt={tracker.trackerName}
+                                        class="w-4 h-4 rounded-sm opacity-60 group-hover:opacity-100 transition-opacity"
+                                />
+                            </a>
+                        {/each}
+
+                        {#if trackers.length > TRACKERS_LIMIT}
+                            <button
+                                    onclick={() => trackersExpanded = !trackersExpanded}
+                                    class="w-6 h-6 flex items-center justify-center rounded-md hover:bg-muted/50 text-[10px] font-bold text-muted-foreground/60"
+                            >
+                                {trackersExpanded ? '−' : `+`}
+                            </button>
+                        {/if}
+                    </div>
+                {/if}
             </div>
 
-            {#if trackers.length > 0}
-                <div class="flex flex-wrap items-center gap-1 sm:gap-1.5 pt-0.5">
-                    {#each visibleTrackers as tracker}
-                        <a
-                                href={getTrackerLink(tracker)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="group flex items-center gap-0 sm:gap-1.5 px-1.5 sm:px-2.5 py-1 rounded-full bg-muted/20 border border-border/20 hover:bg-muted/40 transition-all"
-                        >
-                            <img
-                                    src={getTrackerFavicon(tracker.trackerName)}
-                                    alt={tracker.trackerName}
-                                    class="w-3.5 h-3.5 sm:w-3 sm:h-3 rounded-sm opacity-70 group-hover:opacity-100 transition-opacity"
-                            />
-                            <span class="hidden sm:inline text-[10px] font-mono text-muted-foreground/35">
-                    #{tracker.trackerId}
-                </span>
-                        </a>
-                    {/each}
+            {#if meta?.synopsis}
+                <div class="max-w-7xl space-y-1.5 mx-auto sm:mx-0 text-justify">
+                    <p
+                            bind:this={synopsisElement}
+                            class="text-sm text-muted-foreground leading-relaxed {synopsisExpanded ? '' : 'line-clamp-3'}"
+                    >
+                        {@html meta.synopsis.replace(/<[^>]*>?/gm, '')}
+                    </p>
 
-                    {#if trackers.length > TRACKERS_LIMIT}
+                    {#if canTruncateSynopsis || synopsisExpanded}
                         <button
-                                onclick={() => trackersExpanded = !trackersExpanded}
-                                class="px-2 sm:px-2.5 py-1 rounded-full bg-muted/15 border border-border/15 text-[10px] sm:text-[11px] font-medium text-muted-foreground/50"
+                                onclick={() => synopsisExpanded = !synopsisExpanded}
+                                class="flex items-center gap-1 text-xs font-bold text-primary/80 hover:text-primary transition-colors mx-auto sm:mx-0"
                         >
-                            {trackersExpanded ? '−' : `+${trackers.length - TRACKERS_LIMIT}`}
+                            {#if synopsisExpanded}
+                                <ChevronUp class="w-3 h-3" />
+                            {:else}
+                                <ChevronDown class="w-3 h-3" />
+                            {/if}
                         </button>
                     {/if}
                 </div>
