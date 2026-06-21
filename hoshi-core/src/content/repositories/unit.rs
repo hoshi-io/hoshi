@@ -38,7 +38,6 @@ impl UnitRepository {
     }
 
     pub async fn get_by_cid(pool: &SqlitePool, cid: &str) -> CoreResult<Vec<ContentUnit>> {
-
         let rows: Vec<(Option<i64>, String, f64, String, Option<String>, Option<String>,
                        Option<String>, Option<String>, Option<i32>, Option<i32>, i64)> =
             sqlx::query_as(

@@ -290,58 +290,6 @@ impl ContentRepository {
         })
     }
 
-    pub async fn get_contents_by_cids(
-        pool: &SqlitePool,
-        cids: &[String],
-    ) -> CoreResult<Vec<Content>> {
-        if cids.is_empty() {
-            return Ok(vec![]);
-        }
-        let placeholders = cids.iter().map(|_| "?").collect::<Vec<_>>().join(", ");
-        let sql = format!(
-            "SELECT cid, type, nsfw, created_at, updated_at FROM content WHERE cid IN ({})",
-            placeholders
-        );
-        let mut query = sqlx::query_as::<_, (String, String, i32, i64, i64)>(&sql);
-        for cid in cids {
-            query = query.bind(cid);
-        }
-        let rows = query.fetch_all(pool).await?;
-        Ok(rows.into_iter().map(|(cid, type_str, nsfw, created_at, updated_at)| Content {
-            cid,
-            content_type: serde_json::from_str(&format!("\"{}\"", type_str))
-                .unwrap_or(ContentType::Anime),
-            nsfw: nsfw == 1,
-            created_at,
-            updated_at,
-        }).collect())
-    }
-
-    pub async fn get_metas_by_cids(
-        pool: &SqlitePool,
-        cids: &[String],
-    ) -> CoreResult<Vec<Metadata>> {
-        if cids.is_empty() {
-            return Ok(vec![]);
-        }
-        let placeholders = cids.iter().map(|_| "?").collect::<Vec<_>>().join(", ");
-        let sql = format!(
-            "SELECT * FROM metadata WHERE cid IN ({}) \
-         ORDER BY cid, CASE source_name WHEN 'anilist' THEN 0 ELSE 1 END",
-            placeholders
-        );
-        let mut query = sqlx::query(&sql);
-        for cid in cids {
-            query = query.bind(cid);
-        }
-        let rows = query.fetch_all(pool).await?;
-        let mut results = Vec::new();
-        for row in &rows {
-            results.push(Self::map_metadata_row(row)?);
-        }
-        Ok(results)
-    }
-
     pub async fn delete(pool: &SqlitePool, cid: &str) -> CoreResult<()> {
         sqlx::query("DELETE FROM content WHERE cid = ?")
             .bind(cid)

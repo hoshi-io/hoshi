@@ -162,8 +162,8 @@ pub trait TrackerProvider: Send + Sync {
 
     async fn fetch_airing_schedule(
         &self,
-        from_ts: i64,
-        to_ts: i64,
+        _from_ts: i64,
+        _to_ts: i64,
     ) -> CoreResult<Vec<AiringEpisode>> {
         Err(CoreError::NotFound("Airing schedule not supported".into()))
     }

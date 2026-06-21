@@ -404,15 +404,15 @@ globalThis.__settings = Object.freeze({settings});
     )
 }
 
-fn execute_selector(document: &Html, selector_str: &str, base_uri: &str) -> Vec<Value> {
+fn execute_selector(document: &Html, selector_str: &str) -> Vec<Value> {
     let parts: Vec<&str> = selector_str.split(',').map(|s| s.trim()).collect();
     let mut results = vec![];
 
     for part in parts {
-        if let Some(r) = handle_has_contains_selector(document, part, base_uri) {
+        if let Some(r) = handle_has_contains_selector(document, part) {
             results.extend(r);
         } else if part.contains(":contains(") {
-            if let Some(r) = handle_contains_selector(document, part, base_uri) {
+            if let Some(r) = handle_contains_selector(document, part) {
                 results.extend(r);
             }
         } else {
@@ -420,7 +420,7 @@ fn execute_selector(document: &Html, selector_str: &str, base_uri: &str) -> Vec<
             let sel = Selector::parse(&sanitized);
             match sel {
                 Ok(sel) => {
-                    let els: Vec<_> = document.select(&sel).map(|el| element_to_json(el, base_uri)).collect();
+                    let els: Vec<_> = document.select(&sel).map(|el| element_to_json(el)).collect();
                     results.extend(els);
                 }
                 Err(e) => warn!("[SELECTOR] parse error: {:?}", e),
@@ -431,7 +431,7 @@ fn execute_selector(document: &Html, selector_str: &str, base_uri: &str) -> Vec<
     results
 }
 
-fn handle_has_contains_selector(document: &Html, selector: &str, base_uri: &str) -> Option<Vec<Value>> {
+fn handle_has_contains_selector(document: &Html, selector: &str) -> Option<Vec<Value>> {
     let re = Regex::new(
         r"^(.*?):has\(\s*>\s*([a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)*):contains\(([^)]+)\)\s*\)(.*)?$"
     ).unwrap();
@@ -461,7 +461,7 @@ fn handle_has_contains_selector(document: &Html, selector: &str, base_uri: &str)
         }
 
         if suffix.is_empty() {
-            results.push(element_to_json(outer_el, base_uri));
+            results.push(element_to_json(outer_el));
         } else {
             // Apply suffix combinator, e.g. "> div" or " div"
             let suffix = suffix.trim();
@@ -477,13 +477,13 @@ fn handle_has_contains_selector(document: &Html, selector: &str, base_uri: &str)
                 // Direct children only
                 for child in outer_el.children().filter_map(|c| scraper::ElementRef::wrap(c)) {
                     if child_sel.matches(&child) {
-                        results.push(element_to_json(child, base_uri));
+                        results.push(element_to_json(child));
                     }
                 }
             } else {
                 // Descendants
                 for desc in outer_el.select(&child_sel) {
-                    results.push(element_to_json(desc, base_uri));
+                    results.push(element_to_json(desc));
                 }
             }
         }
@@ -492,7 +492,7 @@ fn handle_has_contains_selector(document: &Html, selector: &str, base_uri: &str)
     Some(results)
 }
 
-fn handle_contains_selector(document: &Html, selector: &str, base_uri: &str) -> Option<Vec<Value>> {
+fn handle_contains_selector(document: &Html, selector: &str) -> Option<Vec<Value>> {
     // Match pattern like: "div.summary-heading:contains(Status) + div"
     let re = regex::Regex::new(r"^(.*?):contains\(([^)]+)\)\s*(\+\s*\S+)?$").unwrap();
     let caps = re.captures(selector)?;
@@ -511,7 +511,7 @@ fn handle_contains_selector(document: &Html, selector: &str, base_uri: &str) -> 
         let text: String = el.text().collect();
         if text.contains(contains_text) {
             if sibling.is_empty() {
-                results.push(element_to_json(el, base_uri));
+                results.push(element_to_json(el));
             } else {
                 // Get adjacent sibling (+ selector)
                 let sibling_tag = sibling.trim_start_matches('+').trim();
@@ -526,7 +526,7 @@ fn handle_contains_selector(document: &Html, selector: &str, base_uri: &str) -> 
                                 .map(|e| e.html())
                                 .unwrap_or_default()
                         ).select(&sib_sel).next() {
-                            results.push(element_to_json(el, base_uri));
+                            results.push(element_to_json(el));
                             break;
                         }
                         next = n.next_sibling();
@@ -539,7 +539,7 @@ fn handle_contains_selector(document: &Html, selector: &str, base_uri: &str) -> 
     Some(results)
 }
 
-fn element_to_json(el: scraper::ElementRef, base_uri: &str) -> Value {
+fn element_to_json(el: scraper::ElementRef) -> Value {
     let attrs: HashMap<String, String> = el.value().attrs()
         .map(|(k, v)| (k.to_string(), v.to_string()))
         .collect();
@@ -679,7 +679,7 @@ fn register_native_apis(
      |html: String, selector: String| -> rquickjs::Result<String> {
          use scraper::Html;
          let document = Html::parse_document(&html);
-         let results = execute_selector(&document, &selector, "");
+         let results = execute_selector(&document, &selector);
          Ok(serde_json::to_string(&results).unwrap_or_default())
      },
     )?)?;

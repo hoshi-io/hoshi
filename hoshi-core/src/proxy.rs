@@ -49,7 +49,6 @@ impl ProxyService {
 
         let req_headers = Self::build_upstream_headers(&params, range_header.as_deref())?;
         let is_range_request = range_header.is_some();
-        let t0 = std::time::Instant::now();
 
         let mut last_error = None;
         let mut upstream_res = None;

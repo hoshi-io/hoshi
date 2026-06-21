@@ -311,7 +311,7 @@ impl AniListProvider {
         Some(format!("{:04}-{:02}-{:02}", y, m, d))
     }
 
-    fn to_fuzzy_date(date_str: Option<&str>) -> Value {
+    fn fuzzy_date(date_str: Option<&str>) -> Value {
         if let Some(s) = date_str {
             let parts: Vec<&str> = s.split('-').collect();
             if parts.len() == 3 {
@@ -513,19 +513,6 @@ impl TrackerProvider for AniListProvider {
             client_id:  Some("37027".into()),
             scopes:     vec![],
         }
-    }
-
-    async fn refresh_score_format(&self, access_token: &str) -> CoreResult<Option<String>> {
-        let res = self.graphql(Some(access_token), &json!({
-        "query": "query { Viewer { mediaListOptions { scoreFormat } } }"
-    })).await?;
-
-        Ok(res.get("data")
-            .and_then(|d| d.get("Viewer"))
-            .and_then(|v| v.get("mediaListOptions"))
-            .and_then(|o| o.get("scoreFormat"))
-            .and_then(|v| v.as_str())
-            .map(str::to_string))
     }
 
     async fn validate_and_store_token(&self, access_token: &str, token_type: &str) -> CoreResult<TokenData> {
@@ -780,8 +767,8 @@ impl TrackerProvider for AniListProvider {
             "status":      params.status,
             "progress":    params.progress,
             "score":       params.score.map(|s| denormalize_score(s, fmt)),
-            "startedAt":   Self::to_fuzzy_date(params.start_date.as_deref()),
-            "completedAt": Self::to_fuzzy_date(params.end_date.as_deref()),
+            "startedAt":   Self::fuzzy_date(params.start_date.as_deref()),
+            "completedAt": Self::fuzzy_date(params.end_date.as_deref()),
             "repeat":      params.repeat_count,
             "notes":       params.notes,
             "private":     params.is_private,
@@ -817,7 +804,7 @@ impl TrackerProvider for AniListProvider {
             .and_then(|b| b.as_bool())
             .unwrap_or(false))
     }
-    
+
     fn to_core_metadata(&self, cid: &str, media: &TrackerMedia) -> Metadata {
         let now = Utc::now().timestamp();
 
@@ -905,6 +892,19 @@ impl TrackerProvider for AniListProvider {
         }
 
         Ok(all_episodes)
+    }
+
+    async fn refresh_score_format(&self, access_token: &str) -> CoreResult<Option<String>> {
+        let res = self.graphql(Some(access_token), &json!({
+        "query": "query { Viewer { mediaListOptions { scoreFormat } } }"
+    })).await?;
+
+        Ok(res.get("data")
+            .and_then(|d| d.get("Viewer"))
+            .and_then(|v| v.get("mediaListOptions"))
+            .and_then(|o| o.get("scoreFormat"))
+            .and_then(|v| v.as_str())
+            .map(str::to_string))
     }
 }
 

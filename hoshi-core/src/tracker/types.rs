@@ -24,13 +24,6 @@ pub struct TrackerInfoResponse {
     pub total_entries: Option<i32>,
     pub last_synced_at: Option<i64>,
 }
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SyncResponse {
-    pub success: bool,
-    pub synced: i32,
-    pub errors: Vec<String>,
-}
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -72,12 +65,6 @@ pub struct AddIntegrationRequest {
     pub username: Option<String>,
     pub password: Option<String>,
     pub code_verifier: Option<String>
-}
-
-pub struct IntegrationCredentials {
-    pub access_token: String,
-    pub refresh_token: Option<String>,
-    pub tracker_user_id: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

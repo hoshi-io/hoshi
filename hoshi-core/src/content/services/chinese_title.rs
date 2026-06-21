@@ -49,7 +49,6 @@ impl ChineseTitleService {
         }
     }
 
-    /// Look up the Chinese title for a given AniList ID.
     pub async fn lookup(anilist_id: u32) -> Option<String> {
         cache()
             .read()

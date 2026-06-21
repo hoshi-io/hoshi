@@ -2,7 +2,7 @@ use chrono::Utc;
 use sqlx::SqlitePool;
 
 use crate::error::CoreResult;
-use crate::tracker::types::{IntegrationCredentials, TrackerIntegration, TrackerMapping};
+use crate::tracker::types::{TrackerIntegration, TrackerMapping};
 
 pub struct TrackerRepository;
 
@@ -55,26 +55,6 @@ impl TrackerRepository {
             .await?;
 
         Ok(())
-    }
-
-    pub async fn get_credentials(
-        pool: &SqlitePool,
-        user_id: i32,
-        tracker_name: &str,
-    ) -> CoreResult<Option<IntegrationCredentials>> {
-        let row: Option<(String, Option<String>, String)> = sqlx::query_as(
-            "SELECT access_token, refresh_token, tracker_user_id
-             FROM UserIntegration
-             WHERE user_id = ? AND tracker_name = ?",
-        )
-            .bind(user_id)
-            .bind(tracker_name)
-            .fetch_optional(pool)
-            .await?;
-
-        Ok(row.map(|(access_token, refresh_token, tracker_user_id)| {
-            IntegrationCredentials { access_token, refresh_token, tracker_user_id }
-        }))
     }
 
     pub async fn delete_integration(
@@ -210,28 +190,6 @@ impl TrackerRepository {
             .await?;
 
         Ok(())
-    }
-
-    pub async fn update_mapping_id(
-        pool: &SqlitePool,
-        cid: &str,
-        tracker_name: &str,
-        new_id: &str,
-    ) -> CoreResult<usize> {
-        let now = Utc::now().timestamp();
-        let result = sqlx::query(
-            "UPDATE tracker_mappings
-             SET tracker_id = ?, updated_at = ?
-             WHERE cid = ? AND tracker_name = ?",
-        )
-            .bind(new_id)
-            .bind(now)
-            .bind(cid)
-            .bind(tracker_name)
-            .execute(pool)
-            .await?;
-
-        Ok(result.rows_affected() as usize)
     }
 
     pub async fn delete_mapping(

@@ -67,7 +67,6 @@ impl ExtensionRepository {
     }
 
     pub async fn get_by_cid(pool: &SqlitePool, cid: &str) -> CoreResult<Vec<ExtensionSource>> {
-
         let rows: Vec<(i64, String, String, String, i32, Option<String>, i64, i64)> =
             sqlx::query_as(
                 "SELECT id, cid, extension_name, extension_id, nsfw, language, created_at, updated_at \

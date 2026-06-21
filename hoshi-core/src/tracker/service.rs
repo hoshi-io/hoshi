@@ -7,10 +7,8 @@ use crate::content::models::ContentType;
 use crate::content::services::enrichment::EnrichmentService;
 use crate::error::{CoreError, CoreResult};
 use crate::list::merge::MergeService;
-use crate::list::repository::ListRepository;
-use crate::list::types::{ListEntry, UpsertEntryBody};
 use crate::state::AppState;
-use crate::tracker::provider::{TrackerProvider, UserListEntry};
+use crate::tracker::provider::{TrackerProvider};
 use crate::tracker::repository::TrackerRepository;
 use crate::tracker::types::{AddIntegrationRequest, ImportEvent, IntegrationsResponse, SuccessResponse, TrackerInfoResponse, TrackerIntegration};
 
