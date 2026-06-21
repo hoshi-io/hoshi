@@ -145,7 +145,8 @@ export class MangaReaderState extends BaseReaderState {
             if (extensions.isTachiyomi(currentExt) && rawImages.length > 0) {
                 const firstUrl = typeof rawImages[0] === "string" ? rawImages[0] : rawImages[0].url;
                 try {
-                    tachiyomiHeaders = await extensionsApi.getImageRequestHeaders(currentExt, firstUrl);
+                    tachiyomiHeaders = await extensionsApi.getImageRequestHeaders(currentExt, firstUrl, this.allChapters[this.currentChapterIndex].id);
+                    console.log(tachiyomiHeaders, this.allChapters[this.currentChapterIndex].id)
                 } catch (e) {
                     console.warn("Could not fetch tachiyomi image headers", e);
                 }

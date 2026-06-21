@@ -12,6 +12,7 @@ export type ChapterItem = {
     number?: string | number;
     unitNumber?: string | number;
     title?: string;
+    id?: string;
     [key: string]: unknown;
 };
 

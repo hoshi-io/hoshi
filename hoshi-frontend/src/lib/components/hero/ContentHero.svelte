@@ -113,7 +113,7 @@
         <div class="flex-1 min-w-0 space-y-4" in:fly={{ y: 20, duration: 500, delay: 200 }}>
 
             <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] line-clamp-2">
-                {displayTitle}
+                {displayTitle || "Unknown title"}
             </h1>
 
             <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 text-xs text-muted-foreground font-semibold">

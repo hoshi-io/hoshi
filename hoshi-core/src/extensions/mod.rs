@@ -611,6 +611,7 @@ impl ExtensionManager {
         &self,
         ext_id: &str,
         image_url: &str,
+        chapter_url: &str,
     ) -> CoreResult<HashMap<String, String>> {
         let extension = self.extensions.get(ext_id).ok_or_else(|| {
             CoreError::NotFound("error.extension.not_found".into())
@@ -623,7 +624,7 @@ impl ExtensionManager {
         self.call_typed_function(
             ext_id,
             "getImageRequestHeaders",
-            vec![json!(image_url)],
+            vec![json!(image_url), json!(chapter_url)],
             self.http_client.clone()
         ).await
     }

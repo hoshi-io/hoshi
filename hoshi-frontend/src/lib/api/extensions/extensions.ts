@@ -70,9 +70,10 @@ export const extensionsApi = {
         });
     },
 
-    getImageRequestHeaders: (extensionId: string, imageUrl: string) => {
+    getImageRequestHeaders: (extensionId: string, imageUrl: string, chapterUrl?: string) => {
+        if (!chapterUrl) chapterUrl = "";
         return call<Record<string, string>>({
-            tauri: { cmd: "get_image_request_headers", args: { extensionId, imageUrl } },
+            tauri: { cmd: "get_image_request_headers", args: { extensionId, imageUrl, chapterUrl } },
         });
     },
 };

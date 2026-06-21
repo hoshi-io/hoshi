@@ -127,7 +127,8 @@ pub async fn get_image_request_headers(
     state: State<'_, Arc<AppState>>,
     extension_id: String,
     image_url: String,
+    chapter_url: String,
 ) -> Result<HashMap<String, String>, CoreError> {
     let manager = state.inner().extension_manager.read().await;
-    manager.get_image_request_headers(&extension_id, &image_url).await
+    manager.get_image_request_headers(&extension_id, &image_url, &chapter_url).await
 }

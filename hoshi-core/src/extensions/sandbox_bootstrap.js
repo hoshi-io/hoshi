@@ -102,19 +102,13 @@ globalThis.fetch = async function(url, options) {
     if (raw.error) {
         throw new TypeError("fetch failed: " + raw.error);
     }
-
-    if (raw.cookies) {
-        for (const [k, v] of Object.entries(raw.cookies)) {
-            _cookieStore.set(k, v);
-        }
-        state?.set?.("cookies", Object.fromEntries(_cookieStore));
-    }
-
+    
     const responseBody = raw.body;
     return {
         ok:     raw.ok,
         status: raw.status,
         url:    url,
+        cookies: raw.cookies,
         headers: {
             get: (_name) => null,
             has: (_name) => false,
@@ -155,13 +149,6 @@ globalThis.fetchSync = function(url, options) {
     const raw = JSON.parse(rawJson);
 
     if (raw.error) throw new TypeError("fetchSync failed: " + raw.error);
-
-    if (raw.cookies) {
-        for (const [k, v] of Object.entries(raw.cookies)) {
-            _cookieStore.set(k, v);
-        }
-        state?.set?.("cookies", Object.fromEntries(_cookieStore));
-    }
 
     return {
         text: raw.body,

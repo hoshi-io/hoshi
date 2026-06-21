@@ -408,29 +408,88 @@ fn execute_selector(document: &Html, selector_str: &str, base_uri: &str) -> Vec<
     let parts: Vec<&str> = selector_str.split(',').map(|s| s.trim()).collect();
     let mut results = vec![];
 
-
     for part in parts {
-        if part.contains(":contains(") {
-            if let Some(contains_results) = handle_contains_selector(document, part, base_uri) {
-                results.extend(contains_results);
-            } else {
+        if let Some(r) = handle_has_contains_selector(document, part, base_uri) {
+            results.extend(r);
+        } else if part.contains(":contains(") {
+            if let Some(r) = handle_contains_selector(document, part, base_uri) {
+                results.extend(r);
             }
         } else {
             let sanitized = sanitize_selector(part);
             let sel = Selector::parse(&sanitized);
             match sel {
                 Ok(sel) => {
-                    let count = document.select(&sel).count();
-                    for el in document.select(&sel) {
-                        results.push(element_to_json(el, base_uri));
-                    }
+                    let els: Vec<_> = document.select(&sel).map(|el| element_to_json(el, base_uri)).collect();
+                    results.extend(els);
                 }
-                Err(e) => eprintln!("[SELECTOR] parse error: {:?}", e),
+                Err(e) => warn!("[SELECTOR] parse error: {:?}", e),
             }
         }
     }
 
     results
+}
+
+fn handle_has_contains_selector(document: &Html, selector: &str, base_uri: &str) -> Option<Vec<Value>> {
+    let re = Regex::new(
+        r"^(.*?):has\(\s*>\s*([a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)*):contains\(([^)]+)\)\s*\)(.*)?$"
+    ).unwrap();
+    let caps = re.captures(selector)?;
+
+    let outer_sel_str = caps.get(1).map_or("*", |m| m.as_str()).trim();
+    let inner_tag     = caps.get(2).map_or("*", |m| m.as_str()).trim();
+    let contains_text = caps.get(3).map_or("", |m| m.as_str()).trim();
+    let suffix        = caps.get(4).map_or("", |m| m.as_str()).trim();
+
+    let outer_sel_str = if outer_sel_str.is_empty() { "*" } else { outer_sel_str };
+    let outer_sel = Selector::parse(&sanitize_selector(outer_sel_str)).ok()?;
+    let inner_sel = Selector::parse(&sanitize_selector(inner_tag)).ok()?;
+
+    let mut results = vec![];
+
+    for outer_el in document.select(&outer_sel) {
+        // Check if it has a direct child matching inner_tag that contains the text
+        let has_match = outer_el.children()
+            .filter_map(|c| scraper::ElementRef::wrap(c))
+            .any(|child| {
+                inner_sel.matches(&child) && child.text().collect::<String>().contains(contains_text)
+            });
+
+        if !has_match {
+            continue;
+        }
+
+        if suffix.is_empty() {
+            results.push(element_to_json(outer_el, base_uri));
+        } else {
+            // Apply suffix combinator, e.g. "> div" or " div"
+            let suffix = suffix.trim();
+            let (combinator, child_sel_str) = if suffix.starts_with('>') {
+                (">", suffix.trim_start_matches('>').trim())
+            } else {
+                ("", suffix)
+            };
+
+            let child_sel = Selector::parse(&sanitize_selector(child_sel_str)).ok()?;
+
+            if combinator == ">" {
+                // Direct children only
+                for child in outer_el.children().filter_map(|c| scraper::ElementRef::wrap(c)) {
+                    if child_sel.matches(&child) {
+                        results.push(element_to_json(child, base_uri));
+                    }
+                }
+            } else {
+                // Descendants
+                for desc in outer_el.select(&child_sel) {
+                    results.push(element_to_json(desc, base_uri));
+                }
+            }
+        }
+    }
+
+    Some(results)
 }
 
 fn handle_contains_selector(document: &Html, selector: &str, base_uri: &str) -> Option<Vec<Value>> {

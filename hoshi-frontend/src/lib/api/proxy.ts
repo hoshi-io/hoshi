@@ -9,6 +9,7 @@ export interface ProxyParams {
 
 export function buildTauriProxyUrl(params: ProxyParams): string {
     const osType = getOsType();
+
     const proxyBaseUrl =
         osType === "linux"
             ? "proxy://localhost"
@@ -16,18 +17,18 @@ export function buildTauriProxyUrl(params: ProxyParams): string {
 
     const query = new URLSearchParams();
 
-    query.set("url", params.url);
+    query.set("url", params.url.trim());
 
-    if (params.referer) {
-        query.set("referer", params.referer);
+    if (params.referer?.trim()) {
+        query.set("referer", params.referer.trim());
     }
 
-    if (params.origin) {
-        query.set("origin", params.origin);
+    if (params.origin?.trim()) {
+        query.set("origin", params.origin.trim());
     }
 
-    if (params.userAgent) {
-        query.set("userAgent", params.userAgent);
+    if (params.userAgent?.trim()) {
+        query.set("userAgent", params.userAgent.trim());
     }
 
     return `${proxyBaseUrl}?${query.toString()}`;
