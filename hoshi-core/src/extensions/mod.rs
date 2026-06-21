@@ -323,11 +323,11 @@ impl ExtensionManager {
                 }
             }
             Err(e) => {
-                debug!(
-                    ext = %prefixed_id,
-                    error = ?e,
-                    "__getTachiyomiSettings failed; skipping preference discovery"
-                );
+                let _ = self.uninstall_extension(&prefixed_id).await;
+
+                return Err(CoreError::Parse(format!(
+                    "Failed to discover extension preferences: {e}"
+                )));
             }
         }
 
