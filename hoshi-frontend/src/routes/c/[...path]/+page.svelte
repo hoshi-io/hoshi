@@ -202,6 +202,8 @@
                                 cid={detail.fullContent.content.cid}
                                 contentType={detail.fullContent.content.contentType}
                                 progress={chapterProgress}
+                                isDerived={detail.isDerived}
+                                source={detail.source || detail.fullContent.metadata[0].sourceName}
                         />
                     {/if}
                 </section>

@@ -35,6 +35,8 @@ export class ContentDetailState {
     cid = $derived(this.pathParts.length === 1 ? this.pathParts[0] : "");
     headers: Record<string, string> | undefined;
 
+    isDerived = $derived(this.fullContent?.trackerMappings.length == 0)
+
     constructor() {
         $effect(() => {
             if (this.cid) {

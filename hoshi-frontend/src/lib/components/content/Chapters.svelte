@@ -12,16 +12,22 @@
         cid,
         contentType,
         progress = [],
+        isDerived,
+        source
     }: {
         cid: string,
         contentType: string,
         progress?: ChapterProgress[],
+        isDerived: boolean,
+        source: string
     } = $props();
 
     const ARC_SIZE = 24;
     const basePath = $derived(contentType === "novel" ? "/read-novel" : "/read");
 
-    let selectedExtensionName = $state("");
+    let selectedExtensionName = $derived(
+        isDerived ? source : ""
+    );
     let chapters = $state<any[]>([]);
     let loading = $state(false);
     let error = $state<CoreError | null>(null);
@@ -152,7 +158,7 @@
                                 bind:value={selectedExtensionName}
                                 items={extensionItems}
                                 placeholder={i18n.t('content.select_extension')}
-                                class="bg-muted/30 border-border/20 hover:bg-muted/50 transition-colors rounded-xl font-medium capitalize text-xs h-8"
+                                class="bg-muted/30 border-border/20 hover:bg-muted/50 transition-colors rounded-sm font-medium capitalize text-xs h-8"
                         />
                     </div>
                 {/if}
@@ -162,7 +168,7 @@
                             bind:value={selectedArc}
                             items={arcItems}
                             placeholder="..."
-                            class="w-auto min-w-[7rem] bg-muted/30 border-border/20 hover:bg-muted/50 transition-colors rounded-xl font-medium text-xs h-8"
+                            class="w-auto min-w-[7rem] bg-muted/30 border-border/20 hover:bg-muted/50 transition-colors rounded-sm font-medium text-xs h-8"
                     />
                 {/if}
             </div>
@@ -171,7 +177,7 @@
 
     <!-- Content Area -->
     {#if extensionItems.length === 0}
-        <div class="flex flex-col items-center justify-center gap-3 py-14 rounded-2xl border border-border/20 bg-muted/5">
+        <div class="flex flex-col items-center justify-center gap-3 py-14 rounded-sm border border-border/20 bg-muted/5">
             <BookOpen class="w-8 h-8 text-muted-foreground/20" />
             <div class="text-center space-y-0.5">
                 <p class="text-sm font-semibold text-muted-foreground/60">{i18n.t('content.no_sources')}</p>
@@ -181,17 +187,17 @@
     {:else if loading}
         <div class="flex flex-col gap-1.5">
             {#each Array(8) as _}
-                <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border/20 bg-muted/10">
-                    <Skeleton class="shrink-0 w-9 h-9 rounded-lg" />
+                <div class="flex items-center gap-3 px-3 py-2.5 rounded-sm border border-border/20 bg-muted/10">
+                    <Skeleton class="shrink-0 w-9 h-9 rounded-sm" />
                     <div class="flex-1 space-y-1.5">
-                        <Skeleton class="h-3.5 w-3/5 rounded-md" />
-                        <Skeleton class="h-2.5 w-1/4 rounded-md opacity-40" />
+                        <Skeleton class="h-3.5 w-3/5 rounded-sm" />
+                        <Skeleton class="h-2.5 w-1/4 rounded-sm opacity-40" />
                     </div>
                 </div>
             {/each}
         </div>
     {:else if error}
-        <div class="flex flex-col items-center justify-center gap-3 py-14 rounded-2xl border border-destructive/10 bg-destructive/5">
+        <div class="flex flex-col items-center justify-center gap-3 py-14 rounded-sm border border-destructive/10 bg-destructive/5">
             <AlertCircle class="w-8 h-8 text-destructive/40" />
             <div class="text-center space-y-0.5">
                 <p class="text-sm font-semibold text-muted-foreground/60">{i18n.t(error.key)}</p>
@@ -201,7 +207,7 @@
             </button>
         </div>
     {:else if chapters.length === 0}
-        <div class="flex flex-col items-center justify-center gap-3 py-14 rounded-2xl border border-border/20 bg-muted/5">
+        <div class="flex flex-col items-center justify-center gap-3 py-14 rounded-sm border border-border/20 bg-muted/5">
             <SearchX class="w-8 h-8 text-muted-foreground/20" />
             <div class="text-center space-y-0.5">
                 <p class="text-sm font-semibold text-muted-foreground/60">{i18n.t('content.no_chapters')}</p>
@@ -221,7 +227,7 @@
                 <a
                         use:scrollIfResume={isResume}
                         href={url}
-                        class="group flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all duration-200
+                        class="group flex items-center gap-3 px-3 py-2.5 rounded-sm border transition-all duration-200
                         {isRead
                             ? 'border-border/10 bg-muted/5 opacity-45 hover:opacity-70 hover:bg-muted/15 hover:border-border/30'
                             : isResume
