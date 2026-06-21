@@ -84,7 +84,7 @@
 <div class="bg-background text-foreground flex flex-col h-full w-full">
     <header
             class="z-40 bg-background/95 backdrop-blur-md border-b border-border/50 p-2 shadow-sm shrink-0 min-h-[60px] flex items-center justify-between gap-2
-    {!layoutState.isMobile ? 'pt-9' : 'pt-safe'}"
+    {!layoutState.isMobile ? 'pt-13' : 'pt-safe'}"
     >
         <div class="flex items-center gap-1.5 sm:gap-3 overflow-hidden flex-1">
             <Button variant="ghost" size="icon" href={`/c/${readerState.cid}`} class="rounded-full size-9 shrink-0">

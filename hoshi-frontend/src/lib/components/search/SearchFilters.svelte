@@ -200,7 +200,7 @@
         ]}
                         onValueChange={handleFilterChange}
                         placeholder={i18n.t('search.any_status')}
-                        class="bg-muted/20 border-none h-1 rounded-sm font-semibold"
+                        class="bg-muted/20 border-none h-11 rounded-sm font-semibold"
                 />
             </div>
 

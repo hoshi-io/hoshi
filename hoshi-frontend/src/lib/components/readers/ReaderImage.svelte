@@ -58,11 +58,132 @@
             }
         }
     });
+
+    const MIN_SCALE = 1;
+    const MAX_SCALE = 4;
+    const DOUBLE_TAP_SCALE = 2.2;
+    const DOUBLE_TAP_WINDOW = 280; // ms
+
+    let scale = $state(1);
+    let panX = $state(0);
+    let panY = $state(0);
+    let isGesturing = $state(false);
+
+    let wrapperEl: HTMLDivElement;
+
+    // plain (non-reactive) gesture bookkeeping
+    let pinchStartDist = 0;
+    let pinchStartScale = 1;
+    let panOriginX = 0;
+    let panOriginY = 0;
+    let panStartTouchX = 0;
+    let panStartTouchY = 0;
+    let lastTapTime = 0;
+
+    function dist(t: TouchList) {
+        const dx = t[0].clientX - t[1].clientX;
+        const dy = t[0].clientY - t[1].clientY;
+        return Math.hypot(dx, dy);
+    }
+
+    function clamp(v: number, lo: number, hi: number) {
+        return Math.min(hi, Math.max(lo, v));
+    }
+
+    function clampPan() {
+        if (!wrapperEl) return;
+        const rect = wrapperEl.getBoundingClientRect();
+        const maxX = Math.max(0, (rect.width * (scale - 1)) / 2);
+        const maxY = Math.max(0, (rect.height * (scale - 1)) / 2);
+        panX = clamp(panX, -maxX, maxX);
+        panY = clamp(panY, -maxY, maxY);
+    }
+
+    function resetZoom() {
+        scale = 1;
+        panX = 0;
+        panY = 0;
+    }
+
+    function handleTouchStart(e: TouchEvent) {
+        if (e.touches.length === 2) {
+            e.stopPropagation();
+            isGesturing = true;
+            pinchStartDist = dist(e.touches);
+            pinchStartScale = scale;
+        } else if (e.touches.length === 1 && scale > 1) {
+            e.stopPropagation();
+            isGesturing = true;
+            panOriginX = panX;
+            panOriginY = panY;
+            panStartTouchX = e.touches[0].clientX;
+            panStartTouchY = e.touches[0].clientY;
+        }
+    }
+
+    function handleTouchMove(e: TouchEvent) {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            e.stopPropagation();
+            const newDist = dist(e.touches);
+            scale = clamp(pinchStartScale * (newDist / pinchStartDist), MIN_SCALE, MAX_SCALE);
+            clampPan();
+        } else if (e.touches.length === 1 && isGesturing && scale > 1) {
+            e.preventDefault();
+            e.stopPropagation();
+            panX = panOriginX + (e.touches[0].clientX - panStartTouchX);
+            panY = panOriginY + (e.touches[0].clientY - panStartTouchY);
+            clampPan();
+        }
+    }
+
+    function handleTouchEnd(e: TouchEvent) {
+        if (e.touches.length === 0) {
+            const wasGesturing = isGesturing;
+            isGesturing = false;
+
+            if (scale <= 1.02) {
+                resetZoom();
+            }
+
+            if (!wasGesturing || scale === 1) {
+                const now = Date.now();
+                if (now - lastTapTime < DOUBLE_TAP_WINDOW) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (scale > 1) {
+                        resetZoom();
+                    } else {
+                        scale = DOUBLE_TAP_SCALE;
+                    }
+                    lastTapTime = 0;
+                } else {
+                    lastTapTime = now;
+                }
+            }
+        }
+    }
+
+    function handleClickCapture(e: MouseEvent) {
+        // while zoomed, swallow clicks so the reader doesn't treat
+        // a pan-release as a "tap zone" page turn
+        if (scale > 1) {
+            e.stopPropagation();
+        }
+    }
 </script>
 
 <div
+        bind:this={wrapperEl}
         class="relative {isPaged ? 'flex items-center justify-center' : ''}"
         style={wrapperStyle}
+        style:touch-action={isPaged ? 'none' : 'pan-y'}
+        style:overflow="hidden"
+        ontouchstart={handleTouchStart}
+        ontouchmove={handleTouchMove}
+        ontouchend={handleTouchEnd}
+        ontouchcancel={handleTouchEnd}
+        onclickcapture={handleClickCapture}
 >
     {#if status === "loading" || status === "error"}
         <div class="absolute inset-0 flex items-center justify-center">
@@ -81,6 +202,9 @@
             loading="lazy"
             class="transition-opacity duration-500 {status === 'loaded' ? 'opacity-100' : 'opacity-0'}"
             style={imgStyle}
+            style:transform="scale({scale}) translate({panX / scale}px, {panY / scale}px)"
+            style:transform-origin="center center"
+            style:transition={isGesturing ? 'none' : 'transform 0.2s ease'}
             onload={() => readerState.setImgStatus(imgEntry.id, "loaded")}
             onerror={() => readerState.setImgStatus(imgEntry.id, "error")}
             use:readerState.resolveBlobSrc={imgEntry}
