@@ -35,7 +35,7 @@
         >
             <Carousel.Content class="-ml-3 md:-ml-5 py-2 md:py-10">
                 {#each items as n (n.cid)}
-                    <Carousel.Item class="pl-3 md:pl-5 basis-[40%] sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 2xl:basis-[14%]">
+                    <Carousel.Item class="pl-3 md:pl-5 basis-[55%] sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 2xl:basis-[14%]">
                         <CardWrapper {...n} />
                     </Carousel.Item>
                 {/each}
