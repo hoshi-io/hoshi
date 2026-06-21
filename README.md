@@ -28,7 +28,8 @@
 
 -  **Smart Tracking:** Sync your library with AniList, MAL, or Kitsu. You can keep everything local if you prefer. Duplicate entries are automatically detected and merged into a single item.
 -  **BYOC Extensions:** Bring your own content by adding marketplace URLs. Browse and install extensions directly from the app.
--  **Advanced Readers & Player:** Includes a custom video player, along with custom, highly configurable readers for manga and light novels.
+-  **Compatibility Layers:** Run LNReader, Tachiyomi, and Aniyomi extensions natively inside Hoshi, no Android required. See the [compatibility docs](https://hoshi-io.github.io/docs/guide/compatibility) for details.
+-  **Advanced Readers & Player:** Includes a custom video player with optional MPV support, along with custom, highly configurable readers for manga and light novels.
 -  **Release Schedule:** Stay up to date with a built-in calendar that shows upcoming anime releases and airing episodes at a glance.
 -  **Customization:** Personalize the experience with themes and adjustable accent colors to match your style.
 -  **15+ Languages:** Fully localized interface with support for 15+ languages (AI translations).
