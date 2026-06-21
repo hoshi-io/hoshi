@@ -47,7 +47,10 @@
                     searchState.searchMode = "tracker";
                 }
             }
-            handleSearch();
+
+            if (!searchState.hasSearched) {
+                handleSearch();
+            }
         });
     });
 
