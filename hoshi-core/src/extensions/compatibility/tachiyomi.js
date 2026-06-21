@@ -252,6 +252,26 @@ globalThis.StringsKt = {
         const result = (limit && limit > 0) ? parts.slice(0, limit) : parts;
         return _makeKotlinList(result);
     },
+    substringBeforeLast$default(str, delimiter, missingDelimiterValue, mask, marker) {
+        if (str == null) return str;
+
+        if ((mask & 2) !== 0) {
+            missingDelimiterValue = str;
+        }
+
+        const idx = String(str).lastIndexOf(String(delimiter));
+
+        if (idx < 0) {
+            return missingDelimiterValue;
+        }
+
+        return String(str).substring(0, idx);
+    },
+
+    trimStart(str) {
+        if (str == null) return str;
+        return String(str).replace(/^\s+/, "");
+    },
 
     startsWith(str, prefix, startIndex = 0) {
         return str.startsWith(prefix, startIndex) ? 1 : 0;
@@ -360,12 +380,16 @@ globalThis.StringsKt = {
     replace$default(str, oldValue, newValue, ignoreCase, mask, marker) {
         if (str == null) return str;
 
+        str = String(str);
+        oldValue = String(oldValue);
+        newValue = String(newValue);
+
         if ((mask & 4) !== 0) {
             ignoreCase = false;
         }
 
         if (ignoreCase) {
-            const escapedOld = String(oldValue).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const escapedOld = oldValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             return str.replace(new RegExp(escapedOld, 'gi'), newValue);
         }
 
@@ -2988,6 +3012,47 @@ Filter.Sort.Selection = class Selection {
     component2()   { return this.ascending; }
 };
 
+globalThis.CheckBoxPreference = class CheckBoxPreference {
+    constructor(context = null) {
+        this.context = context;
+        this._changeListener = null;
+        this.key = "";
+        this.title = "";
+        this.summary = "";
+        this.summaryOn = "";
+        this.summaryOff = "";
+        this.defaultValue = false;
+        this.checked = false;
+    }
+
+    setOnPreferenceChangeListener(listener) {
+        this._changeListener = listener;
+        return this;
+    }
+
+    getOnPreferenceChangeListener() {
+        return this._changeListener;
+    }
+
+    setKey(v) { this.key = v; }
+    getKey() { return this.key; }
+
+    setTitle(v) { this.title = v; }
+    getTitle() { return this.title; }
+
+    setSummary(v) { this.summary = v; }
+    getSummary() { return this.summary; }
+
+    setSummaryOn(v) { this.summaryOn = v; }
+    setSummaryOff(v) { this.summaryOff = v; }
+
+    setDefaultValue(v) { this.defaultValue = !!v; }
+    getDefaultValue() { return this.defaultValue; }
+
+    setChecked(v) { this.checked = !!v; }
+    isChecked() { return this.checked ? 1 : 0; }
+};
+
 globalThis["Filter_Header"]    = Filter.Header;
 globalThis["AnimeFilter_Header"] = Filter.Header;
 globalThis["Filter$Header"] = Filter.Header;
@@ -3866,6 +3931,72 @@ globalThis.MapsKt = {
         return Array.from(source);
     },
 };
+
+globalThis.LinkedHashSet = class LinkedHashSet extends Set {
+    constructor(init) {
+        super();
+
+        if (init == null || typeof init === "number") {
+            return;
+        }
+
+        if (Symbol.iterator in Object(init)) {
+            for (const v of init) {
+                this.add(v);
+            }
+        }
+    }
+
+    add(value) {
+        super.add(value);
+        return this;
+    }
+
+    contains(value) {
+        return this.has(value) ? 1 : 0;
+    }
+
+    remove(value) {
+        const existed = this.has(value);
+        this.delete(value);
+        return existed ? 1 : 0;
+    }
+
+    isEmpty() {
+        return this.size === 0 ? 1 : 0;
+    }
+
+    size() {
+        return super.size;
+    }
+
+    iterator() {
+        const arr = [...this];
+        let i = 0;
+
+        return {
+            hasNext: () => (i < arr.length ? 1 : 0),
+            next: () => arr[i++],
+        };
+    }
+
+    addAll(collection) {
+        for (const v of collection) {
+            this.add(v);
+        }
+        return this;
+    }
+
+    clear() {
+        super.clear();
+    }
+
+    toArray() {
+        return [...this];
+    }
+};
+
+globalThis.HashSet = globalThis.LinkedHashSet;
 
 globalThis.FunctionReferenceImpl = class FunctionReferenceImpl {
     constructor(
