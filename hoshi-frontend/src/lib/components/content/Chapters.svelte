@@ -33,6 +33,8 @@
     let error = $state<CoreError | null>(null);
     let selectedArc = $state("0");
 
+    let loadToken = 0;
+
     const progressMap = $derived(
         new Map(progress.map(p => [p.chapter, p]))
     );
@@ -118,17 +120,21 @@
     });
 
     async function loadChapters(extId: string) {
+        const token = ++loadToken;
         loading = true;
         error = null;
         try {
             const res = await contentApi.getItems(cid, extId);
+            if (token !== loadToken) return; // a newer extension switch happened, drop this
+
             chapters = (Array.isArray(res) ? res : []).sort((a, b) =>
                 (a.number ?? a.unitNumber) - (b.number ?? b.unitNumber)
             );
         } catch (e: any) {
+            if (token !== loadToken) return;
             error = e.key ? e : { key: 'content.failed_load' };
         } finally {
-            loading = false;
+            if (token === loadToken) loading = false;
         }
     }
 

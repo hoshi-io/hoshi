@@ -35,6 +35,8 @@ class SearchState {
 
     isLoading = $state(false);
 
+    private searchToken = 0;
+
     displayResults = $derived(this.results);
 
     nextPage() {
@@ -73,7 +75,7 @@ class SearchState {
     }
 
     async search() {
-        if (this.isLoading) return;
+        const token = ++this.searchToken;
         this.isLoading = true;
         this.error = null;
 
@@ -82,12 +84,14 @@ class SearchState {
         if (!this.query.trim() && !this.status && !this.genre && !this.format && !this.nsfw) {
             try {
                 const res = await contentApi.getTrending(this.contentType);
-                this.results = (res || []).map(normalizeFullContent);
+                if (token !== this.searchToken) return; // a newer search has since started, drop this
 
+                this.results = (res || []).map(normalizeFullContent);
             } catch (e) {
+                if (token !== this.searchToken) return;
                 this.error = e as CoreError;
             } finally {
-                this.isLoading = false;
+                if (token === this.searchToken) this.isLoading = false;
             }
             return;
         }
@@ -105,6 +109,8 @@ class SearchState {
                 sort: this.sort || undefined,
                 tracker: this.tracker,
             });
+
+            if (token !== this.searchToken) return; // a newer search has since started, drop this
 
             const normalized = res.data.map(item =>
                 normalizeTrackerMedia(item, this.tracker)
@@ -127,15 +133,16 @@ class SearchState {
 
             this.hasSearched = true;
         } catch (e) {
+            if (token !== this.searchToken) return;
             this.error = e as CoreError;
             console.error(e);
         } finally {
-            this.isLoading = false;
+            if (token === this.searchToken) this.isLoading = false;
         }
     }
 
     async extensionSearch() {
-        if (this.isLoading) return;
+        const token = ++this.searchToken;
         this.isLoading = true;
         this.error = null;
 
@@ -157,6 +164,8 @@ class SearchState {
                 this.page
             );
 
+            if (token !== this.searchToken) return; // a newer search has since started, drop this
+
             const normalized = res.map(item =>
                 normalizeExtensionResult(item, this.selectedExtension, this.contentType)
             );
@@ -169,6 +178,7 @@ class SearchState {
                         this.selectedExtension,
                         normalized[0].cover
                     );
+                    if (token !== this.searchToken) return;
                 } catch (e) {
                     console.warn("Could not fetch image headers", e);
                 }
@@ -187,10 +197,11 @@ class SearchState {
 
             this.hasSearched = true;
         } catch (e) {
+            if (token !== this.searchToken) return;
             this.error = e as CoreError;
             console.error(e);
         } finally {
-            this.isLoading = false;
+            if (token === this.searchToken) this.isLoading = false;
         }
     }
 }

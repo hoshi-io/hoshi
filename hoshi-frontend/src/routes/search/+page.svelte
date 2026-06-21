@@ -26,7 +26,7 @@
         if (searchTimeout) clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             handleSearch();
-        }, 450);
+        }, 800);
     };
 
     $effect(() => {
