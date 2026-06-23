@@ -23,6 +23,8 @@
     import LazyCardGrid from "@/components/card/LazyCardGrid.svelte";
     import {getCardScore, getCardScoreIsStars} from "@/utils/normalize";
 
+    const isMobile = $derived(layoutState.isMobile);
+
     $effect(() => {
         layoutState.title = listStore.isMobileSearchActive ? "" : i18n.t('list.title');
         layoutState.showBack = false;
@@ -205,7 +207,7 @@
     <title>{i18n.t('list.title')}</title>
 </svelte:head>
 
-<main class="bg-background px-4 md:px-8 lg:pl-32 lg:pr-12 lg:pt-20 w-full max-w-[2000px] mx-auto space-y-10 pt-5">
+<main class="bg-background px-4 md:px-8 lg:pl-32 lg:pr-12 lg:pt-20 w-full max-w-[2000px] mx-auto space-y-10 pt-1">
     <header class="hidden lg:flex lg:flex-row lg:items-start justify-between gap-6 border-b border-border/40 pb-8 w-full">
         <div class="flex items-center gap-5 w-full">
             <Avatar.Root class="h-12 w-12 md:h-16 md:w-16 border border-border/50 shadow-sm shrink-0">
@@ -246,6 +248,21 @@
         </aside>
 
         <section class="flex-1 min-w-0">
+            <div class="flex lg:hidden overflow-x-auto gap-2 pb-4 mb-2 hide-scrollbar snap-x w-full">
+                {#each statusOptions as option}
+                    <button
+                            type="button"
+                            class="px-8 py-4 rounded-sm text-xs font-bold whitespace-nowrap transition-all snap-center border select-none duration-150 {listStore.activeStatus === option.value ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-card text-muted-foreground border-border/60 hover:bg-muted/50'}"
+                            onclick={() => listStore.activeStatus = option.value}
+                    >
+                        {option.label}
+                        <span class="ml-1 text-[10px] font-mono font-normal opacity-70 tabular-nums">
+                            ({statusCounts[option.value] ?? 0})
+                        </span>
+                    </button>
+                {/each}
+            </div>
+
             {#if listStore.isLoading}
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-x-4 gap-y-6 md:gap-x-5 md:gap-y-8 mb-10">
                     {#each Array(14) as _}
@@ -283,25 +300,19 @@
                         <CardWrapper {...item.card} disablePreview={true}>
                             {#snippet overlay()}
                                 <div class="absolute inset-0 p-2 flex flex-col justify-between pointer-events-none select-none">
-                                    <!-- Top Row: Status, Privacy, and Actions -->
                                     <div class="flex items-start justify-between w-full gap-2">
-                                        <!-- Status & Privacy Badges -->
                                         <div class="flex flex-wrap gap-1.5 items-center max-w-[75%]">
-                                            <!-- Status Badge -->
                                             <span class="inline-flex items-center gap-1.5 bg-zinc-950/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide text-zinc-200 border border-white/5 shadow-sm">
                         <span class="h-1.5 w-1.5 rounded-full" class:bg-emerald-500={item.original.status === 'COMPLETED'} class:bg-sky-500={item.original.status === 'CURRENT'} class:bg-amber-500={item.original.status === 'PAUSED'} class:bg-rose-500={item.original.status === 'DROPPED'} class:bg-purple-500={item.original.status === 'REPEATING'} class:bg-zinc-400={item.original.status === 'PLANNING'}></span>
                                                 {item.original.status}
                     </span>
 
-                                            <!-- Private Indicator -->
                                             {#if item.original.isPrivate}
                                                 <div class="bg-zinc-950/70 backdrop-blur-md p-1 rounded-md text-zinc-400 border border-white/5 shadow-sm" title="Private Entry">
-                                                    <!-- Simple SVG Lock (Replace with your icon library lock if preferred) -->
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                                                 </div>
                                             {/if}
 
-                                            <!-- Repeat Tracker -->
                                             {#if item.original.repeatCount > 0}
                         <span class="inline-flex items-center gap-1 bg-purple-950/50 backdrop-blur-md px-1.5 py-0.5 rounded-md text-[10px] font-bold text-purple-300 border border-purple-500/20 shadow-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
