@@ -7,6 +7,7 @@ import { appConfig } from "@/stores/config.svelte.js";
 import { progressApi } from "@/api/progress/progress";
 import { listApi } from "@/api/list/list";
 import type { CoreError } from "@/api/client";
+import {listStore} from "@/app/list.svelte";
 
 export type ChapterItem = {
     number?: string | number;
@@ -102,6 +103,8 @@ export abstract class BaseReaderState {
             listApi
                 .upsert({ cid: this.cid, status: "CURRENT", progress: this.chapterNumber })
                 .catch(e => console.error("List sync failed", e));
+
+            listStore.updateEntryProgressLocal(this.cid, this.chapterNumber, "CURRENT");
         }
     }
 

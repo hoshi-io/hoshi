@@ -17,6 +17,7 @@ import type { FullContent } from "@/api/content/types";
 import { invoke } from "@tauri-apps/api/core";
 
 import type { Subtitle, Chapter } from "@/components/player/types";
+import {listStore} from "@/app/list.svelte";
 
 export class PlayerState {
     params      = $derived(page.params as Record<string, string>);
@@ -323,6 +324,7 @@ export class PlayerState {
                         ? "COMPLETED"
                         : "CURRENT";
                 listApi.upsert({ cid: this.cid, status, progress: this.epNumber }).catch(() => {});
+                listStore.updateEntryProgressLocal(this.cid, this.epNumber, status);
             }
         }
     }

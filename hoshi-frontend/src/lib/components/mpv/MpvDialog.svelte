@@ -12,7 +12,9 @@
     import { Switch } from '@/components/ui/switch';
     import { Label } from '@/components/ui/label';
     import { Button } from '@/components/ui/button';
-    import {i18n} from "@/stores/i18n.svelte";
+    import { i18n } from "@/stores/i18n.svelte";
+    import { homeState } from '@/app/home.svelte.js';
+    import { listStore } from '@/app/list.svelte.js';
 
     let { cid, epNumber, animeTitle, epTitle, totalEpisodes = 0, isNsfw = false, coverImage = null, startTime = 0, open = $bindable() }: {
         cid: string;
@@ -26,6 +28,9 @@
         open: boolean;
     } = $props();
 
+    let currentEpNumber = $state(epNumber);
+    let currentStartTime = $state(startTime);
+
     let selectedExtId = $state(extensions.anime[0]?.id ?? "");
     let selectedServer = $state("");
     let isDub = $state(false);
@@ -38,6 +43,21 @@
 
     const extItems = $derived(extensions.anime.map(e => ({ value: e.id, label: e.name })));
     const serverItems = $derived(extSettings?.episodeServers?.map(s => ({ value: s, label: s })) ?? []);
+
+    $effect(() => {
+        if (open) {
+            currentEpNumber = epNumber;
+            currentStartTime = startTime;
+            launched = false;
+            error = null;
+        }
+    });
+
+    let currentEpTitle = $derived(
+        currentEpNumber === epNumber
+            ? epTitle
+            : i18n.t("watch.episode_number", { num: currentEpNumber })
+    );
 
     $effect(() => {
         const extId = selectedExtId;
@@ -62,7 +82,7 @@
         error = null;
 
         try {
-            const playRes = await extensions.resolveStream(cid, epNumber, selectedExtId, {
+            const playRes = await extensions.resolveStream(cid, currentEpNumber, selectedExtId, {
                 server: selectedServer || undefined,
                 category: isDub ? 'dub' : 'sub',
             });
@@ -72,9 +92,9 @@
 
             await invoke('launch_intent', {
                 url,
-                title: `${animeTitle} - ${epTitle}`,
+                title: `${animeTitle} - ${currentEpTitle}`,
                 subs,
-                position: startTime > 0 ? Math.floor(startTime * 1000) : undefined,
+                position: currentStartTime > 0 ? Math.floor(currentStartTime * 1000) : undefined,
             });
 
             launched = true;
@@ -87,31 +107,47 @@
     }
 
     async function markAsWatched() {
-        const status = totalEpisodes > 0 && epNumber >= totalEpisodes ? 'COMPLETED' : 'CURRENT';
-        await Promise.all([
-            progressApi.updateAnimeProgress({
-                cid,
-                episode: epNumber,
-                timestampSeconds: startTime,
-                completed: true,
-            }).catch(console.error),
-            listApi.upsert({ cid, status, progress: epNumber }).catch(console.error),
-        ]);
-        open = false;
+        const status = totalEpisodes > 0 && currentEpNumber >= totalEpisodes ? 'COMPLETED' : 'CURRENT';
+        error = null;
+
+        try {
+            await Promise.all([
+                progressApi.updateAnimeProgress({
+                    cid,
+                    episode: currentEpNumber,
+                    timestampSeconds: currentStartTime,
+                    completed: true,
+                }),
+                listApi.upsert({ cid, status, progress: currentEpNumber }),
+            ]);
+
+            listStore.updateEntryProgressLocal(cid, currentEpNumber, status);
+            await homeState.refreshContinueWatching();
+
+            if (totalEpisodes === 0 || currentEpNumber < totalEpisodes) {
+                currentEpNumber += 1;
+                currentStartTime = 0;
+                launched = false;
+            } else {
+                open = false;
+            }
+        } catch (err) {
+            console.error("Binge tracking update failed", err);
+            error = "Failed to update progress tracker on the cloud.";
+        }
     }
 </script>
 
 <Dialog.Root bind:open>
     <Dialog.Content class="sm:max-w-[425px]">
         <Dialog.Header>
-            <Dialog.Title>{i18n.t("watch.episode_number", {"num": epNumber })}</Dialog.Title>
+            <Dialog.Title>{i18n.t("watch.episode_number", {"num": currentEpNumber })}</Dialog.Title>
             <Dialog.Description>{animeTitle}</Dialog.Description>
         </Dialog.Header>
 
         <div class="grid gap-6 py-4">
             <div class="grid gap-3">
                 <Label>{i18n.t("watch.server")}</Label>
-
                 <ResponsiveSelect bind:value={selectedExtId} items={extItems} />
             </div>
 
@@ -146,8 +182,10 @@
                     <Button variant="outline" class="flex-1" onclick={() => open = false}>
                         {i18n.t("content.close")}
                     </Button>
-                    <Button class="flex-1" onclick={markAsWatched}>
-                        <CheckCircle class="w-4 h-4 mr-2" /> {i18n.t("watch.mark_watched")}
+                    <!-- Customize button name context to indicate a forward skip loop action -->
+                    <Button class="flex-1 font-bold" onclick={markAsWatched}>
+                        <CheckCircle class="w-4 h-4 mr-2" />
+                        {totalEpisodes === 0 || currentEpNumber < totalEpisodes ? "Watched & Next →" : i18n.t("watch.mark_watched")}
                     </Button>
                 </div>
             {:else}

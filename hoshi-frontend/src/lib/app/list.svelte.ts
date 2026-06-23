@@ -1,5 +1,5 @@
 import { listApi } from "@/api/list/list";
-import type {EnrichedListEntry, UpsertEntryBody, UserStats} from "@/api/list/types";
+import type {EnrichedListEntry, ListStatus, UpsertEntryBody, UserStats} from "@/api/list/types";
 import type { CoreError } from "@/api/client";
 import {type NormalizedCard, normalizeListEntry} from "@/utils/normalize";
 import { appConfig } from "@/stores/config.svelte.js";
@@ -122,6 +122,23 @@ class ListStore {
     openEdit(entry: EnrichedListEntry) {
         this.selectedEntry = entry;
         this.isModalOpen = true;
+    }
+
+    updateEntryProgressLocal(cid: string, progress: number, status: ListStatus) {
+        const idx = this.entries.findIndex(e => e.cid === cid);
+        if (idx !== -1) {
+            const updatedEntry = {
+                ...this.entries[idx],
+                progress,
+                status
+            };
+
+            this.entries[idx] = updatedEntry;
+            this.normalized[idx] = {
+                card: normalizeListEntry(updatedEntry),
+                original: updatedEntry
+            };
+        }
     }
 }
 
