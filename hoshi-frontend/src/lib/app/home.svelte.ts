@@ -73,6 +73,15 @@ class HomeState {
         }
     }
 
+    async refreshContinueWatching() {
+        try {
+            const progRes = await progressApi.getContinueWatching(20);
+            this.continueItems = progRes.items || [];
+        } catch (err) {
+            console.error('Failed to refresh continue watching items', err);
+        }
+    }
+
     getContinueItems(mode: ContentType) {
         return this.continueItems.filter(item => item.contentType === mode);
     }

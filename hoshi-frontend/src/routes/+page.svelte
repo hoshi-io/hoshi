@@ -43,8 +43,12 @@
 
     $effect(() => {
         if (auth.loading || !auth.initialized || !auth.user) return;
-        if (homeState.hasData) return;
-        homeState.load();
+
+        if (homeState.hasData) {
+            homeState.refreshContinueWatching();
+        } else {
+            homeState.load();
+        }
     });
 </script>
 
