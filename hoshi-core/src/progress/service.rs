@@ -57,7 +57,18 @@ impl ProgressService {
             let (title, cover_image, title_i18n, nsfw, units) =
                 Self::fetch_enriched_data(state, &row.cid).await;
 
-            let unit = units.into_iter().find(|u| u.unit_number == row.episode as f64);
+            let (display_episode, display_timestamp, _) = if row.completed {
+                (row.episode + 1, Some(0), false)
+            } else {
+                (row.episode, Some(row.timestamp_seconds), row.completed)
+            };
+
+            let unit = units.into_iter().find(|u| u.unit_number == display_episode as f64);
+
+            // If the user finished the episode but there IS NO next episode,
+            if row.completed && unit.is_none() {
+                continue;
+            }
 
             items.push(ContinueItem {
                 cid: row.cid,
@@ -66,9 +77,9 @@ impl ProgressService {
                 title_i18n,
                 cover_image,
                 nsfw,
-                episode: Some(row.episode),
-                timestamp_seconds: Some(row.timestamp_seconds),
-                episode_duration_seconds: row.episode_duration_seconds,
+                episode: Some(display_episode),
+                timestamp_seconds: display_timestamp,
+                episode_duration_seconds: if row.completed { None } else { row.episode_duration_seconds },
                 chapter: None,
                 unit,
                 last_accessed: row.last_accessed,

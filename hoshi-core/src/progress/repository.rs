@@ -76,7 +76,7 @@ impl ProgressRepository {
             INNER JOIN (
                 SELECT cid, MAX(last_accessed) AS max_accessed
                 FROM AnimeProgress
-                WHERE user_id = ? AND completed = 0
+                WHERE user_id = ?
                 GROUP BY cid
             ) latest ON ap.cid = latest.cid AND ap.last_accessed = latest.max_accessed
             WHERE ap.user_id = ?

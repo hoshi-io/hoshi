@@ -438,7 +438,7 @@
                         {#if isTouchDevice}
                             <div class="relative flex items-center">
                                 <CalendarIcon class="absolute left-3.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-                                <Input type="date" value={startValue ? startValue.toString() : ""} onchange={handleStartNativeChange} class={cn("pl-10 h-11 w-full font-semibold rouded-sm bg-muted/10 border-border/50 text-xs", !startValue && "text-muted-foreground font-medium")} />
+                                <Input type="date" value={startValue ? startValue.toString() : ""} onchange={handleStartNativeChange} class={cn("pl-10 h-11 w-full font-semibold rounded-sm bg-muted/10 border-border/50 text-xs", !startValue && "text-muted-foreground font-medium")} />
                             </div>
                         {:else}
                             <Popover.Root>
@@ -450,7 +450,7 @@
                                         </Button>
                                     {/snippet}
                                 </Popover.Trigger>
-                                <Popover.Content class="w-auto p-0 rouded-sm z-[110]" align="start">
+                                <Popover.Content class="w-auto p-0 rounded-sm z-[110]" align="start">
                                     <Calendar type="single" bind:value={startValue} initialFocus captionLayout="dropdown" />
                                 </Popover.Content>
                             </Popover.Root>
@@ -462,19 +462,19 @@
                         {#if isTouchDevice}
                             <div class="relative flex items-center">
                                 <CalendarIcon class="absolute left-3.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-                                <Input type="date" value={endValue ? endValue.toString() : ""} onchange={handleEndNativeChange} class={cn("pl-10 h-11 w-full font-semibold rouded-sm bg-muted/10 border-border/50 text-xs", !endValue && "text-muted-foreground font-medium")} />
+                                <Input type="date" value={endValue ? endValue.toString() : ""} onchange={handleEndNativeChange} class={cn("pl-10 h-11 w-full font-semibold rounded-sm bg-muted/10 border-border/50 text-xs", !endValue && "text-muted-foreground font-medium")} />
                             </div>
                         {:else}
                             <Popover.Root>
                                 <Popover.Trigger>
                                     {#snippet child({ props })}
-                                        <Button variant="outline" class={cn("w-full justify-start text-left font-semibold h-11 rouded-sm bg-muted/10 border-border/50 hover:bg-muted/20 px-2", !endValue && "text-muted-foreground font-medium")} {...props}>
+                                        <Button variant="outline" class={cn("w-full justify-start text-left font-semibold h-11 rounded-sm bg-muted/10 border-border/50 hover:bg-muted/20 px-2", !endValue && "text-muted-foreground font-medium")} {...props}>
                                             <CalendarIcon class="mr-1 h-4 w-4 shrink-0" />
                                             <span class="truncate text-xs">{endValue ? df.format(endValue.toDate(getLocalTimeZone())) : i18n.t('list.modal.select_date')}</span>
                                         </Button>
                                     {/snippet}
                                 </Popover.Trigger>
-                                <Popover.Content class="w-auto p-0 rouded-sm z-[110]" align="start">
+                                <Popover.Content class="w-auto p-0 rounded-sm z-[110]" align="start">
                                     <Calendar type="single" bind:value={endValue} initialFocus captionLayout="dropdown" />
                                 </Popover.Content>
                             </Popover.Root>
@@ -485,11 +485,11 @@
                 <div class="grid grid-cols-2 gap-5">
                     <div class="col-span-1 space-y-2">
                         <Label for="repeat" class="font-bold text-foreground/90 truncate">{isAnime ? i18n.t('list.modal.times_rewatched') : i18n.t('list.modal.times_reread')}</Label>
-                        <Input id="repeat" type="number" min="0" bind:value={repeatCount} class="h-11 rouded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-semibold" />
+                        <Input id="repeat" type="number" min="0" bind:value={repeatCount} class="h-11 rounded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-semibold" />
                     </div>
 
                     <div class="col-span-1 flex items-end">
-                        <div class="flex items-center space-x-3 bg-muted/10 p-3 rouded-sm border border-border/50 w-full h-11">
+                        <div class="flex items-center space-x-3 bg-muted/10 p-3 rounded-sm border border-border/50 w-full h-11">
                             <Checkbox id="isPrivate" bind:checked={isPrivate} />
                             <Label for="isPrivate" class="font-bold cursor-pointer text-sm truncate">{i18n.t('list.modal.private')}</Label>
                         </div>
@@ -498,7 +498,7 @@
 
                 <div class="space-y-2">
                     <Label for="notes" class="font-bold text-foreground/90">{i18n.t('list.modal.notes')}</Label>
-                    <Textarea id="notes" bind:value={notes} class="min-h-[100px] rouded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-medium resize-none" />
+                    <Textarea id="notes" bind:value={notes} class="min-h-[100px] rounded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-medium resize-none" />
                 </div>
 
                 {#if !isNew && sources.length > 1}
@@ -626,7 +626,7 @@
                 <div class="flex items-center justify-between w-full gap-3">
                     <div class="flex shrink-0">
                         {#if !isNew}
-                            <Button type="button" variant="destructive" size="icon" class="h-11 w-11 rouded-sm shadow-sm" onclick={handleDelete} disabled={submitting}>
+                            <Button type="button" variant="destructive" size="icon" class="h-11 w-11 rounded-sm shadow-sm" onclick={handleDelete} disabled={submitting}>
                                 <Trash2 class="h-5 w-5" />
                             </Button>
                         {:else}
@@ -638,7 +638,7 @@
                         <Button
                                 type="button"
                                 variant="outline"
-                                class="flex-1 sm:w-32 h-11 rouded-sm font-bold border-border/50 hover:bg-muted/20"
+                                class="flex-1 sm:w-32 h-11 rounded-sm font-bold border-border/50 hover:bg-muted/20"
                                 disabled={submitting}
                                 onclick={() => open = false}
                         >
@@ -647,7 +647,7 @@
                         <Button
                                 type="submit"
                                 onclick={handleSubmit}
-                                class="flex-1 sm:w-32 h-11 rouded-sm font-bold shadow-sm"
+                                class="flex-1 sm:w-32 h-11 rounded-sm font-bold shadow-sm"
                                 disabled={submitting}
                         >
                             {#if submitting}

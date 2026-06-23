@@ -54,18 +54,12 @@
 
     function getContinueUrl(item: ContinueItem) {
         if (item.contentType === 'anime' && item.episode) {
-            const ratio = (item.episodeDurationSeconds && item.timestampSeconds)
-                ? item.timestampSeconds / item.episodeDurationSeconds
-                : 0;
-            if (ratio >= 0.95) return `/watch/${item.cid}/${item.episode + 1}`;
-            if (item.timestampSeconds && item.timestampSeconds > 0)
+            if (item.timestampSeconds && item.timestampSeconds > 0) {
                 return `/watch/${item.cid}/${item.episode}?t=${item.timestampSeconds}`;
+            }
             return `/watch/${item.cid}/${item.episode}`;
         }
-        if (item.contentType === 'manga')
-            return `/c/${item.cid}`;
-        if (item.contentType === 'novel')
-            return `/c/${item.cid}`;
+
         return `/c/${item.cid}`;
     }
 
