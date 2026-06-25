@@ -112,6 +112,7 @@
 
 <div
         bind:this={rootEl}
+        id="video-player-fullscreen-root"
         class="player-root relative w-full h-full bg-black overflow-hidden select-none [&:not(:has(.controls-root.visible)):not(:has(.status-overlay))]:cursor-none"
         onmousemove={() => !layoutState.isMobile && ctrl.nudgeControls()}
         onclick={() => {
@@ -137,6 +138,20 @@
             hasNext={playerState.hasNext}
             visible={topBarVisible}
             onBack={() => { playerState.destroy(); goto(`/c/${playerState.cid}`); }}
+            {ctrl}
+            extensionItems={playerState.extensionItems}
+            bind:selectedExtension={playerState.selectedExtension}
+            servers={playerState.servers}
+            serverItems={playerState.serverItems}
+            bind:selectedServer={playerState.selectedServer}
+            supportsDub={playerState.supportsDub}
+            bind:isDub={playerState.isDub}
+            isLoadingPlay={playerState.isLoadingPlay}
+            {subtitleSettings}
+            onExtensionChange={(val) => playerState.selectExtension(val)}
+            onServerChange={() => playerState.loadPlay()}
+            onDubChange={(v) => { playerState.isDub = v; playerState.loadPlay(); }}
+            {onManageExtensions}
     />
 
     <Status

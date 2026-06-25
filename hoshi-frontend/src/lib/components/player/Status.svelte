@@ -35,7 +35,7 @@
             role="status"
     >
         {#if error}
-            <div class="flex flex-col items-center gap-6 p-6 max-w-md text-center animate-in fade-in zoom-in-95 duration-300 drop-shadow-lg">
+            <div class="pointer-events-auto flex flex-col items-center gap-6 p-6 max-w-md text-center animate-in fade-in zoom-in-95 duration-300 drop-shadow-lg">
                 <AlertCircle class="w-12 h-12 text-destructive" />
 
                 <div class="space-y-2">
@@ -85,7 +85,7 @@
                 </div>
             </div>
         {:else if !isLoadingMeta && noExtensions}
-            <div class="flex flex-col items-center gap-6 p-8 text-center animate-in fade-in zoom-in-95 duration-300">
+            <div class="pointer-events-auto flex flex-col items-center gap-6 p-8 text-center animate-in fade-in zoom-in-95 duration-300">
                 <PuzzleIcon class="w-16 h-16 text-white/20" />
                 <div class="space-y-2">
                     <span class="block text-xl font-heading text-white/90">

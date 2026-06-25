@@ -3,6 +3,7 @@ import type { Chapter } from './types.js';
 import {i18n} from "@/stores/i18n.svelte";
 import {appConfig} from "@/stores/config.svelte";
 import type { SubtitleSettings } from './subtitles/SubtitleSettings.svelte.js';
+import {invoke} from "@tauri-apps/api/core";
 
 export interface PlayerCallbacks {
     onTimeUpdate?: (data: { currentTime: number; duration: number; paused: boolean }) => void;
@@ -220,7 +221,6 @@ export class PlayerController {
         }
     }
 
-    // Destroy HLS and restart cleanly after a delay, resuming from last known position
     #scheduleRestart() {
         if (this.#restartTimer) return; // already scheduled
 
@@ -271,6 +271,7 @@ export class PlayerController {
 
         this.currentTime = v.currentTime;
         this.duration    = v.duration || 0;
+        this.paused      = v.paused;
 
         this.#callbacks.onTimeUpdate?.({
             currentTime: this.currentTime,
@@ -278,7 +279,6 @@ export class PlayerController {
             paused:      v.paused,
         });
 
-        // Track last known good position for recovery resume
         if (v.currentTime > 0 && isFinite(v.duration) && v.duration > 0) {
             this.#lastKnownTime = v.currentTime;
         }
@@ -303,8 +303,8 @@ export class PlayerController {
 
     onPlaying() {
         this.isBuffering = false;
-        // Recovery succeeded — reset flag so future errors can attempt recovery again
         this.#mediaRecoveryAttempted = false;
+        this.paused = false;
     }
 
     nudgeControls() {
@@ -317,7 +317,7 @@ export class PlayerController {
         if (!this.paused) {
             this.#hideTimer = setTimeout(() => {
                 this.controlsVisible = false;
-            }, 3000);
+            }, 500);
         }
     }
 
@@ -348,7 +348,6 @@ export class PlayerController {
 
         const durationOk = isFinite(v.duration) && v.duration > 0;
         if (!durationOk) {
-            // Video not ready — queue seek for onCanPlay
             this.#pendingSeekTime = time;
             this.currentTime = time; // update UI optimistically
             return;
@@ -357,9 +356,6 @@ export class PlayerController {
         this.#pendingSeekTime = null;
         v.currentTime    = time;
         this.currentTime = time;
-        // Do NOT call hls.startLoad() here — HLS manages its own pipeline.
-        // Setting currentTime is sufficient; HLS will detect the position change
-        // and load the appropriate segments automatically.
         this.#callbacks.onSeek?.(time);
     }
 
@@ -381,12 +377,17 @@ export class PlayerController {
     toggleFullscreen() {
         const rootEl = this.#rootEl;
         const isFs = !!document.fullscreenElement;
+
         if (isFs) {
             document.exitFullscreen().catch(() => {});
+            invoke('exit_fullscreen').catch(() => {});
         } else if (rootEl?.requestFullscreen) {
-            rootEl.requestFullscreen().catch(() => {});
+            rootEl.requestFullscreen({ navigationUI: 'hide' })
+                .then(() => {
+                    invoke('enter_fullscreen').catch(() => {});
+                })
+                .catch(() => {});
         } else {
-            // iOS Safari fallback
             const video = rootEl?.querySelector('video') as any;
             video?.webkitEnterFullscreen?.();
         }
@@ -541,7 +542,10 @@ export class PlayerController {
             if (this.#hideTimer) clearTimeout(this.#hideTimer);
         } else {
             this.controlsVisible = true;
-            this.#scheduleHide();
+            if (this.#hideTimer) clearTimeout(this.#hideTimer);
+            this.#hideTimer = setTimeout(() => {
+                this.controlsVisible = false;
+            }, 3000);
         }
     }
 }

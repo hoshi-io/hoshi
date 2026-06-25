@@ -1,16 +1,35 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button";
-    import { ChevronLeft, SkipBack, SkipForward } from "lucide-svelte";
+    import { ChevronLeft, SkipBack, SkipForward, Settings as SettingsIcon } from "lucide-svelte";
+    import Subtitles from "@/components/player/controls/buttons/Subtitles.svelte";
+    import Settings from "@/components/player/controls/buttons/Settings.svelte";
+    import type { PlayerController } from "./PlayerController.svelte.js";
+    import type { SubtitleSettings } from "@/components/player/subtitles/SubtitleSettings.svelte.js";
+    import { layoutState } from "@/stores/layout.svelte";
 
     interface Props {
-        cid:          string;
-        animeTitle:   string;
-        episodeTitle: string;
-        epNumber:     number;
-        hasPrev:      boolean;
-        hasNext:      boolean;
-        visible:      boolean;
-        onBack:       () => void;
+        cid:                string;
+        animeTitle:         string;
+        episodeTitle:       string;
+        epNumber:           number;
+        hasPrev:            boolean;
+        hasNext:            boolean;
+        visible:            boolean;
+        onBack:             () => void;
+        ctrl:               PlayerController;
+        extensionItems:     { value: string; label: string }[];
+        selectedExtension:  string | null;
+        servers:            string[];
+        serverItems:        { value: string; label: string }[];
+        selectedServer:     string | null;
+        supportsDub:        boolean;
+        isDub:              boolean;
+        isLoadingPlay:      boolean;
+        subtitleSettings:   SubtitleSettings;
+        onExtensionChange:  (val: string) => void;
+        onServerChange:     () => void;
+        onDubChange:        (val: boolean) => void;
+        onManageExtensions: () => void;
     }
 
     let {
@@ -22,7 +41,34 @@
         hasNext,
         visible,
         onBack,
+        ctrl,
+        extensionItems,
+        selectedExtension = $bindable(),
+        servers,
+        serverItems,
+        selectedServer = $bindable(),
+        supportsDub,
+        isDub = $bindable(),
+        isLoadingPlay,
+        subtitleSettings,
+        onExtensionChange,
+        onServerChange,
+        onDubChange,
+        onManageExtensions,
     }: Props = $props();
+
+    let settingsOpen = $state(false);
+
+    function toggleSettings(e: MouseEvent) {
+        e.stopPropagation();
+        settingsOpen = !settingsOpen;
+    }
+
+    $effect(() => {
+        if (!visible && layoutState.isMobile && !settingsOpen) {
+            settingsOpen = false;
+        }
+    });
 </script>
 
 <div
@@ -70,6 +116,43 @@
                 <SkipForward class="size-4" />
             </Button>
         </div>
+
+        {#if layoutState.isMobile}
+            <div class="relative flex items-center gap-1">
+                {#if ctrl.subtitleTracks.length > 0}
+                    <Subtitles {ctrl} />
+                {/if}
+                <button
+                        class="flex items-center justify-center w-9 h-9 rounded-md bg-transparent
+                           text-white/80 transition-colors duration-200
+                           hover:bg-white/15 hover:text-white
+                           {settingsOpen ? 'bg-white/20 text-white' : ''}"
+                        onclick={toggleSettings}
+                        title="Settings"
+                        aria-label="Stream settings"
+                >
+                    <SettingsIcon class="w-5 h-5" />
+                </button>
+                <Settings
+                        {ctrl}
+                        open={settingsOpen}
+                        {extensionItems}
+                        bind:selectedExtension
+                        {servers}
+                        {serverItems}
+                        bind:selectedServer
+                        {supportsDub}
+                        bind:isDub
+                        {isLoadingPlay}
+                        {onExtensionChange}
+                        {onServerChange}
+                        {onDubChange}
+                        {onManageExtensions}
+                        onClose={() => settingsOpen = false}
+                        {subtitleSettings}
+                />
+            </div>
+        {/if}
     </div>
 </div>
 
@@ -151,8 +234,11 @@
     .right-group {
         display: flex;
         align-items: center;
+        justify-content: flex-end;
         gap: 0.5rem;
         flex-shrink: 0;
+        width: 100%;
+        @media (min-width: 640px) { width: auto; }
     }
 
     .pill {

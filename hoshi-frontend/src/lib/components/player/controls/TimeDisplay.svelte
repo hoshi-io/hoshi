@@ -2,9 +2,11 @@
     interface Props {
         currentTime: number;
         duration: number;
+        compact?: boolean;
+        mode?: 'all' | 'current' | 'total';
     }
 
-    let { currentTime, duration }: Props = $props();
+    let { currentTime, duration, compact = false, mode = 'all' }: Props = $props();
 
     function format(s: number): string {
         if (!isFinite(s) || s < 0) s = 0;
@@ -16,12 +18,26 @@
         }
         return `${m}:${String(sec).padStart(2, '0')}`;
     }
+
+    const remaining = $derived(duration - currentTime);
 </script>
 
 <div class="time-display">
-    <span class="current">{format(currentTime)}</span>
-    <span class="separator">/</span>
-    <span class="total">{format(duration)}</span>
+    {#if mode === 'all' || mode === 'current'}
+        <span class="current">{format(currentTime)}</span>
+    {/if}
+
+    {#if mode === 'all'}
+        <span class="separator">/</span>
+    {/if}
+
+    {#if mode === 'all' || mode === 'total'}
+        {#if compact}
+            <span class="total">-{format(remaining)}</span>
+        {:else}
+            <span class="total">{format(duration)}</span>
+        {/if}
+    {/if}
 </div>
 
 <style>
@@ -33,17 +49,6 @@
         font-size: 13px;
         font-weight: 500;
         letter-spacing: 0.02em;
-        color: rgba(255, 255, 255, 0.9);
-        user-select: none;
-        white-space: nowrap;
-    }
-
-    .separator {
-        color: rgba(255, 255, 255, 0.35);
-        margin: 0 1px;
-    }
-
-    .total {
-        color: rgba(255, 255, 255, 0.5);
+        color: rgba(255, 255, 255, 0.8);
     }
 </style>

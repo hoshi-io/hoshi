@@ -1,11 +1,9 @@
 <script lang="ts">
-    import * as Popover from "@/components/ui/popover";
     import * as Drawer  from "@/components/ui/drawer";
     import { layoutState } from "@/stores/layout.svelte.js";
     import type { PlayerController } from '../../PlayerController.svelte.js';
     import type { SubtitleSettings } from '../../subtitles/SubtitleSettings.svelte.js';
     import MenuContent from "@/components/player/settings/MenuContent.svelte";
-    import { i18n } from "@/stores/i18n.svelte.js";
 
     interface Props {
         ctrl:               PlayerController;
@@ -57,11 +55,12 @@
             onOpenChange={(v) => { if (!v) onClose(); }}
     >
         <Drawer.Portal>
-            <Drawer.Overlay class="fixed inset-0 z-50 bg-black/60" />
+            <Drawer.Overlay class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
+
             <Drawer.Content
                     class="fixed bottom-0 left-0 right-0 mx-auto z-50
                        w-[60%] rounded-t-sm
-                       bg-popover border border-border border-b-0
+                       bg-popover/90 backdrop-blur-xl border border-border border-b-0
                        shadow-2xl font-sans focus:outline-none
                        [&>[data-vaul-drag-handle]]:hidden"
             >
@@ -89,20 +88,12 @@
         </Drawer.Portal>
     </Drawer.Root>
 {:else}
-    <Popover.Root
-            open={open}
-            onOpenChange={(v) => { if (!v) onClose(); }}
-    >
-        <Popover.Trigger class="sr-only" tabindex="-1" aria-hidden="true">
-            {i18n.t("player.settings")}
-        </Popover.Trigger>
-
-        <Popover.Content
-                align="end"
-                side="top"
-                sideOffset={12}
-                class="w-72 p-0 rounded-sm border border-border bg-popover/95 backdrop-blur-xl
-                   shadow-2xl font-sans overflow-hidden"
+    {#if open}
+        <div
+                class="settings-panel absolute bottom-full right-0 mb-2 w-72
+                   rounded-sm border border-border bg-popover/95 backdrop-blur-xl
+                   shadow-2xl font-sans overflow-hidden z-[70]"
+                onclick={(e) => e.stopPropagation()}
         >
             <div class="px-1 py-1">
                 <MenuContent
@@ -124,8 +115,8 @@
                         {onClose}
                 />
             </div>
-        </Popover.Content>
-    </Popover.Root>
+        </div>
+    {/if}
 {/if}
 
 <style>

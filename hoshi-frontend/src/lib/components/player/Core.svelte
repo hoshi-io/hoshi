@@ -3,6 +3,8 @@
     import type { PlayerController } from './PlayerController.svelte.js';
     import type { SubtitleSettings } from './subtitles/SubtitleSettings.svelte.js';
     import SubtitleOverlay from './subtitles/SubtitleOverlay.svelte';
+    import {invoke} from "@tauri-apps/api/core";
+    import {layoutState} from "@/stores/layout.svelte";
 
     interface Props {
         src:        string;
@@ -16,13 +18,18 @@
 
     onMount(() => {
         controller.attachVideo(videoEl);
+
+        if (layoutState.isMobile) controller.toggleFullscreen();
     });
 
     $effect(() => {
         if (src) controller.loadSrc(src);
     });
 
-    onDestroy(() => controller.destroy());
+    onDestroy(() => {
+        invoke('exit_fullscreen').catch(() => {});
+        controller.destroy()
+    });
 </script>
 
 <!-- svelte-ignore a11y_media_has_caption -->

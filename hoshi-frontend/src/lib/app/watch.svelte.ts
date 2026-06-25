@@ -18,6 +18,7 @@ import { invoke } from "@tauri-apps/api/core";
 
 import type { Subtitle, Chapter } from "@/components/player/types";
 import {listStore} from "@/app/list.svelte";
+import {layoutState} from "@/stores/layout.svelte";
 
 export class PlayerState {
     params      = $derived(page.params as Record<string, string>);
@@ -262,10 +263,8 @@ export class PlayerState {
         this.handlePlayerProgress(data);
     }
 
-    onPlay(playerEl?: { enterFullscreen(): void }) {
+    onPlay() {
         this.syncDiscord(false);
-        const isAndroid = /Android/i.test(navigator.userAgent);
-        if (isAndroid) playerEl?.enterFullscreen();
     }
 
     onPause() {

@@ -11,6 +11,8 @@ pub mod commands;
 pub mod headless;
 pub mod orientation;
 pub mod intent;
+pub mod immersive;
+
 pub mod proxy_protocol;
 
 #[cfg(mobile)]
@@ -29,6 +31,14 @@ use crate::intent::intent_plugin::{
     init as intent_plugin_init,
     launch_intent,
 };
+
+#[cfg(mobile)]
+use crate::immersive::immersive_plugin::{
+    init as immersive_plugin_init,
+    enter_fullscreen,
+    exit_fullscreen,
+};
+
 
 
 use crate::commands::i18n::load_locale;
@@ -104,6 +114,7 @@ pub fn run_inner() -> anyhow::Result<()> {
         builder = builder
             .plugin(headless_plugin_init())
             .plugin(orientation_plugin_init())
+            .plugin(immersive_plugin_init())
             .plugin(intent_plugin_init());
     }
 
@@ -175,6 +186,10 @@ pub fn run_inner() -> anyhow::Result<()> {
             get_current_orientation,
             #[cfg(mobile)]
             launch_intent,
+            #[cfg(mobile)]
+            enter_fullscreen,
+            #[cfg(mobile)]
+            exit_fullscreen,
         ])
         .run(tauri::generate_context!())
         .map_err(|e| anyhow::anyhow!("Tauri runtime error: {}", e))?;
