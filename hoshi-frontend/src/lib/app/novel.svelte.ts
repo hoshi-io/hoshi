@@ -49,6 +49,16 @@ export class NovelReaderState extends BaseReaderState {
 
     private debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
+    scrollProgress = $state(0);
+
+    scrollToPercentage(percent: number) {
+        const el = document.getElementById('novel-main-container');
+        if (el) {
+            const scrollHeight = el.scrollHeight - el.clientHeight;
+            el.scrollTop = (percent / 100) * scrollHeight;
+        }
+    }
+
     constructor() {
         super();
 
@@ -165,6 +175,8 @@ export class NovelReaderState extends BaseReaderState {
 
     onScroll(e: Event) {
         const target = e.currentTarget as HTMLElement;
+        const scrollHeight = target.scrollHeight - target.clientHeight;
+        this.scrollProgress = (target.scrollTop / scrollHeight) * 100;
         if (target.scrollHeight > 0) {
             const ratio = (target.scrollTop + target.clientHeight) / target.scrollHeight;
             this.handleProgress(ratio);

@@ -238,7 +238,15 @@
                 <Button variant="secondary" onclick={() => readerState.retry()}>{i18n.t('content.retry')}</Button>
             </div>
         {:else}
-            <div class="flex-1 relative flex flex-col min-h-0 pt-4">
+            <div class="flex-1 relative flex flex-col min-h-0 overflow-hidden">
+                {#if currentProgress}
+                    <div class="absolute top-0 left-0 right-0 z-30 h-[3px] bg-foreground/10 pointer-events-none">
+                        <div
+                                class="h-full bg-primary transition-[width] duration-150 ease-out"
+                                style="width: {currentProgress}"
+                        ></div>
+                    </div>
+                {/if}
                 {@render children()}
             </div>
         {/if}
