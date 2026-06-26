@@ -192,8 +192,8 @@ pub struct MangaConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub enum MangaLayout {
-    #[default]
     Scroll,
+    #[default]
     Paged,
 }
 

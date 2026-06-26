@@ -6,6 +6,8 @@
     import { fly } from "svelte/transition";
     import ReaderImage from "@/components/readers/ReaderImage.svelte";
     import MangaReaderSettings from "@/components/readers/MangaReaderSettings.svelte";
+    import {cubicOut} from "svelte/easing";
+    import {layoutState} from "@/stores/layout.svelte";
 
     const readerState = new MangaReaderState();
 </script>
@@ -37,11 +39,6 @@
             ontouchend={(e) => readerState.handleTouchEnd(e)}
     >
         {#if readerState.layout === "scroll"}
-            <!--
-                Outer column: no padding-x here — ReaderImage's wrapper handles its own width.
-                For fit-height mode the row needs an explicit height so the wrapper's
-                height:100% has something to fill.
-            -->
             <div
                     class="flex flex-col items-center w-full py-4 pb-24"
                     style="row-gap: {readerState.gapY}px;"
@@ -91,10 +88,10 @@
         {/if}
     </main>
 
-    {#if readerState.layout === "paged" && readerState.showOverlay && readerState.groupedImages.length > 0}
+    {#if readerState.layout === "paged" && readerState.showOverlay && readerState.groupedImages.length > 0 && layoutState.isMobile && !readerState.showSettings}
         <div
-                class="fixed bottom-6 left-6 right-6 z-[100] md:hidden pb-[env(safe-area-inset-bottom)]"
-                transition:fly={{ y: 20, duration: 250 }}
+                class="fixed bottom-6 left-6 right-6 md:left-1/2 md:right-auto md:w-[420px] md:-translate-x-1/2 z-[100] pb-[env(safe-area-inset-bottom)]"
+                transition:fly={{ y: 24, duration: 280, easing: cubicOut }}
                 role="presentation"
                 onclick={(e) => e.stopPropagation()}
                 onkeydown={(e) => e.stopPropagation()}
@@ -107,24 +104,20 @@
                         {readerState.groupedImages.length}
                     </span>
                 </div>
-                <div class="px-2">
-                    <Slider
-                            value={[readerState.currentGroupIndex]}
-                            min={0}
-                            max={readerState.groupedImages.length - 1}
-                            step={1}
-                            dir={readerState.direction}
-                            onValueChange={(v) => {
-                                readerState.skipAnimation = false;
-                                readerState.updatePageWithDir(v[0]);
-                            }}
-                            class="w-full"
-                    />
-                </div>
-                <div class="flex justify-between px-2 -mt-2 text-[9px] font-black uppercase tracking-widest text-foreground/40">
-                    <span>{readerState.direction === "rtl" ? i18n.t("reader.end") : i18n.t("reader.start")}</span>
-                    <span>{readerState.direction === "rtl" ? i18n.t("reader.start") : i18n.t("reader.end")}</span>
-                </div>
+                    <div class="px-2">
+                        <Slider
+                                value={[readerState.currentGroupIndex]}
+                                min={0}
+                                max={readerState.groupedImages.length - 1}
+                                step={1}
+                                dir={readerState.direction}
+                                onValueChange={(v) => {
+                                    readerState.skipAnimation = false;
+                                    readerState.updatePageWithDir(v[0]);
+                                }}
+                                class="w-full"
+                        />
+                    </div>
             </div>
         </div>
     {/if}
