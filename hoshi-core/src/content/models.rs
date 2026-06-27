@@ -128,6 +128,11 @@ pub enum RelationType {
     Alternative,
     Parent,
     Summary,
+    Source,
+    Compilation,
+    Contains,
+    Character,
+    Other,
 }
 
 impl RelationType {
@@ -141,6 +146,11 @@ impl RelationType {
             RelationType::Alternative => "alternative",
             RelationType::Parent      => "parent",
             RelationType::Summary     => "summary",
+            RelationType::Source      => "source",
+            RelationType::Compilation => "compilation",
+            RelationType::Contains    => "contains",
+            RelationType::Character   => "character",
+            RelationType::Other       => "other",
         }
     }
 }

@@ -11,7 +11,7 @@ use hoshi_core::content::services::extensions::ExtensionService;
 use hoshi_core::content::services::home::HomeService;
 use hoshi_core::content::services::mapping::MappingService;
 use hoshi_core::content::services::search::SearchService;
-use hoshi_core::content::types::{ContentListResponse, HomeView, SearchParams, UpdateExtensionMappingRequest, UpdateTrackerMappingRequest};
+use hoshi_core::content::types::{ContentListResponse, HomeView, RelationGraph, SearchParams, UpdateExtensionMappingRequest, UpdateTrackerMappingRequest};
 use hoshi_core::extensions::types::{ContentItems, ExtensionSearchResult, PlayContentResult};
 use hoshi_core::tracker::types::TrackerMapping;
 
@@ -165,4 +165,12 @@ pub async fn get_trending(
         &media_type,
         user_id,
     ).await
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn get_relation_tree(
+    state: State<'_, Arc<AppState>>,
+    cid: String,
+) -> Result<RelationGraph, CoreError> {
+    ContentService::get_relation_tree(state.inner(), &cid).await
 }

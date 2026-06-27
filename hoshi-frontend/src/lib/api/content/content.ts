@@ -12,7 +12,7 @@ import type {
     HomeView,
     ContentType,
     TrackerMedia,
-    ExtensionSearchResult,
+    ExtensionSearchResult, RelationGraph,
 } from "./types";
 
 export const contentApi = {
@@ -104,6 +104,12 @@ export const contentApi = {
     resolveByExtension(extName: string, extId: string) {
         return call<FullContent>({
             tauri: { cmd: "resolve_by_extension", args: { ext_name: extName, ext_id: extId } },
+        });
+    },
+
+    get_relation_tree(cid: string) {
+        return call<RelationGraph>({
+            tauri: { cmd: "get_relation_tree", args: { cid } },
         });
     },
 

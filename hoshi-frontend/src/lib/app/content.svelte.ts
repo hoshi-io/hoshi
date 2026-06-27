@@ -23,9 +23,6 @@ export class ContentDetailState {
     error = $state<any>(null);
     fullContent = $state<FullContent | null>(null);
 
-    synopsisElement = $state<HTMLElement | null>(null);
-    canTruncate = $state(false);
-
     relations = $state<NormalizedRelation[]>([]);
     relationsLoading = $state(false);
 

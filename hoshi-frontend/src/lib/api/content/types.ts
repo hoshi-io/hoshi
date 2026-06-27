@@ -15,6 +15,9 @@ export type RelationType =
     | "adaptation"
     | "alternative"
     | "parent"
+    | "source"
+    | "compilation"
+    | "contains"
     | "summary";
 
 export interface Character {
@@ -251,4 +254,21 @@ export function primaryMetadata(
         m.sourceName.toLowerCase() === 'anilist'
     );
     return anilist || fullContent.metadata[0];
+}
+
+export interface RelationNode {
+    cid: string;
+    title: string;
+    coverImage: string | null;
+}
+
+export interface RelationEdge {
+    sourceCid: string;
+    targetCid: string;
+    relationType: RelationType;
+}
+
+export interface RelationGraph {
+    nodes: RelationNode[];
+    edges: RelationEdge[];
 }

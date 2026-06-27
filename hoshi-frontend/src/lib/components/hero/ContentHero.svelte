@@ -7,6 +7,7 @@
     import ListEditorButton from "@/components/ListEditorButton.svelte";
     import SmartImage from "@/components/SmartImage.svelte";
     import { formatScore } from "@/utils/normalize";
+    import RelationTreeDialog from "@/components/content/RelationTreeDialog.svelte";
 
     let {
         fullContent,
@@ -47,6 +48,7 @@
 
     const trackers = $derived(fullContent.trackerMappings ?? []);
     const visibleTrackers = $derived(trackersExpanded ? trackers : trackers.slice(0, TRACKERS_LIMIT));
+    const cid = $derived(fullContent.content.cid)
 
     function formatDate(dateStr?: string | null) {
         if (!dateStr) return null;
@@ -156,7 +158,13 @@
             {/if}
 
             <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-2">
-
+                <Button onclick={onWatchNow} class="rounded-sm px-6 h-10 font-bold shadow-lg gap-2">
+                    {#if isAnime}
+                        <Play class="w-4 h-4 fill-current" />{i18n.t('content.watch_now')}
+                    {:else}
+                        <BookOpen class="w-4 h-4 fill-current" />{i18n.t('content.read_now')}
+                    {/if}
+                </Button>
                 <div class="flex items-center bg-muted/20 p-1 rounded-md border border-border/10 backdrop-blur-md gap-1">
                     <ListEditorButton
                             cid={fullContent.content.cid}
@@ -175,6 +183,7 @@
                     <Button size="icon" variant="ghost" class="rounded-sm w-8 h-8 hover:bg-muted/40 text-muted-foreground hover:text-foreground" onclick={() => showExtensionModal = true} title="Extensions">
                         <Plug class="w-4 h-4" />
                     </Button>
+                    <RelationTreeDialog cid={cid} />
                 </div>
 
                 {#if trackers.length > 0}

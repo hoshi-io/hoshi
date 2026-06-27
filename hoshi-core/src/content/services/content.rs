@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use tracing::{info, instrument, warn};
 use crate::config::model::TitleLanguage;
 use crate::config::repository::ConfigRepository;
@@ -12,11 +12,16 @@ use crate::content::services::content_units::SimklUnitsService;
 use crate::content::services::enrichment::EnrichmentService;
 use crate::content::services::extensions::ExtensionService;
 use crate::content::services::resolver::ContentResolverService;
+use crate::content::types::{RelationEdge, RelationGraph, RelationNode};
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::types::ExtensionMetadata;
 use crate::state::AppState;
 use crate::tracker::provider::TrackerMedia;
 use crate::tracker::repository::TrackerRepository;
+
+const BG_RESOLVE_MAX_NODES: usize = 30;
+const BG_RESOLVE_MAX_DEPTH: usize = 2;
+const MAX_TREE_NODES: usize = 150;
 
 const TRACKER_SOURCES: &[&str] = &["anilist", "mal", "kitsu", "anidb"];
 const FUZZY_SCORE_THRESHOLD: f64 = 0.85;
@@ -52,6 +57,7 @@ impl ContentService {
         let cid_bg = cid.to_string();
 
         tokio::spawn(async move {
+            Self::resolve_relations_recursive(&state_bg, &cid_bg).await;
             if let Err(e) = SimklUnitsService::sync_units_if_needed(&state_bg, &cid_bg).await {
                 warn!(cid = %cid_bg, error = ?e, "Background unit sync failed");
             }
@@ -618,5 +624,116 @@ impl ContentService {
         }
 
         Ok(())
+    }
+
+    #[instrument(skip(state))]
+    async fn resolve_relations_recursive(state: &Arc<AppState>, root_cid: &str) {
+        let mut visited: HashSet<String> = HashSet::new();
+        let mut queue: VecDeque<(String, usize)> = VecDeque::new();
+        queue.push_back((root_cid.to_string(), 0));
+
+        while let Some((cid, depth)) = queue.pop_front() {
+            if visited.contains(&cid) || visited.len() >= BG_RESOLVE_MAX_NODES || depth > BG_RESOLVE_MAX_DEPTH {
+                continue;
+            }
+            visited.insert(cid.clone());
+
+            if let Err(e) = Self::resolve_pending_relations(state, &cid).await {
+                warn!(cid = %cid, error = ?e, "Background recursive relation resolution failed");
+                continue;
+            }
+
+            let Ok(Some(full)) = ContentRepository::get_full_content(&state.pool, &cid).await else {
+                continue;
+            };
+
+            for rel in &full.relations {
+                if !visited.contains(&rel.target_cid) {
+                    queue.push_back((rel.target_cid.clone(), depth + 1));
+                }
+            }
+        }
+    }
+
+    fn is_traversable(rel_type: &RelationType) -> bool {
+        matches!(
+        rel_type,
+        RelationType::Prequel
+            | RelationType::Sequel
+            | RelationType::Parent
+            | RelationType::SideStory
+            | RelationType::Summary
+            | RelationType::Alternative
+            | RelationType::Adaptation
+            | RelationType::Source
+            | RelationType::Compilation
+            | RelationType::Contains
+    )
+        // excluded on purpose: Character, SpinOff, Other
+    }
+
+    #[instrument(skip(state))]
+    pub async fn get_relation_tree(
+        state: &Arc<AppState>,
+        root_cid: &str,
+    ) -> CoreResult<RelationGraph> {
+        let mut visited: HashSet<String> = HashSet::new();
+        let mut queue: VecDeque<String> = VecDeque::new();
+        let mut nodes = Vec::new();
+        let mut edges = Vec::new();
+        let mut seen_edges = HashSet::new();
+
+        queue.push_back(root_cid.to_string());
+
+        while let Some(cid) = queue.pop_front() {
+            if visited.contains(&cid) || visited.len() >= MAX_TREE_NODES {
+                continue;
+            }
+            visited.insert(cid.clone());
+
+            if let Err(e) = Self::resolve_pending_relations(state, &cid).await {
+                warn!(cid = %cid, error = ?e, "Failed resolving relations during tree build");
+            }
+
+            let Some(full) = ContentRepository::get_full_content(&state.pool, &cid).await? else {
+                continue;
+            };
+
+            let title = full.metadata.first()
+                .map(|m| m.title.clone())
+                .unwrap_or_default();
+            let cover = full.metadata.first().and_then(|m| m.cover_image.clone());
+
+            nodes.push(RelationNode { cid: cid.clone(), title, cover_image: cover });
+
+            for rel in &full.relations {
+                if !Self::is_traversable(&rel.relation_type) {
+                    continue;
+                }
+
+                let key = if cid < rel.target_cid {
+                    (cid.clone(), rel.target_cid.clone())
+                } else {
+                    (rel.target_cid.clone(), cid.clone())
+                };
+
+                if seen_edges.contains(&key) {
+                    continue;
+                }
+                seen_edges.insert(key);
+
+                edges.push(RelationEdge {
+                    source_cid: cid.clone(),
+                    target_cid: rel.target_cid.clone(),
+                    relation_type: rel.relation_type.clone(),
+                });
+
+                if !visited.contains(&rel.target_cid) {
+                    queue.push_back(rel.target_cid.clone());
+                }
+            }
+        }
+
+        Ok(RelationGraph { nodes, edges })
     }
 }

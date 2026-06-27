@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::content::models::{ContentType, FullContent};
+use crate::content::models::{ContentType, FullContent, RelationType};
 use crate::tracker::provider::TrackerMedia;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -154,4 +154,27 @@ pub struct AniSkipInterval {
     pub start_time: f64,
     #[serde(rename = "endTime")]
     pub end_time: f64,
+}
+
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RelationNode {
+    pub cid: String,
+    pub title: String,
+    pub cover_image: Option<String>,
+}
+
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RelationEdge {
+    pub source_cid: String,
+    pub target_cid: String,
+    pub relation_type: RelationType,
+}
+
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RelationGraph {
+    pub nodes: Vec<RelationNode>,
+    pub edges: Vec<RelationEdge>,
 }
