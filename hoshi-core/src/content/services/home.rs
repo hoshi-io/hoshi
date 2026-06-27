@@ -48,8 +48,7 @@ impl HomeService {
         let section_keys = [
             "trending_anime", "popular_anime", "top_rated_anime",
             "seasonal_anime", "upcoming_anime", "recently_finished_anime",
-            "top_action_anime", "top_romance_anime", "top_fantasy_anime",
-            "top_scifi_anime", "top_sports_anime",
+            "top_action_anime",
             "trending_manga", "popular_manga", "top_rated_manga",
             "seasonal_manga", "recently_finished_manga",
             "trending_novel", "popular_novel", "top_rated_novel",
@@ -111,10 +110,6 @@ impl HomeService {
                 upcoming:          lookup("upcoming_anime"),
                 recently_finished: lookup("recently_finished_anime"),
                 top_action:        lookup("top_action_anime"),
-                top_romance:       lookup("top_romance_anime"),
-                top_fantasy:       lookup("top_fantasy_anime"),
-                top_scifi:         lookup("top_scifi_anime"),
-                top_sports:        lookup("top_sports_anime"),
             },
             manga: MangaSection {
                 trending:          lookup("trending_manga"),

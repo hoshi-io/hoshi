@@ -13,10 +13,6 @@ export type NormalizedSection = {
     recentlyFinished: NormalizedCard[];
     upcoming: NormalizedCard[];
     topAction: NormalizedCard[];
-    topRomance: NormalizedCard[];
-    topFantasy: NormalizedCard[];
-    topScifi: NormalizedCard[];
-    topSports: NormalizedCard[];
 };
 
 function normalizeSection(section: Record<string, FullContent[]>): NormalizedSection {
@@ -29,10 +25,6 @@ function normalizeSection(section: Record<string, FullContent[]>): NormalizedSec
         recentlyFinished: norm(section.recentlyFinished ?? []),
         upcoming: norm(section.upcoming ?? []),
         topAction: norm(section.topAction ?? []),
-        topRomance: norm(section.topRomance ?? []),
-        topFantasy: norm(section.topFantasy ?? []),
-        topScifi: norm(section.topScifi ?? []),
-        topSports: norm(section.topSports ?? []),
     };
 }
 

@@ -150,12 +150,6 @@
                                     {#if section.topAction.length > 0}
                                         <ContentCardCarousel title={i18n.t("home.action")} items={section.topAction} />
                                     {/if}
-                                    {#if section.topRomance.length > 0}
-                                        <ContentCardCarousel title={i18n.t("home.romance")} items={section.topRomance} />
-                                    {/if}
-                                    {#if section.topFantasy.length > 0}
-                                        <ContentCardCarousel title={i18n.t("home.fantasy")} items={section.topFantasy} />
-                                    {/if}
                                 {/if}
                             {/if}
                         </div>

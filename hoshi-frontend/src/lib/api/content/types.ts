@@ -156,10 +156,6 @@ export interface AnimeSection {
     upcoming: FullContent[];
     recentlyFinished: FullContent[];
     topAction: FullContent[];
-    topRomance: FullContent[];
-    topFantasy: FullContent[];
-    topScifi: FullContent[];
-    topSports: FullContent[];
 }
 
 export interface MangaSection {

@@ -129,23 +129,6 @@ query {
 }
 "#;
 
-const HOME_QUERY_ANIME_3: &str = r#"
-query {
-  top_romance_anime: Page(perPage: 20) {
-    media(sort: SCORE_DESC, type: ANIME, genre: "Romance", isAdult: false) { ...mediaFields }
-  }
-  top_fantasy_anime: Page(perPage: 20) {
-    media(sort: SCORE_DESC, type: ANIME, genre: "Fantasy", isAdult: false) { ...mediaFields }
-  }
-  top_scifi_anime: Page(perPage: 20) {
-    media(sort: SCORE_DESC, type: ANIME, genre: "Sci-Fi", isAdult: false) { ...mediaFields }
-  }
-  top_sports_anime: Page(perPage: 20) {
-    media(sort: SCORE_DESC, type: ANIME, genre: "Sports", isAdult: false) { ...mediaFields }
-  }
-}
-"#;
-
 const HOME_QUERY_MANGA_1: &str = r#"
 query {
   trending_manga: Page(perPage: 20) {
@@ -626,15 +609,13 @@ impl TrackerProvider for AniListProvider {
 
         let body_a1 = json!({ "query": format!("{}\n{}", HOME_QUERY_ANIME_1, frag) });
         let body_a2 = json!({ "query": format!("{}\n{}", HOME_QUERY_ANIME_2, frag) });
-        let body_a3 = json!({ "query": format!("{}\n{}", HOME_QUERY_ANIME_3, frag) });
         let body_m1 = json!({ "query": format!("{}\n{}", HOME_QUERY_MANGA_1, frag) });
         let body_m2 = json!({ "query": format!("{}\n{}", HOME_QUERY_MANGA_2, frag) });
         let body_m3 = json!({ "query": format!("{}\n{}", HOME_QUERY_MANGA_3, frag) });
 
-        let (r_a1, r_a2, r_a3, r_m1, r_m2, r_m3) = tokio::try_join!(
+        let (r_a1, r_a2, r_m1, r_m2, r_m3) = tokio::try_join!(
         self.graphql(None, &body_a1),
         self.graphql(None, &body_a2),
-        self.graphql(None, &body_a3),
         self.graphql(None, &body_m1),
         self.graphql(None, &body_m2),
         self.graphql(None, &body_m3),
@@ -645,7 +626,6 @@ impl TrackerProvider for AniListProvider {
         for (res, keys) in [
             (r_a1, vec!["trending_anime", "popular_anime", "top_rated_anime"]),
             (r_a2, vec!["seasonal_anime", "upcoming_anime", "recently_finished_anime", "top_action_anime"]),
-            (r_a3, vec!["top_romance_anime", "top_fantasy_anime", "top_scifi_anime", "top_sports_anime"]),
             (r_m1, vec!["trending_manga", "popular_manga", "top_rated_manga"]),
             (r_m2, vec!["seasonal_manga", "recently_finished_manga"]),
             (r_m3, vec!["trending_novel", "popular_novel", "top_rated_novel", "recently_finished_novel"]),

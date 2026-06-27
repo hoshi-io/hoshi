@@ -37,10 +37,6 @@ pub struct AnimeSection {
     pub upcoming:          Vec<FullContent>,
     pub recently_finished: Vec<FullContent>,
     pub top_action:        Vec<FullContent>,
-    pub top_romance:       Vec<FullContent>,
-    pub top_fantasy:       Vec<FullContent>,
-    pub top_scifi:         Vec<FullContent>,
-    pub top_sports:        Vec<FullContent>,
 }
 
 impl AnimeSection {
@@ -52,10 +48,6 @@ impl AnimeSection {
         self.upcoming.retain(|m| !m.content.nsfw);
         self.recently_finished.retain(|m| !m.content.nsfw);
         self.top_action.retain(|m| !m.content.nsfw);
-        self.top_romance.retain(|m| !m.content.nsfw);
-        self.top_fantasy.retain(|m| !m.content.nsfw);
-        self.top_scifi.retain(|m| !m.content.nsfw);
-        self.top_sports.retain(|m| !m.content.nsfw);
     }
 }
 

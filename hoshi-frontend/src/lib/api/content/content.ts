@@ -11,7 +11,6 @@ import type {
     ExtensionSource,
     HomeView,
     ContentType,
-    TrackerMedia,
     ExtensionSearchResult, RelationGraph,
 } from "./types";
 
