@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS content_units (
     UNIQUE(cid, type, unit_number),
     FOREIGN KEY(cid) REFERENCES content(cid) ON DELETE CASCADE
 );
+
+ALTER TABLE content_units ADD COLUMN updated_at INTEGER;
+
 CREATE INDEX IF NOT EXISTS idx_units_cid ON content_units(cid);
 CREATE INDEX IF NOT EXISTS idx_units_type ON content_units(type);
 

@@ -7,19 +7,19 @@ pub struct UnitRepository;
 
 impl UnitRepository {
     pub async fn upsert(pool: &SqlitePool, unit: &ContentUnit) -> CoreResult<()> {
-
         sqlx::query(
             r#"
-            INSERT INTO content_units (
-                cid, unit_number, type, title, description,
-                thumbnail_url, released_at, duration, absolute_number, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(cid, type, unit_number) DO UPDATE SET
-                title         = excluded.title,
-                description   = excluded.description,
-                thumbnail_url = excluded.thumbnail_url,
-                released_at   = excluded.released_at
-            "#,
+        INSERT INTO content_units (
+            cid, unit_number, type, title, description,
+            thumbnail_url, released_at, duration, absolute_number, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(cid, type, unit_number) DO UPDATE SET
+            title         = excluded.title,
+            description   = excluded.description,
+            thumbnail_url = excluded.thumbnail_url,
+            released_at   = excluded.released_at,
+            updated_at    = excluded.updated_at
+        "#,
         )
             .bind(&unit.cid)
             .bind(unit.unit_number)
@@ -31,10 +31,22 @@ impl UnitRepository {
             .bind(unit.duration)
             .bind(unit.absolute_number)
             .bind(unit.created_at)
+            .bind(unit.created_at)
             .execute(pool)
             .await?;
 
         Ok(())
+    }
+
+    pub async fn last_synced_at(pool: &SqlitePool, cid: &str) -> CoreResult<Option<i64>> {
+        let row: Option<(Option<i64>,)> = sqlx::query_as(
+            "SELECT MAX(updated_at) FROM content_units WHERE cid = ?"
+        )
+            .bind(cid)
+            .fetch_optional(pool)
+            .await?;
+
+        Ok(row.and_then(|(v,)| v))
     }
 
     pub async fn get_by_cid(pool: &SqlitePool, cid: &str) -> CoreResult<Vec<ContentUnit>> {

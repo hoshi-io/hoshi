@@ -9,45 +9,43 @@ use crate::state::AppState;
 use crate::tracker::repository::TrackerRepository;
 
 const SIMKL_CLIENT_ID: &str = "d8385263a0cd0e60acd779d9db61310f41c8f99e40571af596ef79c7de1d4b2e";
+const AIRING_SYNC_INTERVAL_SECS: i64 = 6 * 60 * 60;
 
 pub struct SimklUnitsService;
 
 impl SimklUnitsService {
+
     #[instrument(skip(state))]
     pub async fn sync_units_if_needed(state: &Arc<AppState>, cid: &str) -> CoreResult<()> {
         let simkl_id = match TrackerRepository::find_tracker_id_by_cid(&state.pool, cid, "simkl").await? {
             Some(id) => id,
-            None => {
-                return Ok(());
-            }
+            None => return Ok(()),
         };
 
         let units = UnitRepository::get_by_cid(&state.pool, cid).await?;
         let has_units = !units.is_empty();
 
-        let is_airing = if has_units {
-            ContentRepository::get_full_content(&state.pool, cid).await?
-                .and_then(|c| {
-                    c.metadata.first().map(|m| {
-                        matches!(m.status, Some(Status::Ongoing))
-                    })
-                })
-                .unwrap_or(false)
-        } else {
-            false
-        };
+        if !has_units {
+            info!(cid = %cid, simkl_id = %simkl_id, "No units cached, fetching from Simkl");
+            return Self::fetch_and_persist(state, cid, &simkl_id).await;
+        }
 
-        if has_units && !is_airing {
+        let is_airing = ContentRepository::get_full_content(&state.pool, cid).await?
+            .and_then(|c| c.metadata.first().map(|m| matches!(m.status, Some(Status::Ongoing))))
+            .unwrap_or(false);
+
+        if !is_airing {
             return Ok(());
         }
 
-        info!(
-            cid = %cid,
-            simkl_id = %simkl_id,
-            reason = if !has_units { "no units" } else { "still airing" },
-            "Fetching content units from Simkl"
-        );
+        let last_synced = UnitRepository::last_synced_at(&state.pool, cid).await?.unwrap_or(0);
+        let now = chrono::Utc::now().timestamp();
 
+        if now - last_synced < AIRING_SYNC_INTERVAL_SECS {
+            return Ok(());
+        }
+
+        info!(cid = %cid, simkl_id = %simkl_id, "Airing series due for re-sync");
         Self::fetch_and_persist(state, cid, &simkl_id).await
     }
 
