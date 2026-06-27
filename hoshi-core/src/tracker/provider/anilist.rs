@@ -308,6 +308,101 @@ impl AniListProvider {
         json!(null)
     }
 
+    fn media_to_tracker_media_stub(&self, data: &Value) -> Option<TrackerMedia> {
+        let tracker_id = data.get("id")?.as_i64()?.to_string();
+
+        let format_str = data.get("format").and_then(|v| v.as_str());
+
+        let content_type = match data.get("type").and_then(|v| v.as_str()) {
+            Some("MANGA") if matches!(format_str, Some("NOVEL") | Some("LIGHT_NOVEL")) => ContentType::Novel,
+            Some("MANGA") => ContentType::Manga,
+            _ => ContentType::Anime,
+        };
+
+        let mut cross_ids = HashMap::new();
+        if let Some(mal_id) = data.get("idMal").and_then(|v| v.as_i64()) {
+            let prefix = match content_type {
+                ContentType::Anime => "anime",
+                ContentType::Manga | ContentType::Novel => "manga",
+            };
+            cross_ids.insert("mal".to_string(), format!("{}:{}", prefix, mal_id));
+        }
+
+        let titles_obj = data.get("title");
+
+        let title = titles_obj
+            .and_then(|t| t.get("romaji").or(t.get("english")))
+            .and_then(|v| v.as_str())
+            .unwrap_or("Unknown")
+            .to_string();
+
+        let mut title_i18n: HashMap<String, String> = HashMap::new();
+        if let Some(t) = titles_obj {
+            if let Some(s) = t.get("native").and_then(|v| v.as_str()).filter(|s| !s.is_empty()) {
+                title_i18n.insert("native".to_string(), s.to_string());
+            }
+            if let Some(s) = t.get("romaji").and_then(|v| v.as_str()).filter(|s| !s.is_empty()) {
+                title_i18n.insert("romaji".to_string(), s.to_string());
+            }
+            if let Some(s) = t.get("english").and_then(|v| v.as_str()).filter(|s| !s.is_empty()) {
+                title_i18n.insert("english".to_string(), s.to_string());
+            }
+        }
+
+        let mut alt_titles = vec![];
+        if let Some(t) = titles_obj.and_then(|t| t.get("english")).and_then(|v| v.as_str()) {
+            alt_titles.push(t.to_string());
+        }
+        if let Some(t) = titles_obj.and_then(|t| t.get("native")).and_then(|v| v.as_str()) {
+            alt_titles.push(t.to_string());
+        }
+        if let Some(syns) = data.get("synonyms").and_then(|v| v.as_array()) {
+            alt_titles.extend(syns.iter().filter_map(|v| v.as_str().map(String::from)));
+        }
+
+        let cover_image = data.get("coverImage")
+            .and_then(|i| i.get("extraLarge").or(i.get("large")))
+            .and_then(|v| v.as_str())
+            .map(String::from);
+
+        let genres: Vec<String> = data.get("genres").and_then(|v| v.as_array())
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+            .unwrap_or_default();
+
+        let rating = data.get("averageScore").or(data.get("meanScore"))
+            .and_then(|v| v.as_f64())
+            .map(|v| (v / 10.0) as f32);
+
+        Some(TrackerMedia {
+            tracker_id,
+            tracker_url: None,
+            cross_ids,
+            content_type,
+            title,
+            alt_titles,
+            title_i18n,
+            synopsis: data.get("description").and_then(|v| v.as_str()).map(String::from),
+            cover_image,
+            banner_image: data.get("bannerImage").and_then(|v| v.as_str()).map(String::from),
+            episode_count: data.get("episodes").and_then(|v| v.as_i64()).map(|i| i as i32),
+            chapter_count: data.get("chapters").and_then(|v| v.as_i64()).map(|i| i as i32),
+            episode_duration: data.get("duration").and_then(|v| v.as_i64()).map(|i| i as i32),
+            status: data.get("status").and_then(|v| v.as_str()).map(String::from),
+            genres,
+            tags: vec![],        // not needed for relation stubs
+            nsfw: data.get("isAdult").and_then(|v| v.as_bool()).unwrap_or(false),
+            release_date: data.get("startDate").and_then(Self::parse_date),
+            end_date: data.get("endDate").and_then(Self::parse_date),
+            rating,
+            trailer_url: None,   // not needed for relation stubs
+            format: format_str.map(String::from),
+            studio: None,        // not needed for relation stubs
+            characters: vec![],  // not needed for relation stubs
+            staff: vec![],       // not needed for relation stubs
+            relations: vec![],   // ← the whole point, breaks recursion
+        })
+    }
+
     fn media_to_tracker_media(&self, data: &Value) -> Option<TrackerMedia> {
         let tracker_id = data.get("id")?.as_i64()?.to_string();
 
@@ -429,7 +524,7 @@ impl AniListProvider {
             for edge in edges {
                 let relation_type = edge.get("relationType").and_then(|v| v.as_str()).unwrap_or("").to_string();
                 if let Some(node) = edge.get("node") {
-                    if let Some(rel_media) = self.media_to_tracker_media(node) {
+                    if let Some(rel_media) = self.media_to_tracker_media_stub(node) {
                         relations.push(super::TrackerRelation { relation_type, media: rel_media });
                     }
                 }
