@@ -10,6 +10,7 @@ import { appConfig } from "@/stores/config.svelte.js";
 import { normalizeFullContent, type NormalizedCard } from "@/utils/normalize";
 import {extensions} from "@/stores/extensions.svelte";
 import {extensionsApi} from "@/api/extensions/extensions";
+import {historyStore} from "@/stores/history.svelte";
 
 export type NormalizedRelation = {
     targetCid: string;
@@ -88,6 +89,12 @@ export class ContentDetailState {
             const pref = appConfig.data?.ui?.titleLanguage || 'romaji';
             const title = meta.titleI18n?.[pref] || meta.title || '';
             layoutState.title = title;
+
+            historyStore.add({
+                id: res.content.cid,
+                title,
+                coverImage: meta.coverImage ?? null
+            });
         }
 
         if (meta && extensions.isTachiyomi(meta.sourceName) && meta.coverImage) {

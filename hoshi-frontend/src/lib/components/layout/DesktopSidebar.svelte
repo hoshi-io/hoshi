@@ -5,6 +5,7 @@
     import * as Avatar from '$lib/components/ui/avatar';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { page } from "$app/state";
+    import HistoryMenu from "@/components/history/HistoryMenu.svelte";
 
     let { mainRoutes, profileRoutes, showSwitchProfileModal = $bindable(false) } = $props();
 
@@ -45,6 +46,7 @@
                 </Button>
             </a>
         {/each}
+        <HistoryMenu />
     </nav>
 
     <div class="flex flex-col items-center space-y-4 px-3 w-full">

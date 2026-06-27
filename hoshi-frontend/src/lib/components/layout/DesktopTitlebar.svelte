@@ -5,6 +5,7 @@
     import { layoutState } from '@/stores/layout.svelte.js';
     import { themeManager } from '@/stores/theme.svelte.js';
     import MpvPopover from '@/components/mpv/MpvPopover.svelte';
+    import HistoryMenu from "@/components/history/HistoryMenu.svelte";
 
     const isTauri = browser && '__TAURI__' in window;
     const osType = isTauri ? type() : null;

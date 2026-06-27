@@ -5,6 +5,7 @@
     import { layoutState } from '@/stores/layout.svelte.js';
     import * as Avatar from '$lib/components/ui/avatar';
     import { Button } from '$lib/components/ui/button';
+    import HistoryMenu from '@/components/history/HistoryMenu.svelte';
 
     let { showSwitchProfileModal = $bindable(false) } = $props();
 
@@ -28,9 +29,9 @@
         {/if}
 
         {#if !layoutState.headerAction && layoutState.title}
-            <span class="text-lg font-bold tracking-tight text-foreground capitalize truncate">
-                {layoutState.title}
-            </span>
+			<span class="text-lg font-bold tracking-tight text-foreground capitalize truncate">
+				{layoutState.title}
+			</span>
         {/if}
     </div>
 
@@ -39,6 +40,8 @@
             {@render layoutState.headerAction()}
         {/if}
     </div>
+
+    <HistoryMenu />
 
     {#if auth.user}
         <button onclick={() => showSwitchProfileModal = true} class="shrink-0">
