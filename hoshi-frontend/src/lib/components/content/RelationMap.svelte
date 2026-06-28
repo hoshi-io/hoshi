@@ -48,7 +48,6 @@
     let lastY = 0;
 
     function onPointerDown(e: PointerEvent) {
-        // Only initiate drag from left mouse button / touch, not buttons inside
         if (e.button !== 0 && e.pointerType === 'mouse') return;
         e.preventDefault();
         dragging = true;
@@ -71,6 +70,13 @@
 
     function onPointerUp(e: PointerEvent) {
         dragging = false;
+        if (didDrag) return;
+
+        const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+        const cardEl = el?.closest('[data-cid]') as HTMLElement | null;
+        if (cardEl?.dataset.cid) {
+            openNode(cardEl.dataset.cid);
+        }
     }
 
     function onWheel(e: WheelEvent) {
@@ -84,7 +90,6 @@
     }
 
     function openNode(cid: string) {
-        // Don't navigate if the user was dragging
         if (didDrag) return;
         goto(`/c/${cid}`);
         onNavigate?.();
@@ -138,15 +143,15 @@
 
             {#each layout.nodes as node, i (node.cid)}
                 <div
+                        data-cid={node.cid}
                         in:scaleTransition={{ duration: 400, delay: 300 + (i * 20), start: 0.8, easing: cubicOut }}
                         role="button"
                         tabindex="0"
-                        onclick={() => openNode(node.cid)}
                         onkeydown={(e) => e.key === 'Enter' && openNode(node.cid)}
                         onmouseenter={() => (hoveredCid = node.cid)}
                         onmouseleave={() => (hoveredCid = null)}
                         class="absolute overflow-hidden rounded-xl border shadow-sm transition-[box-shadow,opacity] duration-200 cursor-pointer hover:shadow-xl hover:z-10
-                        {node.cid === rootCid ? 'ring-4 ring-primary shadow-primary/20' : ''}"
+            {node.cid === rootCid ? 'ring-4 ring-primary shadow-primary/20' : ''}"
                         style="left: {node.x}px; top: {node.y}px; width: {NODE_W}px; height: {NODE_H}px;"
                 >
                     <img

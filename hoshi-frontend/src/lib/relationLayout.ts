@@ -19,8 +19,20 @@ const ROW_GAP = 80;
 
 const UPWARD_RELATIONS = new Set(['source', 'parent', 'adaptation']);
 const HORIZONTAL_RELATIONS = new Set(['sequel', 'prequel']);
+const DIRECTIONAL_SIDE_RELATIONS = new Set(['summary', 'compilation', 'contains']);
+
+function computeSideNodes(graph: RelationGraph): Set<string> {
+    const side = new Set<string>();
+    for (const e of graph.edges) {
+        if (DIRECTIONAL_SIDE_RELATIONS.has(e.relationType)) {
+            side.add(e.targetCid); // by convention, the target is always the recap/condensed entry
+        }
+    }
+    return side;
+}
 
 export function computeLayout(graph: RelationGraph, rootCid: string): LayoutResult {
+    const sideNodes = computeSideNodes(graph);
     const adjacency = new Map<string, RelationEdge[]>();
     graph.edges.forEach((e) => {
         if (!adjacency.has(e.sourceCid)) adjacency.set(e.sourceCid, []);
@@ -35,7 +47,6 @@ export function computeLayout(graph: RelationGraph, rootCid: string): LayoutResu
     grid.set(rootCid, { x: 0, y: 0 });
     occupied.add(`0,0`);
 
-    // PASS 1: horizontal timeline (sequel/prequel)
     const timelineQueue = [rootCid];
     const timelineVisited = new Set<string>([rootCid]);
 
@@ -50,6 +61,7 @@ export function computeLayout(graph: RelationGraph, rootCid: string): LayoutResu
             const isSource = edge.sourceCid === cur;
             const other = isSource ? edge.targetCid : edge.sourceCid;
             if (grid.has(other) || timelineVisited.has(other)) continue;
+            if (sideNodes.has(other)) continue;
             timelineVisited.add(other);
 
             const fx = edge.relationType === 'sequel'
@@ -66,8 +78,6 @@ export function computeLayout(graph: RelationGraph, rootCid: string): LayoutResu
         }
     }
 
-    // PASS 2: vertical relations — fan children out horizontally around parent
-    // Process level by level so parents are placed before children
     const verticalQueue: string[] = [...grid.keys()];
     const verticalVisited = new Set<string>(grid.keys());
 
@@ -76,7 +86,6 @@ export function computeLayout(graph: RelationGraph, rootCid: string): LayoutResu
         const curPos = grid.get(cur)!;
         const edges = adjacency.get(cur) ?? [];
 
-        // Collect unplaced children going down and up separately
         const downChildren: string[] = [];
         const upChildren: string[] = [];
 
