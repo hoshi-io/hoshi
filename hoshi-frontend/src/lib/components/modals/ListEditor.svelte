@@ -333,7 +333,7 @@
 </script>
 
 <Dialog.Root bind:open={open}>
-    <Dialog.Content class="sm:max-w-xl bg-background border-border p-0 overflow-hidden sm:rounded-sm shadow-lg z-[100]">
+    <Dialog.Content class="w-[95vw] sm:max-w-2xl lg:max-w-3xl bg-background border-border p-0 overflow-hidden sm:rounded-sm shadow-lg z-[100] flex flex-col max-h-[95dvh] sm:max-h-[90dvh]">
 
         {#if loading}
             <div class="h-64 flex flex-col items-center justify-center gap-4 text-muted-foreground">
@@ -381,7 +381,7 @@
                 </div>
             </div>
 
-            <form onsubmit={handleSubmit} class="p-6 pt-4 space-y-6 overflow-y-auto max-h-[70vh] hide-scrollbar">
+            <form onsubmit={handleSubmit} class="flex-1 p-6 pt-4 space-y-6 overflow-y-auto hide-scrollbar">
                 <div class="grid grid-cols-2 gap-5">
                     <div class="col-span-2 space-y-2">
                         <Label for="status" class="font-bold text-foreground/90">{i18n.t('list.modal.status')}</Label>

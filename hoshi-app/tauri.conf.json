@@ -4,6 +4,8 @@
   "version": "1.1.0",
   "identifier": "com.ninelfx.hoshi",
   "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:5173",
     "frontendDist": "../hoshi-frontend/build"
   },
   "app": {
