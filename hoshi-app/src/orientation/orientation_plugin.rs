@@ -6,7 +6,7 @@ use tauri::{
 };
 use tracing::debug;
 
-const PLUGIN_IDENTIFIER: &str = "com.dot_fx.hoshi";
+const PLUGIN_IDENTIFIER: &str = "com.ninelfx.hoshi";
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -5,7 +5,7 @@ use tauri::{
     Manager, Runtime,
 };
 
-const PLUGIN_IDENTIFIER: &str = "com.dot_fx.hoshi";
+const PLUGIN_IDENTIFIER: &str = "com.ninelfx.hoshi";
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]

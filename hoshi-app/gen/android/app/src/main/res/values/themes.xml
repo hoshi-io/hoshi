@@ -1,13 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.hoshi_app" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Force the status bar text to be white -->
-        <item name="android:windowLightStatusBar">false</item>
-        <!-- Make the status bar background transparent so your app shows underneath -->
-        <item name="android:statusBarColor">@android:color/transparent</item>
-
-        <!-- Do the exact same thing for the bottom navigation/swipe bar! -->
-        <item name="android:windowLightNavigationBar">false</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <!-- Customize your theme here. -->
     </style>
 </resources>

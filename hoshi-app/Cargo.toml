@@ -2,7 +2,7 @@
 name = "hoshi-app"
 version = "1.1.0"
 description = "Cross-platform tracker manager for anime, manga and light novels"
-authors = ["dot-fx"]
+authors = ["ninelfx"]
 edition = "2024"
 build = "build.rs"
 

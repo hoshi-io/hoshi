@@ -1,4 +1,4 @@
-package com.dot_fx.hoshi
+package com.ninelfx.hoshi
 
 import android.os.Build
 import android.util.Log

@@ -1,4 +1,4 @@
-package com.dot_fx.hoshi
+package com.ninelfx.hoshi
 
 import android.content.pm.ActivityInfo
 import android.util.Log
