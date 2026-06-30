@@ -148,7 +148,10 @@ jobs:
           echo "BINDGEN_EXTRA_CLANG_ARGS_i686_linux_android=--sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/i686-linux-android" >> $GITHUB_ENV
           echo "BINDGEN_EXTRA_CLANG_ARGS_x86_64_linux_android=--sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/x86_64-linux-android" >> $GITHUB_ENV
 
-      - name: Build Android Artifacts
+      - name: Build Android (split APKs)
+        run: cargo tauri android build --split-per-abi
+
+      - name: Build Android (AAB)
         run: cargo tauri android build
 
       - name: Sign and Rename Artifacts
@@ -158,27 +161,27 @@ jobs:
         run: |
           mkdir -p final-artifacts
           VERSION=${{ github.ref_name }}
-          
+
           echo "$KEYSTORE_B64" | base64 --decode > hoshi.jks
-          
+
           BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/* | tail -1)
-          
+
           APK_ARM64=$(find hoshi-app/gen/android/app/build/outputs -name "*arm64*.apk" | head -n 1)
           APK_ARM32=$(find hoshi-app/gen/android/app/build/outputs -name "*app-arm-*.apk" | head -n 1)
-          
+
           $BUILD_TOOLS/zipalign -v -p 4 "$APK_ARM64" final-artifacts/hoshi-android-arm64-${VERSION}.apk
           $BUILD_TOOLS/apksigner sign --ks hoshi.jks --ks-pass env:KEYSTORE_PASS --key-pass env:KEYSTORE_PASS final-artifacts/hoshi-android-arm64-${VERSION}.apk
-          
+
           $BUILD_TOOLS/zipalign -v -p 4 "$APK_ARM32" final-artifacts/hoshi-android-arm32-${VERSION}.apk
           $BUILD_TOOLS/apksigner sign --ks hoshi.jks --ks-pass env:KEYSTORE_PASS --key-pass env:KEYSTORE_PASS final-artifacts/hoshi-android-arm32-${VERSION}.apk
-          
+
           AAB_FILE=$(find hoshi-app/gen/android/app/build/outputs -name "*.aab" | head -n 1)
-          
+
           jarsigner -sigalg SHA256withRSA -digestalg SHA-256 \
             -keystore hoshi.jks \
             -storepass "${KEYSTORE_PASS}" -keypass "${KEYSTORE_PASS}" \
             "$AAB_FILE" hoshi
-          
+
           mv "$AAB_FILE" final-artifacts/hoshi-android-${VERSION}.aab
 
       - name: Upload Android artifacts
