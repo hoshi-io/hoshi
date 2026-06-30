@@ -19,9 +19,8 @@ use crate::state::AppState;
 use crate::tracker::provider::TrackerMedia;
 use crate::tracker::repository::TrackerRepository;
 
-const BG_RESOLVE_MAX_NODES: usize = 30;
-const BG_RESOLVE_MAX_DEPTH: usize = 2;
 const MAX_TREE_NODES: usize = 150;
+const MAX_TREE_DEPTH: usize = 4;
 
 const TRACKER_SOURCES: &[&str] = &["anilist", "mal", "kitsu", "anidb"];
 const FUZZY_SCORE_THRESHOLD: f64 = 0.85;
@@ -57,12 +56,8 @@ impl ContentService {
         let cid_bg = cid.to_string();
 
         tokio::spawn(async move {
-            Self::resolve_relations_recursive(&state_bg, &cid_bg).await;
             if let Err(e) = SimklUnitsService::sync_units_if_needed(&state_bg, &cid_bg).await {
                 warn!(cid = %cid_bg, error = ?e, "Background unit sync failed");
-            }
-            if let Err(e) = Self::resolve_pending_relations(&state_bg, &cid_bg).await {
-                warn!(cid = %cid_bg, error = ?e, "Background relation resolution failed");
             }
             if let Ok(config) = ConfigRepository::get_config(&state_bg.pool, 1).await {
                 let preferred = &config.content.preferred_metadata_provider;
@@ -106,7 +101,6 @@ impl ContentService {
                 };
                 let _ = Self::backfill_preferred_metadata(&state_bg, &cid_bg, &full, &tracker_bg, &tracker_id_bg).await;
                 let _ = SimklUnitsService::sync_units_if_needed(&state_bg, &cid_bg).await;
-                let _ = Self::resolve_pending_relations(&state_bg, &cid_bg).await;
                 let _ = Self::backfill_cross_ids(&state_bg, &cid_bg, &full, &tracker_bg, &tracker_id_bg).await;
             });
 
@@ -118,13 +112,7 @@ impl ContentService {
             state, &media.content_type, &media, tracker_id, tracker, None,
         ).await?;
 
-        let state_bg = state.clone();
-        let cid_bg = full.content.cid.clone();
-        let _ = SimklUnitsService::sync_units_if_needed(&state_bg, &cid_bg).await;
-
-        tokio::spawn(async move {
-            let _ = Self::resolve_pending_relations(&state_bg, &cid_bg).await;
-        });
+        let _ = SimklUnitsService::sync_units_if_needed(state, &full.content.cid).await;
 
         Ok(full)
     }
@@ -419,62 +407,6 @@ impl ContentService {
         }
     }
 
-    async fn resolve_pending_relations(state: &Arc<AppState>, cid: &str) -> CoreResult<()> {
-        let pending = RelationRepository::get_pending(&state.pool, cid).await?;
-        if pending.is_empty() { return Ok(()); }
-
-        for (id, tracker_name, tracker_id, rel_type) in pending {
-            let target_cid = match TrackerRepository::find_cid_by_tracker(
-                &state.pool, &tracker_name, &tracker_id
-            ).await? {
-                Some(tcid) => tcid,
-                None => {
-                    match ContentResolverService::fetch_tracker_media(state, &tracker_name, &tracker_id).await {
-                        Ok(media) => {
-                            match EnrichmentService::create_enriched_content(
-                                state,
-                                &media.content_type,
-                                &media,
-                                &tracker_id,
-                                &tracker_name,
-                                None,
-                            ).await {
-                                Ok(full) => full.content.cid,
-                                Err(e) => {
-                                    warn!(error = ?e, tracker_id = %tracker_id, "Failed to enrich pending relation target");
-                                    continue;
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            warn!(error = ?e, tracker_id = %tracker_id, "Failed to fetch pending relation media");
-                            continue;
-                        }
-                    }
-                }
-            };
-
-            let rel_enum = serde_json::from_str::<RelationType>(&format!("\"{}\"", rel_type))
-                .unwrap_or(RelationType::Alternative);
-
-            if let Err(e) = RelationRepository::upsert(&state.pool, &Relation {
-                id: None,
-                source_cid: cid.to_string(),
-                target_cid,
-                relation_type: rel_enum,
-                source_name: tracker_name,
-                created_at: chrono::Utc::now().timestamp(),
-            }).await {
-                warn!(error = ?e, "Failed to upsert resolved relation");
-                continue;
-            }
-
-            RelationRepository::delete_pending(&state.pool, id).await.ok();
-        }
-
-        Ok(())
-    }
-
     async fn backfill_preferred_metadata_by_cid(
         state: &Arc<AppState>,
         cid: &str,
@@ -626,35 +558,6 @@ impl ContentService {
         Ok(())
     }
 
-    #[instrument(skip(state))]
-    async fn resolve_relations_recursive(state: &Arc<AppState>, root_cid: &str) {
-        let mut visited: HashSet<String> = HashSet::new();
-        let mut queue: VecDeque<(String, usize)> = VecDeque::new();
-        queue.push_back((root_cid.to_string(), 0));
-
-        while let Some((cid, depth)) = queue.pop_front() {
-            if visited.contains(&cid) || visited.len() >= BG_RESOLVE_MAX_NODES || depth > BG_RESOLVE_MAX_DEPTH {
-                continue;
-            }
-            visited.insert(cid.clone());
-
-            if let Err(e) = Self::resolve_pending_relations(state, &cid).await {
-                warn!(cid = %cid, error = ?e, "Background recursive relation resolution failed");
-                continue;
-            }
-
-            let Ok(Some(full)) = ContentRepository::get_full_content(&state.pool, &cid).await else {
-                continue;
-            };
-
-            for rel in &full.relations {
-                if !visited.contains(&rel.target_cid) {
-                    queue.push_back((rel.target_cid.clone(), depth + 1));
-                }
-            }
-        }
-    }
-
     fn is_traversable(rel_type: &RelationType) -> bool {
         matches!(
         rel_type,
@@ -677,63 +580,112 @@ impl ContentService {
         state: &Arc<AppState>,
         root_cid: &str,
     ) -> CoreResult<RelationGraph> {
-        let mut visited: HashSet<String> = HashSet::new();
-        let mut queue: VecDeque<String> = VecDeque::new();
+        const MAX_TREE_EAGER_RESOLVES: usize = 12;
+        let mut visited_cids: HashSet<String> = HashSet::new();
+        let mut visited_leaves: HashSet<(String, String)> = HashSet::new();
+        let mut queue: VecDeque<(String, usize)> = VecDeque::new();
         let mut nodes = Vec::new();
         let mut edges = Vec::new();
-        let mut seen_edges = HashSet::new();
+        let mut seen_edges: HashSet<(String, String)> = HashSet::new();
+        let mut eager_resolves = 0usize;
 
-        queue.push_back(root_cid.to_string());
+        queue.push_back((root_cid.to_string(), 0));
 
-        while let Some(cid) = queue.pop_front() {
-            if visited.contains(&cid) || visited.len() >= MAX_TREE_NODES {
+        while let Some((cid, depth)) = queue.pop_front() {
+            if visited_cids.contains(&cid) || visited_cids.len() >= MAX_TREE_NODES {
                 continue;
             }
-            visited.insert(cid.clone());
-
-            if let Err(e) = Self::resolve_pending_relations(state, &cid).await {
-                warn!(cid = %cid, error = ?e, "Failed resolving relations during tree build");
-            }
+            visited_cids.insert(cid.clone());
 
             let Some(full) = ContentRepository::get_full_content(&state.pool, &cid).await? else {
                 continue;
             };
 
-            let title = full.metadata.first()
-                .map(|m| m.title.clone())
-                .unwrap_or_default();
+            let title = full.metadata.first().map(|m| m.title.clone()).unwrap_or_default();
             let cover = full.metadata.first().and_then(|m| m.cover_image.clone());
 
-            nodes.push(RelationNode { cid: cid.clone(), title, cover_image: cover });
+            nodes.push(RelationNode {
+                cid: Some(cid.clone()),
+                tracker_name: None,
+                tracker_id: None,
+                title,
+                cover_image: cover,
+            });
 
-            for rel in &full.relations {
+            if depth >= MAX_TREE_DEPTH {
+                continue;
+            }
+
+            let relations = RelationRepository::get_by_source(&state.pool, &cid).await?;
+
+            for rel in relations {
                 if !Self::is_traversable(&rel.relation_type) {
                     continue;
                 }
 
-                let key = if cid < rel.target_cid {
-                    (cid.clone(), rel.target_cid.clone())
-                } else {
-                    (rel.target_cid.clone(), cid.clone())
+                let mut target_cid = rel.target_cid.clone();
+                if target_cid.is_none() && eager_resolves < MAX_TREE_EAGER_RESOLVES {
+                    eager_resolves += 1;
+                    target_cid = Self::eager_resolve_relation_target(state, &rel).await;
+                }
+
+                let edge_key = match &target_cid {
+                    Some(tcid) if cid < *tcid => (cid.clone(), tcid.clone()),
+                    Some(tcid) => (tcid.clone(), cid.clone()),
+                    None => (cid.clone(), format!("{}:{}", rel.target_tracker_name, rel.target_tracker_id)),
                 };
 
-                if seen_edges.contains(&key) {
+                if seen_edges.contains(&edge_key) {
                     continue;
                 }
-                seen_edges.insert(key);
+                seen_edges.insert(edge_key);
 
                 edges.push(RelationEdge {
                     source_cid: cid.clone(),
-                    target_cid: rel.target_cid.clone(),
+                    target_cid: target_cid.clone(),
+                    target_tracker_name: rel.target_tracker_name.clone(),
+                    target_tracker_id: rel.target_tracker_id.clone(),
                     relation_type: rel.relation_type.clone(),
                 });
 
-                if !visited.contains(&rel.target_cid) {
-                    queue.push_back(rel.target_cid.clone());
+                match &target_cid {
+                    Some(tcid) if !visited_cids.contains(tcid) => {
+                        queue.push_back((tcid.clone(), depth + 1));
+                    }
+                    None => {
+                        let leaf_key = (rel.target_tracker_name.clone(), rel.target_tracker_id.clone());
+                        if visited_leaves.insert(leaf_key) {
+                            nodes.push(RelationNode {
+                                cid: None,
+                                tracker_name: Some(rel.target_tracker_name.clone()),
+                                tracker_id: Some(rel.target_tracker_id.clone()),
+                                title: rel.target_title.clone(),
+                                cover_image: rel.target_cover_image.clone(),
+                            });
+                        }
+                    }
+                    _ => {}
                 }
             }
         }
 
         Ok(RelationGraph { nodes, edges })
+    }
+
+    async fn eager_resolve_relation_target(state: &Arc<AppState>, rel: &Relation) -> Option<String> {
+        let media = ContentResolverService::fetch_tracker_media(
+            state, &rel.target_tracker_name, &rel.target_tracker_id,
+        ).await.ok()?;
+
+        let full = EnrichmentService::create_enriched_content(
+            state, &media.content_type, &media,
+            &rel.target_tracker_id, &rel.target_tracker_name, None,
+        ).await.ok()?;
+
+        let _ = RelationRepository::backfill_target_cid(
+            &state.pool, &rel.target_tracker_name, &rel.target_tracker_id, &full.content.cid,
+        ).await;
+
+        Some(full.content.cid)
     }
 }

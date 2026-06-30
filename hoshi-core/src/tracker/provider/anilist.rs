@@ -28,21 +28,15 @@ fragment mediaFields on Media {
   averageScore meanScore
   trailer { id site }
   relations {
-  edges {
-    relationType(version: 2)
-    node {
-      id idMal
-      title { romaji english native userPreferred }
-      description
-      type status format
-      coverImage { large }
-      episodes chapters
-      averageScore
-      startDate { year month day }
-      genres
+      edges {
+        relationType(version: 2)
+        node {
+          id idMal type
+          title { romaji english }
+          coverImage { large }
+        }
+      }
     }
-  }
-}
   characters(role: MAIN, perPage: 6) {
     edges {
       role
@@ -389,17 +383,17 @@ impl AniListProvider {
             episode_duration: data.get("duration").and_then(|v| v.as_i64()).map(|i| i as i32),
             status: data.get("status").and_then(|v| v.as_str()).map(String::from),
             genres,
-            tags: vec![],        // not needed for relation stubs
+            tags: vec![],
             nsfw: data.get("isAdult").and_then(|v| v.as_bool()).unwrap_or(false),
             release_date: data.get("startDate").and_then(Self::parse_date),
             end_date: data.get("endDate").and_then(Self::parse_date),
             rating,
-            trailer_url: None,   // not needed for relation stubs
+            trailer_url: None,
             format: format_str.map(String::from),
-            studio: None,        // not needed for relation stubs
-            characters: vec![],  // not needed for relation stubs
-            staff: vec![],       // not needed for relation stubs
-            relations: vec![],   // ← the whole point, breaks recursion
+            studio: None,
+            characters: vec![],
+            staff: vec![],
+            relations: vec![],
         })
     }
 

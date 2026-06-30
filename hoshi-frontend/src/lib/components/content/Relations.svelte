@@ -1,10 +1,10 @@
 <script lang="ts">
-    import type { NormalizedRelation } from "@/app/content.svelte";
     import { Skeleton } from "$lib/components/ui/skeleton";
     import { i18n } from "@/stores/i18n.svelte.js";
     import CardWrapper from "@/components/card/CardWrapper.svelte";
     import { Button } from "$lib/components/ui/button";
     import { ChevronDown, ChevronUp } from "lucide-svelte";
+    import type {NormalizedRelation} from "@/utils/normalize";
 
     let { relations, loading = false }: {
         relations: NormalizedRelation[];
@@ -24,6 +24,10 @@
             return type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
         }
         return translated;
+    }
+
+    function relationKey(relation: NormalizedRelation) {
+        return relation.targetCid ?? `${relation.targetTrackerName}:${relation.targetTrackerId}`;
     }
 </script>
 
@@ -46,7 +50,7 @@
         <p class="text-muted-foreground">{i18n.t('content.no_related')}</p>
     {:else}
         <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-6">
-            {#each visibleRelations as relation (relation.targetCid)}
+            {#each visibleRelations as relation (relationKey(relation))}
                 <div class="relative group w-full h-full animate-in fade-in duration-300">
                     {#snippet relationOverlay()}
                         <div class="absolute top-2 left-2 z-20 bg-background/95 backdrop-blur-md px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border border-border/50 shadow-md text-foreground">

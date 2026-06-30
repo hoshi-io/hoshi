@@ -151,16 +151,19 @@ pub struct AniSkipInterval {
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RelationNode {
-    pub cid: String,
+    pub cid: Option<String>,
+    pub tracker_name: Option<String>,
+    pub tracker_id: Option<String>,
     pub title: String,
     pub cover_image: Option<String>,
 }
-
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RelationEdge {
     pub source_cid: String,
-    pub target_cid: String,
+    pub target_cid: Option<String>,
+    pub target_tracker_name: String,
+    pub target_tracker_id: String,
     pub relation_type: RelationType,
 }
 

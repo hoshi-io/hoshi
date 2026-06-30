@@ -7,16 +7,10 @@ import {primaryMetadata} from "@/api/content/types";
 import type { FullContent } from "@/api/content/types";
 import { layoutState } from '@/stores/layout.svelte.js';
 import { appConfig } from "@/stores/config.svelte.js";
-import { normalizeFullContent, type NormalizedCard } from "@/utils/normalize";
+import {type NormalizedCard, type NormalizedRelation, normalizeRelationCard} from "@/utils/normalize";
 import {extensions} from "@/stores/extensions.svelte";
 import {extensionsApi} from "@/api/extensions/extensions";
 import {historyStore} from "@/stores/history.svelte";
-
-export type NormalizedRelation = {
-    targetCid: string;
-    relationType: string;
-    card: NormalizedCard;
-};
 
 export class ContentDetailState {
     isLoading = $state(true);
@@ -24,7 +18,6 @@ export class ContentDetailState {
     fullContent = $state<FullContent | null>(null);
 
     relations = $state<NormalizedRelation[]>([]);
-    relationsLoading = $state(false);
 
     params = $derived(page.params as Record<string, string>);
     pathParts = $derived(this.params.path ? this.params.path.split('/') : []);
@@ -53,7 +46,7 @@ export class ContentDetailState {
 
         try {
             const res = await contentApi.get_by_cid(cid);
-            await this.handleResponse(res);
+            this.handleResponse(res);
         } catch (e) {
             this.handleError(e);
         } finally {
@@ -70,7 +63,7 @@ export class ContentDetailState {
         try {
             const res = await contentApi.get(src, entryId);
 
-            await this.handleResponse(res);
+            this.handleResponse(res);
         } catch (e) {
             this.handleError(e);
         } finally {
@@ -78,7 +71,7 @@ export class ContentDetailState {
         }
     }
 
-    private async handleResponse(res: FullContent) {
+    private handleResponse(res: FullContent) {
         this.fullContent = res;
 
         const meta = primaryMetadata(res, appConfig.data?.content?.preferredMetadataProvider);
@@ -95,43 +88,18 @@ export class ContentDetailState {
         }
 
         if (meta && extensions.isTachiyomi(meta.sourceName) && meta.coverImage) {
-            try {
-                this.headers = await extensionsApi.getImageRequestHeaders(
-                    meta.sourceName,
-                    meta.coverImage
-                );
-            } catch (e) {
-                console.warn("Could not fetch tachiyomi image headers", e);
-            }
+            extensionsApi.getImageRequestHeaders(meta.sourceName, meta.coverImage)
+                .then(headers => { this.headers = headers; })
+                .catch(e => console.warn("Could not fetch tachiyomi image headers", e));
         }
 
-        const [,] = await Promise.all([
-            this.loadRelations(res.relations),
-        ]);
-    }
-
-    private async loadRelations(rawRelations: FullContent['relations']) {
-        if (!rawRelations?.length) return;
-
-        this.relationsLoading = true;
-        try {
-            const settled = await Promise.allSettled(
-                rawRelations.map(async (relation) => {
-                    const content = await contentApi.get_by_cid(relation.targetCid);
-                    return {
-                        targetCid: relation.targetCid,
-                        relationType: relation.relationType,
-                        card: normalizeFullContent(content),
-                    } satisfies NormalizedRelation;
-                })
-            );
-
-            this.relations = settled
-                .filter(r => r.status === "fulfilled")
-                .map(r => (r as PromiseFulfilledResult<NormalizedRelation>).value);
-        } finally {
-            this.relationsLoading = false;
-        }
+        this.relations = (res.relations ?? []).map((relation) => ({
+            targetCid: relation.targetCid,
+            targetTrackerName: relation.targetTrackerName,
+            targetTrackerId: relation.targetTrackerId,
+            relationType: relation.relationType,
+            card: normalizeRelationCard(relation),
+        }));
     }
 
     private handleError(e: any) {

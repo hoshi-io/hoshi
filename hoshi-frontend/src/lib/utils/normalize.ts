@@ -3,6 +3,7 @@ import { primaryMetadata } from "@/api/content/types";
 import { appConfig } from "@/stores/config.svelte.js";
 import { i18n } from "@/stores/i18n.svelte.js";
 import type { EnrichedListEntry } from "@/api/list/types";
+import {page} from "$app/state";
 
 export type NormalizedCard = {
     cid: string;
@@ -179,5 +180,44 @@ export function normalizeListEntry(entry: EnrichedListEntry): NormalizedCard {
         episodeCount: entry.totalUnits ?? null,
         contentType: entry.contentType,
         href: `/c/${entry.cid}`,
+    };
+}
+
+export type NormalizedRelation = {
+    targetCid: string | null;
+    targetTrackerName: string;
+    targetTrackerId: string;
+    relationType: string;
+    card: NormalizedCard;
+};
+
+export function normalizeRelationCard(relation: {
+    targetCid: string | null;
+    targetTrackerName: string;
+    targetTrackerId: string;
+    targetTitle: string;
+    targetCoverImage?: string | null;
+}): NormalizedCard {
+    const href = relation.targetCid
+        ? `/c/${relation.targetCid}`
+        : `/c/${relation.targetTrackerName}/${btoa(relation.targetTrackerId)}`;
+
+    return {
+        cid: relation.targetCid ?? "",
+        titleI18n: {},
+        titleDefault: relation.targetTitle,
+        cover: relation.targetCoverImage ?? "",
+        score: null,
+        year: null,
+        nsfw: false,
+        hasAdultGenre: false,
+        contentTypeLabel: null,
+        synopsis: null,
+        status: null,
+        bannerImage: null,
+        trailerUrlRaw: null,
+        episodeCount: null,
+        contentType: "",
+        href,
     };
 }

@@ -7,9 +7,9 @@ pub struct RelationRepository;
 
 impl RelationRepository {
     pub async fn get_by_source(pool: &SqlitePool, source_cid: &str) -> CoreResult<Vec<Relation>> {
-
-        let rows: Vec<(i64, String, String, String, String, i64)> = sqlx::query_as(
-            "SELECT id, source_cid, target_cid, relation_type, source_name, created_at \
+        let rows: Vec<(i64, String, Option<String>, String, String, String, String, Option<String>, String, i64)> = sqlx::query_as(
+            "SELECT id, source_cid, target_cid, target_tracker_name, target_tracker_id, \
+                    relation_type, target_title, target_cover_image, source_name, created_at \
              FROM content_relations WHERE source_cid = ?",
         )
             .bind(source_cid)
@@ -18,14 +18,19 @@ impl RelationRepository {
 
         Ok(rows
             .into_iter()
-            .map(|(id, source_cid, target_cid, type_raw, source_name, created_at)| {
+            .map(|(id, source_cid, target_cid, target_tracker_name, target_tracker_id,
+                      type_raw, target_title, target_cover_image, source_name, created_at)| {
                 let relation_type = serde_json::from_str(&format!("\"{}\"", type_raw))
                     .unwrap_or(RelationType::Alternative);
                 Relation {
                     id: Some(id),
                     source_cid,
                     target_cid,
+                    target_tracker_name,
+                    target_tracker_id,
                     relation_type,
+                    target_title,
+                    target_cover_image,
                     source_name,
                     created_at,
                 }
@@ -35,15 +40,26 @@ impl RelationRepository {
 
     pub async fn upsert(pool: &SqlitePool, relation: &Relation) -> CoreResult<()> {
         sqlx::query(
-        r#"
-                INSERT INTO content_relations (source_cid, target_cid, relation_type, source_name, created_at)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(source_cid, target_cid, relation_type) DO NOTHING
+            r#"
+                INSERT INTO content_relations (
+                    source_cid, target_cid, target_tracker_name, target_tracker_id,
+                    relation_type, target_title, target_cover_image, source_name, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(source_cid, target_tracker_name, target_tracker_id, relation_type)
+                DO UPDATE SET
+                    target_cid = excluded.target_cid,
+                    target_title = excluded.target_title,
+                    target_cover_image = excluded.target_cover_image
             "#,
         )
             .bind(&relation.source_cid)
             .bind(&relation.target_cid)
+            .bind(&relation.target_tracker_name)
+            .bind(&relation.target_tracker_id)
             .bind(relation.relation_type.as_str())
+            .bind(&relation.target_title)
+            .bind(&relation.target_cover_image)
             .bind(&relation.source_name)
             .bind(relation.created_at)
             .execute(pool)
@@ -52,47 +68,15 @@ impl RelationRepository {
         Ok(())
     }
 
-    pub async fn save_pending(
-        pool: &SqlitePool,
-        source_cid: &str,
-        tracker_name: &str,
-        target_tracker_id: &str,
-        relation_type: &str,
+    pub async fn backfill_target_cid(
+        pool: &SqlitePool, tracker_name: &str, tracker_id: &str, cid: &str,
     ) -> CoreResult<()> {
         sqlx::query(
-            r#"INSERT OR IGNORE INTO pending_relations
-           (source_cid, target_tracker_name, target_tracker_id, relation_type, created_at)
-           VALUES (?, ?, ?, ?, ?)"#,
+            "UPDATE content_relations SET target_cid = ? \
+             WHERE target_tracker_name = ? AND target_tracker_id = ? AND target_cid IS NULL",
         )
-            .bind(source_cid)
-            .bind(tracker_name)
-            .bind(target_tracker_id)
-            .bind(relation_type)
-            .bind(chrono::Utc::now().timestamp())
-            .execute(pool)
-            .await?;
-        Ok(())
-    }
-
-    pub async fn get_pending(
-        pool: &SqlitePool,
-        source_cid: &str,
-    ) -> CoreResult<Vec<(i64, String, String, String)>> {
-        let rows: Vec<(i64, String, String, String)> = sqlx::query_as(
-            "SELECT id, target_tracker_name, target_tracker_id, relation_type
-         FROM pending_relations WHERE source_cid = ?"
-        )
-            .bind(source_cid)
-            .fetch_all(pool)
-            .await?;
-        Ok(rows)
-    }
-
-    pub async fn delete_pending(pool: &SqlitePool, id: i64) -> CoreResult<()> {
-        sqlx::query("DELETE FROM pending_relations WHERE id = ?")
-            .bind(id)
-            .execute(pool)
-            .await?;
+            .bind(cid).bind(tracker_name).bind(tracker_id)
+            .execute(pool).await?;
         Ok(())
     }
 }

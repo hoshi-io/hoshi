@@ -22,25 +22,17 @@ CREATE INDEX IF NOT EXISTS idx_units_type ON content_units(type);
 CREATE TABLE IF NOT EXISTS content_relations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source_cid TEXT NOT NULL,
-    target_cid TEXT NOT NULL,
-    relation_type TEXT NOT NULL,
-    source_name TEXT NOT NULL,
-    created_at INTEGER NOT NULL,
-    UNIQUE(source_cid, target_cid, relation_type),
-    FOREIGN KEY (source_cid) REFERENCES content(cid) ON DELETE CASCADE,
-    FOREIGN KEY (target_cid) REFERENCES content(cid) ON DELETE CASCADE
-);
-CREATE INDEX IF NOT EXISTS idx_rel_source ON content_relations(source_cid);
-CREATE INDEX IF NOT EXISTS idx_rel_target ON content_relations(target_cid);
-
-CREATE TABLE IF NOT EXISTS pending_relations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    source_cid TEXT NOT NULL,
+    target_cid TEXT,                      -- nullable: filled in lazily once the target is imported
     target_tracker_name TEXT NOT NULL,
     target_tracker_id TEXT NOT NULL,
     relation_type TEXT NOT NULL,
+    target_title TEXT NOT NULL,
+    target_cover_image TEXT,
+    source_name TEXT NOT NULL,
     created_at INTEGER NOT NULL,
     UNIQUE(source_cid, target_tracker_name, target_tracker_id, relation_type),
-    FOREIGN KEY (source_cid) REFERENCES content(cid) ON DELETE CASCADE
-);
-CREATE INDEX IF NOT EXISTS idx_pending_rel_source ON pending_relations(source_cid);
+    FOREIGN KEY (source_cid) REFERENCES content(cid) ON DELETE CASCADE,
+    FOREIGN KEY (target_cid) REFERENCES content(cid) ON DELETE SET NULL
+    );
+CREATE INDEX IF NOT EXISTS idx_rel_source ON content_relations(source_cid);
+CREATE INDEX IF NOT EXISTS idx_rel_target ON content_relations(target_cid);

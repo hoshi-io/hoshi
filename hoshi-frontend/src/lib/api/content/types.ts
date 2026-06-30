@@ -36,8 +36,12 @@ export interface StaffMember {
 export interface Relation {
     id?: number | null;
     sourceCid: string;
-    targetCid: string;
+    targetCid: string | null;
+    targetTrackerName: string;
+    targetTrackerId: string;
     relationType: RelationType;
+    targetTitle: string;
+    targetCoverImage?: string | null;
     sourceName: string;
     createdAt: number;
 }

@@ -89,9 +89,13 @@
         scale = Math.min(2, Math.max(0.2, scale + delta));
     }
 
-    function openNode(cid: string) {
+    function openNode(node: { cid: string | null; trackerName?: string; trackerId?: string }) {
         if (didDrag) return;
-        goto(`/c/${cid}`);
+        if (node.cid) {
+            goto(`/c/${node.cid}`);
+        } else if (node.trackerName && node.trackerId) {
+            goto(`/${node.trackerName}/${btoa(node.trackerId)}`);
+        }
         onNavigate?.();
     }
 
@@ -123,7 +127,7 @@
                 style="transform: translate({panX}px, {panY}px) scale({scale});"
         >
             <svg class="absolute top-0 left-0 pointer-events-none" width={layout.width} height={layout.height}>
-                {#each layout.edges as edge, i (edge.sourceCid + edge.targetCid + edge.relationType)}
+                {#each layout.edges as edge, i (edge.sourceCid + (edge.targetCid ?? `${edge.targetTrackerName}:${edge.targetTrackerId}`) + edge.relationType)}
                     {@const from = layout.nodes.find((n) => n.cid === edge.sourceCid)}
                     {@const to = layout.nodes.find((n) => n.cid === edge.targetCid)}
                     {#if from && to}
@@ -141,7 +145,7 @@
                 {/each}
             </svg>
 
-            {#each layout.nodes as node, i (node.cid)}
+            {#each layout.nodes as node, i (node.cid ?? `${node.trackerName}:${node.trackerId}`)}
                 <div
                         data-cid={node.cid}
                         in:scaleTransition={{ duration: 400, delay: 300 + (i * 20), start: 0.8, easing: cubicOut }}
@@ -182,6 +186,8 @@
                 <LocateFixed class="size-4" />
             </Button>
         </div>
+
+        <p class="text-muted-foreground">The tree might not show full relations to not get rate limited.</p>
 
         <div class="flex flex-wrap justify-end gap-x-4 gap-y-1.5 rounded-md border bg-background/95 backdrop-blur px-4 py-2 text-xs shadow-md pointer-events-auto w-full">
             {#each presentTypes as type}

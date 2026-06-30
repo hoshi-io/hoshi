@@ -3,7 +3,7 @@ use serde_json::json;
 use tracing::{info, instrument, warn};
 use async_recursion::async_recursion;
 
-use crate::content::models::{ContentType, EpisodeData, Metadata, Status};
+use crate::content::models::{ContentType, EpisodeData, Metadata, Relation, RelationType, Status};
 use crate::content::repositories::content::ContentRepository;
 use crate::content::repositories::relations::RelationRepository;
 use crate::content::utils::generate_cid;
@@ -67,28 +67,42 @@ impl ImportService {
 
         for rel in &media.relations {
             let rel_type = match rel.relation_type.as_str() {
-                "SEQUEL"      => "sequel",
-                "PREQUEL"     => "prequel",
-                "SIDE_STORY"  => "side_story",
-                "SPIN_OFF"    => "spinoff",
-                "ADAPTATION"  => "adaptation",
-                "PARENT"      => "parent",
-                "SUMMARY"     => "summary",
-                "SOURCE"      => "source",
-                "COMPILATION" => "compilation",
-                "CONTAINS"    => "contains",
-                "ALTERNATIVE" => "alternative",
-                "CHARACTER"   => "character",
-                "OTHER"       => "other",
+                "SEQUEL"      => RelationType::Sequel,
+                "PREQUEL"     => RelationType::Prequel,
+                "SIDE_STORY"  => RelationType::SideStory,
+                "SPIN_OFF"    => RelationType::Spinoff,
+                "ADAPTATION"  => RelationType::Adaptation,
+                "PARENT"      => RelationType::Parent,
+                "SUMMARY"     => RelationType::Summary,
+                "SOURCE"      => RelationType::Source,
+                "COMPILATION" => RelationType::Compilation,
+                "CONTAINS"    => RelationType::Contains,
+                "ALTERNATIVE" => RelationType::Alternative,
+                "CHARACTER"   => RelationType::Character,
+                "OTHER"       => RelationType::Other,
                 other => {
                     warn!(relation_type = %other, "Unknown AniList relation type");
-                    "alternative"
+                    RelationType::Alternative
                 }
             };
-            if let Err(e) = RelationRepository::save_pending(
-                pool, &cid, tracker_name, &rel.media.tracker_id, rel_type,
-            ).await {
-                warn!(error = ?e, "Failed to save pending relation in shallow import");
+
+            let target_cid = TrackerRepository::find_cid_by_tracker(
+                pool, tracker_name, &rel.media.tracker_id,
+            ).await.unwrap_or(None);
+
+            if let Err(e) = RelationRepository::upsert(pool, &Relation {
+                id: None,
+                source_cid: cid.to_string(),
+                target_cid,
+                target_tracker_name: tracker_name.to_string(),
+                target_tracker_id: rel.media.tracker_id.clone(),
+                relation_type: rel_type,
+                target_title: rel.media.title.clone(),
+                target_cover_image: rel.media.cover_image.clone(),
+                source_name: tracker_name.to_string(),
+                created_at: chrono::Utc::now().timestamp(),
+            }).await {
+                warn!(error = ?e, "Failed to save relation");
             }
         }
 

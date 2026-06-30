@@ -196,8 +196,12 @@ pub struct ExtensionSource {
 pub struct Relation {
     pub id: Option<i64>,
     pub source_cid: String,
-    pub target_cid: String,
+    pub target_cid: Option<String>,
+    pub target_tracker_name: String,
+    pub target_tracker_id: String,
     pub relation_type: RelationType,
+    pub target_title: String,
+    pub target_cover_image: Option<String>,
     pub source_name: String,
     pub created_at: i64,
 }
