@@ -35,6 +35,7 @@
         onEnded: () => playerState.onEnded()
     }));
 
+    let rootEl: HTMLElement | undefined = $state();
     $effect(() => { if (rootEl) ctrl.attachRoot(rootEl); });
     $effect(() => ctrl.setSubtitles(playerState.subtitles));
     $effect(() => ctrl.setChapters(playerState.chapters));
@@ -103,7 +104,6 @@
         return () => window.removeEventListener("keydown", handleKeyDown);
     });
 
-    let rootEl: HTMLElement;
     const topBarVisible = $derived(!playerState.m3u8Url || ctrl.controlsVisible);
 
     export function getControlsVisible() { return ctrl.controlsVisible; }
@@ -137,6 +137,7 @@
             hasPrev={playerState.hasPrev}
             hasNext={playerState.hasNext}
             visible={topBarVisible}
+            fullscreenEl={rootEl}
             onBack={() => { playerState.destroy(); goto(`/c/${playerState.cid}`); }}
             {ctrl}
             extensionItems={playerState.extensionItems}

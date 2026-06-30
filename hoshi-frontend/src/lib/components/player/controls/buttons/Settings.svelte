@@ -10,6 +10,7 @@
         subtitleSettings:   SubtitleSettings;
         open:               boolean;
         extensionItems:     { value: string; label: string }[];
+        fullscreenEl: HTMLElement;
         selectedExtension:  string | null;
         servers:            string[];
         serverItems:        { value: string; label: string }[];
@@ -29,6 +30,7 @@
         subtitleSettings,
         open,
         extensionItems,
+        fullscreenEl,
         selectedExtension = $bindable(),
         servers,
         serverItems,
@@ -49,12 +51,12 @@
     $effect(() => { if (!open) menuContent?.resetSection(); });
 </script>
 
-{#if isMobile}
+{#if isMobile && fullscreenEl}
     <Drawer.Root
             open={open}
             onOpenChange={(v) => { if (!v) onClose(); }}
     >
-        <Drawer.Portal>
+        <Drawer.Portal to={fullscreenEl}>
             <Drawer.Overlay class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
 
             <Drawer.Content

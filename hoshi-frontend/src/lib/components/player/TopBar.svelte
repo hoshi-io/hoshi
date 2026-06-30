@@ -15,6 +15,7 @@
         hasPrev:            boolean;
         hasNext:            boolean;
         visible:            boolean;
+        fullscreenEl: HTMLElement;
         onBack:             () => void;
         ctrl:               PlayerController;
         extensionItems:     { value: string; label: string }[];
@@ -40,6 +41,7 @@
         hasPrev,
         hasNext,
         visible,
+        fullscreenEl,
         onBack,
         ctrl,
         extensionItems,
@@ -137,6 +139,7 @@
                         {ctrl}
                         open={settingsOpen}
                         {extensionItems}
+                        {fullscreenEl}
                         bind:selectedExtension
                         {servers}
                         {serverItems}
