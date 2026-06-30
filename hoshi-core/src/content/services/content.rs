@@ -52,13 +52,15 @@ impl ContentService {
         let mut full = ContentRepository::get_full_content(&state.pool, cid).await?
             .ok_or_else(|| CoreError::NotFound("error.content.not_found".into()))?;
 
+        if let Err(e) = SimklUnitsService::sync_units_if_needed(state, cid).await {
+            warn!(cid = %cid, error = ?e, "Failed to sync units synchronously");
+        } else if let Some(refreshed) = ContentRepository::get_full_content(&state.pool, cid).await? {
+            full = refreshed;
+        }
+
         let state_bg = state.clone();
         let cid_bg = cid.to_string();
-
         tokio::spawn(async move {
-            if let Err(e) = SimklUnitsService::sync_units_if_needed(&state_bg, &cid_bg).await {
-                warn!(cid = %cid_bg, error = ?e, "Background unit sync failed");
-            }
             if let Ok(config) = ConfigRepository::get_config(&state_bg.pool, 1).await {
                 let preferred = &config.content.preferred_metadata_provider;
                 if let Ok(mappings) = TrackerRepository::get_mappings_by_cid(&state_bg.pool, &cid_bg).await {
@@ -90,6 +92,10 @@ impl ContentService {
         let maybe_cid = TrackerRepository::find_cid_by_tracker(&state.pool, tracker, tracker_id).await?;
 
         if let Some(cid) = maybe_cid {
+            if let Err(e) = SimklUnitsService::sync_units_if_needed(state, &cid).await {
+                warn!(cid = %cid, error = ?e, "Failed to sync units synchronously");
+            }
+
             let state_bg = state.clone();
             let cid_bg = cid.clone();
             let tracker_bg = tracker.to_string();
@@ -100,7 +106,6 @@ impl ContentService {
                     Err(_) => return,
                 };
                 let _ = Self::backfill_preferred_metadata(&state_bg, &cid_bg, &full, &tracker_bg, &tracker_id_bg).await;
-                let _ = SimklUnitsService::sync_units_if_needed(&state_bg, &cid_bg).await;
                 let _ = Self::backfill_cross_ids(&state_bg, &cid_bg, &full, &tracker_bg, &tracker_id_bg).await;
             });
 
@@ -112,7 +117,11 @@ impl ContentService {
             state, &media.content_type, &media, tracker_id, tracker, None,
         ).await?;
 
-        let _ = SimklUnitsService::sync_units_if_needed(state, &full.content.cid).await;
+        if let Err(e) = SimklUnitsService::sync_units_if_needed(state, &full.content.cid).await {
+            warn!(cid = %full.content.cid, error = ?e, "Failed to sync units synchronously");
+        }
+
+        let _ = ContentResolverService::load_full_content(state, &full.content.cid).await;
 
         Ok(full)
     }
