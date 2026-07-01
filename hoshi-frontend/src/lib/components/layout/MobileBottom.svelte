@@ -11,38 +11,37 @@
     }
 </script>
 
-<nav class="lg:hidden fixed bottom-0 z-50 w-full pb-safe">
-    <div class="mx-4 mb-3 rounded-2xl border border-border/30 bg-background/80 backdrop-blur-2xl shadow-[0_-2px_24px_rgba(0,0,0,0.15)] overflow-hidden">
-        <div class="flex items-center h-14">
+<nav class="lg:hidden fixed bottom-0 z-50 w-full pb-safe pointer-events-none">
+    <div class="mx-4 mb-4 rounded-3xl border border-border/40 bg-background/85 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.2)] overflow-hidden pointer-events-auto">
+        <div class="flex items-center justify-around h-15 px-2">
             {#each routes as route}
                 {@const Icon = route.icon}
                 {@const active = isActive(route.path)}
 
-
                 <a href={route.path}
-                class="relative flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-colors duration-200
-                {active ? 'text-primary' : 'text-muted-foreground/60 hover:text-muted-foreground'}"
+                   class="relative flex flex-col items-center justify-center flex-1 h-full gap-1 select-none transition-colors duration-300
+                   {active ? 'text-primary' : 'text-muted-foreground/50 active:text-muted-foreground'}"
                 >
-                {#if active}
-                    <div
-                            class="absolute inset-x-2 inset-y-1.5 rounded-xl bg-primary/10"
-                            in:fly={{ y: 4, duration: 200 }}
-                    ></div>
-                {/if}
+                    {#if active}
+                        <div
+                                class="absolute inset-x-1.5 inset-y-1 rounded-xl bg-primary/8 border border-primary/10"
+                                in:fly={{ y: 2, duration: 180 }}
+                        ></div>
+                    {/if}
 
-                <div class="relative flex items-center justify-center">
-                    <Icon
-                            class="size-5 transition-all duration-200 {active ? 'scale-110' : 'scale-100'}"
-                            stroke-width={active ? 2.5 : 1.75}
-                    />
-                </div>
+                    <div class="relative flex items-center justify-center transition-transform duration-300 {active ? 'scale-105 -translate-y-0.5' : 'scale-100'}">
+                        <Icon
+                                class="size-[21px] transition-all duration-300"
+                                stroke-width={active ? 2.25 : 1.75}
+                        />
+                    </div>
 
-                <!-- Label only shows when active -->
-                {#if active}
-                        <span class="relative text-[9px] font-semibold tracking-wide leading-none" in:fly={{ y: 3, duration: 150 }}>
-                            {route.name}
-                        </span>
-                {/if}
+                    <span
+                            class="relative text-[9px] font-bold tracking-normal transition-all duration-300 long-press-none
+                        {active ? 'opacity-100 scale-100 font-extrabold' : 'opacity-60 scale-95 font-medium text-muted-foreground/70'}"
+                    >
+                        {route.name}
+                    </span>
                 </a>
             {/each}
         </div>

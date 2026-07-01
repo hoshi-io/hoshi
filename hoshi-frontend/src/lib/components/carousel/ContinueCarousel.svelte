@@ -86,106 +86,115 @@
                     {@const displayTitle = getDisplayTitle(item)}
                     {@const progressPercent = getProgressPercent(item)}
 
-                    <Carousel.Item class="pl-5 {mode === 'anime' ? 'basis-[275px] sm:basis-[360px]' : 'basis-[220px] sm:basis-[260px]'}">
+                    <!-- Equalized column basis bounds for structural parity across formats -->
+                    <Carousel.Item class="pl-5 {mode === 'anime' ? 'basis-[275px] sm:basis-[360px]' : 'basis-[155px] sm:basis-[185px]'}">
                         {#if mode === 'anime'}
                             <a href={getContinueUrl(item)}
                                onclick={(e) => handleAnimeClick(e, item)}
                                class="anime-card group flex flex-col gap-4 focus-visible:outline-none"
                             >
-                            <div class="relative w-full aspect-video overflow-hidden bg-muted/20 border border-border/30 rounded-sm">
-                                {#if imageUrl}
-                                    <img
-                                            src={imageUrl}
-                                            alt={displayTitle}
-                                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03] {isBlurred(item) ? 'blur-xl scale-110' : ''}"
-                                    />
-                                {:else}
-                                    <div class="w-full h-full flex items-center justify-center">
+                                <div class="relative w-full aspect-video overflow-hidden bg-muted/20 border border-border/30 rounded-sm">
+                                    {#if imageUrl}
+                                        <img
+                                                src={imageUrl}
+                                                alt={displayTitle}
+                                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03] {isBlurred(item) ? 'blur-xl scale-110' : ''}"
+                                        />
+                                    {:else}
+                                        <div class="w-full h-full flex items-center justify-center">
                                             <span class="text-6xl font-black text-muted-foreground/10 select-none">
                                                 {item.episode ?? '?'}
                                             </span>
-                                    </div>
-                                {/if}
+                                        </div>
+                                    {/if}
 
-                                <div class="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
+                                    <div class="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
 
-                                {#if item.nsfw}
-                                    <div class="absolute top-2 right-2 bg-destructive text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-sm tracking-wider">
-                                        18+
-                                    </div>
-                                {/if}
+                                    {#if item.nsfw}
+                                        <div class="absolute top-2 right-2 bg-destructive text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-sm tracking-wider">
+                                            18+
+                                        </div>
+                                        #{/if}
 
-                                {#if progressPercent > 0}
-                                    <div class="absolute bottom-0 left-0 right-0 h-[4px] bg-white/10">
-                                        <div class="h-full bg-primary transition-all shadow-[0_0_8px_rgba(var(--primary),0.6)]" style="width: {progressPercent}%"></div>
-                                    </div>
-                                {/if}
-                            </div>
+                                    {#if progressPercent > 0}
+                                        <div class="absolute bottom-0 left-0 right-0 h-[4px] bg-white/10">
+                                            <div class="h-full bg-primary transition-all shadow-[0_0_8px_rgba(var(--primary),0.6)]" style="width: {progressPercent}%"></div>
+                                        </div>
+                                    {/if}
+                                </div>
 
-                            <div class="flex flex-col gap-1 px-1">
-                                <p class="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest truncate">
-                                    {displayTitle}
-                                </p>
-                                <div class="flex items-baseline gap-2 overflow-hidden">
+                                <div class="flex flex-col gap-1 px-1">
+                                    <p class="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest truncate">
+                                        {displayTitle}
+                                    </p>
+                                    <div class="flex items-baseline gap-2 overflow-hidden">
                                         <span class="font-black text-base md:text-sm whitespace-nowrap group-hover:text-primary transition-colors">
                                             {item.episode}
                                         </span>
-                                    {#if item.unit?.title}
-                                        <span class="text-muted-foreground/40 text-xs">.</span>
-                                        <span class="text-sm md:text-base font-semibold text-muted-foreground line-clamp-1">
+                                        {#if item.unit?.title}
+                                            <span class="text-muted-foreground/40 text-xs">.</span>
+                                            <span class="text-sm md:text-base font-semibold text-muted-foreground line-clamp-1">
                                                 {item.unit.title}
                                             </span>
-                                    {/if}
+                                        {/if}
+                                    </div>
                                 </div>
-                            </div>
                             </a>
                         {:else}
                             {@const coverImg = processImageUrl(item.coverImage)}
 
+                            <!-- NEW PORTRAIT CARDS -->
                             <a href={getContinueUrl(item)}
-                            class="reader-card group flex gap-3 w-full p-2.5 border border-border/30 bg-card/60 hover:border-border/70 hover:bg-card transition-all duration-200 focus-visible:outline-none rounded-sm"
+                               class="reader-card group flex flex-col gap-3 w-full focus-visible:outline-none"
                             >
-                            <div class="relative shrink-0 w-[60px] aspect-[2/3] overflow-hidden bg-muted/20 rounded-sm">
-                                {#if coverImg}
-                                    <img
-                                            src={coverImg}
-                                            alt={displayTitle}
-                                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04] {isBlurred(item) ? 'blur-xl scale-110' : ''}"
-                                    />
-                                {:else}
-                                    <div class="w-full h-full flex items-center justify-center bg-muted/30">
+                                <div class="relative w-full aspect-[2/3] overflow-hidden bg-muted/15 border border-border/30 rounded-sm shadow-sm">
+                                    {#if coverImg}
+                                        <img
+                                                src={coverImg}
+                                                alt={displayTitle}
+                                                class="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.04] group-hover:brightness-110 {isBlurred(item) ? 'blur-xl scale-110' : ''}"
+                                        />
+                                    {:else}
+                                        <div class="w-full h-full flex items-center justify-center bg-muted/20">
+                                            {#if mode === 'novel'}
+                                                <FileText class="size-6 text-muted-foreground/30" />
+                                            {:else}
+                                                <BookOpen class="size-6 text-muted-foreground/30" />
+                                            {/if}
+                                        </div>
+                                    {/if}
+
+                                    <div class="absolute top-2 left-2 bg-background/80 backdrop-blur-md text-muted-foreground font-mono text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm border border-border/20 flex items-center gap-1">
                                         {#if mode === 'novel'}
-                                            <FileText class="size-5 text-muted-foreground/30" />
+                                            <FileText class="size-2.5 text-primary" />
+                                            <span>LN</span>
                                         {:else}
-                                            <BookOpen class="size-5 text-muted-foreground/30" />
+                                            <BookOpen class="size-2.5 text-primary" />
+                                            <span>MANGA</span>
                                         {/if}
                                     </div>
-                                {/if}
-                            </div>
 
-                            <div class="flex flex-col justify-between flex-1 min-w-0 py-0.5">
-                                <div class="space-y-1">
-                                    <p class="font-bold text-[12px] leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                                    {#if item.nsfw}
+                                        <div class="absolute top-2 right-2 bg-destructive text-white text-[9px] font-black uppercase px-1.5 py-0.5 rounded-sm tracking-wider">
+                                            18+
+                                        </div>
+                                    {/if}
+
+                                    <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none flex items-end p-2">
+                                        <p class="text-[10px] text-white/90 font-black tracking-wide uppercase line-clamp-1">
+                                            {i18n.t('home.continue.chapters', { num: item.chapter })}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col gap-0.5 px-0.5">
+                                    <p class="font-black text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors duration-200">
                                         {displayTitle}
                                     </p>
-                                    <p class="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">
-                                        {i18n.t('home.continue.chapters', { num: item.chapter })}
-                                    </p>
+                                    <span class="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">
+                                        {i18n.t('home.continue.continue_reading')} →
+                                    </span>
                                 </div>
-
-                                <div class="flex items-center gap-1.5 mt-2">
-                                    <div class="w-5 h-5 rounded-sm bg-primary/10 flex items-center justify-center group-hover:bg-primary transition-colors duration-200">
-                                        {#if mode === 'novel'}
-                                            <FileText class="size-3 text-primary group-hover:text-primary-foreground transition-colors" />
-                                        {:else}
-                                            <BookOpen class="size-3 text-primary group-hover:text-primary-foreground transition-colors" />
-                                        {/if}
-                                    </div>
-                                    <span class="text-[10px] font-bold text-muted-foreground group-hover:text-foreground transition-colors">
-                                            {i18n.t('home.continue.continue_reading')}
-                                        </span>
-                                </div>
-                            </div>
                             </a>
                         {/if}
                     </Carousel.Item>
