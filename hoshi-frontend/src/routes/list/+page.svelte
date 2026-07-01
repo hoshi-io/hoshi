@@ -227,7 +227,7 @@
     </header>
 
     <div class="flex items-start gap-8 w-full pt-4">
-        <aside class="hidden lg:flex flex-col gap-5 w-68 shrink-0 sticky top-24 h-[calc(100vh-8rem)] pb-4 overflow-y-auto hide-scrollbar">
+        <aside class="hidden lg:flex flex-col gap-5 w-68 shrink-0 sticky top-24 max-h-[calc(100vh-7rem)] pb-4 overflow-y-auto hide-scrollbar">
             <div class="space-y-2.5 p-0.5">{@render searchBar()}</div>
             <div class="space-y-8 flex-1 flex flex-col justify-start">
                 <div class="space-y-2.5">
