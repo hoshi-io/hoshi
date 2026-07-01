@@ -8,7 +8,7 @@
     import LanguageSelector from "@/components/LanguageSelector.svelte";
     import { auth } from "@/stores/auth.svelte.js";
     import { appConfig } from "@/stores/config.svelte.js";
-    import { Check, ChevronRight, ChevronLeft, UserCircle2, Camera, User } from "lucide-svelte";
+    import {Check, ChevronRight, ChevronLeft, UserCircle2, Camera, User} from "lucide-svelte";
     import { Spinner } from "$lib/components/ui/spinner";
     import { fly } from "svelte/transition";
     import { toast } from "svelte-sonner";
@@ -17,6 +17,7 @@
     import type { CoreError } from "@/api/client";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import Marketplace from "@/components/settings/extensions/Marketplace.svelte";
+    import StarBackground from "@/components/StarBackground.svelte";
 
     const availableSteps = ['profile', 'appearance', 'content', 'marketplace'];
 
@@ -175,6 +176,7 @@
 <svelte:head><title>{i18n.t("setup.title")}</title></svelte:head>
 
 <div class="h-[100dvh] bg-background text-foreground flex flex-col overflow-hidden">
+    <StarBackground />
 
 <div class="w-full max-w-3xl mx-auto flex flex-col flex-1 pt-10 pb-6 px-4 sm:px-8 md:px-10 min-h-0">
 
