@@ -85,25 +85,25 @@
 .oled {
   --background: oklch(0 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.05 0 0);
+  --card: oklch(0.1 0 0);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.05 0 0);
+  --popover: oklch(0.1 0 0);
   --popover-foreground: oklch(0.985 0 0);
 
   --primary: var(--app-accent, oklch(0.929 0.013 255.508));
   --primary-foreground: var(--app-accent-foreground, oklch(0 0 0));
-  --secondary: oklch(0.12 0 0);
+  --secondary: oklch(0.18 0 0);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.12 0 0);
+  --muted: oklch(0.18 0 0);
   --muted-foreground: oklch(0.65 0 0);
 
   --accent: color-mix(in srgb, var(--app-accent, oklch(0.12 0 0)) 20%, transparent);
   --accent-foreground: var(--app-accent, oklch(0.985 0 0));
 
   --destructive: oklch(0.55 0.22 25);
-  --border: oklch(0.18 0 0);
+  --border: oklch(0.32 0 0);
   --ring: var(--app-accent, oklch(0.551 0 0));
-  --input: oklch(0.12 0 0);
+  --input: oklch(0.22 0 0);
 
   --chart-1: oklch(0.7 0.2 250);
   --chart-2: oklch(0.75 0.18 170);
