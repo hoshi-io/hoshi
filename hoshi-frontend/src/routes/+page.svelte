@@ -71,7 +71,7 @@
     </div>
 {/snippet}
 
-<div class="bg-background overflow-x-hidden relative">
+<div class="bg-background overflow-x-hidden relative -mt-24 lg:mt-0">
 
     {#if isSkeletonVisible}
         <div class="w-full space-y-12" in:fade={{ duration: 300 }}>
