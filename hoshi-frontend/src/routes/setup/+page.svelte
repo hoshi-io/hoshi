@@ -20,8 +20,6 @@
 
     const availableSteps = ['profile', 'appearance', 'content', 'marketplace'];
 
-    let currentIndex = $state(0);
-    let currentStepId = $derived(availableSteps[currentIndex]);
     let isSaving = $state(false);
 
     let language = $state(i18n.locale);
@@ -36,7 +34,7 @@
     let titleLanguage = $state<'romaji' | 'english' | 'native'>('romaji');
     let defaultHomeSection = $state<'anime' | 'manga' | 'novel'>('anime');
 
-    let extConfig = $state({ repoUrl: appConfig.data?.extensions?.repoUrl || "" });
+    let extConfig = $state({ repoUrl: appConfig.data?.extensions?.repoUrls || [] });
 
     const themes = [
         { id: 'light', label: 'Light', classes: 'bg-zinc-50 text-zinc-950 border-zinc-200' },
@@ -89,16 +87,26 @@
         themeManager.setAccentColor(input.value);
     }
 
+    let currentIndex = $state(0);
+    let currentStepId = $derived(availableSteps[currentIndex]);
+    let direction = $state(1);
+
     function nextStep() {
         if (currentStepId === 'profile' && !username.trim()) {
             toast.error(i18n.t('setup.profile.validation_error'));
-            return;
+            return; //
         }
-        if (currentIndex < availableSteps.length - 1) currentIndex++;
+        if (currentIndex < availableSteps.length - 1) {
+            direction = 1; // Set forward
+            currentIndex++; //
+        }
     }
 
     function prevStep() {
-        if (currentIndex > 0) currentIndex--;
+        if (currentIndex > 0) {
+            direction = -1; // Set backward
+            currentIndex--; //
+        }
     }
 
     function skipStep() {
@@ -106,8 +114,12 @@
             toast.error(i18n.t('setup.profile.require_profile'));
             return;
         }
-        if (currentIndex < availableSteps.length - 1) currentIndex++;
-        else finishSetup();
+        if (currentIndex < availableSteps.length - 1) {
+            direction = 1; // Set forward
+            currentIndex++;
+        } else {
+            finishSetup();
+        }
     }
 
     async function finishSetup() {
@@ -136,9 +148,10 @@
                 },
                 content: {
                     preferredMetadataProvider,
-                    autoUpdateProgress: appConfig.data?.content?.autoUpdateProgress ?? true
+                    autoUpdateProgress: appConfig.data?.content?.autoUpdateProgress ?? true,
+                    scoreFormat: "point10"
                 },
-                extensions: extConfig
+                extensions: extConfig,
             });
 
             goto("/");
@@ -161,42 +174,30 @@
 
 <svelte:head><title>{i18n.t("setup.title")}</title></svelte:head>
 
-<!--
-    Layout strategy for mobile safety:
-    - Outer wrapper is min-h-screen flex flex-col
-    - Inner wrapper grows but does NOT use overflow-hidden — instead main is overflow-y-auto
-    - Footer is sticky at bottom via mt-auto, always visible regardless of content height
-    - py-safe-* accounts for notched phones via env(safe-area-inset-*)
--->
-<div class="min-h-screen bg-background text-foreground flex flex-col">
-    <div class="w-full max-w-3xl mx-auto flex flex-col flex-1 py-10 px-4 sm:px-6"
-         style="padding-bottom: max(1.5rem, env(safe-area-inset-bottom))">
+<div class="h-[100dvh] bg-background text-foreground flex flex-col overflow-hidden">
 
-        <!-- Header: title + step dots -->
-        <header class="mb-8 shrink-0">
-            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-center mb-6">
-                {i18n.t('setup.welcome_app')}
-            </h1>
-            <div class="flex items-center justify-center gap-2">
-                {#each availableSteps as _, i}
-                    <div class="h-2 rounded-sm transition-all duration-300 {currentIndex >= i ? 'w-10 bg-primary' : 'w-3 bg-muted'}"></div>
-                {/each}
-            </div>
-        </header>
+<div class="w-full max-w-3xl mx-auto flex flex-col flex-1 pt-10 pb-6 px-4 sm:px-8 md:px-10 min-h-0">
 
-        <!--
-            Main: scrollable so tall content never pushes footer off-screen.
-            The footer sits outside this element so it always stays visible.
-        -->
-        <main class="flex-1 overflow-y-auto pb-6 min-h-0">
+    <header class="mb-8 shrink-0">
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-center mb-6">
+            {i18n.t('setup.welcome_app')}
+        </h1>
+        <div class="flex items-center justify-center gap-2">
+            {#each availableSteps as _, i}
+                <div class="h-2 rounded-sm transition-all duration-300 {currentIndex >= i ? 'w-10 bg-primary' : 'w-3 bg-muted'}"></div>
+            {/each}
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto pr-1 pb-6 min-h-0 custom-scrollbar relative">
+        {#key currentStepId}
+            <div
+                    in:fly={{ x: direction * 50, duration: 300, delay: 150 }}
+                    out:fly={{ x: -direction * 50, duration: 150 }}
+                    class="w-full h-full"
+            >
 
             {#if currentStepId === 'profile'}
-                <div
-                        in:fly={{ y: 20, duration: 400, delay: 150 }}
-                        out:fly={{ y: -20, duration: 300 }}
-                        class="flex flex-col max-w-lg mx-auto w-full space-y-6 py-4"
-                >
-                    <!-- Avatar picker — sized generously so the step feels substantial -->
                     <div class="flex flex-col items-center gap-5">
                         <div class="relative group">
                             <div class="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden border-[6px] border-background shadow-2xl bg-secondary flex items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:shadow-primary/20">
@@ -239,15 +240,9 @@
                             />
                         </div>
                     </div>
-                </div>
             {/if}
 
             {#if currentStepId === 'appearance'}
-                <div
-                        in:fly={{ x: 50, duration: 300, delay: 150 }}
-                        out:fly={{ x: -50, duration: 150 }}
-                        class="space-y-8 max-w-lg mx-auto w-full"
-                >
                     <div class="text-center space-y-2">
                         <h2 class="text-2xl font-bold">{i18n.t('setup.appearance.title')}</h2>
                         <p class="text-muted-foreground">{i18n.t('setup.appearance.description')}</p>
@@ -306,15 +301,9 @@
                             </div>
                         </div>
                     </div>
-                </div>
             {/if}
 
             {#if currentStepId === 'content'}
-                <div
-                        in:fly={{ x: 50, duration: 300, delay: 150 }}
-                        out:fly={{ x: -50, duration: 150 }}
-                        class="space-y-8 max-w-lg mx-auto w-full"
-                >
                     <div class="text-center space-y-2">
                         <h2 class="text-2xl font-bold">{i18n.t('setup.content.title')}</h2>
                         <p class="text-muted-foreground">{i18n.t('setup.content.description')}</p>
@@ -364,15 +353,9 @@
                             </div>
                         </div>
                     </div>
-                </div>
             {/if}
 
             {#if currentStepId === 'marketplace'}
-                <div
-                        in:fly={{ x: 50, duration: 300, delay: 150 }}
-                        out:fly={{ x: -50, duration: 150 }}
-                        class="space-y-8 w-full"
-                >
                     <div class="text-center space-y-2">
                         <h2 class="text-2xl font-bold">{i18n.t('setup.marketplace.title')}</h2>
                         <p class="text-muted-foreground">{i18n.t('setup.marketplace.description')}</p>
@@ -381,13 +364,16 @@
                     <div class="max-w-2xl mx-auto w-full">
                         <Marketplace bind:config={extConfig} onSave={async () => {}} />
                     </div>
-                </div>
             {/if}
+            </div>
+        {/key}
 
         </main>
 
-        <!-- Footer: always visible, never scrolls away -->
-        <footer class="shrink-0 pt-5 mt-4 flex items-center justify-between border-t border-border/30">
+    <footer
+            class="shrink-0 pt-5 mt-auto flex items-center justify-between border-t border-border/30 bg-background"
+            style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom))"
+    >
             <div>
                 {#if currentIndex > 0}
                     <Button variant="ghost" onclick={prevStep} class="rounded-sm font-bold h-11 px-5">
