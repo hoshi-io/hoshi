@@ -8,7 +8,7 @@
     import { Textarea } from "@/components/ui/textarea";
     import { Checkbox } from "@/components/ui/checkbox";
     import { listApi } from "@/api/list/list";
-    import type { EnrichedListEntry, EntrySource, ListEntryChange, ListStatus, UpsertEntryBody } from "@/api/list/types";
+    import type { EntrySource, ListEntryChange, ListStatus, UpsertEntryBody } from "@/api/list/types";
     import { toast } from "svelte-sonner";
     import { Trash2, Save, Star, CheckCircle, Calendar as CalendarIcon, Clock, GitMerge, AlertTriangle } from "lucide-svelte";
     import { Spinner } from "$lib/components/ui/spinner";
@@ -249,35 +249,15 @@
             };
 
             await listApi.upsert(body);
-            toast.success(isNew ? i18n.t('list.modal.added_to_list') : i18n.t('list.modal.entry_updated'));
 
-            const existing = listStore.entries.find(e => e.cid === cid);
-            const now = new Date().toISOString();
-            const updated: EnrichedListEntry = {
-                userId:             existing?.userId             ?? 0,
-                createdAt:          existing?.createdAt          ?? now,
-                trackerIds:         existing?.trackerIds         ?? {},
-                externalIds:        existing?.externalIds        ?? null,
-                hasExtensionSource: existing?.hasExtensionSource ?? false,
-                nsfw:               existing?.nsfw               ?? false,
-                totalUnits:         existing?.totalUnits         ?? null,
-                titleI18n:          existing?.titleI18n          ?? {},
-                sources:            existing?.sources            ?? [],
-                cid,
-                title,
-                contentType,
-                coverImage:    coverImage || null,
-                updatedAt:     now,
-                status,
-                progress:      body.progress    ?? 0,
-                score: toStoredScore(score),
-                startDate:     body.startDate   ?? null,
-                endDate:       body.endDate     ?? null,
-                repeatCount:   body.repeatCount ?? 0,
-                notes:         body.notes       ?? null,
-                isPrivate:     body.isPrivate   ?? false,
-            };
-            listStore.upsertLocal(body, updated);
+            const res = await listApi.getEntry(cid);
+            console.log(res)
+            if (res.found && res.entry) {
+                listStore.upsertLocal(body, res.entry);
+            } else {
+                console.error("Entry not found after upsert", cid);
+            }
+
             open = false;
         } catch (err) {
             const error = err as CoreError;
@@ -292,7 +272,6 @@
         try {
             await listApi.delete(cid);
             listStore.deleteLocal(cid);
-            toast.success(i18n.t('list.modal.removed'));
             open = false;
         } catch (err) {
             const error = err as CoreError;

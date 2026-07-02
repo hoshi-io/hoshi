@@ -211,18 +211,6 @@ body {
     color: var(--primary) !important;
   }
 
-  .dark .bg-card,
-  [data-theme="dark"] .bg-card {
-    background-color: var(--app-accent) !important;
-    color: #fafafa !important;
-  }
-
-  .oled .bg-card,
-  [data-theme="oled"] .bg-card {
-    background-color: var(--app-accent) !important;
-    color: #ffffff;
-  }
-
   * {
     scrollbar-width: none;
   }

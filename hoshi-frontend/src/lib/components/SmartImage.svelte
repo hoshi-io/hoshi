@@ -17,13 +17,21 @@
 
     let objectUrl = $state<string | null>(null);
     let isLoaded = $state(false);
+    let imgEl = $state<HTMLImageElement | null>(null);
+    let lastProcessedSrc: string | null | undefined = undefined;
 
     $effect(() => {
         if (!src) {
             objectUrl = null;
             isLoaded = false;
+            lastProcessedSrc = src;
             return;
         }
+
+        if (src === lastProcessedSrc) {
+            return;
+        }
+        lastProcessedSrc = src;
 
         let revoked = false;
         isLoaded = false;
@@ -57,6 +65,12 @@
             if (objectUrl?.startsWith("blob:")) URL.revokeObjectURL(objectUrl);
         };
     });
+
+    $effect(() => {
+        if (imgEl && !isLoaded && imgEl.complete && imgEl.naturalWidth > 0) {
+            isLoaded = true;
+        }
+    });
 </script>
 
 <div class="smart-image-wrapper {className}">
@@ -66,6 +80,7 @@
 
     {#if objectUrl}
         <img
+                bind:this={imgEl}
                 src={objectUrl}
                 {alt}
                 loading="lazy"
