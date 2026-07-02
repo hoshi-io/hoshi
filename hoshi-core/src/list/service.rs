@@ -203,22 +203,10 @@ impl ListService {
 
         let deleted = ListRepository::delete_entry(&state.pool, user_id, &cid).await?;
 
-        if let Ok(Some(entry)) = ListRepository::get_entry(&state.pool, user_id, &cid).await {
-            if let Some(entry_id) = entry.id {
-                let _ = ListRepository::insert_deletion_change(
-                    &state.pool,
-                    entry_id,
-                    user_id,
-                    ChangeSource::Local.as_str(),
-                ).await;
-            }
-        }
-
         if deleted {
             info!("Entry deleted successfully from local database");
             Ok(SuccessResponse { success: true })
         } else {
-            warn!("Attempted to delete an entry that does not exist");
             Err(CoreError::NotFound("error.list.entry_not_found".into()))
         }
     }

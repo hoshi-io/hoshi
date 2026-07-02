@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS ListEntryChange (
     field TEXT NOT NULL,
     old_value TEXT,
     new_value TEXT,
-    FOREIGN KEY (entry_id) REFERENCES ListEntry(id) ON DELETE SET NULL,
+    FOREIGN KEY (entry_id) REFERENCES ListEntry(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_change_entry ON ListEntryChange(entry_id, changed_at DESC);
