@@ -22,7 +22,7 @@ use crate::tracker::repository::TrackerRepository;
 const MAX_TREE_NODES: usize = 150;
 const MAX_TREE_DEPTH: usize = 4;
 
-const TRACKER_SOURCES: &[&str] = &["anilist", "mal", "kitsu", "anidb"];
+const TRACKER_SOURCES: &[&str] = &["anilist", "mal", "kitsu", "simkl"];
 const FUZZY_SCORE_THRESHOLD: f64 = 0.85;
 
 pub struct ContentService;

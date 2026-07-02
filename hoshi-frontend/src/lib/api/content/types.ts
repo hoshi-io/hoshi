@@ -136,7 +136,7 @@ export interface SearchQuery {
     sort?: string;
     genre?: string;
     format?: string;
-    tracker?: "anilist" | "mal" | "kitsu";
+    tracker?: "anilist" | "mal" | "kitsu" | "simkl";
     extensionFilters?: string;
 }
 

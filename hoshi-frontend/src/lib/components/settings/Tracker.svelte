@@ -98,7 +98,7 @@
             const allTrackers = await integrationsApi.getAll() || [];
 
             trackers = allTrackers
-                .filter(t => t.name.toLowerCase() !== 'simkl')
+                .filter(t => t.name.toLowerCase())
                 .sort((a, b) => {
                     const ai = TRACKER_ORDER.indexOf(a.name.toLowerCase());
                     const bi = TRACKER_ORDER.indexOf(b.name.toLowerCase());
@@ -139,7 +139,7 @@
     async function handleAuthStart() {
         if (newTrackerAuth?.oauthFlow === 'pkce') {
             const verifier = generateVerifier();
-            localStorage.setItem("mal_verifier", verifier);
+            localStorage.setItem(`${newTrackerName}_verifier`, verifier);
 
             const params = new URLSearchParams({
                 client_id: newTrackerAuth.clientId,
@@ -163,8 +163,9 @@
             await integrationsApi.add({
                 trackerName: newTrackerName,
                 accessToken: code,
-                codeVerifier: localStorage.getItem("mal_verifier") || undefined
+                codeVerifier: localStorage.getItem(`${newTrackerName}_verifier`) || undefined
             });
+            localStorage.removeItem(`${newTrackerName}_verifier`);
             showAddTrackerDialog = false;
             await loadTrackers();
         } catch (error: any) {

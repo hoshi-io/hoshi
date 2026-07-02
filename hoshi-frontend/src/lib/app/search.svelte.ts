@@ -27,7 +27,7 @@ class SearchState {
     format = $state<string>("");
     nsfw = $state<boolean>(false);
     sort = $state<string>("");
-    tracker = $state<"anilist" | "mal" | "kitsu">("anilist");
+    tracker = $state<"anilist" | "mal" | "kitsu" | "simkl">("anilist");
 
     extFilterValues = $state<Record<string, any>>({});
 
@@ -119,6 +119,8 @@ class SearchState {
             const unique = Array.from(
                 new Map(normalized.map(item => [item.cid, item])).values()
             );
+
+            console.log(unique)
 
             if (this.page === 1) {
                 this.results = unique;

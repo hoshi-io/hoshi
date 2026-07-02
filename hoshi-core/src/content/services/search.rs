@@ -26,6 +26,7 @@ impl SearchService {
         let tracker_name = match params.tracker.as_deref().unwrap_or("anilist") {
             "mal"   => "mal",
             "kitsu" => "kitsu",
+            "simkl" => "simkl",
             _       => "anilist",
         };
 
