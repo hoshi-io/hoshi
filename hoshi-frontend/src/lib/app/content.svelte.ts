@@ -73,6 +73,7 @@ export class ContentDetailState {
 
     private handleResponse(res: FullContent) {
         this.fullContent = res;
+        console.log(res)
 
         const meta = primaryMetadata(res, appConfig.data?.content?.preferredMetadataProvider);
         if (meta) {

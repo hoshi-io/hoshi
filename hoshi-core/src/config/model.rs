@@ -317,7 +317,8 @@ pub enum MergeStrategy {
     KeepLatest,
     AnilistFirst,
     MalFirst,
-    KitsuFirst
+    KitsuFirst,
+    SimklFirst
 }
 
 impl Default for ListConfig {

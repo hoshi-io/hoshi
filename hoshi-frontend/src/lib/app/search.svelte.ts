@@ -120,8 +120,6 @@ class SearchState {
                 new Map(normalized.map(item => [item.cid, item])).values()
             );
 
-            console.log(unique)
-
             if (this.page === 1) {
                 this.results = unique;
             } else {

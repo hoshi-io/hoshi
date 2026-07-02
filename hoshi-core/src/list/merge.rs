@@ -173,6 +173,16 @@ impl MergeService {
                              l.start_date.clone(), l.end_date.clone())
                         }
                     },
+
+                    MergeStrategy::SimklFirst => {
+                        if tracker_name == "simkl" {
+                            (entry.progress, remote_status, entry.score,
+                             entry.start_date.clone(), entry.end_date.clone())
+                        } else {
+                            (l.progress, l.status.clone(), l.score,
+                             l.start_date.clone(), l.end_date.clone())
+                        }
+                    },
                 }
             }
         };

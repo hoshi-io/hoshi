@@ -21,7 +21,8 @@
     const metadataProviders = [
         { value: "anilist", label: "AniList" },
         { value: "myanimelist", label: "MyAnimeList" },
-        { value: "kitsu", label: "Kitsu" }
+        { value: "kitsu", label: "Kitsu" },
+        { value: "simkl", label: "Simkl" }
     ];
 
     const scoreFormats = [

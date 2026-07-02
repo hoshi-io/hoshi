@@ -49,7 +49,8 @@
         { value: 'keepLatest', label: i18n.t("settings.trackers_section.conflict_updated") },
         { value: 'anilistFirst', label: i18n.t("settings.trackers_section.conflict_anilist") },
         { value: 'malFirst', label: i18n.t("settings.trackers_section.conflict_mal") },
-        { value: 'kitsuFirst', label: i18n.t("settings.trackers_section.conflict_kitsu") }
+        { value: 'kitsuFirst', label: i18n.t("settings.trackers_section.conflict_kitsu") },
+        { value: 'simklFirst', label: i18n.t("settings.trackers_section.conflict_simkl") }
     ];
 
     function generateVerifier() {
