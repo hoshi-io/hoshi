@@ -163,6 +163,9 @@ impl EnrichmentService {
                 ids.clone()
             }
             None => {
+                // strip manga: prefix from myanimelist ids
+                let id = id.strip_prefix("manga:").unwrap_or(id);
+
                 let endpoint = match tracker.to_lowercase().as_str() {
                     "anilist"                               => format!("/v1/source/anilist/{}", id),
                     "kitsu"                                 => format!("/v1/source/kitsu/{}", id),
