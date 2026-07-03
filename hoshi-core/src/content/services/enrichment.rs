@@ -99,14 +99,18 @@ impl EnrichmentService {
             }
             None => {
                 let endpoint = match tracker.to_lowercase().as_str() {
-                    "anilist"             => format!("anilist/{}", id),
-                    "mal" | "myanimelist" => {
-                        let raw_id = id.splitn(2, ':').last().unwrap_or(id);
+                    "anilist"                              => format!("anilist/{}", id),
+                    "mal" | "myanimelist"                  => {
+                        let raw_id = id.split_once(':').map_or(id, |(_, id)| id);
                         format!("myanimelist/{}", raw_id)
-                    },
-                    "kitsu"               => format!("kitsu/{}", id),
-                    "simkl"               => format!("simkl/{}", id),
-                    "trakt"               => format!("trakt/show/{}", id),
+                    }
+                    "kitsu"                                => format!("kitsu/{}", id),
+                    "simkl"                                => format!("simkl/{}", id),
+                    "trakt"                                => format!("trakt/show/{}", id),
+                    "annict"                               => format!("annict/{}", id),
+                    "hikka"                                => format!("hikka/{}", id),
+                    "notify"                               => format!("notify/{}", id),
+                    "shikimori"                            => format!("shikimori/{}", id),
                     _ => return Err(CoreError::Internal("error.enrichment.unsupported_tracker".into())),
                 };
                 let url = format!("https://animeapi.my.id/{}", endpoint);
@@ -213,7 +217,19 @@ impl EnrichmentService {
     }
 
     pub fn extract_anime_cross_ids(data: &serde_json::Value) -> HashMap<String, String> {
-        let allowed = ["anilist", "myanimelist", "kitsu", "simkl", "trakt", "shikimori", "animeplanet", "anidb"];
+        let allowed = [
+            "anidb",
+            "anilist",
+            "animeplanet",
+            "hikka",
+            "kitsu",
+            "myanimelist",
+            "notify",
+            "shikimori",
+            "simkl",
+            "trakt",
+            "annict",
+        ];
         let mut out = HashMap::new();
 
         if let Some(obj) = data.as_object() {
