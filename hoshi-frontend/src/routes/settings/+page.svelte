@@ -11,8 +11,7 @@
     import { Spinner } from "$lib/components/ui/spinner";
     import * as Avatar from "$lib/components/ui/avatar";
     import SwitchProfile from "$lib/components/modals/SwitchProfile.svelte";
-    let showSwitchProfile = $state(false);
-
+    import { type, version, arch } from "@tauri-apps/plugin-os";
     import Account from "$lib/components/settings/Account.svelte";
     import Tracker from "$lib/components/settings/Tracker.svelte";
     import General from "$lib/components/settings/General.svelte";
@@ -28,11 +27,62 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { onMount } from "svelte";
     import { page } from "$app/state";
+    import {getVersion} from "@tauri-apps/api/app";
 
+    let showSwitchProfile = $state(false);
     let configSaving = $state(false);
     let isDesktop = $state(false);
     let activeTab = $state(page.url.searchParams.get('tab') || 'account');
     let isMobileDetail = $derived(page.url.searchParams.has('tab'));
+
+    let appVersion = $state("");
+    let osInfo = $state("");
+    let hardwareInfo = $state("");
+    let webviewInfo = $state("");
+
+    onMount(() => {
+        const mediaQuery = window.matchMedia('(min-width: 768px)');
+        isDesktop = mediaQuery.matches;
+
+        const updateLayout = (e: MediaQueryListEvent) => {
+            isDesktop = e.matches;
+        };
+
+        mediaQuery.addEventListener('change', updateLayout);
+
+        getVersion()
+            .then((v) => appVersion = v)
+            .catch(console.error);
+
+        try {
+            osInfo = `${type()} ${version()} (${arch()})`;
+        } catch (err) {
+            console.error("Failed to get OS info:", err);
+        }
+
+        try {
+            const cores = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} Cores` : '';
+            hardwareInfo = [cores].filter(Boolean).join(' • ');
+
+            const ua = navigator.userAgent;
+            if (ua.includes("Edg/")) {
+                const match = ua.match(/Edg\/(\d+\.\d+)/);
+                webviewInfo = match ? `WebView2 v${match[1]}` : "WebView2";
+            } else if (ua.includes("Chrome/")) {
+                const match = ua.match(/Chrome\/(\d+\.\d+)/);
+                webviewInfo = match ? `Chromium v${match[1]}` : "Chromium";
+            } else if (ua.includes("WebKit/")) {
+                const match = ua.match(/WebKit\/(\d+\.\d+)/);
+                webviewInfo = match ? `WebKit v${match[1]}` : "WebKit";
+            } else {
+                webviewInfo = "Unknown Engine";
+            }
+        } catch (err) {
+            console.error("Failed to get extra system info:", err);
+        }
+
+        return () => mediaQuery.removeEventListener('change', updateLayout);
+    });
 
     onMount(() => {
         const mediaQuery = window.matchMedia('(min-width: 768px)');
@@ -231,6 +281,27 @@
                                 <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
                             </Tabs.Trigger>
                         {/if}
+                        <div class="mt-8 md:mt-auto pt-4 pb-4 px-4 w-full flex flex-col items-center md:items-start gap-4 text-center md:text-left">
+                            <div class="flex flex-col gap-1 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-wider w-full">
+                                {#if appVersion}
+                                    <span class="text-xs text-primary/80 mb-1">Version {appVersion} ★</span>
+                                {/if}
+                                {#if osInfo}
+                                    <span class="truncate" title={osInfo}>{osInfo}</span>
+                                {/if}
+                                {#if hardwareInfo}
+                                    <span class="truncate" title={hardwareInfo}>{hardwareInfo}</span>
+                                {/if}
+                                {#if webviewInfo}
+                                    <span class="truncate" title={webviewInfo}>{webviewInfo}</span>
+                                {/if}
+                            </div>
+                            <img
+                                    src="/chibi.png"
+                                    alt="App Mascot"
+                                    class="w-20 h-20 object-contain hover:opacity-100 hover:scale-105 transition-all duration-300 drop-shadow-sm will-change-[transform,opacity]"
+                            />
+                        </div>
                     </Tabs.List>
 
                     <div class="{isMobileDetail ? 'block' : 'hidden md:block pr-5'} mobile-content-wrapper flex-1 min-w-0 w-full max-w-none">
