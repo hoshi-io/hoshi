@@ -37,7 +37,7 @@ function toCard(entry: AiringEntry): NormalizedCard {
         trailerUrlRaw:    entry.trailerUrl ?? null,
         episodeCount:     null,
         contentType:      "anime",
-        href:             `/c/anilist/${entry.trackerId}`,
+        href:             `/c/anilist/${btoa(entry.trackerId)}`,
     };
 }
 
