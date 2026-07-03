@@ -53,8 +53,8 @@ pub async fn build_app_state(
     let db = Arc::new(db_manager);
 
     let http_client = Client::builder()
-        .timeout(Duration::from_secs(15))
-        .connect_timeout(Duration::from_secs(5))
+        .timeout(Duration::from_secs(45))
+        .connect_timeout(Duration::from_secs(10))
         .pool_idle_timeout(Duration::from_secs(90))
         .pool_max_idle_per_host(10)
         .build()
