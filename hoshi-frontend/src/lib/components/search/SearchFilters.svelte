@@ -21,7 +21,7 @@
         onClear
     }: {
         searchMode: "tracker" | "extension";
-        tracker: "anilist" | "mal" | "kitsu";
+        tracker: "anilist" | "mal" | "kitsu" | "simkl";
         status: string;
         genre: string;
         format: string;
@@ -188,7 +188,7 @@
 </script>
 
 <div class="space-y-6 w-full">
-    {#if searchMode === "tracker"}
+    {#if searchMode === "tracker" && tracker != "simkl"}
         <div class="space-y-5">
             <div class="space-y-2.5">
                 <Label class="text-sm font-bold text-foreground/90">{i18n.t('search.status')}</Label>
