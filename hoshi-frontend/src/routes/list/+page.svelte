@@ -41,6 +41,14 @@
         { value: "DROPPED",   label: i18n.t('list.dropped') },
     ]);
 
+    const trackerOptions = [
+        { value: "ALL", label: i18n.t('list.all_trackers') },
+        { value: "anilist", label: i18n.t('list.missing_anilist') },
+        { value: "mal", label: i18n.t('list.missing_mal') },
+        { value: "kitsu", label: i18n.t('list.missing_kitsu') },
+        { value: "simkl", label: i18n.t('list.missing_simkl') }
+    ];
+
     const statusCounts = $derived({
         ALL:       listStore.entries.length,
         CURRENT:   listStore.stats?.watching   ?? 0,
@@ -73,6 +81,30 @@
     />
 {/snippet}
 
+{#snippet syncFilters()}
+    <div class="space-y-4 pt-4 border-t border-border/40 w-full mt-4">
+        <div class="space-y-2">
+            <button
+                    class="flex w-full items-center justify-start rounded-sm px-3 py-2 text-sm font-medium transition-colors border {listStore.showConflicts ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 shadow-sm' : 'bg-transparent text-muted-foreground border-transparent hover:bg-muted/50 hover:text-foreground'}"
+                    onclick={() => listStore.showConflicts = !listStore.showConflicts}
+            >
+                <AlertCircle class="w-4 h-4 mr-2" />
+                {i18n.t("list.show_conflicts")}
+            </button>
+
+            <ResponsiveSelect
+                    bind:value={listStore.missingOn}
+                    items={trackerOptions.filter(
+        (item) =>
+            item.value === "ALL" ||
+            listStore.connectedTrackers.includes(item.value)
+    )}
+                    class="h-11 rounded-sm font-bold bg-card border border-border/40 shadow-sm"
+            />
+        </div>
+    </div>
+{/snippet}
+
 {#snippet sortSelect()}
     <ResponsiveSelect
             bind:value={listStore.activeSort}
@@ -100,7 +132,7 @@
     <div class="flex flex-col gap-1 w-full">
         {#each statusOptions as option}
             <button
-                    class="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors {listStore.activeStatus === option.value ? 'bg-muted/80 text-foreground' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
+                    class="flex w-full items-center justify-start rounded-sm px-3 py-2 text-sm font-medium transition-colors {listStore.activeStatus === option.value ? 'bg-muted/80 text-foreground' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
                     onclick={() => listStore.activeStatus = option.value}
             >
                 {option.label}
@@ -121,7 +153,7 @@
                 { value: "manga", label: i18n.t('list.manga') },
                 { value: "novel", label: i18n.t('list.novel') }
             ]}
-            class="h-11 rounded-xl font-bold bg-card border border-border/40 shadow-sm"
+            class="h-11 rounded-sm font-bold bg-card border border-border/40 shadow-sm"
     />
 {/snippet}
 
@@ -189,6 +221,8 @@
                                 <Label class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{i18n.t("list.status")}</Label>
                                 {@render statusSelect()}
                             </div>
+
+                            {@render syncFilters()}
                         </div>
 
                         <div class="shrink-0 p-4 bg-background border-t border-border/40 pb-8">
@@ -229,7 +263,7 @@
     <div class="flex items-start gap-8 w-full pt-4">
         <aside class="hidden lg:flex flex-col gap-5 w-68 shrink-0 sticky top-24 max-h-[calc(100vh-7rem)] pb-4 overflow-y-auto hide-scrollbar">
             <div class="space-y-2.5 p-0.5">{@render searchBar()}</div>
-            <div class="space-y-8 flex-1 flex flex-col justify-start">
+            <div class="space-y-3 flex-1 flex flex-col justify-start">
                 <div class="space-y-2.5">
                     <h3 class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">{i18n.t("list.sort_by")}</h3>
                     {@render sortSelect()}
@@ -242,6 +276,10 @@
                     <h3 class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1 mb-1">{i18n.t("list.status")}</h3>
                     <div class="flex-1 overflow-y-auto hide-scrollbar pr-0.5">
                         {@render desktopStatusList()}
+
+                        {#if listStore.connectedTrackers.length > 1}
+                            {@render syncFilters()}
+                        {/if}
                     </div>
                 </div>
             </div>

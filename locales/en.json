@@ -128,6 +128,12 @@
 
   "list": {
     "title": "List",
+    "all_trackers": "All trackers",
+    "missing_anilist": "Missing on Anilist",
+    "missing_mal": "Missing on MyAnimeList",
+    "missing_kitsu": "Missing on Kitsu",
+    "missing_simkl": "Missing on Simkl",
+    "show_conflicts": "Show Sync Conflicts",
     "header_title": "{{name}}'s List",
     "add_to_list": "Add to list",
     "all": "All",

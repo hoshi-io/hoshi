@@ -251,7 +251,6 @@
             await listApi.upsert(body);
 
             const res = await listApi.getEntry(cid);
-            console.log(res)
             if (res.found && res.entry) {
                 listStore.upsertLocal(body, res.entry);
             } else {
@@ -533,7 +532,9 @@
                                         </div>
                                         {#each sources as source}
                                             {@const val = source[field.key]}
-                                            {@const displayVal = val != null ? String(val) : "—"}
+                                            {@const displayVal = val != null ?
+                                                (field.key === 'status' ? String(val).toLowerCase() : String(val))
+                                                : "—"}
                                             {@const isWinner = String(val ?? "").toUpperCase() === localValueFor(field.key).toUpperCase()}
                                             <div class="px-3 py-2 {isWinner ? 'text-foreground' : 'text-muted-foreground'}">
                                                 {displayVal}

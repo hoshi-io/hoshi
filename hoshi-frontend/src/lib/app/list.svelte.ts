@@ -3,10 +3,13 @@ import type {EnrichedListEntry, ListStatus, UpsertEntryBody, UserStats} from "@/
 import type { CoreError } from "@/api/client";
 import {type NormalizedCard, normalizeListEntry} from "@/utils/normalize";
 import { appConfig } from "@/stores/config.svelte.js";
+import type {TrackerInfo} from "@/api/tracker/types";
+import {integrationsApi} from "@/api/tracker/tracker";
 
 export type SortOption = "SCORE_DESC" | "TITLE_ASC" | "TITLE_DESC" | "PROGRESS_DESC" | "PROGRESS_ASC";
 export type StatusFilter = "ALL" | "CURRENT" | "COMPLETED" | "PLANNING" | "PAUSED" | "DROPPED";
 export type TypeFilter = "ALL" | "anime" | "manga" | "novel";
+export type MissingTrackerFilter = "ALL" | "anilist" | "mal" | "kitsu" | "simkl";
 
 export type NormalizedListEntry = {
     card: NormalizedCard;
@@ -20,6 +23,9 @@ class ListStore {
     error = $state<CoreError | null>(null);
     isInitialized = $state(false);
 
+    showConflicts = $state(false);
+    missingOn = $state<MissingTrackerFilter>("ALL");
+
     activeStatus = $state<StatusFilter>("ALL");
     activeType = $state<TypeFilter>("ALL");
     searchQuery = $state("");
@@ -28,6 +34,7 @@ class ListStore {
     isDrawerOpen = $state(false);
     selectedEntry = $state<EnrichedListEntry | null>(null);
     isModalOpen = $state(false);
+    connectedTrackers = $state<string[]>([]);
 
     normalized = $state<NormalizedListEntry[]>([]);
 
@@ -42,7 +49,51 @@ class ListStore {
             const matchesStatus = this.activeStatus === "ALL" || item.original.status === this.activeStatus;
             const matchesType = this.activeType === "ALL" || item.original.contentType === this.activeType;
             const matchesSearch = this.searchQuery === "" || searchString.includes(this.searchQuery.toLowerCase());
-            return matchesStatus && matchesType && matchesSearch;
+
+            let matchesConflicts = true;
+            if (this.showConflicts) {
+                const sources = item.original.sources || [];
+
+                if (sources.length <= 1) {
+                    matchesConflicts = false;
+                } else {
+                    const first = sources[0] as any;
+
+                    matchesConflicts = sources.some((s: any) => {
+                        if (s.tracker === first.tracker) return false;
+
+                        const sStatus = String(s.status || "").toUpperCase().trim();
+                        const fStatus = String(first.status || "").toUpperCase().trim();
+
+                        const statusConflict = (sStatus !== "" && fStatus !== "") && (sStatus !== fStatus);
+
+                        const sProg = Number(s.progress) || 0;
+                        const fProg = Number(first.progress) || 0;
+                        const progressConflict = sProg !== fProg;
+
+                        return statusConflict || progressConflict;
+                    });
+                }
+            }
+
+            let matchesMissingTracker = true;
+
+            if (this.missingOn !== "ALL") {
+                if (
+                    this.missingOn === "simkl" &&
+                    (item.card.contentType.toUpperCase() === "MANGA" ||
+                        item.card.contentType.toUpperCase() === "NOVEL")
+                ) {
+                    matchesMissingTracker = false;
+                } else {
+                    const sources = item.original.sources || [];
+                    matchesMissingTracker = !sources.some(
+                        s => s.tracker === this.missingOn
+                    );
+                }
+            }
+
+            return matchesStatus && matchesType && matchesSearch && matchesConflicts && matchesMissingTracker;
         })
     );
 
@@ -61,8 +112,15 @@ class ListStore {
         })
     );
 
+    updateConnectedTrackers(trackers: TrackerInfo[]) {
+        this.connectedTrackers = trackers
+            .filter(t => t.connected)
+            .map(t => t.name.toLowerCase());
+    }
+
     async loadData(forceRefresh = false) {
         if (this.isInitialized && !forceRefresh) return;
+        listStore.updateConnectedTrackers(await integrationsApi.getAll());
 
         this.isLoading = true;
         this.error = null;
@@ -117,6 +175,8 @@ class ListStore {
         this.activeType = "ALL";
         this.searchQuery = "";
         this.activeSort = "SCORE_DESC";
+        this.showConflicts = false;
+        this.missingOn = "ALL";
     }
 
     openEdit(entry: EnrichedListEntry) {
