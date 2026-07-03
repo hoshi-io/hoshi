@@ -3,11 +3,12 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { appConfig } from "@/stores/config.svelte";
     import { Button } from "@/components/ui/button";
-    import { Star, Calendar, Tv, BookMarked, Building2, Play, BookOpen, Link, Plug, ChevronDown, ChevronUp } from "lucide-svelte";
+    import { Star, Calendar, Tv, BookMarked, Building2, Play, BookOpen, Link, Plug, ChevronDown, ChevronUp, Clock } from "lucide-svelte";
     import ListEditorButton from "@/components/ListEditorButton.svelte";
     import SmartImage from "@/components/SmartImage.svelte";
     import { formatScore } from "@/utils/normalize";
     import RelationTreeDialog from "@/components/content/RelationTreeDialog.svelte";
+    import { scheduleStore } from "@/app/schedule.svelte.js";
 
     let {
         fullContent,
@@ -49,6 +50,29 @@
     const trackers = $derived(fullContent.trackerMappings ?? []);
     const visibleTrackers = $derived(trackersExpanded ? trackers : trackers.slice(0, TRACKERS_LIMIT));
     const cid = $derived(fullContent.content.cid)
+
+    function getAiringMs(ts: number) {
+        return ts > 1e11 ? ts : ts * 1000;
+    }
+
+    const airingEntry = $derived(
+        scheduleStore.entries.find(e => String(e.trackerId) === fullContent.trackerMappings.find(e => e.trackerName === "anilist")?.trackerId)
+    );
+
+    const countdownText = $derived.by(() => {
+        if (!airingEntry) return null;
+        const diffMs = getAiringMs(airingEntry.airingAt) - Date.now();
+        if (diffMs <= 0) return null;
+
+        const totalMinutes = Math.floor(diffMs / 60_000);
+        const days    = Math.floor(totalMinutes / 1440);
+        const hours   = Math.floor((totalMinutes % 1440) / 60);
+        const minutes = totalMinutes % 60;
+
+        if (days > 0)  return `${days}d ${hours}h`;
+        if (hours > 0) return `${hours}h ${minutes}m`;
+        return `${minutes}m`;
+    });
 
     function formatDate(dateStr?: string | null) {
         if (!dateStr) return null;
@@ -122,6 +146,11 @@
                 {#if score}
                     <span class="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md font-bold shadow-sm">
                         <Star class="w-3 h-3 fill-current" /> {score}
+                    </span>
+                {/if}
+                {#if airingEntry && countdownText}
+                    <span class="flex items-center gap-1 bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-sm font-bold shadow-sm">
+                        <Clock class="w-3 h-3" /> {i18n.t("content.episode_in", { num: airingEntry.episode, time: countdownText})}
                     </span>
                 {/if}
                 {#if meta?.releaseDate}

@@ -2,10 +2,11 @@
     import {getCardScore, getCardScoreIsStars, type NormalizedCard} from '@/utils/normalize';
     import { getCardTitle, getCardShouldBlur, getCardTrailerUrl } from '@/utils/normalize';
     import { Button } from '@/components/ui/button';
-    import { Play, Plus, Check } from 'lucide-svelte';
+    import {Play, Plus, Check, Clock, Star} from 'lucide-svelte';
     import { fade, fly } from 'svelte/transition';
     import { i18n } from "@/stores/i18n.svelte.js";
     import { listStore } from '@/app/list.svelte.js';
+    import { scheduleStore } from "@/app/schedule.svelte.js";
     import ListEditorButton from "@/components/ListEditorButton.svelte";
 
     const YOUTUBE_REGEXP = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -54,6 +55,33 @@
     $effect(() => {
         currentIndex;
         iframeReady = false;
+    });
+
+    $effect(() => {
+        scheduleStore.load();
+    });
+
+    function getAiringMs(ts: number) {
+        return ts > 1e11 ? ts : ts * 1000;
+    }
+
+    const airingEntry = $derived(
+        currentItem ? scheduleStore.entries.find(e => String(e.trackerId) === String(currentItem.anilistId)) : undefined
+    );
+
+    const countdownText = $derived.by(() => {
+        if (!airingEntry) return null;
+        const diffMs = getAiringMs(airingEntry.airingAt) - Date.now();
+        if (diffMs <= 0) return null;
+
+        const totalMinutes = Math.floor(diffMs / 60_000);
+        const days    = Math.floor(totalMinutes / 1440);
+        const hours   = Math.floor((totalMinutes % 1440) / 60);
+        const minutes = totalMinutes % 60;
+
+        if (days > 0)  return `${days}d ${hours}h`;
+        if (hours > 0) return `${hours}h ${minutes}m`;
+        return `${minutes}m`;
     });
 
     function onIframeLoad() {
@@ -124,8 +152,13 @@
                                 </span>
                             {/if}
                             {#if score}
-                                <span class="bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded-md text-[11px] border border-emerald-500/20 backdrop-blur-md font-black">
-                                    {score}
+                                <span class="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md font-bold shadow-sm">
+                                    <Star class="w-3 h-3 fill-current" /> {score}
+                                </span>
+                            {/if}
+                            {#if airingEntry && countdownText}
+                                <span class="flex items-center gap-1 bg-primary/10 text-primary px-2.5 py-0.5 rounded-md text-[11px] border border-primary/20 backdrop-blur-md font-bold">
+                                    <Clock class="w-3 h-3" /> {i18n.t("content.episode_in", { num: airingEntry.episode, time: countdownText})}
                                 </span>
                             {/if}
                             {#if currentItem.year}

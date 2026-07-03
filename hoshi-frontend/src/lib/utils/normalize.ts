@@ -3,7 +3,6 @@ import { primaryMetadata } from "@/api/content/types";
 import { appConfig } from "@/stores/config.svelte.js";
 import { i18n } from "@/stores/i18n.svelte.js";
 import type { EnrichedListEntry } from "@/api/list/types";
-import {page} from "$app/state";
 
 export type NormalizedCard = {
     cid: string;
@@ -23,6 +22,7 @@ export type NormalizedCard = {
     contentType: string;
     href: string;
     imageHeaders?: Record<string, string>;
+    anilistId?: string;
 };
 
 export function getCardTitle(card: NormalizedCard): string {
@@ -101,6 +101,7 @@ export function normalizeFullContent(item: FullContent): NormalizedCard {
         episodeCount: meta?.epsOrChapters ?? null,
         contentType: item.content.contentType,
         href: `/c/${item.content.cid}`,
+        anilistId: item.trackerMappings.find(e => e.trackerName === "anilist")?.trackerId
     };
 }
 

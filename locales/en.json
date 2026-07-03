@@ -354,6 +354,7 @@
   },
   "content": {
     "details": "Details",
+    "episode_in": "Episode {{num}} in {{time}}",
     "resume": "Resume",
     "loading": "Loading",
     "score": "{{score}}%",
