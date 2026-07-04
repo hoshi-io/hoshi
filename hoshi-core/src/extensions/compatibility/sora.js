@@ -1,8 +1,55 @@
-// sora_compat.js
-// Wraps a raw Sora module (already eval'd into global scope) into
-// something matching the sandbox's Anime class contract.
+function buildSoraSharedMethods(BaseClass) {
+    return class extends BaseClass {
+        async getFilters() {
+            return {};
+        }
+
+        async search(query, filters, page) {
+            const raw = await searchResults(query);
+            const items = JSON.parse(raw);
+
+            const mapped = items
+                .filter(i => i.href)
+                .map(i => ({ id: i.href, title: i.title, url: i.href, image: i.image }));
+
+            if (mapped.length === 0 && items.length > 0) {
+                throw new Error("This source appears broken (returned no valid results). It may need an update.");
+            }
+
+            for (const item of mapped) {
+                state.set(`sora:searchmeta:${item.id}`, { title: item.title, image: item.image, query });
+            }
+
+            return mapped;
+        }
+
+        async getMetadata(id) {
+            const detailsRaw = await extractDetails(id);
+            const details = JSON.parse(detailsRaw)[0];
+
+            let cached = state.get(`sora:searchmeta:${id}`);
+            if (!cached) {
+                cached = { title: null, image: null };
+            }
+
+            return {
+                title: cached.title,
+                synopsis: details.description ?? null,
+                image: cached.image,
+                eps_or_chapters: details?.animeDetails?.episodes?.length ?? null,
+                rating: null,
+                year: details.animeDetails?.year ?? null,
+                genres: [],
+                anilist_id: null,
+                mal_id: null,
+                external_ids: { imdb: null }
+            };
+        }
+    };
+}
 
 function __sora_buildAnimeClass() {
+    const Shared = buildSoraSharedMethods(Anime);
 
     function hrefToQueryGuess(href) {
         // best-effort: last path segment, dashes -> spaces
@@ -10,7 +57,7 @@ function __sora_buildAnimeClass() {
         return slug.replace(/-/g, ' ');
     }
 
-    class SoraCompatAnime extends Anime {
+    return class SoraCompatAnime extends Shared {
 
         async getFilters() {
             return {};
@@ -41,11 +88,20 @@ function __sora_buildAnimeClass() {
 
         async getMetadata(id) {
             const detailsRaw = await extractDetails(id);
-            const details = JSON.parse(detailsRaw)[0];
+            let details;
+            try {
+                const parsed = JSON.parse(detailsRaw);
+                details = Array.isArray(parsed) ? parsed[0] : parsed;
+            } catch {
+                details = null;
+            }
+
+            if (!details) {
+                throw new Error("This source returned no metadata for this title — it may need an update.");
+            }
 
             let cached = state.get(`sora:searchmeta:${id}`);
             if (!cached) {
-                // cold cache: try to re-derive a query and re-search once
                 const guess = hrefToQueryGuess(id);
                 const raw = await searchResults(guess);
                 const items = JSON.parse(raw);
@@ -53,25 +109,17 @@ function __sora_buildAnimeClass() {
                 cached = match ? { title: match.title, image: match.image } : { title: null, image: null };
             }
 
-            const epCount = details?.animeDetails?.episodes?.length ?? null;
-
             return {
                 title: cached.title,
                 synopsis: details.description ?? null,
                 image: cached.image,
-
-                eps_or_chapters: epCount,
-                rating: null,       // not exposed upstream
-                year: details.animeDetails?.year ?? null,
-
-                genres: [],         // not exposed upstream
-
-                anilist_id: null,   // not exposed upstream
-                mal_id: null,       // not exposed upstream
-
-                external_ids: {
-                    imdb: null       // not exposed upstream
-                }
+                eps_or_chapters: details?.animeDetails?.episodes?.length ?? null,
+                rating: null,
+                year: details?.animeDetails?.year ?? null,
+                genres: [],
+                anilist_id: null,
+                mal_id: null,
+                external_ids: { imdb: null }
             };
         }
 
@@ -209,6 +257,49 @@ function __sora_buildAnimeClass() {
         const m = url.match(/[._-](en|es|fr|de|ar|pt|ja|ko)[._-]/i);
         return m ? m[1].toUpperCase() : null;
     }
+}
 
-    return SoraCompatAnime;
+function __sora_buildNovelClass() {
+    const Shared = buildSoraSharedMethods(Novel);
+
+    return class SoraCompatNovel extends Shared {
+        async findChapters(contentId) {
+            const raw = await extractChapters(contentId);
+            const chapters = JSON.parse(raw);
+
+            return chapters.map(c => ({
+                id: `${contentId}###ch${c.number}`,
+                title: c.title,
+                number: c.number,
+                index: c.number - 1
+            }));
+
+            // note: extractChapters here builds hrefs purely by numeric
+            // pattern (`${url}/chapter-${i}`) rather than scraping real
+            // per-chapter links — cheap but fragile if a site's chapter
+            // URLs aren't sequential/predictable. Nothing to fix here on
+            // the glue side; it's the module's own assumption.
+        }
+
+        async findChapterPages(chapterId) {
+            // reverse the id scheme back into the real chapter URL
+            const [contentId, chPart] = chapterId.split('###ch');
+            const chapterNum = chPart;
+            const url = `${contentId}/chapter-${chapterNum}`;
+
+            const text = await extractText(url);
+            // extractText returns raw joined <p> HTML directly (not JSON-wrapped)
+            // on success, but JSON.stringify({text: 'Error...'}) on failure —
+            // inconsistent return shape from the module itself.
+            try {
+                const parsed = JSON.parse(text);
+                if (parsed?.text) throw new Error(parsed.text);
+            } catch (e) {
+                if (e.message?.includes('Error extracting text')) throw e;
+                // JSON.parse failing here just means we got the real HTML string, not an error — expected path
+            }
+
+            return text;
+        }
+    };
 }

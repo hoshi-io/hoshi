@@ -13,7 +13,6 @@ use hoshi_core::content::services::home::HomeService;
 use hoshi_core::content::services::mapping::MappingService;
 use hoshi_core::content::services::search::SearchService;
 use hoshi_core::content::types::{ContentListResponse, HomeView, RelationGraph, SearchParams, UpdateExtensionMappingRequest, UpdateTrackerMappingRequest};
-use hoshi_core::extensions::ExtensionManager;
 use hoshi_core::extensions::types::{ContentItems, ExtensionSearchResult, PlayContentResult};
 use hoshi_core::tracker::types::TrackerMapping;
 

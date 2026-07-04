@@ -23,6 +23,20 @@
         )
     );
 
+    let displayNames = $derived((() => {
+        const nameCounts = new Map<string, number>();
+        for (const ext of sortedExtensions) {
+            nameCounts.set(ext.name, (nameCounts.get(ext.name) ?? 0) + 1);
+        }
+
+        const map = new Map<string, string>();
+        for (const ext of sortedExtensions) {
+            const isDuplicate = (nameCounts.get(ext.name) ?? 0) > 1;
+            map.set(ext.id, isDuplicate && ext.source ? `${ext.name} (${ext.source})` : ext.name);
+        }
+        return map;
+    })());
+
     function getTrackerFavicon(trackerName: string) {
         const domains: Record<string, string> = {
             'anilist': 'anilist.co',
@@ -110,12 +124,10 @@
                     <ChevronRight class="w-4 h-4 transition-transform duration-200 {extensionsOpen ? 'rotate-90' : ''}" />
                 </button>
 
-                <!-- SearchSourceGrid.svelte -->
 
                 {#if extensionsOpen}
                     <div class="space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent animate-in slide-in-from-top-2 fade-in duration-200">
                         {#each sortedExtensions as ext}
-                            <!-- 1. Enforced a rigid layout row height (h-9 min-h-[36px] max-h-[36px]) so it never expands -->
                             <div class="{rowClasses} pr-1.5 justify-between h-9 min-h-[36px] max-h-[36px] {searchState.searchMode === 'extension' && searchState.selectedExtension === ext.id ? activeRow : inactiveRow}">
 
                                 <button
@@ -124,17 +136,16 @@
                                         class="flex items-center gap-3 flex-1 min-w-0 h-full outline-none text-left"
                                 >
                                     {#if ext.icon}
-                                        <img src={ext.icon} class="w-5 h-5 shrink-0 rounded-sm object-contain {searchState.searchMode === 'extension' && searchState.selectedExtension === ext.id ? '' : 'grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100'}" alt={ext.name} />
+                                        <img src={ext.icon} class="w-5 h-5 shrink-0 rounded-sm object-contain {searchState.searchMode === 'extension' && searchState.selectedExtension === ext.id ? '' : 'grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100'}" alt={displayNames.get(ext.id) ?? ext.name} />
                                     {:else}
                                         <Plug class="w-5 h-5 shrink-0 {searchState.searchMode === 'extension' && searchState.selectedExtension === ext.id ? 'text-primary' : 'text-muted-foreground'}" />
                                     {/if}
-                                    <span class="truncate">{ext.name}</span>
+                                    <span class="truncate">{displayNames.get(ext.id) ?? ext.name}</span>
                                 </button>
 
                                 {#if ext.source === 'tachiyomi' && ext.settings}
                                     {@const langDef = ext.setting_definitions?.find(s => s.id === 'language' || s.key === 'language')}
                                     {#if langDef}
-                                        <!-- 2. Replaced w-[85px] with strict height capping (!h-6) to ensure the select stays compact -->
                                         <div class="w-[85px] shrink-0 ml-2 h-6 flex items-center" onclick={(e) => e.stopPropagation()}>
                                             <ResponsiveSelect
                                                     value={ext.settings.language as string}

@@ -6,13 +6,14 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use regex::Regex;
+use rquickjs::prelude::Opt;
 use scraper::{Html, Selector};
 use tracing::{debug, error, instrument, warn};
 
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::ExtensionStateStore;
 use crate::extensions::{ANIME, BASE, MANGA, NOVEL, SANDBOX_BOOTSTRAP};
-use crate::extensions::types::CompatLayer;
+use crate::extensions::types::{CompatLayer, ExtensionType};
 use crate::headless::{HeadlessHandle, HeadlessOptions};
 
 pub(crate) async fn execute_in_quickjs(
@@ -24,6 +25,7 @@ pub(crate) async fn execute_in_quickjs(
     extension_id: String,
     state_store: ExtensionStateStore,
     compat_layer: Option<CompatLayer>,
+    ext_type: ExtensionType,
     http_client: reqwest::Client,
 ) -> CoreResult<Value> {
     let base_classes = format!("{}\n{}\n{}\n{}", BASE, ANIME, MANGA, NOVEL);
@@ -54,6 +56,7 @@ pub(crate) async fn execute_in_quickjs(
         &function_name,
         &args_json,
         &settings_json,
+        &ext_type,
     );
 
     let headless_available = headless.is_available();
@@ -260,6 +263,7 @@ fn build_sandbox_script(
     function_name: &str,
     args_json: &str,
     settings_json: &str,
+    ext_type: &ExtensionType,
 ) -> String {
     let ext_code_repr = serde_json::to_string(extension_code).unwrap_or_default();
 
@@ -284,29 +288,35 @@ fn build_sandbox_script(
         }
 
         Some(CompatLayer::Sora(js)) => {
+            let build_call = match ext_type {
+                ExtensionType::Novel => "__sora_buildNovelClass()",
+                _                     => "__sora_buildAnimeClass()", // default/fallback
+            };
+
             let runner = format!(
                 r#"(async () => {{
-            const src = {ext_repr};
-            (0, eval)(src);
+                    const src = {ext_repr};
+                    (0, eval)(src);
 
-            if (typeof globalThis.fetchv2 !== "function") {{
-                globalThis.fetchv2 = async (url, headers = {{}}, method = "GET", body = null) => {{
-                    return await fetch(url, {{ method, headers, body }});
-                }};
-            }}
+                    if (typeof globalThis.fetchv2 !== "function") {{
+                        globalThis.fetchv2 = async (url, headers = {{}}, method = "GET", body = null) => {{
+                            return await fetch(url, {{ method, headers, body }});
+                        }};
+                    }}
 
-            const ExtClass = __sora_buildAnimeClass();
-            const instance = new ExtClass();
+                    const ExtClass = {build_call};
+                    const instance = new ExtClass();
 
-            const fn_name = "{fn}";
-            if (typeof instance[fn_name] !== "function")
-                throw new Error(`Method "${{fn_name}}" not found on Sora compat class`);
+                    const fn_name = "{fn}";
+                    if (typeof instance[fn_name] !== "function")
+                        throw new Error(`Method "${{fn_name}}" not found on Sora compat class`);
 
-            return await instance[fn_name](...{args});
-        }})()"#,
-                ext_repr = ext_code_repr,
-                fn       = function_name,
-                args     = args_json,
+                    return await instance[fn_name](...{args});
+                }})()"#,
+                ext_repr   = ext_code_repr,
+                build_call = build_call,
+                fn         = function_name,
+                args       = args_json,
             );
             (js.clone(), runner)
         }

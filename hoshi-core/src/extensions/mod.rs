@@ -652,6 +652,8 @@ impl ExtensionManager {
             _ => None,
         };
 
+        let ext_type = extension.ext_type.clone();
+
         sandbox::execute_in_quickjs(
             extension_code,
             function_name.to_string(),
@@ -661,6 +663,7 @@ impl ExtensionManager {
             extension_id.to_string(),
             Arc::clone(&self.extension_state),
             compat,
+            ext_type,
             http_client
         ).await
     }

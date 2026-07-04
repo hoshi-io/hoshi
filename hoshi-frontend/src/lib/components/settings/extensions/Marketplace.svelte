@@ -45,12 +45,11 @@
 
     function normalizeLang(lang: string | undefined): string {
         if (!lang) return 'Unknown';
-        const l = lang.toLowerCase().trim();
 
-        // Multi-language aliases
+        let l = lang.toLowerCase().trim().replace(/\s*\([^)]*\)\s*$/, '').trim();
+
         if (['all', 'multi', 'multiple', 'multilingual', 'various', 'universal'].includes(l)) return 'Multi';
 
-        // ISO 639-1 / common codes
         const codes: Record<string, string> = {
             af: 'Afrikaans', ar: 'Arabic', az: 'Azerbaijani', be: 'Belarusian',
             bg: 'Bulgarian', bn: 'Bengali', ca: 'Catalan', cs: 'Czech',
@@ -76,7 +75,6 @@
 
         if (codes[l]) return codes[l];
 
-        // Already a full word (e.g. "english", "spanish") — just capitalize
         return l.charAt(0).toUpperCase() + l.slice(1);
     }
 
@@ -107,7 +105,7 @@
         for (const item of marketplaceItems) {
             const lang = normalizeLang(getItemLang(item));
             if (selectedLang !== "All" && lang !== selectedLang) continue;
-            if (query && !item.name.toLowerCase().includes(query)) continue;
+            if (query && !getItemName(item).toLowerCase().includes(query)) continue;
             (groups[lang] ??= []).push(item);
         }
 
@@ -175,6 +173,18 @@
         }
 
         await loadRepository(url);
+    }
+
+    function normalizeSoraType(raw: string | undefined): string {
+        switch (raw) {
+            case 'anime': return 'anime';
+            case 'novels':
+            case 'novel': return 'novel';
+            case 'movies/shows':
+            case 'movies':
+            case 'shows': return 'movie';
+            default: return 'other';
+        }
     }
 
     async function loadRepository(url: string) {
@@ -303,6 +313,12 @@
     function hasUpdate(item: AnyMarketplaceEntry): boolean {
         const v = getInstalledVersion(item);
         return v ? isNewerVersion(item.version, v) : false;
+    }
+
+    function getItemName(item: AnyMarketplaceEntry): string {
+        if (isSora(item)) return item.sourceName;
+        if (isTachiyomi(item)) return item.sources?.[0]?.name ?? item.pkg;
+        return item.name ?? '';
     }
 
     async function handleInstall(item: AnyMarketplaceEntry) {
@@ -479,11 +495,11 @@
     } : isTachiyomi(item) ? {
         ...item, name: item.sources?.[0]?.name, id: item.pkg, ext_type: 'manga',
         icon: getTachiyomiIconUrl(item), language: item.lang, author: 'Tachiyomi'
-    } : isSora(item) ? {
+} : isSora(item) ? {
     ...item,
     name: item.sourceName,
     icon: item.iconUrl,
-    ext_type: 'anime',
+    ext_type: normalizeSoraType(item.type),
     language: item.language,
     author: item.author?.name ?? 'Unknown'
 } : item

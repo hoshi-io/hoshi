@@ -76,7 +76,7 @@ pub struct SoraModuleManifest {
 pub fn normalize_sora_type(raw: &str) -> &'static str {
     match raw {
         "anime" => "anime",
-        "novel" => "novel",
+        "novels" | "novel" => "novel",
         "movies/shows" | "movies" | "shows" => "anime",
         _ => "anime",
     }
