@@ -81,25 +81,48 @@
 
     const processedChapters = $derived.by(() => {
         if (duration <= 0) return [];
-        let result: { start: number, end: number, title: string, width: number }[] = [];
-        let lastEnd = 0;
+
         const sorted = [...chapters].sort((a, b) => a.start - b.start);
 
+        let sanitized: { start: number; end: number; title: string }[] = [];
+        let currentTimelineTime = 0;
+
         for (const ch of sorted) {
-            if (ch.start > lastEnd) {
-                result.push({ start: lastEnd, end: ch.start, title: '', width: ((ch.start - lastEnd) / duration) * 100 });
+            if (ch.end <= ch.start) continue;
+
+            if (ch.start > currentTimelineTime) {
+                sanitized.push({
+                    start: currentTimelineTime,
+                    end: ch.start,
+                    title: ''
+                });
+                currentTimelineTime = ch.start;
             }
-            result.push({
-                ...ch,
-                width: ((ch.end - ch.start) / duration) * 100
-            });
-            lastEnd = ch.end;
+
+            if (ch.start <= currentTimelineTime) {
+                if (ch.end <= currentTimelineTime) continue;
+
+                sanitized.push({
+                    start: currentTimelineTime,
+                    end: ch.end,
+                    title: ch.title
+                });
+                currentTimelineTime = ch.end;
+            }
         }
 
-        if (lastEnd < duration) {
-            result.push({ start: lastEnd, end: duration, title: '', width: ((duration - lastEnd) / duration) * 100 });
+        if (currentTimelineTime < duration) {
+            sanitized.push({
+                start: currentTimelineTime,
+                end: duration,
+                title: ''
+            });
         }
-        return result;
+
+        return sanitized.map(seg => ({
+            ...seg,
+            width: ((seg.end - seg.start) / duration) * 100
+        }));
     });
 
     function getSegmentProgress(start: number, end: number, current: number) {
