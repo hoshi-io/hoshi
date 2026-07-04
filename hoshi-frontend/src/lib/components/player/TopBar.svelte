@@ -6,6 +6,7 @@
     import type { PlayerController } from "./PlayerController.svelte.js";
     import type { SubtitleSettings } from "@/components/player/subtitles/SubtitleSettings.svelte.js";
     import { layoutState } from "@/stores/layout.svelte";
+    import { goto } from "$app/navigation";
 
     interface Props {
         cid:                string;
@@ -102,8 +103,7 @@
                     variant="ghost"
                     size="icon"
                     disabled={!hasPrev}
-                    href={`/watch/${cid}/${epNumber - 1}`}
-                    class="pill-btn"
+                    onclick={() => goto(`/watch/${cid}/${epNumber - 1}`)} class="pill-btn"
             >
                 <SkipBack class="size-4" />
             </Button>
@@ -112,8 +112,7 @@
                     variant="ghost"
                     size="icon"
                     disabled={!hasNext}
-                    href={`/watch/${cid}/${epNumber + 1}`}
-                    class="pill-btn"
+                    onclick={() => goto(`/watch/${cid}/${epNumber + 1}`)} class="pill-btn"
             >
                 <SkipForward class="size-4" />
             </Button>

@@ -18,7 +18,6 @@ import { invoke } from "@tauri-apps/api/core";
 
 import type { Subtitle, Chapter } from "@/components/player/types";
 import {listStore} from "@/app/list.svelte";
-import {layoutState} from "@/stores/layout.svelte";
 import type {Extension} from "@/api/extensions/types";
 
 export class PlayerState {
@@ -47,7 +46,7 @@ export class PlayerState {
     hasPrev = $derived(this.epNumber > 1);
 
     extensions = $state<Extension[]>([]);
-    selectedExtension   = $state<string | null>(null);
+    selectedExtension = $state<string | null>(null);
     servers             = $state<string[]>([]);
     supportsDub         = $state(false);
     selectedServer      = $state<string | null>(null);
@@ -145,6 +144,10 @@ export class PlayerState {
             this.discordStatusUpdated = false;
             this.currentLoadedEp = targetEp;
 
+            if (!extensionsStore.initialized) {
+                await extensionsStore.load();
+            }
+
             if (targetCid !== this.currentLoadedCid) {
                 this.isLoadingMeta = true;
                 const contentRes = await contentApi.get_by_cid(targetCid);
@@ -164,6 +167,10 @@ export class PlayerState {
                 }
 
                 this.isLoadingMeta = false;
+            } else {
+                this.currentLoadedEp = targetEp;
+                this.updateEpisodeTitle(targetEp);
+                await this.loadPlay();
             }
 
         } catch (e: any) {
