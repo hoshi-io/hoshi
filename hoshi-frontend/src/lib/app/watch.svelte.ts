@@ -19,6 +19,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type { Subtitle, Chapter } from "@/components/player/types";
 import {listStore} from "@/app/list.svelte";
 import {layoutState} from "@/stores/layout.svelte";
+import type {Extension} from "@/api/extensions/types";
 
 export class PlayerState {
     params      = $derived(page.params as Record<string, string>);
@@ -45,14 +46,29 @@ export class PlayerState {
     hasNext = $derived(this.totalEpisodes > 0 && this.epNumber < this.totalEpisodes);
     hasPrev = $derived(this.epNumber > 1);
 
-    extensions          = $state<string[]>([]);
+    extensions = $state<Extension[]>([]);
     selectedExtension   = $state<string | null>(null);
     servers             = $state<string[]>([]);
     supportsDub         = $state(false);
     selectedServer      = $state<string | null>(null);
     isDub               = $state(false);
 
-    extensionItems  = $derived(this.extensions.map(ext => ({ value: ext, label: ext })));
+    extensionItems = $derived((() => {
+        const nameCounts = new Map<string, number>();
+        for (const ext of this.extensions) {
+            nameCounts.set(ext.name, (nameCounts.get(ext.name) ?? 0) + 1);
+        }
+
+        return this.extensions.map(ext => {
+            const isDuplicate = (nameCounts.get(ext.name) ?? 0) > 1;
+            const label = isDuplicate && ext.source
+                ? `${ext.name} (${ext.source})`
+                : ext.name;
+
+            return { value: ext.id, label };
+        });
+    })());
+
     serverItems     = $derived(this.servers.map(srv => ({ value: srv, label: srv })));
 
     isLoadingPlay   = $state(false);
@@ -135,23 +151,19 @@ export class PlayerState {
                 this.animeData = contentRes;
                 this.updateEpisodeTitle(targetEp);
 
-                const globalExtensions = extensionsStore.anime.map(e => e.id);
+                const globalExtensions = extensionsStore.anime;
                 const contentExtensions = contentRes.extensionSources?.map((e: any) => e.extensionName) || [];
                 this.extensions = globalExtensions;
                 this.currentLoadedCid = targetCid;
 
                 if (this.extensions.length > 0) {
                     const initialExt =
-                        contentExtensions.find((e: string) => globalExtensions.includes(e)) ||
+                        this.extensions.find(e => contentExtensions.includes(e.id)) ??
                         this.extensions[0];
-                    await this.selectExtension(initialExt);
+                    await this.selectExtension(initialExt.id);
                 }
 
                 this.isLoadingMeta = false;
-            } else {
-                this.currentLoadedEp = targetEp;
-                this.updateEpisodeTitle(targetEp);
-                await this.loadPlay();
             }
 
         } catch (e: any) {
@@ -175,12 +187,16 @@ export class PlayerState {
         this.selectedServer = null;
         this.isDub = false;
 
-        try {
-            const s = await extensionsApi.getSettings(ext);
-            this.servers = s.episodeServers ?? [];
-            this.supportsDub = s.supportsDub ?? false;
-            this.selectedServer = this.servers[0] ?? null;
-        } catch {}
+        const isSora = extensionsStore.anime.find(e => e.id === ext)?.source === 'sora';
+
+        if (!isSora) {
+            try {
+                const s = await extensionsApi.getSettings(ext);
+                this.servers = s.episodeServers ?? [];
+                this.supportsDub = s.supportsDub ?? false;
+                this.selectedServer = this.servers[0] ?? null;
+            } catch {}
+        }
 
         await this.loadPlay();
     }
@@ -203,6 +219,19 @@ export class PlayerState {
                     this.initialTime = prog?.timestampSeconds ?? 0;
                 } catch {
                     this.initialTime = 0;
+                }
+            }
+
+            const isSora = extensionsStore.anime.find(e => e.id === this.selectedExtension)?.source === 'sora';
+
+            if (isSora) {
+                const res = await contentApi.listEpisodeServers(this.selectedExtension, this.cid, this.epNumber);
+                this.servers = res.servers ?? [];
+                this.supportsDub = false;
+                this.isDub = false;
+
+                if (!this.selectedServer || !this.servers.includes(this.selectedServer)) {
+                    this.selectedServer = this.servers[0] ?? null;
                 }
             }
 

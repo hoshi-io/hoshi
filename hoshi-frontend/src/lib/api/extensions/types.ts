@@ -39,7 +39,24 @@ export interface NativeMarketplaceEntry {
     manifestUrl: string;
 }
 
-export type AnyMarketplaceEntry = NativeMarketplaceEntry | LNReaderMarketplaceEntry | TachiyomiMarketplaceEntry;
+export interface SoraMarketplaceEntry {
+    id: string;
+    sourceName: string;
+    iconUrl: string;
+    language: string;
+    baseUrl: string;
+    manifestUrl: string;
+    addedAt?: string;
+    installCount?: number;
+    type: string; // "anime" | "movies/shows" | ... inconsistent, don't trust it strictly
+    author: { name: string; icon?: string; url?: string };
+}
+
+export type AnyMarketplaceEntry =
+    | NativeMarketplaceEntry
+    | LNReaderMarketplaceEntry
+    | TachiyomiMarketplaceEntry
+    | SoraMarketplaceEntry;
 
 export interface LNReaderMarketplaceEntry {
     id: string;

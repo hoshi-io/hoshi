@@ -283,6 +283,34 @@ fn build_sandbox_script(
             (js.clone(), runner)
         }
 
+        Some(CompatLayer::Sora(js)) => {
+            let runner = format!(
+                r#"(async () => {{
+            const src = {ext_repr};
+            (0, eval)(src);
+
+            if (typeof globalThis.fetchv2 !== "function") {{
+                globalThis.fetchv2 = async (url, headers = {{}}, method = "GET", body = null) => {{
+                    return await fetch(url, {{ method, headers, body }});
+                }};
+            }}
+
+            const ExtClass = __sora_buildAnimeClass();
+            const instance = new ExtClass();
+
+            const fn_name = "{fn}";
+            if (typeof instance[fn_name] !== "function")
+                throw new Error(`Method "${{fn_name}}" not found on Sora compat class`);
+
+            return await instance[fn_name](...{args});
+        }})()"#,
+                ext_repr = ext_code_repr,
+                fn       = function_name,
+                args     = args_json,
+            );
+            (js.clone(), runner)
+        }
+
         Some(CompatLayer::Tachiyomi(js)) | Some(CompatLayer::Aniyomi(js)) => {
             let runner = format!(
                 r#"(async () => {{

@@ -30,11 +30,13 @@
         { value: "lnreader",  label: "LNReader"    },
         { value: "tachiyomi", label: "Tachiyomi"   },
         { value: "aniyomi",   label: "Aniyomi"     },
+        { value: "sora",      label: "Sora"        },
     ];
 
-    function getSource(ext: { id: string; source?: string }): "lnreader" | "tachiyomi" | "aniyomi" | "native" {
+    function getSource(ext: { id: string; source?: string }): "lnreader" | "tachiyomi" | "aniyomi" | "sora" | "native" {
         if (ext.id.startsWith("lnr_"))   return "lnreader";
         if (ext.id.startsWith("tachi_")) return ext.source === "aniyomi" ? "aniyomi" : "tachiyomi";
+        if (ext.id.startsWith("sora_"))  return "sora";
         return "native";
     }
 

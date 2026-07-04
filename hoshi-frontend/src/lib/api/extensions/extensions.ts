@@ -3,7 +3,8 @@ import type {
     Extension,
     ExtensionFiltersResponse,
     ExtensionSettingsResponse,
-    InstallExtensionResponse, LNReaderMarketplaceEntry, NativeMarketplaceEntry, TachiyomiMarketplaceEntry,
+    InstallExtensionResponse, LNReaderMarketplaceEntry, NativeMarketplaceEntry,
+    SoraMarketplaceEntry, TachiyomiMarketplaceEntry,
     UninstallExtensionResponse, UpdateExtensionResponse,
     UpdateExtensionSettingsResponse,
 } from "./types";
@@ -45,11 +46,10 @@ export const extensionsApi = {
         });
     },
 
-    installAuto(entry: NativeMarketplaceEntry | LNReaderMarketplaceEntry) {
-        if ("url" in entry && "iconUrl" in entry) {
-            return extensionsApi.installLNReader(entry as LNReaderMarketplaceEntry);
-        }
-        return extensionsApi.install((entry as NativeMarketplaceEntry).manifestUrl);
+    installSora(entry: SoraMarketplaceEntry) {
+        return call<InstallExtensionResponse>({
+            tauri: { cmd: "install_sora_extension", args: { entry } },
+        });
     },
 
     installTachiyomi(downloadUrl: string, entry: TachiyomiMarketplaceEntry) {

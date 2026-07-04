@@ -13,7 +13,7 @@ use types::{Extension, ExtensionManifest, ExtensionType, SettingDefinition};
 pub type ExtensionStateStore = Arc<Mutex<HashMap<String, HashMap<String, Value>>>>;
 
 use crate::error::{CoreError, CoreResult};
-use crate::extensions::types::{Chapter, CompatLayer, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, LNReaderMarketplaceEntry, Page, TachiyomiMarketplaceEntry};
+use crate::extensions::types::{normalize_sora_type, Chapter, CompatLayer, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, LNReaderMarketplaceEntry, Page, SoraMarketplaceEntry, SoraModuleManifest, TachiyomiMarketplaceEntry};
 use crate::headless::{noop_headless, HeadlessHandle};
 use crate::paths::AppPaths;
 use crate::state::AppState;
@@ -25,6 +25,7 @@ const NOVEL: &str = include_str!("base/Novel.js");
 
 const TACHIYOMI: &str = include_str!("compatibility/tachiyomi.js");
 const LNREADER: &str = include_str!("compatibility/lnreader.js");
+const SORA: &str = include_str!("compatibility/sora.js");
 const SANDBOX_BOOTSTRAP: &str = include_str!("sandbox_bootstrap.js");
 
 pub struct ExtensionManager {
@@ -221,6 +222,78 @@ impl ExtensionManager {
         self.extensions.insert(manifest.id.clone(), extension.clone());
         info!(ext = %extension.id, "LNReader extension installed successfully");
 
+        Ok(extension)
+    }
+
+    #[instrument(skip(self, state, entry))]
+    pub async fn install_sora_extension(
+        &mut self,
+        state: &AppState,
+        entry: SoraMarketplaceEntry,
+    ) -> CoreResult<Extension> {
+        info!(id = %entry.id, "Installing Sora extension");
+
+        let module_manifest: SoraModuleManifest = state.http_client
+            .get(&entry.manifest_url)
+            .send()
+            .await
+            .map_err(|e| { error!(error = ?e, "Failed to fetch Sora manifest"); CoreError::Network("error.extension.install_network_failed".into()) })?
+            .json()
+            .await
+            .map_err(|e| { error!(error = ?e, "Invalid Sora manifest JSON"); CoreError::Parse("error.extension.invalid_manifest".into()) })?;
+
+        let script = state.http_client
+            .get(&module_manifest.script_url)
+            .send()
+            .await
+            .map_err(|e| { error!(error = ?e, "Failed to download Sora module JS"); CoreError::Network("error.extension.install_network_failed".into()) })?
+            .text()
+            .await
+            .map_err(|_| CoreError::Network("error.extension.install_network_failed".into()))?;
+
+        let prefixed_id = format!("sora_{}", entry.id);
+
+        let manifest_yaml = format!(
+            "id: {id}\nname: {name}\nversion: {version}\ntype: {ext_type}\nlanguage: {lang}\nicon: {icon}\nauthor: {author}\nmain: index.js\nsource: sora\nnote: {note}\nsoftsub: {softsub}\n",
+            id       = prefixed_id,
+            name     = entry.source_name,
+            version  = module_manifest.version,
+            ext_type = normalize_sora_type(&entry.ext_type),
+            lang     = entry.language,
+            icon     = entry.icon_url,
+            author   = entry.author.name,
+            note     = module_manifest.note.clone().unwrap_or_default(),
+            softsub  = module_manifest.softsub,
+        );
+
+        let ext_dir = self.extensions_dir.join(&prefixed_id);
+        fs::create_dir_all(&ext_dir).await.map_err(CoreError::Io)?;
+        fs::write(ext_dir.join("manifest.yaml"), &manifest_yaml).await.map_err(CoreError::Io)?;
+        fs::write(ext_dir.join("index.js"), &script).await.map_err(CoreError::Io)?;
+
+        let manifest: ExtensionManifest = serde_yaml::from_str(&manifest_yaml)
+            .map_err(|e| { error!(error = ?e, "Generated manifest is invalid"); CoreError::Parse("error.extension.invalid_manifest".into()) })?;
+
+        let settings = load_settings(&ext_dir, &manifest.settings).await;
+
+        let extension = Extension {
+            id: manifest.id.clone(),
+            name: manifest.name,
+            version: manifest.version,
+            author: manifest.author.unwrap_or_else(|| "Unknown".to_string()),
+            icon: manifest.icon,
+            ext_type: manifest.ext_type,
+            script_path: ext_dir.join("index.js"),
+            language: manifest.language,
+            nsfw: false,
+            skip_default_processing: manifest.skip_default_processing,
+            setting_definitions: manifest.settings,
+            settings,
+            source: manifest.source,
+        };
+
+        self.extensions.insert(manifest.id.clone(), extension.clone());
+        info!(ext = %extension.id, "Sora extension installed successfully");
         Ok(extension)
     }
 
@@ -575,6 +648,7 @@ impl ExtensionManager {
             Some("lnreader") => Some(CompatLayer::Lnreader(LNREADER.to_string())),
             Some("tachiyomi") => Some(CompatLayer::Tachiyomi(TACHIYOMI.to_string())),
             Some("aniyomi") => Some(CompatLayer::Aniyomi(TACHIYOMI.to_string())),
+            Some("sora") => Some(CompatLayer::Sora(SORA.to_string())),
             _ => None,
         };
 
@@ -669,6 +743,19 @@ impl ExtensionManager {
             ext_id,
             "findEpisodeServer",
             vec![json!(content_id), json!(server), json!(category)], self.http_client.clone()
+        ).await
+    }
+
+    pub async fn list_episode_servers(
+        &self,
+        ext_id: &str,
+        content_id: &str,
+    ) -> CoreResult<Vec<String>> {
+        self.call_typed_function(
+            ext_id,
+            "listEpisodeServers",
+            vec![json!(content_id)],
+            self.http_client.clone(),
         ).await
     }
 

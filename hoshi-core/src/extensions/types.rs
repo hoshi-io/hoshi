@@ -1,13 +1,87 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
 pub enum CompatLayer {
     Lnreader(String),
+    Sora(String),
     Tachiyomi(String),
     Aniyomi(String),
 }
+
+#[derive(Debug, Clone)]
+pub struct SoraAuthor {
+    pub name: String,
+    pub icon: Option<String>,
+    pub url: Option<String>,
+}
+
+impl<'de> Deserialize<'de> for SoraAuthor {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum AuthorShape {
+            Name(String),
+            Object {
+                name: String,
+                #[serde(default)]
+                icon: Option<String>,
+                #[serde(default)]
+                url: Option<String>,
+            },
+        }
+
+        Ok(match AuthorShape::deserialize(deserializer)? {
+            AuthorShape::Name(name) => SoraAuthor { name, icon: None, url: None },
+            AuthorShape::Object { name, icon, url } => SoraAuthor { name, icon, url },
+        })
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SoraMarketplaceEntry {
+    pub id: String,
+    #[serde(rename = "sourceName")]
+    pub source_name: String,
+    #[serde(rename = "iconUrl")]
+    pub icon_url: String,
+    pub language: String,
+    #[serde(rename = "baseUrl")]
+    pub base_url: Option<String>,
+    #[serde(rename = "manifestUrl")]
+    pub manifest_url: String,
+    #[serde(rename = "type")]
+    pub ext_type: String,
+    pub author: SoraAuthor,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SoraModuleManifest {
+    pub version: String,
+    #[serde(rename = "scriptUrl")]
+    pub script_url: String,
+    #[serde(rename = "streamType")]
+    pub stream_type: Option<String>,
+    pub quality: Option<String>,
+    pub note: Option<String>,
+    #[serde(default)]
+    pub softsub: bool,
+}
+
+
+pub fn normalize_sora_type(raw: &str) -> &'static str {
+    match raw {
+        "anime" => "anime",
+        "novel" => "novel",
+        "movies/shows" | "movies" | "shows" => "anime",
+        _ => "anime",
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct TachiyomiMarketplaceEntry {
     pub name: String,

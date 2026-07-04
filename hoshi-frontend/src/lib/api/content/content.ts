@@ -112,6 +112,12 @@ export const contentApi = {
         });
     },
 
+    async listEpisodeServers(extName: string, cid: string, number: number) {
+        return call<{ ok: boolean; servers: string[] }>({
+            tauri: { cmd: "list_episode_servers", args: { extName, cid, number } },
+        });
+    },
+
     searchExtension(extName: string, query: string, filters: any, page: number) {
         return call<ExtensionSearchResult[]>({
             tauri: {
