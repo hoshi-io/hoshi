@@ -1,6 +1,6 @@
 [package]
 name = "hoshi-app"
-version = "1.1.0"
+version = "1.1.2"
 description = "Cross-platform tracker manager for anime, manga and light novels"
 authors = ["ninelfx"]
 edition = "2024"
