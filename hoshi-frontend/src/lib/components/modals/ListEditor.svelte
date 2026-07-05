@@ -319,7 +319,7 @@
                 <p class="font-bold">{i18n.t('list.modal.loading')}</p>
             </div>
         {:else}
-            <div class="relative z-10 p-6 pb-1 flex items-center gap-5 w-full">
+            <div class="relative z-10 px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-1 flex items-center gap-5 w-full">
                 {#if coverImage}
                     <div class="aspect-auto w-30 object-cover">
                         <SmartImage
@@ -602,7 +602,7 @@
                 {/if}
             </form>
 
-            <Dialog.Footer class="p-5 border-t border-border bg-muted/10">
+            <Dialog.Footer class="px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] border-t border-border bg-muted/10">
                 <div class="flex items-center justify-between w-full gap-3">
                     <div class="flex shrink-0">
                         {#if !isNew}

@@ -62,7 +62,7 @@
         <Drawer.Content class="p-6 pb-10 rounded-sm border-border/50 max-h-[50vh]">
             <div class="mt-4 space-y-2">
                 <button
-                        class="w-full text-left font-bold py-3.5 px-4 rounded-xl bg-muted/50 hover:bg-muted text-sm flex items-center gap-2 transition-colors"
+                        class="w-full text-left font-bold py-3.5 px-4 text-sm flex items-center gap-2 transition-colors"
                         onclick={() => {
                             isDrawerOpen = false;
                             onDetails();
@@ -77,7 +77,7 @@
 
                 {#if onIncrement}
                     <button
-                            class="w-full text-left font-bold py-3.5 px-4 rounded-xl bg-muted/50 hover:bg-muted text-sm flex items-center gap-2 transition-colors"
+                            class="w-full text-left font-bold py-3.5 px-4 text-sm flex items-center gap-2 transition-colors"
                             onclick={() => {
                                 isDrawerOpen = false;
                                 onIncrement();
@@ -89,7 +89,7 @@
 
                 {#if onDelete}
                     <button
-                            class="w-full text-left font-bold py-3.5 px-4 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive text-sm flex items-center gap-2 transition-colors"
+                            class="w-full text-left font-bold py-3.5 px-4 rounded-sm bg-destructive/10 hover:bg-destructive/20 text-destructive text-sm flex items-center gap-2 transition-colors"
                             onclick={() => {
                                 isDrawerOpen = false;
                                 handleDelete();
