@@ -22,6 +22,8 @@
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import LazyCardGrid from "@/components/card/LazyCardGrid.svelte";
     import {getCardScore, getCardScoreIsStars} from "@/utils/normalize";
+    import ResponsiveMenu from "@/components/ResponsiveMenu.svelte";
+    import { goto } from "$app/navigation";
 
     const isMobile = $derived(layoutState.isMobile);
 
@@ -335,66 +337,76 @@
         }}
                 >
                     {#snippet cardContent(item)}
-                        <CardWrapper {...item.card} disablePreview={true}>
-                            {#snippet overlay()}
-                                <div class="absolute inset-0 p-2 flex flex-col justify-between pointer-events-none select-none">
-                                    <div class="flex items-start justify-between w-full gap-2">
-                                        <div class="flex flex-wrap gap-1.5 items-center max-w-[75%]">
-                                            <span class="inline-flex items-center gap-1.5 bg-zinc-950/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide text-zinc-200 border border-white/5 shadow-sm">
-                        <span class="h-1.5 w-1.5 rounded-full" class:bg-emerald-500={item.original.status === 'COMPLETED'} class:bg-sky-500={item.original.status === 'CURRENT'} class:bg-amber-500={item.original.status === 'PAUSED'} class:bg-rose-500={item.original.status === 'DROPPED'} class:bg-purple-500={item.original.status === 'REPEATING'} class:bg-zinc-400={item.original.status === 'PLANNING'}></span>
-                                                {item.original.status}
-                    </span>
-
-                                            {#if item.original.isPrivate}
-                                                <div class="bg-zinc-950/70 backdrop-blur-md p-1 rounded-md text-zinc-400 border border-white/5 shadow-sm" title="Private Entry">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                                </div>
-                                            {/if}
-
-                                            {#if item.original.repeatCount > 0}
-                        <span class="inline-flex items-center gap-1 bg-purple-950/50 backdrop-blur-md px-1.5 py-0.5 rounded-md text-[10px] font-bold text-purple-300 border border-purple-500/20 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
-                            {item.original.repeatCount}
-                        </span>
-                                            {/if}
-                                        </div>
-
-                                        <!-- Action Button -->
-                                        <button
-                                                type="button"
-                                                class="pointer-events-auto opacity-100 lg:opacity-0 group-hover:opacity-100 transition-all duration-200 h-7 w-7 rounded-md bg-zinc-950/70 backdrop-blur-md text-zinc-300 border border-white/5 hover:bg-primary hover:text-primary-foreground hover:scale-105 shadow-sm flex items-center justify-center"
-                                                onclick={(e) => {
+                        <ResponsiveMenu
+                                title={item.original.titleI18n?.[appConfig.data?.ui?.titleLanguage || 'romaji'] || item.original.title}
+                                status={item.original.status}
+                                onDetails={() => goto(`/c/${item.original.cid}`)}
+                                onIncrement={() => listStore.incrementProgress(item.original)}
+                                onDelete={() => listStore.removeEntry(item.original.cid)}
+                        >
+                            {#snippet trigger()}
+                                <div
+                                        role="button"
+                                        tabindex="0"
+                                        class="block w-full h-full cursor-pointer text-left"
+                                        onclick={(e) => {
+                    e.preventDefault();
+                    listStore.openEdit(item.original);
+                }}
+                                        onkeydown={(e) => {
+                    if (e.key === 'Enter') {
                         e.preventDefault();
-                        e.stopPropagation();
                         listStore.openEdit(item.original);
-                    }}
-                                        >
-                                            <MoreVertical class="h-4 w-4" />
-                                        </button>
-                                    </div>
+                    }
+                }}
+                                >
+                                    <CardWrapper {...item.card} disablePreview={true}>
+                                        {#snippet overlay()}
+                                            <div class="absolute inset-0 p-2 flex flex-col justify-between pointer-events-none select-none">
+                                                <div class="flex items-start justify-between w-full gap-2">
+                                                    <div class="flex flex-wrap gap-1.5 items-center max-w-[75%]">
+                                    <span class="inline-flex items-center gap-1.5 bg-zinc-950/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide text-zinc-200 border border-white/5 shadow-sm">
+                                        <span class="h-1.5 w-1.5 rounded-full" class:bg-emerald-500={item.original.status === 'COMPLETED'} class:bg-sky-500={item.original.status === 'CURRENT'} class:bg-amber-500={item.original.status === 'PAUSED'} class:bg-rose-500={item.original.status === 'DROPPED'} class:bg-purple-500={item.original.status === 'REPEATING'} class:bg-zinc-400={item.original.status === 'PLANNING'}></span>
+                                        {item.original.status}
+                                    </span>
 
-                                    <!-- Bottom Row: Progress and Score Counters -->
-                                    <div class="flex items-center justify-between w-full mt-auto">
-                                        <!-- Progress Container -->
-                                        <div class="bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-md shadow-md border border-white/5 flex items-center gap-1.5 font-mono">
-                                            <span class="text-xs font-black text-primary">{item.original.progress}</span>
-                                            <span class="text-[10px] font-medium text-zinc-500">/</span>
-                                            <span class="text-[10px] font-bold text-zinc-400">{item.original.totalUnits || '—'}</span>
-                                        </div>
+                                                        {#if item.original.isPrivate}
+                                                            <div class="bg-zinc-950/70 backdrop-blur-md p-1 rounded-md text-zinc-400 border border-white/5 shadow-sm" title="Private Entry">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                                            </div>
+                                                        {/if}
 
-                                        <!-- Score Container -->
-                                        {#if item.original.score}
-                                            <div class="bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-md shadow-md border border-white/5 flex items-center gap-1 font-mono text-xs font-black text-amber-400">
-                                                {#if !getCardScoreIsStars(item.card)}
-                                                    <span class="text-[10px] text-amber-500">★</span>
-                                                {/if}
-                                                <span>{getCardScore(item.card)}</span>
+                                                        {#if item.original.repeatCount > 0}
+                                        <span class="inline-flex items-center gap-1 bg-purple-950/50 backdrop-blur-md px-1.5 py-0.5 rounded-md text-[10px] font-bold text-purple-300 border border-purple-500/20 shadow-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+                                            {item.original.repeatCount}
+                                        </span>
+                                                        {/if}
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex items-center justify-between w-full mt-auto">
+                                                    <div class="bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-md shadow-md border border-white/5 flex items-center gap-1.5 font-mono">
+                                                        <span class="text-xs font-black text-primary">{item.original.progress}</span>
+                                                        <span class="text-[10px] font-medium text-zinc-500">/</span>
+                                                        <span class="text-[10px] font-bold text-zinc-400">{item.original.totalUnits || '—'}</span>
+                                                    </div>
+
+                                                    {#if item.original.score}
+                                                        <div class="bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-md shadow-md border border-white/5 flex items-center gap-1 font-mono text-xs font-black text-amber-400">
+                                                            {#if !getCardScoreIsStars(item.card)}
+                                                                <span class="text-[10px] text-amber-500">★</span>
+                                                            {/if}
+                                                            <span>{getCardScore(item.card)}</span>
+                                                        </div>
+                                                    {/if}
+                                                </div>
                                             </div>
-                                        {/if}
-                                    </div>
+                                        {/snippet}
+                                    </CardWrapper>
                                 </div>
                             {/snippet}
-                        </CardWrapper>
+                        </ResponsiveMenu>
                     {/snippet}
                 </LazyCardGrid>
             {/if}

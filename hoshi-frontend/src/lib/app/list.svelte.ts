@@ -170,6 +170,26 @@ class ListStore {
         return this.entries.some(e => e.cid === cid);
     }
 
+    async incrementProgress(entry: EnrichedListEntry) {
+        const nextProgress = (entry.progress || 0) + 1;
+        const body: UpsertEntryBody = {
+            cid: entry.cid,
+            status: entry.status,
+            progress: nextProgress,
+        };
+
+        await listApi.upsert(body);
+        const res = await listApi.getEntry(entry.cid);
+        if (res.found && res.entry) {
+            this.upsertLocal(body, res.entry);
+        }
+    }
+
+    async removeEntry(cid: string) {
+        await listApi.delete(cid);
+        this.deleteLocal(cid);
+    }
+
     resetFilters() {
         this.activeStatus = "ALL";
         this.activeType = "ALL";
