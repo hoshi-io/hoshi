@@ -1953,7 +1953,7 @@ dependencies = [
 
 [[package]]
 name = "hoshi-app"
-version = "1.1.0"
+version = "1.1.2"
 dependencies = [
  "anyhow",
  "async-trait",
