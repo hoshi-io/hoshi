@@ -77,7 +77,6 @@
         top: 0.45rem; right: 0.45rem;
         display: flex; align-items: center; gap: 0.2rem;
         background: hsla(0, 0%, 0%, 0.55);
-        backdrop-filter: blur(4px);
         color: white;
         font-size: 0.65rem; font-weight: 700;
         padding: 0.2rem 0.45rem;
@@ -88,7 +87,7 @@
 
     .score-badge.stars {
         font-size: 0.55rem;
-        letter-spacing: -0.05em; /* tighten stars together */
+        letter-spacing: -0.05em;
         padding: 0.2rem 0.35rem;
     }
 

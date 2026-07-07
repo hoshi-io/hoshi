@@ -132,14 +132,13 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -10px rgba(0, 0, 0, 0.5);
         pointer-events: auto;
         transform-origin: center center;
         backface-visibility: hidden;
     }
 
     .banner {
-        display: block; /* Added block display for anchor layout */
+        display: block;
         position: relative;
         aspect-ratio: 16 / 11;
         background: var(--card);
@@ -291,8 +290,6 @@
         font-size: 0.75rem;
         color: var(--muted-foreground);
         line-height: 1.5;
-        mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-        -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
         flex: 1;
         min-height: 0;
         overflow: hidden;

@@ -21,11 +21,13 @@
     let isMobile   = $derived(layoutState.isMobile);
     let score      = $derived(getCardScore(card));
     let isStars    = $derived(getCardScoreIsStars(card));
+    let isHovering = $state(false);
+
 
     let contentTypeLabel = $derived(getCardContentTypeLabel(card));
 </script>
 
-<div class="card-ct group relative" class:no-preview={disablePreview}>
+<div class="card-ct group relative" class:no-preview={disablePreview} onmouseenter={() => isHovering = true} onmouseleave={() => isHovering = false}>
     <a
             href={card.href}
             class="card-base block w-full outline-none cursor-pointer h-full overflow-hidden {disablePreview ? '' : 'transition-opacity duration-300 group-hover:opacity-0'}"
@@ -43,7 +45,7 @@
         />
     </a>
 
-    {#if !disablePreview && !isMobile}
+    {#if !disablePreview && !isMobile && isHovering}
         <div class="preview-anchor">
             <CardPreview
                     cid={card.cid}
