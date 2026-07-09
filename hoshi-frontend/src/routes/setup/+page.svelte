@@ -16,10 +16,9 @@
     import { layoutState } from "@/stores/layout.svelte.js";
     import type { CoreError } from "@/api/client";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
-    import Marketplace from "@/components/settings/extensions/Marketplace.svelte";
     import StarBackground from "@/components/StarBackground.svelte";
 
-    const availableSteps = ['profile', 'appearance', 'content', 'marketplace'];
+    const availableSteps = ['profile', 'appearance', 'content'];
 
     let isSaving = $state(false);
 
@@ -96,18 +95,18 @@
     function nextStep() {
         if (currentStepId === 'profile' && !username.trim()) {
             toast.error(i18n.t('setup.profile.validation_error'));
-            return; //
+            return;
         }
         if (currentIndex < availableSteps.length - 1) {
-            direction = 1; // Set forward
-            currentIndex++; //
+            direction = 1;
+            currentIndex++;
         }
     }
 
     function prevStep() {
         if (currentIndex > 0) {
-            direction = -1; // Set backward
-            currentIndex--; //
+            direction = -1;
+            currentIndex--;
         }
     }
 
@@ -355,17 +354,6 @@
                                 <Switch id="blurAdultContent" bind:checked={blurAdultContent} disabled={!showAdultContent} class="shrink-0 scale-125" />
                             </div>
                         </div>
-                    </div>
-            {/if}
-
-            {#if currentStepId === 'marketplace'}
-                    <div class="text-center space-y-2">
-                        <h2 class="text-2xl font-bold">{i18n.t('setup.marketplace.title')}</h2>
-                        <p class="text-muted-foreground">{i18n.t('setup.marketplace.description')}</p>
-                    </div>
-
-                    <div class="max-w-2xl mx-auto w-full">
-                        <Marketplace bind:config={extConfig} onSave={async () => {}} />
                     </div>
             {/if}
             </div>
