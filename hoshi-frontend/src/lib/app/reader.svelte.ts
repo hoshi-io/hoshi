@@ -8,6 +8,7 @@ import { progressApi } from "@/api/progress/progress";
 import { listApi } from "@/api/list/list";
 import type { CoreError } from "@/api/client";
 import {listStore} from "@/app/list.svelte";
+import {invoke} from "@tauri-apps/api/core";
 
 export type ChapterItem = {
     number?: string | number;
@@ -38,6 +39,14 @@ export abstract class BaseReaderState {
     abstract get isEmpty(): boolean;
 
     constructor() {
+        $effect(() => {
+            invoke('enter_fullscreen').catch((e) => console.error("Failed to enter fullscreen", e));
+
+            return () => {
+                invoke('exit_fullscreen').catch(() => {});
+            };
+        });
+
         $effect(() => {
             this.chapterNumber;
             untrack(() => {

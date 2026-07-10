@@ -39,6 +39,7 @@
         onPlayPause:        () => void;
         onSeek:             (time: number) => void;
         onFullscreen:       () => void;
+        fullscreenEl:       HTMLElement | undefined;
     }
 
     let {
@@ -46,7 +47,7 @@
         extensionItems, selectedExtension = $bindable(), servers, serverItems,
         selectedServer = $bindable(), supportsDub, isDub = $bindable(),
         isLoadingPlay, hasError = false, subtitleSettings, onExtensionChange, onServerChange, onDubChange,
-        onManageExtensions, onPlayPause, onSeek, onFullscreen,
+        onManageExtensions, onPlayPause, onSeek, onFullscreen, fullscreenEl
     }: Props = $props();
 
     let settingsOpen = $state(false);
@@ -120,6 +121,7 @@
                     <Settings
                             {ctrl}
                             open={settingsOpen}
+                            {fullscreenEl}
                             {extensionItems}
                             bind:selectedExtension
                             {servers}
@@ -199,6 +201,7 @@
                         <Settings
                                 {ctrl}
                                 open={settingsOpen}
+                                {fullscreenEl}
                                 {extensionItems}
                                 bind:selectedExtension
                                 {servers}

@@ -84,20 +84,6 @@
         return () => mediaQuery.removeEventListener('change', updateLayout);
     });
 
-    onMount(() => {
-        const mediaQuery = window.matchMedia('(min-width: 768px)');
-
-        isDesktop = mediaQuery.matches;
-
-        const updateLayout = (e: MediaQueryListEvent) => {
-            isDesktop = e.matches;
-        };
-
-        mediaQuery.addEventListener('change', updateLayout);
-
-        return () => mediaQuery.removeEventListener('change', updateLayout);
-    });
-
     $effect(() => {
         if (isDesktop) {
             layoutState.title = "Settings";
@@ -162,7 +148,7 @@
 
     <header
             in:fly={{ y: -10, duration: 400, easing: cubicOut }}
-            class="{isMobileDetail ? 'hidden md:flex' : 'flex'} flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border/40 pb-4 md:pb-8 w-full"
+            class="{isMobileDetail ? 'hidden md:flex' : 'flex pt-5'} flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border/40 pb-4 md:pb-8 w-full"
     >
         <div class="flex items-center gap-5">
             <Avatar.Root class="h-12 w-12 md:h-16 md:w-16 border border-border/50 shadow-sm transition-transform duration-300 hover:scale-102">
@@ -200,7 +186,8 @@
                     }}
                         class="flex flex-col md:flex-row gap-8 lg:gap-16 w-full items-start"
                 >
-                    <Tabs.List class="{isMobileDetail ? 'hidden md:flex' : 'flex'} flex-col justify-start bg-transparent h-auto p-0 gap-1 w-full md:w-64 shrink-0 border-none md:sticky md:top-24 max-h-[calc(100vh-8rem)] overflow-y-auto hide-scrollbar">                        <div class="px-4 pt-2 pb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 text-left w-full">
+                    <Tabs.List class="{isMobileDetail ? 'hidden md:flex' : 'flex'} flex-col justify-start bg-transparent h-auto p-0 gap-1 w-full md:w-64 shrink-0 border-none md:sticky md:top-24 md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:hide-scrollbar">
+                        <div class="px-4 pt-2 pb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 text-left w-full">
                             {i18n.t('settings.section_profile')}
                         </div>
                         <Tabs.Trigger value="account" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">

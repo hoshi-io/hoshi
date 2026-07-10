@@ -57,11 +57,11 @@
             onOpenChange={(v) => { if (!v) onClose(); }}
     >
         <Drawer.Portal to={fullscreenEl}>
-            <Drawer.Overlay class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
+            <Drawer.Overlay class="absolute inset-0 z-[70] bg-black/40 backdrop-blur-sm" />
 
             <Drawer.Content
-                    class="fixed bottom-0 left-0 right-0 mx-auto z-50
-                       w-[60%] rounded-t-sm
+                    class="absolute bottom-0 left-0 right-0 mx-auto z-[70]
+                       w-full sm:w-[60%] rounded-t-xl
                        bg-popover/90 backdrop-blur-xl border border-border border-b-0
                        shadow-2xl font-sans focus:outline-none
                        [&>[data-vaul-drag-handle]]:hidden"

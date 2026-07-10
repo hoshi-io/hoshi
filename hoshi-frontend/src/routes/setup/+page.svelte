@@ -219,8 +219,7 @@
                         </div>
                     </div>
 
-                    <!-- Username + language card -->
-                    <div class="bg-card p-6 md:p-8 space-y-6">
+                    <div class="p-6 md:p-8 space-y-6">
                         <div class="space-y-3">
                             <Label for="username" class="text-sm font-bold text-foreground flex items-center gap-2">
                                 <UserCircle2 class="w-4 h-4 text-primary" />
@@ -250,8 +249,7 @@
                         <p class="text-muted-foreground">{i18n.t('setup.appearance.description')}</p>
                     </div>
 
-                    <div class="bg-card p-6 space-y-6">
-                        <!-- Theme picker -->
+                    <div class="p-6 space-y-6">
                         <div class="space-y-4">
                             <Label class="text-base font-bold">{i18n.t('setup.appearance.theme')}</Label>
                             <div class="grid grid-cols-3 gap-3">
@@ -311,7 +309,7 @@
                         <p class="text-muted-foreground">{i18n.t('setup.content.description')}</p>
                     </div>
 
-                    <div class="bg-card rounded-sm p-6 space-y-6">
+                    <div class="rounded-sm p-6 space-y-6">
                         <div class="space-y-3">
                             <Label class="text-base font-bold">{i18n.t('setup.content.metadata_provider')}</Label>
                             <ResponsiveSelect

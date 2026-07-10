@@ -39,6 +39,8 @@ class SearchState {
 
     displayResults = $derived(this.results);
 
+    hasMore = $state(true);
+
     nextPage() {
         const isTrending =
             this.searchMode === "tracker" &&
@@ -64,6 +66,7 @@ class SearchState {
         this.results = [];
         this.page = 1;
         this.format = "";
+        this.hasMore = true;
         this.search();
     }
 
@@ -79,7 +82,10 @@ class SearchState {
         this.isLoading = true;
         this.error = null;
 
-        if (this.page === 1) this.results = [];
+        if (this.page === 1) {
+            this.results = [];
+            this.hasMore = true;
+        }
 
         if (!this.query.trim() && !this.status && !this.genre && !this.format && !this.nsfw) {
             try {
@@ -116,6 +122,10 @@ class SearchState {
                 normalizeTrackerMedia(item, this.tracker)
             );
 
+            if (normalized.length < 16) {
+                this.hasMore = false;
+            }
+
             const unique = Array.from(
                 new Map(normalized.map(item => [item.cid, item])).values()
             );
@@ -146,7 +156,10 @@ class SearchState {
         this.isLoading = true;
         this.error = null;
 
-        if (this.page === 1) this.results = [];
+        if (this.page === 1) {
+            this.results = [];
+            this.hasMore = true;
+        }
 
         try {
             const cleanedFilters = Object.fromEntries(
@@ -163,6 +176,10 @@ class SearchState {
                 cleanedFilters,
                 this.page
             );
+
+            if (!res || res.length === 0) {
+                this.hasMore = false;
+            }
 
             if (token !== this.searchToken) return; // a newer search has since started, drop this
 

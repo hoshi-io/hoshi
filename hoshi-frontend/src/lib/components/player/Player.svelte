@@ -193,6 +193,7 @@
                 buffered={ctrl.buffered}
                 chapters={playerState.chapters}
                 visible={controlsVisible}
+                fullscreenEl={rootEl}
                 {hasError}
                 extensionItems={playerState.extensionItems}
                 bind:selectedExtension={playerState.selectedExtension}
