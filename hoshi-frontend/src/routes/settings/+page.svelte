@@ -144,7 +144,7 @@
     <title>{i18n.t('settings.title')}</title>
 </svelte:head>
 
-<main class="bg-background pb-6 md:pb-12 {isMobileDetail ? 'pt-0 md:pt-12' : 'pt-4 md:pt-20'} px-4 md:px-8 lg:pl-32 lg:pr-12 w-full max-w-[2000px] mx-auto {isMobileDetail ? 'space-y-0 md:space-y-8' : 'space-y-4 md:space-y-8'}">
+<main class="bg-background pb-6 md:pb-12 {isMobileDetail ? 'pt-5 md:pt-12' : 'pt-4 md:pt-20'} px-4 md:px-8 lg:pl-32 lg:pr-12 w-full max-w-[2000px] mx-auto {isMobileDetail ? 'space-y-0 md:space-y-8' : 'space-y-4 md:space-y-8'}">
 
     <header
             in:fly={{ y: -10, duration: 400, easing: cubicOut }}
