@@ -93,7 +93,7 @@ export function normalizeFullContent(item: FullContent): NormalizedCard {
         year: meta?.releaseDate ? meta.releaseDate.split("-")[0] : null,
         nsfw: item.content.nsfw,
         hasAdultGenre,
-        contentTypeLabel: formatKey ? (i18n.t(`card.${formatKey}`) || formatKey) : null,
+        contentTypeLabel: formatKey ?? null,
         synopsis: meta?.synopsis?.replace(/<[^>]*>?/gm, "") ?? null,
         status: meta?.status ?? null,
         bannerImage: meta?.bannerImage ?? null,
