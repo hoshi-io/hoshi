@@ -7,7 +7,7 @@ import {primaryMetadata} from "@/api/content/types";
 import type { FullContent } from "@/api/content/types";
 import { layoutState } from '@/stores/layout.svelte.js';
 import { appConfig } from "@/stores/config.svelte.js";
-import {type NormalizedCard, type NormalizedRelation, normalizeRelationCard} from "@/utils/normalize";
+import {type NormalizedRelation, normalizeRelationCard} from "@/utils/normalize";
 import {extensions} from "@/stores/extensions.svelte";
 import {extensionsApi} from "@/api/extensions/extensions";
 import {historyStore} from "@/stores/history.svelte";
@@ -73,7 +73,6 @@ export class ContentDetailState {
 
     private handleResponse(res: FullContent) {
         this.fullContent = res;
-        console.log(res)
 
         const meta = primaryMetadata(res, appConfig.data?.content?.preferredMetadataProvider);
         if (meta) {
@@ -93,6 +92,8 @@ export class ContentDetailState {
                 .then(headers => { this.headers = headers; })
                 .catch(e => console.warn("Could not fetch tachiyomi image headers", e));
         }
+
+        if(!this.cid) this.cid = res.content.cid;
 
         this.relations = (res.relations ?? []).map((relation) => ({
             targetCid: relation.targetCid,
