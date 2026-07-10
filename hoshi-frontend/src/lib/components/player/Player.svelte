@@ -104,7 +104,9 @@
         return () => window.removeEventListener("keydown", handleKeyDown);
     });
 
-    const topBarVisible = $derived(!playerState.m3u8Url || ctrl.controlsVisible);
+    const topBarVisible    = $derived(!playerState.m3u8Url || ctrl.controlsVisible);
+    const hasError         = $derived(!!playerState.error || !!ctrl.hlsError);
+    const controlsVisible  = $derived(hasError || (!!playerState.m3u8Url && ctrl.controlsVisible));
 
     export function getControlsVisible() { return ctrl.controlsVisible; }
     export function toggleFullscreen() { ctrl.toggleFullscreen(); }
@@ -182,7 +184,7 @@
         </button>
     {/if}
 
-    {#if playerState.m3u8Url}
+    {#if playerState.m3u8Url || hasError}
         <Controls
                 ctrl={ctrl}
                 paused={ctrl.paused}
@@ -190,7 +192,8 @@
                 duration={ctrl.duration}
                 buffered={ctrl.buffered}
                 chapters={playerState.chapters}
-                visible={ctrl.controlsVisible}
+                visible={controlsVisible}
+                {hasError}
                 extensionItems={playerState.extensionItems}
                 bind:selectedExtension={playerState.selectedExtension}
                 servers={playerState.servers}

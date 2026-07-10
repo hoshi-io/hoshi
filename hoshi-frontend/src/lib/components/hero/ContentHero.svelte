@@ -163,7 +163,7 @@
                         <Tv class="w-3 h-3 text-primary/70" />{meta.subtype}
                     </span>
                 {/if}
-                {#if meta?.epsOrChapters}
+                {#if meta?.epsOrChapters > 1}
                     <span class="flex items-center gap-1.5 bg-muted/30 px-2 py-0.5 rounded-md border border-border/10">
                         <BookMarked class="w-3 h-3 text-primary/70" />
                         {meta.epsOrChapters} {isAnime ? i18n.t('content.eps_short') : i18n.t('content.ch_short')}
