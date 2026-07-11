@@ -111,6 +111,7 @@
         error = null;
 
         try {
+            const body = { cid, status, progress: currentEpNumber };
             await Promise.all([
                 progressApi.updateAnimeProgress({
                     cid,
@@ -118,10 +119,14 @@
                     timestampSeconds: currentStartTime,
                     completed: true,
                 }),
-                listApi.upsert({ cid, status, progress: currentEpNumber }),
+                listApi.upsert(body),
             ]);
 
-            listStore.updateEntryProgressLocal(cid, currentEpNumber, status);
+            const res = await listApi.getEntry(cid);
+            if (res.found && res.entry) {
+                listStore.upsertLocal(body, res.entry);
+            }
+
             await homeState.refreshContinueWatching();
 
             if (totalEpisodes === 0 || currentEpNumber < totalEpisodes) {
