@@ -6,7 +6,7 @@
     import { slide, fade } from 'svelte/transition';
 
     import {openUrl} from "@tauri-apps/plugin-opener";
-    import { initApp, handleNavigation, handleDiscordActivity } from '$lib/app/app';
+    import {initApp, handleNavigation, handleDiscordActivity} from '$lib/app/app';
     import { auth } from '@/stores/auth.svelte.js';
     import { Toaster } from '$lib/components/ui/sonner';
 
@@ -21,6 +21,8 @@
     import { layoutState } from "@/stores/layout.svelte";
     import { setupImportListener } from "@/stores/importStatus.svelte";
     import ImportStatus from "@/components/ImportStatus.svelte";
+    import {check} from "@smbcloud/tauri-plugin-android-tv-check-api";
+    import {enableSpatialNav} from "@/tv/spatialNav";
 
     let { children } = $props();
 
@@ -127,6 +129,12 @@
     onMount(() => {
         initApp((v) => isTouchDevice = v);
         setupImportListener();
+
+        (async () => {
+            const result = await check();
+            layoutState.isTV = result.isAndroidTv;
+            if (layoutState.isTV) enableSpatialNav();
+        })();
     });
 
     $effect(() => {
@@ -159,7 +167,9 @@
 
 <div class="h-dvh w-full bg-background text-foreground flex flex-col overflow-hidden relative">
 
-    <DesktopTitlebar />
+    {#if !layoutState.isTV}
+        <DesktopTitlebar />
+    {/if}
 
     <div class="flex flex-1 overflow-hidden relative">
 
@@ -171,7 +181,7 @@
 
         <div class="flex-1 flex flex-col relative overflow-hidden bg-background">
 
-            {#if showNav}
+            {#if showNav && !layoutState.isTV}
                 <div class="w-full z-50 lg:hidden absolute top-0 left-0 transition-transform duration-300 ease-in-out {isNavHidden ? '-translate-y-full' : 'translate-y-0'}">
                     <MobileTop bind:showSwitchProfileModal />
                 </div>
@@ -179,7 +189,9 @@
 
             <main
                     bind:this={mainElement}
-                    class="flex-1 relative w-full h-full {isViewer ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden touch-pan-y'} {showNav ? 'pt-24 pb-20 lg:pt-0 lg:pb-0' : ''}"
+                    class="flex-1 relative w-full h-full {isViewer ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden touch-pan-y'}
+                    {showNav && !layoutState.isTV ? 'pt-24 pb-20 lg:pt-0 lg:pb-0' : ''}
+                    {layoutState.isTV ? 'pl-16' : ''}"
                     onscroll={handleScroll}
             >
                 {#key pathname}
@@ -189,7 +201,7 @@
                 {/key}
             </main>
 
-            {#if showNav && !pathname.startsWith('/settings')}
+            {#if showNav && !pathname.startsWith('/settings') && !layoutState.isTV}
                 <div class="w-full z-50 lg:hidden absolute bottom-0 left-0 transition-transform duration-300 ease-in-out glass-panel {isNavHidden ? 'translate-y-full' : 'translate-y-0'}">
                     <MobileBottom routes={mobileRoutes} />
                 </div>

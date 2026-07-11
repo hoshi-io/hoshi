@@ -1963,6 +1963,7 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-build",
+ "tauri-plugin-android-tv-check",
  "tauri-plugin-deep-link",
  "tauri-plugin-opener",
  "tauri-plugin-os",
@@ -5156,6 +5157,18 @@ dependencies = [
  "tauri-utils",
  "toml 0.9.12+spec-1.1.0",
  "walkdir",
+]
+
+[[package]]
+name = "tauri-plugin-android-tv-check"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8db6ef67e577cee1eeda736a87600019f14ed8b35dad7dcae4c30f206b7a910"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

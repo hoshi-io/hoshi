@@ -17,16 +17,22 @@
     import type { CoreError } from "@/api/client";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import StarBackground from "@/components/StarBackground.svelte";
+    import { tick } from "svelte";
+    import { focusFirstIn } from "@/tv/spatialNav";
 
     const availableSteps = ['profile', 'appearance', 'content'];
 
     let isSaving = $state(false);
-
     let language = $state(i18n.locale);
-
     let username = $state("");
+
+    // --- Non-TV Profile State ---
     let avatarFile = $state<File | null>(null);
     let avatarPreview = $state<string | null>(null);
+
+    // --- TV Specific Profile State ---
+    const predefinedAvatars = ['/128x128.png', '/chibi.png'];
+    let selectedAvatarIndex = $state(0);
 
     let showAdultContent = $state(false);
     let blurAdultContent = $state(true);
@@ -91,6 +97,18 @@
     let currentIndex = $state(0);
     let currentStepId = $derived(availableSteps[currentIndex]);
     let direction = $state(1);
+    let stepContainer = $state<HTMLElement | null>(null);
+
+    // TV: move focus into the new step's first control after every transition,
+    // so the user isn't stranded on the footer button they just pressed.
+    $effect(() => {
+        currentStepId;
+        if (layoutState.isTV) {
+            tick().then(() => {
+                if (stepContainer) focusFirstIn(stepContainer);
+            });
+        }
+    });
 
     function nextStep() {
         if (currentStepId === 'profile' && !username.trim()) {
@@ -116,11 +134,18 @@
             return;
         }
         if (currentIndex < availableSteps.length - 1) {
-            direction = 1; // Set forward
+            direction = 1;
             currentIndex++;
         } else {
             finishSetup();
         }
+    }
+
+    // Convert TV image assets into a File payload to satisfy backend expectation
+    async function getTVAvatarFile(): Promise<File> {
+        const res = await fetch(predefinedAvatars[selectedAvatarIndex]);
+        const blob = await res.blob();
+        return new File([blob], 'avatar.png', { type: blob.type });
     }
 
     async function finishSetup() {
@@ -132,15 +157,12 @@
 
         isSaving = true;
         try {
+            const finalAvatar = layoutState.isTV ? await getTVAvatarFile() : avatarFile;
             const registerData = { username };
-            await auth.register(registerData, avatarFile);
+            await auth.register(registerData, finalAvatar);
 
             await appConfig.update({
-                general: {
-                    showAdultContent,
-                    blurAdultContent,
-                    needSetup: false
-                },
+                general: { showAdultContent, blurAdultContent, needSetup: false },
                 ui: {
                     sidebarCollapsed: appConfig.data?.ui?.sidebarCollapsed ?? false,
                     disableCardTrailers: appConfig.data?.ui?.disableCardTrailers ?? false,
@@ -178,214 +200,272 @@
 <div class="h-[100dvh] bg-background text-foreground flex flex-col overflow-hidden">
     <StarBackground />
 
-<div class="w-full max-w-3xl mx-auto flex flex-col flex-1 pt-10 pb-6 px-4 sm:px-8 md:px-10 min-h-0">
+    <!-- Container sizing adapts gracefully if running on Android TV -->
+    <div class="w-full mx-auto flex flex-col flex-1 min-h-0 transition-all
+        {layoutState.isTV ? 'max-w-3xl pt-10 pb-6 px-6 sm:px-10 md:px-12' : 'max-w-3xl pt-10 pb-6 px-4 sm:px-8 md:px-10'}">
 
-    <header class="mb-8 shrink-0">
-        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-center mb-6">
-            {i18n.t('setup.welcome_app')}
-        </h1>
-        <div class="flex items-center justify-center gap-2">
-            {#each availableSteps as _, i}
-                <div class="h-2 rounded-sm transition-all duration-300 {currentIndex >= i ? 'w-10 bg-primary' : 'w-3 bg-muted'}"></div>
-            {/each}
-        </div>
-    </header>
-
-    <main class="flex-1 overflow-y-auto pr-1 pb-6 min-h-0 custom-scrollbar relative">
-        {#key currentStepId}
-            <div
-                    in:fly={{ x: direction * 50, duration: 300, delay: 150 }}
-                    out:fly={{ x: -direction * 50, duration: 150 }}
-                    class="w-full h-full"
-            >
-
-            {#if currentStepId === 'profile'}
-                    <div class="flex flex-col items-center gap-5">
-                        <div class="relative group">
-                            <div class="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden border-[6px] border-background shadow-2xl bg-secondary flex items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:shadow-primary/20">
-                                {#if avatarPreview}
-                                    <img src={avatarPreview} alt="Avatar" class="w-full h-full object-cover" />
-                                {:else}
-                                    <User class="w-20 h-20 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
-                                {/if}
-                            </div>
-                            <label for="avatar-upload" class="absolute bottom-2 right-2 bg-primary text-primary-foreground p-3.5 rounded-full cursor-pointer shadow-xl hover:scale-110 transition-transform duration-300">
-                                <Camera class="w-5 h-5" />
-                            </label>
-                            <input type="file" id="avatar-upload" accept="image/*" class="hidden" onchange={handleAvatarChange} />
-                        </div>
-                        <div class="text-center space-y-1">
-                            <p class="text-xl font-bold text-foreground">{i18n.t('setup.profile.avatar')}</p>
-                        </div>
+        <header class="shrink-0 {layoutState.isTV ? 'mb-8' : 'mb-8'}">
+            <h1 class="font-extrabold tracking-tight text-center transition-all
+                {layoutState.isTV ? 'text-3xl sm:text-4xl mb-6' : 'text-3xl sm:text-4xl mb-6'}">
+                {i18n.t('setup.welcome_app')}
+            </h1>
+            <div class="flex items-center justify-center gap-2">
+                {#each availableSteps as _, i}
+                    <div class="rounded-sm transition-all duration-300 h-2
+                        {currentIndex >= i ? 'w-10 bg-primary' : 'w-3 bg-muted'}">
                     </div>
+                {/each}
+            </div>
+        </header>
 
-                    <div class="p-6 md:p-8 space-y-6">
-                        <div class="space-y-3">
-                            <Label for="username" class="text-sm font-bold text-foreground flex items-center gap-2">
-                                <UserCircle2 class="w-4 h-4 text-primary" />
-                                {i18n.t('setup.profile.username')}
-                            </Label>
-                            <Input
-                                    id="username"
-                                    bind:value={username}
-                                    placeholder={i18n.t('setup.profile.username_placeholder')}
-                                    class="h-14 rounded-sm bg-secondary/50 border-border text-lg shadow-inner focus-visible:ring-primary px-4 transition-all"
-                            />
-                        </div>
+        <main class="flex-1 overflow-y-auto pr-1 pb-6 min-h-0 custom-scrollbar relative">
+            {#key currentStepId}
+                <div
+                        bind:this={stepContainer}
+                        in:fly={{ x: direction * 50, duration: 300, delay: 150 }}
+                        out:fly={{ x: -direction * 50, duration: 150 }}
+                        class="w-full h-full"
+                >
 
-                        <div class="space-y-3 pt-2 border-t border-border/40">
-                            <Label class="text-sm font-bold">{i18n.t('setup.appearance.language')}</Label>
-                            <LanguageSelector
-                                    class="w-full h-12 rounded-sm bg-muted/20"
-                                    onLanguageChange={(code) => { language = code; i18n.setLocale(code); }}
-                            />
-                        </div>
-                    </div>
-            {/if}
-
-            {#if currentStepId === 'appearance'}
-                    <div class="text-center space-y-2">
-                        <h2 class="text-2xl font-bold">{i18n.t('setup.appearance.title')}</h2>
-                        <p class="text-muted-foreground">{i18n.t('setup.appearance.description')}</p>
-                    </div>
-
-                    <div class="p-6 space-y-6">
-                        <div class="space-y-4">
-                            <Label class="text-base font-bold">{i18n.t('setup.appearance.theme')}</Label>
-                            <div class="grid grid-cols-3 gap-3">
-                                {#each themes as theme}
-                                    <button
-                                            onclick={() => themeManager.setTheme(theme.id)}
-                                            class="relative flex items-center justify-center h-14 rounded-sm border-2 font-bold {theme.classes} {themeManager.theme === theme.id ? 'ring-2 ring-primary border-transparent' : 'opacity-70 border-transparent'} transition-all"
-                                    >
-                                        {theme.label}
-                                        {#if themeManager.theme === theme.id}
-                                            <div class="absolute top-1.5 right-1.5 bg-primary rounded-full p-0.5">
-                                                <Check class="size-3 text-primary-foreground" />
-                                            </div>
-                                        {/if}
-                                    </button>
-                                {/each}
-                            </div>
-                        </div>
-
-                        <!-- Accent color -->
-                        <div class="space-y-4 pt-4 border-t border-border/40">
-                            <Label class="text-base font-bold">{i18n.t('setup.appearance.accent_color')}</Label>
-                            <div class="flex flex-wrap items-center gap-3">
-                                <div class="relative flex items-center gap-3 bg-muted/20 p-2 rounded-sm border border-border/50">
-                                    <Input
-                                            type="color"
-                                            value={themeManager.accentColor || '#ffffff'}
-                                            onchange={handleCustomColor}
-                                            class="w-10 h-10 p-0 rounded-sm border-none cursor-pointer bg-transparent shrink-0"
-                                    />
-                                    <span class="text-xs font-mono font-bold pr-2 uppercase opacity-70">{themeManager.accentColor}</span>
+                    {#if currentStepId === 'profile'}
+                        {#if layoutState.isTV}
+                            <!-- ANDROID TV ONLY: Dedicated D-Pad image selection grid -->
+                            <div class="flex flex-col items-center gap-5">
+                                <div class="text-center space-y-1">
+                                    <p class="text-xl font-bold text-foreground">{i18n.t('setup.profile.avatar')}</p>
+                                    <p class="text-muted-foreground text-sm">Select your profile picture</p>
                                 </div>
-                                <div class="h-8 w-px bg-border/40 mx-1 hidden sm:block"></div>
-                                <div class="flex flex-wrap gap-2">
-                                    {#each colorPresets as preset}
+                                <div class="flex items-center justify-center gap-5">
+                                    {#each predefinedAvatars as avatar, i}
                                         <button
                                                 type="button"
-                                                onclick={() => setPresetColor(preset.value)}
-                                                class="size-10 rounded-full border-2 border-background shadow-sm transition-transform active:scale-90 flex items-center justify-center"
-                                                style="background-color: {preset.value}"
-                                                title={preset.name}
+                                                data-sn
+                                                tabindex="0"
+                                                class="relative w-36 h-36 rounded-full overflow-hidden border-[6px] transition-all duration-300 outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:scale-110 hover:scale-105 {selectedAvatarIndex === i ? 'border-primary shadow-primary/40 shadow-2xl scale-105' : 'border-background bg-secondary shadow-xl opacity-70 hover:opacity-100'}"
+                                                onclick={() => selectedAvatarIndex = i}
                                         >
-                                            {#if themeManager.accentColor?.toLowerCase() === preset.value.toLowerCase()}
-                                                <Check class="size-5 text-white drop-shadow-md" />
+                                            <img src={avatar} alt="Avatar option" class="w-full h-full object-cover" />
+                                            {#if selectedAvatarIndex === i}
+                                                <div class="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                                    <div class="bg-primary rounded-full p-2 shadow-lg">
+                                                        <Check class="w-6 h-6 text-primary-foreground" />
+                                                    </div>
+                                                </div>
                                             {/if}
                                         </button>
                                     {/each}
                                 </div>
                             </div>
-                        </div>
-                    </div>
-            {/if}
-
-            {#if currentStepId === 'content'}
-                    <div class="text-center space-y-2">
-                        <h2 class="text-2xl font-bold">{i18n.t('setup.content.title')}</h2>
-                        <p class="text-muted-foreground">{i18n.t('setup.content.description')}</p>
-                    </div>
-
-                    <div class="rounded-sm p-6 space-y-6">
-                        <div class="space-y-3">
-                            <Label class="text-base font-bold">{i18n.t('setup.content.metadata_provider')}</Label>
-                            <ResponsiveSelect
-                                    bind:value={preferredMetadataProvider}
-                                    items={metadataOptions}
-                                    label={i18n.t('setup.content.metadata_provider')}
-                            />
-                        </div>
-
-                        <div class="space-y-3 pt-4 border-t border-border/40">
-                            <Label class="text-base font-bold">{i18n.t('setup.content.title_language')}</Label>
-                            <ResponsiveSelect
-                                    bind:value={titleLanguage}
-                                    items={languageOptions}
-                                    label={i18n.t('setup.content.title_language')}
-                            />
-                        </div>
-
-                        <div class="space-y-3 pt-4 border-t border-border/40">
-                            <Label class="text-base font-bold">{i18n.t('setup.content.default_home_section')}</Label>
-                            <ResponsiveSelect
-                                    bind:value={defaultHomeSection}
-                                    items={sectionOptions}
-                                    label={i18n.t('setup.content.default_home_section')}
-                            />
-                        </div>
-
-                        <div class="pt-4 space-y-5 border-t border-border/40">
-                            <div class="flex items-center justify-between gap-4">
-                                <div class="space-y-0.5">
-                                    <Label class="text-base font-bold cursor-pointer" for="showAdultContent">{i18n.t('setup.content.show_nsfw')}</Label>
+                        {:else}
+                            <!-- DESKTOP / MOBILE / TABLET ONLY: Original Upload Component -->
+                            <div class="flex flex-col items-center gap-5">
+                                <div class="relative group">
+                                    <div class="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden border-[6px] border-background shadow-2xl bg-secondary flex items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:shadow-primary/20">
+                                        {#if avatarPreview}
+                                            <img src={avatarPreview} alt="Avatar" class="w-full h-full object-cover" />
+                                        {:else}
+                                            <User class="w-20 h-20 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
+                                        {/if}
+                                    </div>
+                                    <label for="avatar-upload" class="absolute bottom-2 right-2 bg-primary text-primary-foreground p-3.5 rounded-full cursor-pointer shadow-xl hover:scale-110 transition-transform duration-300">
+                                        <Camera class="w-5 h-5" />
+                                    </label>
+                                    <input type="file" id="avatar-upload" accept="image/*" class="hidden" onchange={handleAvatarChange} />
                                 </div>
-                                <Switch id="showAdultContent" bind:checked={showAdultContent} class="shrink-0 scale-125" />
+                                <div class="text-center space-y-1">
+                                    <p class="text-xl font-bold text-foreground">{i18n.t('setup.profile.avatar')}</p>
+                                </div>
+                            </div>
+                        {/if}
+
+                        <div class="space-y-6 {layoutState.isTV ? 'p-6 md:p-8 space-y-6 mt-4' : 'p-6 md:p-8'}">
+                            <div class="space-y-3">
+                                <Label for="username" class="font-bold text-foreground flex items-center gap-2 {layoutState.isTV ? 'text-base gap-2' : 'text-sm'}">
+                                    <UserCircle2 class="text-primary {layoutState.isTV ? 'w-5 h-5' : 'w-4 h-4'}" />
+                                    {i18n.t('setup.profile.username')}
+                                </Label>
+                                <Input
+                                        id="username"
+                                        data-sn
+                                        tabindex="0"
+                                        bind:value={username}
+                                        placeholder={i18n.t('setup.profile.username_placeholder')}
+                                        class="rounded-sm bg-secondary/50 border-border shadow-inner px-4 transition-all focus-visible:ring-primary
+                                    {layoutState.isTV ? 'h-14 text-lg outline-none focus-visible:ring-4 focus-visible:border-primary px-5' : 'h-14 text-lg'}"
+                                />
                             </div>
 
-                            <div class="flex items-center justify-between gap-4 transition-opacity {!showAdultContent ? 'opacity-50' : ''}">
-                                <div class="space-y-0.5">
-                                    <Label class="text-base font-bold {showAdultContent ? 'cursor-pointer' : 'cursor-not-allowed'}" for="blurAdultContent">{i18n.t('setup.content.blur_nsfw')}</Label>
-                                </div>
-                                <Switch id="blurAdultContent" bind:checked={blurAdultContent} disabled={!showAdultContent} class="shrink-0 scale-125" />
+                            <div class="pt-2 border-t border-border/40 space-y-3">
+                                <Label class="font-bold {layoutState.isTV ? 'text-base' : 'text-sm'}">{i18n.t('setup.appearance.language')}</Label>
+                                <LanguageSelector
+                                        data-sn
+                                        tabindex="0"
+                                        class="w-full bg-muted/20 rounded-sm outline-none {layoutState.isTV ? 'h-12 text-base focus-visible:ring-4 focus-visible:ring-primary' : 'h-12'}"
+                                        onLanguageChange={(code) => { language = code; i18n.setLocale(code); }}
+                                />
                             </div>
                         </div>
-                    </div>
-            {/if}
-            </div>
-        {/key}
+                    {/if}
 
+                    {#if currentStepId === 'appearance'}
+                        <div class="text-center space-y-2">
+                            <h2 class="font-bold {layoutState.isTV ? 'text-2xl' : 'text-2xl'}">{i18n.t('setup.appearance.title')}</h2>
+                            <p class="text-muted-foreground {layoutState.isTV ? 'text-base' : ''}">{i18n.t('setup.appearance.description')}</p>
+                        </div>
+
+                        <div class="space-y-6 {layoutState.isTV ? 'p-6 space-y-6' : 'p-6'}">
+                            <div class="space-y-4">
+                                <Label class="font-bold {layoutState.isTV ? 'text-lg' : 'text-base'}">{i18n.t('setup.appearance.theme')}</Label>
+                                <div class="grid grid-cols-3 gap-3 {layoutState.isTV ? 'gap-4' : ''}">
+                                    {#each themes as theme}
+                                        <button
+                                                data-sn
+                                                tabindex="0"
+                                                onclick={() => themeManager.setTheme(theme.id)}
+                                                class="relative flex items-center justify-center rounded-sm border-2 font-bold transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary
+                                            {theme.classes}
+                                            {themeManager.theme === theme.id ? 'ring-2 ring-primary border-transparent opacity-100' : 'opacity-70 border-transparent'}
+                                            {layoutState.isTV ? 'h-16 text-base focus-visible:ring-4 focus-visible:scale-105' : 'h-14'}"
+                                        >
+                                            {theme.label}
+                                            {#if themeManager.theme === theme.id}
+                                                <div class="absolute bg-primary rounded-full shadow-md {layoutState.isTV ? 'top-2 right-2 p-1' : 'top-1.5 right-1.5 p-0.5'}">
+                                                    <Check class="text-primary-foreground {layoutState.isTV ? 'size-4' : 'size-3'}" />
+                                                </div>
+                                            {/if}
+                                        </button>
+                                    {/each}
+                                </div>
+                            </div>
+
+                            <!-- Accent color -->
+                            <div class="pt-4 border-t border-border/40 space-y-4 {layoutState.isTV ? 'pt-6 space-y-4' : ''}">
+                                <Label class="font-bold {layoutState.isTV ? 'text-lg' : 'text-base'}">{i18n.t('setup.appearance.accent_color')}</Label>
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <div class="relative flex items-center gap-3 bg-muted/20 p-2 rounded-sm border border-border/50 focus-within:ring-2 focus-within:ring-primary {layoutState.isTV ? 'focus-within:ring-4' : ''}">
+                                        <Input
+                                                type="color"
+                                                data-sn
+                                                tabindex="0"
+                                                value={themeManager.accentColor || '#ffffff'}
+                                                onchange={handleCustomColor}
+                                                class="p-0 rounded-sm border-none cursor-pointer bg-transparent shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary
+                                            {layoutState.isTV ? 'w-11 h-11' : 'w-10 h-10'}"
+                                        />
+                                        <span class="font-mono font-bold pr-2 uppercase opacity-70 {layoutState.isTV ? 'text-xs pr-3' : 'text-xs'}">{themeManager.accentColor}</span>
+                                    </div>
+                                    <div class="w-px bg-border/40 mx-1 hidden sm:block {layoutState.isTV ? 'h-9 mx-2' : 'h-8'}"></div>
+                                    <div class="flex flex-wrap gap-2 {layoutState.isTV ? 'gap-2' : ''}">
+                                        {#each colorPresets as preset}
+                                            <button
+                                                    type="button"
+                                                    data-sn
+                                                    tabindex="0"
+                                                    onclick={() => setPresetColor(preset.value)}
+                                                    class="rounded-full border-2 border-background shadow-sm transition-transform active:scale-90 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-primary
+                                                {layoutState.isTV ? 'size-11 border-[3px] focus-visible:ring-4 focus-visible:scale-110 hover:scale-110' : 'size-10'}"
+                                                    style="background-color: {preset.value}"
+                                                    title={preset.name}
+                                            >
+                                                {#if themeManager.accentColor?.toLowerCase() === preset.value.toLowerCase()}
+                                                    <Check class="text-white drop-shadow-md {layoutState.isTV ? 'size-6' : 'size-5'}" />
+                                                {/if}
+                                            </button>
+                                        {/each}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {/if}
+
+                    {#if currentStepId === 'content'}
+                        <div class="text-center space-y-2">
+                            <h2 class="font-bold {layoutState.isTV ? 'text-2xl' : 'text-2xl'}">{i18n.t('setup.content.title')}</h2>
+                            <p class="text-muted-foreground {layoutState.isTV ? 'text-base' : ''}">{i18n.t('setup.content.description')}</p>
+                        </div>
+
+                        <div class="rounded-sm space-y-6 {layoutState.isTV ? 'p-6 space-y-6' : 'p-6'}">
+                            <div class="space-y-3 {layoutState.isTV ? 'focus-within:ring-4 focus-within:ring-primary rounded-lg outline-none' : ''}">
+                                <Label class="font-bold {layoutState.isTV ? 'text-lg' : 'text-base'}">{i18n.t('setup.content.metadata_provider')}</Label>
+                                <ResponsiveSelect
+                                        data-sn
+                                        tabindex="0"
+                                        bind:value={preferredMetadataProvider}
+                                        items={metadataOptions}
+                                        label={i18n.t('setup.content.metadata_provider')}
+                                />
+                            </div>
+
+                            <div class="pt-4 border-t border-border/40 space-y-3 {layoutState.isTV ? 'focus-within:ring-4 focus-within:ring-primary rounded-lg outline-none' : ''}">
+                                <Label class="font-bold {layoutState.isTV ? 'text-lg' : 'text-base'}">{i18n.t('setup.content.title_language')}</Label>
+                                <ResponsiveSelect
+                                        data-sn
+                                        tabindex="0"
+                                        bind:value={titleLanguage}
+                                        items={languageOptions}
+                                        label={i18n.t('setup.content.title_language')}
+                                />
+                            </div>
+
+                            <div class="pt-4 border-t border-border/40 space-y-3 {layoutState.isTV ? 'focus-within:ring-4 focus-within:ring-primary rounded-lg outline-none' : ''}">
+                                <Label class="font-bold {layoutState.isTV ? 'text-lg' : 'text-base'}">{i18n.t('setup.content.default_home_section')}</Label>
+                                <ResponsiveSelect
+                                        data-sn
+                                        tabindex="0"
+                                        bind:value={defaultHomeSection}
+                                        items={sectionOptions}
+                                        label={i18n.t('setup.content.default_home_section')}
+                                />
+                            </div>
+
+                            <div class="pt-4 space-y-5 border-t border-border/40 {layoutState.isTV ? 'pt-6 space-y-5' : ''}">
+                                <div class="flex items-center justify-between gap-4 p-1 rounded-sm focus-within:ring-2 focus-within:ring-primary {layoutState.isTV ? 'gap-4 focus-within:ring-4' : ''}">
+                                    <div class="space-y-0.5 font-bold {layoutState.isTV ? 'text-lg' : 'text-base'}">
+                                        <Label class="cursor-pointer" for="showAdultContent">{i18n.t('setup.content.show_nsfw')}</Label>
+                                    </div>
+                                    <Switch id="showAdultContent" data-sn tabindex="0" bind:checked={showAdultContent} class="shrink-0 outline-none focus-visible:ring-0 {layoutState.isTV ? 'scale-125' : 'scale-125'}" />
+                                </div>
+
+                                <div class="flex items-center justify-between gap-4 p-1 rounded-sm focus-within:ring-2 focus-within:ring-primary transition-opacity {!showAdultContent ? 'opacity-50' : ''} {layoutState.isTV ? 'gap-4 focus-within:ring-4' : ''}">
+                                    <div class="space-y-0.5 font-bold {layoutState.isTV ? 'text-lg' : 'text-base'}">
+                                        <Label class="{showAdultContent ? 'cursor-pointer' : 'cursor-not-allowed'}" for="blurAdultContent">{i18n.t('setup.content.blur_nsfw')}</Label>
+                                    </div>
+                                    <Switch id="blurAdultContent" data-sn tabindex="0" bind:checked={blurAdultContent} disabled={!showAdultContent} class="shrink-0 outline-none focus-visible:ring-0 {layoutState.isTV ? 'scale-125' : 'scale-125'}" />
+                                </div>
+                            </div>
+                        </div>
+                    {/if}
+                </div>
+            {/key}
         </main>
 
-    <footer
-            class="shrink-0 pt-5 mt-auto flex items-center justify-between border-t border-border/30 bg-background"
-            style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom))"
-    >
+        <footer
+                class="shrink-0 pt-5 mt-auto flex items-center justify-between border-t border-border/30 bg-background"
+                style="padding-bottom: max({layoutState.isTV ? '1rem' : '0.5rem'}, env(safe-area-inset-bottom))"
+        >
             <div>
                 {#if currentIndex > 0}
-                    <Button variant="ghost" onclick={prevStep} class="rounded-sm font-bold h-11 px-5">
-                        <ChevronLeft class="mr-1.5 h-4 w-4" /> {i18n.t('setup.navigation.back')}
+                    <Button data-sn tabindex="0" variant="ghost" onclick={prevStep} class="rounded-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary {layoutState.isTV ? 'h-12 text-base px-5 focus-visible:ring-4' : 'h-11 px-5'}">
+                        <ChevronLeft class="mr-1.5 h-4 w-4 {layoutState.isTV ? 'mr-2 h-4 w-4' : ''}" /> {i18n.t('setup.navigation.back')}
                     </Button>
                 {/if}
             </div>
 
             <div class="flex items-center gap-3">
                 {#if currentStepId !== 'profile'}
-                    <Button variant="ghost" onclick={skipStep} class="rounded-sm font-bold h-11 px-5 text-muted-foreground hover:text-foreground transition-colors">
+                    <Button data-sn tabindex="0" variant="ghost" onclick={skipStep} class="rounded-sm font-bold text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary {layoutState.isTV ? 'h-12 text-base px-5 focus-visible:ring-4' : 'h-11 px-5'}">
                         {i18n.t('setup.navigation.skip')}
                     </Button>
                 {/if}
 
                 {#if currentIndex < availableSteps.length - 1}
-                    <Button onclick={nextStep} class="rounded-sm font-bold h-11 px-7 shadow-sm">
+                    <Button data-sn tabindex="0" onclick={nextStep} class="rounded-sm font-bold shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary {layoutState.isTV ? 'h-12 text-base px-6 focus-visible:ring-4 focus-visible:scale-105 transition-transform' : 'h-11 px-7'}">
                         {i18n.t('setup.navigation.next')} <ChevronRight class="ml-1.5 h-4 w-4" />
                     </Button>
                 {:else}
-                    <Button onclick={finishSetup} disabled={isSaving} class="rounded-sm font-bold h-11 px-7 shadow-sm bg-primary text-primary-foreground hover:bg-primary/90">
+                    <Button data-sn tabindex="0" onclick={finishSetup} disabled={isSaving} class="rounded-sm font-bold shadow-sm bg-primary text-primary-foreground hover:bg-primary/90 outline-none focus-visible:ring-2 focus-visible:ring-primary {layoutState.isTV ? 'h-12 text-base px-6 focus-visible:ring-4 focus-visible:scale-105 transition-transform' : 'h-11 px-7'}">
                         {#if isSaving}
-                            <Spinner class="mr-2 h-4 w-4 animate-spin" /> {i18n.t('setup.navigation.saving')}
+                            <Spinner class="animate-spin {layoutState.isTV ? 'mr-3 h-4 w-4' : 'mr-2 h-4 w-4'}" /> {i18n.t('setup.navigation.saving')}
                         {:else}
                             {i18n.t('setup.navigation.finish')} <Check class="ml-1.5 h-4 w-4" />
                         {/if}

@@ -30,6 +30,7 @@ export const layoutState = $state({
     listEditor: null as ListEditorPayload | null,
     listEditorOpen: false,
     mpv: null as MpvState | null,
+    isTV: false,
 });
 
 export function openListEditor(payload: ListEditorPayload) {

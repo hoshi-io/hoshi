@@ -115,6 +115,7 @@ pub fn run_inner() -> anyhow::Result<()> {
             .plugin(headless_plugin_init())
             .plugin(orientation_plugin_init())
             .plugin(immersive_plugin_init())
+            .plugin(tauri_plugin_android_tv_check::init())
             .plugin(intent_plugin_init());
     }
 
