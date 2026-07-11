@@ -428,7 +428,7 @@ impl ListService {
         prev.and_then(|e| e.start_date.clone()),
         final_start_date.clone().unwrap_or_default());
 
-        if let Some(ref ed) = final_end_date {
+        if let Some(ed) = final_end_date {
             diff!("end_date",
             prev.and_then(|e| e.end_date.clone()),
             ed.clone());
