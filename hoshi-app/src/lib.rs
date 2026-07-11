@@ -44,7 +44,7 @@ use crate::immersive::immersive_plugin::{
 use crate::commands::i18n::load_locale;
 use crate::commands::auth::{login, register, logout, get_current_profile};
 use crate::commands::users::{get_all_users, get_me, update_me, delete_me, change_password, upload_avatar, delete_avatar};
-use crate::commands::content::{list_episode_servers, get_trending, get_home_content, get_content, get_content_by_cid, get_relation_tree, update_content, search, get_content_items, play_content_by_number, add_tracker_mapping, add_extension_source, update_extension_mapping, update_tracker_mapping, delete_tracker_mapping, search_extension};
+use crate::commands::content::{merge_content, search_local_content, list_episode_servers, get_trending, get_home_content, get_content, get_content_by_cid, get_relation_tree, update_content, search, get_content_items, play_content_by_number, add_tracker_mapping, add_extension_source, update_extension_mapping, update_tracker_mapping, delete_tracker_mapping, search_extension};
 use crate::commands::schedule::{get_schedule};
 use crate::commands::list::{get_list, get_single_entry, upsert_entry, delete_entry, get_stats, get_entry_history, get_activity_feed};
 use crate::commands::extensions::{get_image_request_headers, get_extensions, get_extension_filters, get_extension_settings, install_extension, install_sora_extension, install_tachiyomi_extension, install_lnreader_extension, update_extension, uninstall_extension, update_extension_settings};
@@ -156,7 +156,7 @@ pub fn run_inner() -> anyhow::Result<()> {
             get_system_logs, list_log_files, get_log_file, delete_log_file,
             login, register, logout,
             get_current_profile, get_all_users, get_me, update_me, delete_me, change_password, upload_avatar, delete_avatar,
-            list_episode_servers, get_trending, get_home_content, get_content, get_content_by_cid, update_content, search, get_relation_tree, get_content_items, play_content_by_number, add_tracker_mapping, add_extension_source, update_extension_mapping, update_tracker_mapping, delete_tracker_mapping, search_extension,
+            merge_content, search_local_content, list_episode_servers, get_trending, get_home_content, get_content, get_content_by_cid, update_content, search, get_relation_tree, get_content_items, play_content_by_number, add_tracker_mapping, add_extension_source, update_extension_mapping, update_tracker_mapping, delete_tracker_mapping, search_extension,
             get_schedule,
             get_list, get_single_entry, upsert_entry, delete_entry, get_stats, get_entry_history, get_activity_feed,
             get_image_request_headers, get_extensions, get_extension_filters, get_extension_settings, install_extension, install_sora_extension, install_tachiyomi_extension, install_lnreader_extension, update_extension, uninstall_extension, update_extension_settings,

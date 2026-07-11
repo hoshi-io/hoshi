@@ -3,7 +3,10 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { appConfig } from "@/stores/config.svelte";
     import { Button } from "@/components/ui/button";
-    import { Star, Calendar, Tv, BookMarked, Building2, Play, BookOpen, Link, Plug, ChevronDown, ChevronUp, Clock } from "lucide-svelte";
+    import {
+        Star, Calendar, Tv, BookMarked, Building2, Play, BookOpen, Link, Plug, ChevronDown, ChevronUp, Clock,
+        GitMerge
+    } from "lucide-svelte";
     import ListEditorButton from "@/components/ListEditorButton.svelte";
     import SmartImage from "@/components/SmartImage.svelte";
     import { formatScore } from "@/utils/normalize";
@@ -17,6 +20,7 @@
         isAnime,
         showTrackerModal = $bindable(),
         showExtensionModal = $bindable(),
+        showMergeModal = $bindable(),
         onWatchNow,
         headers
     } = $props<{
@@ -26,6 +30,7 @@
         isAnime: boolean;
         showTrackerModal: boolean;
         showExtensionModal: boolean;
+        showMergeModal: boolean;
         onWatchNow: () => void;
         headers?: any
     }>();
@@ -211,6 +216,9 @@
                     </Button>
                     <Button size="icon" variant="ghost" class="rounded-sm w-8 h-8 hover:bg-muted/40 text-muted-foreground hover:text-foreground" onclick={() => showExtensionModal = true} title="Extensions">
                         <Plug class="w-4 h-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" class="rounded-sm w-8 h-8 hover:bg-muted/40 text-muted-foreground hover:text-foreground" onclick={() => showMergeModal = true} title={i18n.t('content.merge_entries')}>
+                        <GitMerge class="w-4 h-4" />
                     </Button>
                     <RelationTreeDialog cid={cid} />
                 </div>

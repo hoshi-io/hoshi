@@ -18,6 +18,13 @@ pub struct SearchParams {
     pub page: Option<u32>,
 }
 
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct SearchResult {
+    pub cid: String,
+    pub title: String,
+    pub cover_image: Option<String>,
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ContentListResponse {

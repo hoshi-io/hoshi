@@ -12,7 +12,7 @@ use crate::content::services::content_units::SimklUnitsService;
 use crate::content::services::enrichment::EnrichmentService;
 use crate::content::services::extensions::ExtensionService;
 use crate::content::services::resolver::ContentResolverService;
-use crate::content::types::{RelationEdge, RelationGraph, RelationNode};
+use crate::content::types::{RelationEdge, RelationGraph, RelationNode, SearchResult};
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::types::ExtensionMetadata;
 use crate::state::AppState;
@@ -696,5 +696,28 @@ impl ContentService {
         ).await;
 
         Some(full.content.cid)
+    }
+
+    pub async fn merge_content(
+        state: &AppState,
+        survivor_cid: &str,
+        loser_cid: &str,
+    ) -> CoreResult<FullContent> {
+        ContentRepository::merge(&state.pool, survivor_cid, loser_cid).await?;
+
+        ContentRepository::get_full_content(&state.pool, survivor_cid)
+            .await?
+            .ok_or_else(|| CoreError::NotFound("survivor cid not found after merge".into()))
+    }
+
+    pub async fn search_local(
+        state: &AppState,
+        query: &str,
+        content_type: &ContentType,
+    ) -> CoreResult<Vec<SearchResult>> {
+        if query.trim().len() < 2 {
+            return Ok(vec![]);
+        }
+        ContentRepository::search_local(&state.pool, query, content_type).await
     }
 }

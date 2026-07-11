@@ -22,6 +22,7 @@
     import { progressApi } from "@/api/progress/progress";
     import type { AnimeProgress, ChapterProgress } from "@/api/progress/types";
     import MpvLauncher from "@/components/mpv/MpvLauncher.svelte";
+    import MergeContent from "@/components/modals/MergeContent.svelte";
 
     let mpvOpen = $state(false);
     let mpvEpNumber = $state(1);
@@ -62,8 +63,8 @@
 
     let showTrackerModal = $state(false);
     let showExtensionModal = $state(false);
+    let showMergeModal = $state(false);
 
-    // Progress state — fetched once when fullContent becomes available
     let animeProgress = $state<AnimeProgress[]>([]);
     let chapterProgress = $state<ChapterProgress[]>([]);
     let progressLoaded = $state(false);
@@ -74,7 +75,6 @@
         layoutState.headerAction = headerAction;
     });
 
-    // Fetch progress as soon as we have a cid, but only once per page load
     $effect(() => {
         const cid = detail.fullContent?.content.cid;
         if (!cid || progressLoaded) return;
@@ -177,6 +177,7 @@
                 {isAnime}
                 bind:showTrackerModal
                 bind:showExtensionModal
+                bind:showMergeModal
                 watchUrl={isAnime ? watchUrl : null}
                 onWatchNow={handleWatchNowClick}
                 headers={detail.headers}
@@ -236,5 +237,12 @@
                     bind:open={mpvOpen}
             />
         {/if}
+        <MergeContent
+                bind:open={showMergeModal}
+                cid={detail.fullContent.content.cid}
+                displayTitle={displayTitle}
+                coverImage={meta?.coverImage}
+                contentType={detail.fullContent.content.contentType}
+        />
     {/if}
 </div>

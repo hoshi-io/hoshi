@@ -238,6 +238,12 @@ export interface ExtensionSearchResult {
     nsfw: boolean | null;
 }
 
+export interface SearchResult {
+    cid: string;
+    title: string;
+    cover_image?: string |null;
+}
+
 export function primaryMetadata(
     fullContent: FullContent | null | undefined,
     preferredProvider: string = 'anilist'

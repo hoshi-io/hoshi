@@ -447,7 +447,15 @@
       "edit": "edit",
       "no_extensions_configured": "There are no extensions for the currently title type"
     },
-    "connected_trackers": "Trackers"
+    "connected_trackers": "Trackers",
+    "merge_entries": "Merge Entries",
+    "merge_entries_desc": "Combine this with a duplicate entry to merge their trackers, sources, and metadata.",
+    "keeping_this_entry": "Keeping this entry",
+    "search_duplicate_placeholder": "Search your library for the duplicate...",
+    "no_results": "No matching entries found",
+    "merge_warning": "{{title}} will be merged into this entry and permanently deleted. This cannot be undone.",
+    "merge_success": "Entries merged successfully",
+    "confirm_merge": "Confirm Merge"
   },
 
   "discord": {

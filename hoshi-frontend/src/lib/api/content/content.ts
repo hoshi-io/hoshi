@@ -11,7 +11,7 @@ import type {
     ExtensionSource,
     HomeView,
     ContentType,
-    ExtensionSearchResult, RelationGraph,
+    ExtensionSearchResult, RelationGraph, SearchResult,
 } from "./types";
 
 export const contentApi = {
@@ -133,6 +133,18 @@ export const contentApi = {
                     },
                 },
             },
+        });
+    },
+
+    mergeContent(survivorCid: string, loserCid: string) {
+        return call<FullContent>({
+            tauri: { cmd: "merge_content", args: { survivor_cid: survivorCid, loser_cid: loserCid } },
+        });
+    },
+
+    searchLibrary(query: string, contentType: string) {
+        return call<SearchResult[]>({
+            tauri: { cmd: "search_local_content", args: { query, content_type: contentType } },
         });
     },
 };

@@ -6,13 +6,13 @@ use crate::{require_auth, TauriSession};
 use std::sync::Arc;
 use serde_json::{json, Value};
 use tauri::State;
-use hoshi_core::content::models::{ExtensionSource, FullContent, Metadata};
+use hoshi_core::content::models::{ContentType, ExtensionSource, FullContent, Metadata};
 use hoshi_core::content::services::content::ContentService;
 use hoshi_core::content::services::extensions::ExtensionService;
 use hoshi_core::content::services::home::HomeService;
 use hoshi_core::content::services::mapping::MappingService;
 use hoshi_core::content::services::search::SearchService;
-use hoshi_core::content::types::{ContentListResponse, HomeView, RelationGraph, SearchParams, UpdateExtensionMappingRequest, UpdateTrackerMappingRequest};
+use hoshi_core::content::types::{ContentListResponse, HomeView, RelationGraph, SearchParams, SearchResult, UpdateExtensionMappingRequest, UpdateTrackerMappingRequest};
 use hoshi_core::extensions::types::{ContentItems, ExtensionSearchResult, PlayContentResult};
 use hoshi_core::tracker::types::TrackerMapping;
 
@@ -33,6 +33,30 @@ pub async fn get_content(
     source_id: String,
 ) -> Result<FullContent, CoreError> {
     ContentService::get_content(state.inner(), &source, &source_id).await
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn merge_content(
+    state: State<'_, Arc<AppState>>,
+    survivor_cid: String,
+    loser_cid: String,
+) -> Result<FullContent, CoreError> {
+    ContentService::merge_content(state.inner(), &survivor_cid, &loser_cid).await
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn search_local_content(
+    state: State<'_, Arc<AppState>>,
+    query: String,
+    content_type: String,
+) -> Result<Vec<SearchResult>, CoreError> {
+    let content_type = match content_type.as_str() {
+        "anime" => ContentType::Anime,
+        "manga" => ContentType::Manga,
+        "novel" => ContentType::Novel,
+        _ => return Err(CoreError::Internal("invalid content_type".into())),
+    };
+    ContentService::search_local(state.inner(), &query, &content_type).await
 }
 
 #[tauri::command(rename_all = "snake_case")]
