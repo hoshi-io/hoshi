@@ -53,6 +53,14 @@ android {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("com.fasterxml.jackson.core:jackson-databind:2.13.5")
+        force("com.fasterxml.jackson.core:jackson-core:2.13.5")
+        force("com.fasterxml.jackson.core:jackson-annotations:2.13.5")
+    }
+}
+
 rust {
     rootDirRel = "../../../"
 }
