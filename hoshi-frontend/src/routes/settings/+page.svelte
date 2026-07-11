@@ -283,11 +283,13 @@
                                     <span class="truncate" title={webviewInfo}>{webviewInfo}</span>
                                 {/if}
                             </div>
-                            <img
-                                    src="/chibi.png"
-                                    alt="App Mascot"
-                                    class="w-20 h-20 object-contain hover:opacity-100 hover:scale-105 transition-all duration-300 drop-shadow-sm will-change-[transform,opacity]"
-                            />
+                            <div class="w-25 h-25 flex items-center justify-center">
+                                <img
+                                        src="/chibi.png"
+                                        alt="App Mascot"
+                                        class="max-w-full max-h-full object-scale-down [image-rendering:-webkit-optimize-contrast] hover:opacity-100 hover:-scale-x-105 hover:scale-y-105 transition-all duration-300 drop-shadow-sm -scale-x-100"
+                                />
+                            </div>
                         </div>
                     </Tabs.List>
 
