@@ -19,7 +19,7 @@ const SIMKL_TOKEN_URL: &str = "https://api.simkl.com/oauth/token";
 const SIMKL_API_BASE: &str = "https://api.simkl.com";
 const SIMKL_CLIENT_ID: &str = "d8385263a0cd0e60acd779d9db61310f41c8f99e40571af596ef79c7de1d4b2e";
 const SIMKL_APP_NAME: &str = "hoshi";
-const SIMKL_APP_VERSION: &str = "1.1.2";
+const SIMKL_APP_VERSION: &str = "1.1.3";
 
 #[derive(Debug, Clone, Deserialize)]
 struct SimklIds {
