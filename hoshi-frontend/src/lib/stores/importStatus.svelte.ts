@@ -21,7 +21,7 @@ export async function setupImportListener() {
             case "done":
                 importStatuses[name] = { status: "done", imported: payload.imported };
                 setTimeout(() => delete importStatuses[name], 5000);
-                listStore.loadData();
+                listStore.refresh();
                 break;
             case "error":
                 importStatuses[name] = { status: "error", message: payload.message };
