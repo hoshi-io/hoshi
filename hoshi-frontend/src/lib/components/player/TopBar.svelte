@@ -4,61 +4,22 @@
     import Subtitles from "@/components/player/controls/buttons/Subtitles.svelte";
     import Settings from "@/components/player/controls/buttons/Settings.svelte";
     import type { PlayerController } from "./PlayerController.svelte.js";
+    import type { PlayerState } from "@/app/watch.svelte.js";
     import type { SubtitleSettings } from "@/components/player/subtitles/SubtitleSettings.svelte.js";
     import { layoutState } from "@/stores/layout.svelte";
     import { goto } from "$app/navigation";
 
     interface Props {
-        cid:                string;
-        animeTitle:         string;
-        episodeTitle:       string;
-        epNumber:           number;
-        hasPrev:            boolean;
-        hasNext:            boolean;
-        visible:            boolean;
-        fullscreenEl: HTMLElement;
-        onBack:             () => void;
         ctrl:               PlayerController;
-        extensionItems:     { value: string; label: string }[];
-        selectedExtension:  string | null;
-        servers:            string[];
-        serverItems:        { value: string; label: string }[];
-        selectedServer:     string | null;
-        supportsDub:        boolean;
-        isDub:              boolean;
-        isLoadingPlay:      boolean;
+        playerState:        PlayerState;
         subtitleSettings:   SubtitleSettings;
-        onExtensionChange:  (val: string) => void;
-        onServerChange:     () => void;
-        onDubChange:        (val: boolean) => void;
+        visible:            boolean;
+        fullscreenEl:       HTMLElement;
+        onBack:             () => void;
         onManageExtensions: () => void;
     }
 
-    let {
-        cid,
-        animeTitle,
-        episodeTitle,
-        epNumber,
-        hasPrev,
-        hasNext,
-        visible,
-        fullscreenEl,
-        onBack,
-        ctrl,
-        extensionItems,
-        selectedExtension = $bindable(),
-        servers,
-        serverItems,
-        selectedServer = $bindable(),
-        supportsDub,
-        isDub = $bindable(),
-        isLoadingPlay,
-        subtitleSettings,
-        onExtensionChange,
-        onServerChange,
-        onDubChange,
-        onManageExtensions,
-    }: Props = $props();
+    let { ctrl, playerState, subtitleSettings, visible, fullscreenEl, onBack, onManageExtensions }: Props = $props();
 
     let settingsOpen = $state(false);
 
@@ -92,8 +53,8 @@
         </Button>
 
         <div class="title-block">
-            <h1 class="anime-title font-heading">{animeTitle}</h1>
-            <p class="episode-title">{episodeTitle}</p>
+            <h1 class="anime-title font-heading">{playerState.animeTitle}</h1>
+            <p class="episode-title">{playerState.episodeTitle}</p>
         </div>
     </div>
 
@@ -102,8 +63,8 @@
             <Button
                     variant="ghost"
                     size="icon"
-                    disabled={!hasPrev}
-                    onclick={() => goto(`/watch/${cid}/${epNumber - 1}`)} class="pill-btn"
+                    disabled={!playerState.hasPrev}
+                    onclick={() => goto(`/watch/${playerState.cid}/${playerState.epNumber - 1}`)} class="pill-btn"
             >
                 <SkipBack class="size-4" />
             </Button>
@@ -111,8 +72,8 @@
             <Button
                     variant="ghost"
                     size="icon"
-                    disabled={!hasNext}
-                    onclick={() => goto(`/watch/${cid}/${epNumber + 1}`)} class="pill-btn"
+                    disabled={!playerState.hasNext}
+                    onclick={() => goto(`/watch/${playerState.cid}/${playerState.epNumber + 1}`)} class="pill-btn"
             >
                 <SkipForward class="size-4" />
             </Button>
@@ -136,22 +97,12 @@
                 </button>
                 <Settings
                         {ctrl}
+                        {playerState}
+                        {subtitleSettings}
                         open={settingsOpen}
-                        {extensionItems}
                         {fullscreenEl}
-                        bind:selectedExtension
-                        {servers}
-                        {serverItems}
-                        bind:selectedServer
-                        {supportsDub}
-                        bind:isDub
-                        {isLoadingPlay}
-                        {onExtensionChange}
-                        {onServerChange}
-                        {onDubChange}
                         {onManageExtensions}
                         onClose={() => settingsOpen = false}
-                        {subtitleSettings}
                 />
             </div>
         {/if}

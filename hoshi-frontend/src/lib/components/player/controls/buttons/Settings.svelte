@@ -2,48 +2,21 @@
     import * as Drawer  from "@/components/ui/drawer";
     import { layoutState } from "@/stores/layout.svelte.js";
     import type { PlayerController } from '../../PlayerController.svelte.js';
+    import type { PlayerState } from "@/app/watch.svelte.js";
     import type { SubtitleSettings } from '../../subtitles/SubtitleSettings.svelte.js';
     import MenuContent from "@/components/player/settings/MenuContent.svelte";
 
     interface Props {
         ctrl:               PlayerController;
+        playerState:        PlayerState;
         subtitleSettings:   SubtitleSettings;
         open:               boolean;
-        extensionItems:     { value: string; label: string }[];
-        fullscreenEl: HTMLElement;
-        selectedExtension:  string | null;
-        servers:            string[];
-        serverItems:        { value: string; label: string }[];
-        selectedServer:     string | null;
-        supportsDub:        boolean;
-        isDub:              boolean;
-        isLoadingPlay:      boolean;
-        onExtensionChange:  (val: string) => void;
-        onServerChange:     () => void;
-        onDubChange:        (val: boolean) => void;
+        fullscreenEl:       HTMLElement;
         onManageExtensions: () => void;
         onClose:            () => void;
     }
 
-    let {
-        ctrl,
-        subtitleSettings,
-        open,
-        extensionItems,
-        fullscreenEl,
-        selectedExtension = $bindable(),
-        servers,
-        serverItems,
-        selectedServer    = $bindable(),
-        supportsDub,
-        isDub             = $bindable(),
-        isLoadingPlay,
-        onExtensionChange,
-        onServerChange,
-        onDubChange,
-        onManageExtensions,
-        onClose,
-    }: Props = $props();
+    let { ctrl, playerState, subtitleSettings, open, fullscreenEl, onManageExtensions, onClose }: Props = $props();
 
     let isMobile = layoutState.isMobile;
 
@@ -69,19 +42,9 @@
                 <div class="px-2 pt-1 pb-safe-or-8">
                     <MenuContent
                             bind:this={menuContent}
-                            bind:selectedExtension
-                            bind:selectedServer
-                            bind:isDub
                             {ctrl}
+                            {playerState}
                             {subtitleSettings}
-                            {extensionItems}
-                            {servers}
-                            {serverItems}
-                            {supportsDub}
-                            {isLoadingPlay}
-                            {onExtensionChange}
-                            {onServerChange}
-                            {onDubChange}
                             {onManageExtensions}
                             {onClose}
                     />
@@ -100,19 +63,9 @@
             <div class="px-1 py-1">
                 <MenuContent
                         bind:this={menuContent}
-                        bind:selectedExtension
-                        bind:selectedServer
-                        bind:isDub
                         {ctrl}
+                        {playerState}
                         {subtitleSettings}
-                        {extensionItems}
-                        {servers}
-                        {serverItems}
-                        {supportsDub}
-                        {isLoadingPlay}
-                        {onExtensionChange}
-                        {onServerChange}
-                        {onDubChange}
                         {onManageExtensions}
                         {onClose}
                 />

@@ -54,10 +54,11 @@ export class PlayerController {
     #pendingSeekTime: number | null = null;
     #lastKnownTime   = 0;
 
-    // Recovery state — only one attempt per error event, gate with a flag
     #mediaRecoveryAttempted = false;
     #currentSrc = '';
     #restartTimer: ReturnType<typeof setTimeout> | null = null;
+    #restartAttempts = 0;
+    static readonly #MAX_RESTART_ATTEMPTS = 3;
 
     #rootEl:        HTMLElement    | null = null;
     #subtitleEl:    HTMLDivElement | null = null;
@@ -171,6 +172,12 @@ export class PlayerController {
                 if (!data.fatal) return;
 
                 if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                    if (data.details === Hls.ErrorDetails.BUFFER_INCOMPATIBLE_CODECS_ERROR && this.#mediaRecoveryAttempted) {
+                        console.error('[HLS] Codec unsupported by this device, aborting playback');
+                        this.#abortUnsupported();
+                        return;
+                    }
+
                     if (!this.#mediaRecoveryAttempted) {
                         // First attempt: let hls.js try to recover
                         this.#mediaRecoveryAttempted = true;
@@ -221,10 +228,28 @@ export class PlayerController {
         }
     }
 
+    #abortUnsupported() {
+        if (this.#restartTimer) {
+            clearTimeout(this.#restartTimer);
+            this.#restartTimer = null;
+        }
+        this.#hls?.destroy();
+        this.#hls = null;
+        this.isBuffering = false;
+        this.hlsError = { message: 'This stream is not supported on this device', retrying: false };
+    }
+
     #scheduleRestart() {
         if (this.#restartTimer) return; // already scheduled
 
-        console.error('[HLS] Scheduling stream restart in 3s');
+        this.#restartAttempts++;
+        if (this.#restartAttempts > PlayerController.#MAX_RESTART_ATTEMPTS) {
+            console.error('[HLS] Max restart attempts reached, aborting');
+            this.#abortUnsupported();
+            return;
+        }
+
+        console.error(`[HLS] Scheduling stream restart in 3s (attempt ${this.#restartAttempts}/${PlayerController.#MAX_RESTART_ATTEMPTS})`);
         this.#hls?.destroy();
         this.#hls = null;
         this.hlsError = { message: 'Stream error', retrying: true };
@@ -304,6 +329,7 @@ export class PlayerController {
     onPlaying() {
         this.isBuffering = false;
         this.#mediaRecoveryAttempted = false;
+        this.#restartAttempts = 0;
         this.paused = false;
     }
 
@@ -435,6 +461,7 @@ export class PlayerController {
         this.#pendingSeekTime        = null;
         this.#lastKnownTime          = 0;
         this.#mediaRecoveryAttempted = false;
+        this.#restartAttempts = 0;
         if (this.#restartTimer) {
             clearTimeout(this.#restartTimer);
             this.#restartTimer = null;

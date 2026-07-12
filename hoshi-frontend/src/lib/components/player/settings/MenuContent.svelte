@@ -2,6 +2,7 @@
     import { Gauge, AudioLines, Captions, PuzzleIcon, Mic2, Server, Settings2 } from 'lucide-svelte';
     import { Switch } from "@/components/ui/switch";
     import type { PlayerController } from '../PlayerController.svelte.js';
+    import type { PlayerState } from "@/app/watch.svelte.js";
     import { type SubtitleSettings } from '../subtitles/SubtitleSettings.svelte.js';
     import { appConfig } from "@/stores/config.svelte.js";
     import { i18n } from "@/stores/i18n.svelte.js";
@@ -11,39 +12,13 @@
 
     interface Props {
         ctrl:               PlayerController;
+        playerState:        PlayerState;
         subtitleSettings:   SubtitleSettings;
-        extensionItems:     { value: string; label: string }[];
-        selectedExtension:  string | null;
-        servers:            string[];
-        serverItems:        { value: string; label: string }[];
-        selectedServer:     string | null;
-        supportsDub:        boolean;
-        isDub:              boolean;
-        isLoadingPlay:      boolean;
-        onExtensionChange:  (val: string) => void;
-        onServerChange:     () => void;
-        onDubChange:        (val: boolean) => void;
         onManageExtensions: () => void;
         onClose:            () => void;
     }
 
-    let {
-        ctrl,
-        subtitleSettings,
-        extensionItems,
-        selectedExtension = $bindable(),
-        servers,
-        serverItems,
-        selectedServer    = $bindable(),
-        supportsDub,
-        isDub             = $bindable(),
-        isLoadingPlay,
-        onExtensionChange,
-        onServerChange,
-        onDubChange,
-        onManageExtensions,
-        onClose,
-    }: Props = $props();
+    let { ctrl, playerState, subtitleSettings, onManageExtensions, onClose }: Props = $props();
 
     let activeSection = $state<string | null>(null);
 
@@ -87,9 +62,9 @@
             id:       'extension',
             label:    i18n.t('watch.select_extension'),
             icon:     PuzzleIcon,
-            options:  extensionItems.map(i => ({ id: i.value, label: i.label })),
-            current:  selectedExtension ?? '',
-            onSelect: (id: string) => onExtensionChange(id),
+            options:  playerState.extensionItems.map(i => ({ id: i.value, label: i.label })),
+            current:  playerState.selectedExtension ?? '',
+            onSelect: (id: string) => playerState.selectExtension(id),
             visible:  true,
             isExtGroup: true,
         },
@@ -97,10 +72,10 @@
             id:       'server',
             label:    i18n.t('watch.server'),
             icon:     Server,
-            options:  serverItems.map(i => ({ id: i.value, label: i.label })),
-            current:  selectedServer ?? '',
-            onSelect: (id: string) => { selectedServer = id; onServerChange(); },
-            visible:  servers.length > 1,
+            options:  playerState.serverItems.map(i => ({ id: i.value, label: i.label })),
+            current:  playerState.selectedServer ?? '',
+            onSelect: (id: string) => { playerState.selectedServer = id; playerState.loadPlay(); },
+            visible:  playerState.servers.length > 1,
             isExtGroup: true,
         },
         {
@@ -161,16 +136,16 @@
             />
         {/each}
 
-        {#if supportsDub}
+        {#if playerState.supportsDub}
             <Row
                     icon={Mic2}
                     label={i18n.t('watch.dub')}
-                    onclick={() => { isDub = !isDub; onDubChange(isDub); }}
+                    onclick={() => { playerState.isDub = !playerState.isDub; playerState.loadPlay(); }}
             >
                 {#snippet children()}
                     <Switch
-                            checked={isDub}
-                            disabled={isLoadingPlay}
+                            checked={playerState.isDub}
+                            disabled={playerState.isLoadingPlay}
                             class="pointer-events-none"
                     />
                 {/snippet}

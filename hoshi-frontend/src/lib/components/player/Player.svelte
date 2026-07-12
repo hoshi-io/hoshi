@@ -132,39 +132,18 @@
     {/if}
 
     <TopBar
-            cid={playerState.cid}
-            animeTitle={playerState.animeTitle}
-            episodeTitle={playerState.episodeTitle}
-            epNumber={playerState.epNumber}
-            hasPrev={playerState.hasPrev}
-            hasNext={playerState.hasNext}
+            {ctrl}
+            {playerState}
+            {subtitleSettings}
             visible={topBarVisible}
             fullscreenEl={rootEl}
             onBack={() => { playerState.destroy(); goto(`/c/${playerState.cid}`); }}
-            {ctrl}
-            extensionItems={playerState.extensionItems}
-            bind:selectedExtension={playerState.selectedExtension}
-            servers={playerState.servers}
-            serverItems={playerState.serverItems}
-            bind:selectedServer={playerState.selectedServer}
-            supportsDub={playerState.supportsDub}
-            bind:isDub={playerState.isDub}
-            isLoadingPlay={playerState.isLoadingPlay}
-            {subtitleSettings}
-            onExtensionChange={(val) => playerState.selectExtension(val)}
-            onServerChange={() => playerState.loadPlay()}
-            onDubChange={(v) => { playerState.isDub = v; playerState.loadPlay(); }}
             {onManageExtensions}
     />
 
     <Status
-            error={playerState.error}
-            isLoadingPlay={playerState.isLoadingPlay}
-            isLoadingMeta={playerState.isLoadingMeta}
-            noExtensions={!playerState.isLoadingMeta && playerState.extensions.length === 0}
-            isMappingError={playerState.isMappingError}
-            hlsError={ctrl.hlsError}
-            onRetry={() => playerState.loadPlay()}
+            {ctrl}
+            {playerState}
             {onManageExtensions}
     />
 
@@ -186,31 +165,12 @@
 
     {#if playerState.m3u8Url || hasError}
         <Controls
-                ctrl={ctrl}
-                paused={ctrl.paused}
-                currentTime={ctrl.currentTime}
-                duration={ctrl.duration}
-                buffered={ctrl.buffered}
-                chapters={playerState.chapters}
+                {ctrl}
+                {playerState}
+                {subtitleSettings}
                 visible={controlsVisible}
                 fullscreenEl={rootEl}
-                {hasError}
-                extensionItems={playerState.extensionItems}
-                bind:selectedExtension={playerState.selectedExtension}
-                servers={playerState.servers}
-                serverItems={playerState.serverItems}
-                bind:selectedServer={playerState.selectedServer}
-                supportsDub={playerState.supportsDub}
-                bind:isDub={playerState.isDub}
-                isLoadingPlay={playerState.isLoadingPlay}
-                onExtensionChange={(val) => playerState.selectExtension(val)}
-                onServerChange={() => playerState.loadPlay()}
-                onDubChange={(v) => { playerState.isDub = v; playerState.loadPlay(); }}
                 {onManageExtensions}
-                {subtitleSettings}
-                onPlayPause={() => ctrl.togglePlay()}
-                onSeek={(t) => ctrl.seek(t)}
-                onFullscreen={() => ctrl.toggleFullscreen()}
         />
     {/if}
 </div>
