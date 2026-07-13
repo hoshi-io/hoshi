@@ -130,11 +130,11 @@
         initApp((v) => isTouchDevice = v);
         setupImportListener();
 
-        (async () => {
-            const result = await check();
-            layoutState.isTV = result.isAndroidTv;
-            if (layoutState.isTV) enableSpatialNav();
-        })();
+        //(async () => {
+        //    const result = await check();
+        //    layoutState.isTV = result.isAndroidTv;
+        //    if (layoutState.isTV) enableSpatialNav();
+        //})();
     });
 
     $effect(() => {

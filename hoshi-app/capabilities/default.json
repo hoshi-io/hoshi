@@ -14,8 +14,6 @@
     "core:window:allow-maximize",
     "core:window:allow-unmaximize",
     "core:window:allow-close",
-    "opener:default",
-    "android-tv-check:allow-check",
-    "android-tv-check:default"
+    "opener:default"
   ]
 }

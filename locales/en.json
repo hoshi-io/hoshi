@@ -101,7 +101,7 @@
       "title": "Recently Aired",
       "just_aired": "Just aired",
       "hours_ago": "{{count}}h ago",
-      "days_ago": "{{count}}d ago",
+      "days_ago": "{{count}}d ago"
     },
 
     "hero": {
