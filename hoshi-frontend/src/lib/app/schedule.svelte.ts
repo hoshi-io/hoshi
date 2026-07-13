@@ -3,6 +3,7 @@ import type { AiringEntry } from "@/api/schedule/types";
 import type { CoreError } from "@/api/client";
 import { i18n } from "@/stores/i18n.svelte.js";
 import type { NormalizedCard } from "@/utils/normalize";
+import { normalizeFullContent } from "@/utils/normalize";
 
 export type ScheduleGroup = {
     key: string;
@@ -16,29 +17,26 @@ export type ScheduleGroup = {
     }>;
 };
 
+export type RecentlyAiredItem = {
+    card: NormalizedCard;
+    episode: number;
+    airingAt: number;
+    trackerId: string;
+    hasUnit: boolean;
+};
+
 function getMs(ts: number) {
     return ts > 1e11 ? ts : ts * 1000;
 }
 
 function toCard(entry: AiringEntry): NormalizedCard {
-    return {
-        cid:              entry.trackerId,
-        titleI18n:        entry.titleI18n ?? {},
-        titleDefault:     entry.title ?? "",
-        cover:            entry.coverImage ?? "",
-        bannerImage:      entry.bannerImage ?? null,
-        synopsis:         entry.synopsis?.replace(/<[^>]*>?/gm, "") ?? null,
-        score:            entry.rating ? Math.round(entry.rating * (entry.rating <= 10 ? 10 : 1)) : null,
-        year:             entry.releaseDate ? entry.releaseDate.split("-")[0] : null,
-        nsfw:             entry.nsfw,
-        hasAdultGenre:    entry.genres?.some(g => g.toLowerCase() === "hentai" || g.toLowerCase() === "adult") ?? false,
-        contentTypeLabel: entry.subtype ?? "TV",
-        status:           entry.status ?? null,
-        trailerUrlRaw:    entry.trailerUrl ?? null,
-        episodeCount:     null,
-        contentType:      "anime",
-        href:             `/c/anilist/${btoa(entry.trackerId)}`,
-    };
+    return normalizeFullContent(entry.fullContent);
+}
+
+function hasSyncedUnit(entry: AiringEntry): boolean {
+    return entry.fullContent.contentUnits?.some(
+        u => u.unitNumber === entry.episode && u.contentType === "episode"
+    ) ?? false;
 }
 
 function buildGroups(entries: AiringEntry[]): ScheduleGroup[] {
@@ -88,7 +86,22 @@ class ScheduleStore {
             : this.entries
     );
 
-    groups = $derived(buildGroups(this.filteredEntries));
+    upcoming = $derived(this.filteredEntries.filter(e => getMs(e.airingAt) > Date.now()));
+    aired    = $derived(this.filteredEntries.filter(e => getMs(e.airingAt) <= Date.now()));
+
+    groups = $derived(buildGroups(this.upcoming));
+
+    recentlyAired = $derived<RecentlyAiredItem[]>(
+        [...this.aired]
+            .sort((a, b) => b.airingAt - a.airingAt)
+            .map(e => ({
+                card:      toCard(e),
+                episode:   e.episode,
+                airingAt:  e.airingAt,
+                trackerId: e.trackerId,
+                hasUnit:   hasSyncedUnit(e),
+            }))
+    );
 
     async load(force = false) {
         if (!force && this.entries.length > 0) return;
@@ -97,7 +110,7 @@ class ScheduleStore {
         this.error = null;
 
         try {
-            this.entries = await scheduleApi.get({ daysBack: 0, daysAhead: 7 });
+            this.entries = await scheduleApi.get({ daysBack: 2, daysAhead: 7 });
         } catch (err) {
             console.error("Failed to load schedule:", err);
             this.error = err as CoreError;

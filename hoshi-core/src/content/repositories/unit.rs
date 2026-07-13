@@ -82,4 +82,33 @@ impl UnitRepository {
             })
             .collect())
     }
+
+    pub async fn get_unit(
+        pool: &SqlitePool,
+        cid: &str,
+        unit_number: f64,
+        content_type: &str,
+    ) -> CoreResult<Option<ContentUnit>> {
+        let row: Option<(Option<i64>, String, f64, String, Option<String>, Option<String>,
+                         Option<String>, Option<String>, Option<i32>, Option<i32>, i64)> =
+            sqlx::query_as(
+                "SELECT id, cid, unit_number, type, title, description, thumbnail_url, \
+             released_at, duration, absolute_number, created_at \
+             FROM content_units WHERE cid = ? AND unit_number = ? AND type = ? \
+             LIMIT 1",
+            )
+                .bind(cid)
+                .bind(unit_number)
+                .bind(content_type)
+                .fetch_optional(pool)
+                .await?;
+
+        Ok(row.map(|(id, cid, unit_number, content_type, title, description,
+                        thumbnail_url, released_at, duration, absolute_number, created_at)| {
+            ContentUnit {
+                id, cid, unit_number, content_type, title, description,
+                thumbnail_url, released_at, duration, absolute_number, created_at,
+            }
+        }))
+    }
 }

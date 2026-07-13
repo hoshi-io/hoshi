@@ -11,6 +11,7 @@
     import { i18n } from '@/stores/i18n.svelte.js';
     import { auth } from '@/stores/auth.svelte.js';
     import { homeState } from '@/app/home.svelte.js';
+    import RecentlyAiredCarousel from "@/components/carousel/RecentlyAiredCarousel.svelte";
 
     let currentMode = $state<ContentType>('anime');
     let initializedMode = $state(false);
@@ -118,6 +119,9 @@
 
                         <div class="contents">
                             {#if section}
+                                {#if id === 'anime'}
+                                    <RecentlyAiredCarousel/>
+                                {/if}
                                 {#if continueItems.length > 0}
                                     <ContinueCarouselCarousel items={continueItems} mode={id} />
                                 {/if}

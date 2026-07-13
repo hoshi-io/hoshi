@@ -6,5 +6,5 @@ pub mod extensions;
 pub mod search;
 pub mod home;
 pub mod enrichment;
-mod content_units;
+pub mod content_units;
 mod chinese_title;

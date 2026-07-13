@@ -97,6 +97,13 @@
       "chapters": "Chapter {{num}}"
     },
 
+    "recently_aired": {
+      "title": "Recently Aired",
+      "just_aired": "Just aired",
+      "hours_ago": "{{count}}h ago",
+      "days_ago": "{{count}}d ago",
+    },
+
     "hero": {
       "rating": "Rating",
       "no_synopsis": "No synopsis",

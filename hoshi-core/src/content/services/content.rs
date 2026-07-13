@@ -8,7 +8,7 @@ use crate::content::repositories::content::ContentRepository;
 use crate::content::repositories::extension::ExtensionRepository;
 use crate::content::repositories::relations::RelationRepository;
 use crate::content::services::chinese_title::ChineseTitleService;
-use crate::content::services::content_units::SimklUnitsService;
+pub(crate) use crate::content::services::content_units::SimklUnitsService;
 use crate::content::services::enrichment::EnrichmentService;
 use crate::content::services::extensions::ExtensionService;
 use crate::content::services::resolver::ContentResolverService;
@@ -492,18 +492,20 @@ impl ContentService {
 
         let cross_ids = match full.content.content_type {
             ContentType::Anime => {
-                let endpoint = match tracker {
-                    "anilist"             => format!("anilist/{}", tracker_id),
-                    "mal" | "myanimelist" => {
-                        let raw = tracker_id.splitn(2, ':').last().unwrap_or(tracker_id);
-                        format!("myanimelist/{}", raw)
+                let endpoint = match tracker.to_lowercase().as_str() {
+                    "anilist"                              => format!("anilist/{}", tracker_id),
+                    "mal" | "myanimelist"                  => {
+                        let raw_id = tracker_id.split_once(':').map_or(tracker_id, |(_, id)| id);
+                        format!("myanimelist/{}", raw_id)
                     }
-                    "kitsu"  => format!("kitsu/{}", tracker_id),
-                    "simkl"  => format!("simkl/{}", tracker_id),
-                    _ => {
-                        warn!(cid = %cid, tracker = %tracker, "Unsupported tracker for cross-ID backfill");
-                        return Ok(());
-                    }
+                    "kitsu"                                => format!("kitsu/{}", tracker_id),
+                    "simkl"                                => format!("simkl/{}", tracker_id),
+                    "trakt"                                => format!("trakt/show/{}", tracker_id),
+                    "annict"                               => format!("annict/{}", tracker_id),
+                    "hikka"                                => format!("hikka/{}", tracker_id),
+                    "notify"                               => format!("notify/{}", tracker_id),
+                    "shikimori"                            => format!("shikimori/{}", tracker_id),
+                    _ => return Err(CoreError::Internal("error.enrichment.unsupported_tracker".into())),
                 };
                 let url = format!("https://animeapi.my.id/{}", endpoint);
                 let resp = state.http_client.get(&url).send().await
@@ -516,15 +518,15 @@ impl ContentService {
                 }).collect::<HashMap<String, String>>()
             }
             ContentType::Manga | ContentType::Novel => {
-                let endpoint = match tracker {
-                    "anilist"                        => format!("/v1/source/anilist/{}", tracker_id),
-                    "kitsu"                          => format!("/v1/source/kitsu/{}", tracker_id),
-                    "mal" | "myanimelist"            => format!("/v1/source/my-anime-list/{}", tracker_id),
-                    "mangaupdates" | "manga-updates" => format!("/v1/source/manga-updates/{}", tracker_id),
-                    _ => {
-                        warn!(cid = %cid, tracker = %tracker, "Unsupported tracker for cross-ID backfill");
-                        return Ok(());
-                    }
+                let id = tracker_id.strip_prefix("manga:").unwrap_or(tracker_id);
+
+                let endpoint = match tracker.to_lowercase().as_str() {
+                    "anilist"                               => format!("/v1/source/anilist/{}", id),
+                    "kitsu"                                 => format!("/v1/source/kitsu/{}", id),
+                    "animeplanet" | "anime-planet"          => format!("/v1/source/anime-planet/{}", id),
+                    "mangaupdates" | "manga-updates"        => format!("/v1/source/manga-updates/{}", id),
+                    "mal" | "myanimelist" | "my-anime-list" => format!("/v1/source/my-anime-list/{}", id),
+                    _ => return Err(CoreError::Internal("error.enrichment.unsupported_tracker".into())),
                 };
                 let url = format!("https://api.mangabaka.dev{}", endpoint);
                 let resp = state.http_client.get(&url).send().await

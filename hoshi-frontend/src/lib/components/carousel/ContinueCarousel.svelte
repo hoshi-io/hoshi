@@ -129,13 +129,13 @@
                                     </p>
                                     <div class="flex items-baseline gap-2 overflow-hidden">
                                         <span class="font-black text-base md:text-sm whitespace-nowrap group-hover:text-primary transition-colors">
-                                            {item.episode}
-                                        </span>
+    {item.unit?.title ? item.episode : i18n.t('watch.episode_number', { num: item.episode })}
+</span>
                                         {#if item.unit?.title}
                                             <span class="text-muted-foreground/40 text-xs">.</span>
                                             <span class="text-sm md:text-base font-semibold text-muted-foreground line-clamp-1">
-                                                {item.unit.title}
-                                            </span>
+        {item.unit.title}
+    </span>
                                         {/if}
                                     </div>
                                 </div>
