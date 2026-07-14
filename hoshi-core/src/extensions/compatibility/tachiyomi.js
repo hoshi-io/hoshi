@@ -237,13 +237,7 @@ globalThis.InjektKt = class InjektKt {
     }
 };
 
-// RequestsKt
 globalThis.__lastExtractedUrl = "";
-
-
-
-// HttpUrl
-
 
 globalThis.AppInfo = {
     INSTANCE: {
@@ -253,7 +247,6 @@ globalThis.AppInfo = {
         getPackageName()  { return "eu.kanade.tachiyomi"; },
         getApplicationId(){ return "eu.kanade.tachiyomi"; },
 
-        // Kotlin object — make it look like a companion/singleton
         versionName:  "1.0.0",
         versionCode:  1,
         packageName:  "eu.kanade.tachiyomi",
@@ -280,13 +273,10 @@ globalThis.Source = class Source {
     fetchPageList(chapter) { throw new Error("Not used"); }
 };
 
-// eu.kanade.tachiyomi.source.SourceFactory
 globalThis.SourceFactory = class SourceFactory {
     createSources() { return []; }
 };
 
-
-//  HttpSource
 
 globalThis._SandboxManga = Manga;
 class HttpSource extends _SandboxManga {
@@ -619,8 +609,6 @@ _networkHelper.getClient            = function() { return _makeOkHttpClient(true
 _networkHelper.getNonCloudflareClient = function() { return _makeOkHttpClient(false); };
 
 
-// ─── Aniyomi models ──────────────────────────────────────────────────────────
-
 globalThis.SAnime = class SAnime {
     static UNKNOWN             = 0;
     static ONGOING             = 1;
@@ -748,7 +736,6 @@ SEpisode.Companion = {
     create() { return new SEpisode(); },
 };
 
-// Track — used inside Video for subtitles and audio tracks
 globalThis.Track = class Track {
     constructor(url, lang) {
         this.url  = url  ?? "";
@@ -756,7 +743,6 @@ globalThis.Track = class Track {
     }
 };
 
-// TimeStamp — used inside Video
 globalThis.TimeStamp = class TimeStamp {
     constructor(startMs, endMs, title) {
         this.startMs = startMs ?? 0;
@@ -765,7 +751,6 @@ globalThis.TimeStamp = class TimeStamp {
     }
 };
 
-// Video — the actual stream object extensions produce
 globalThis.Video = class Video {
     // Legacy 3-arg constructor: Video(url, quality, videoUrl, headers?, subtitleTracks?, audioTracks?)
     // Modern constructor:       Video(videoUrl, videoTitle, resolution?, bitrate?, headers?, ...)
@@ -831,7 +816,6 @@ globalThis.Video = class Video {
     getTimestamps()     { return this.timestamps; }
 };
 
-// Hoster — intermediate object between episode and video list
 globalThis.Hoster = class Hoster {
     constructor(hosterUrl = "", hosterName = "", videoList = null, internalData = "", lazy = false) {
         this.hosterUrl    = hosterUrl;

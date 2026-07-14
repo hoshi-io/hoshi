@@ -5,8 +5,7 @@ use rquickjs::{
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use regex::Regex;
-use scraper::{Html, Selector};
+use scraper::{Selector};
 use tracing::{debug, error, instrument, warn};
 
 use crate::error::{CoreError, CoreResult};
