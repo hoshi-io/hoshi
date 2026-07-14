@@ -417,7 +417,7 @@ fn build_sandbox_script(
                 fn       = function_name,
                 args     = args_json,
             );
-            (String::new(), runner)
+            (Arc::from(""), runner)
         }
     };
 

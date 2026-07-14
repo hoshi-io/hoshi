@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::Arc;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
 pub enum CompatLayer {
-    Lnreader(String),
-    Sora(String),
-    Tachiyomi(String),
-    Aniyomi(String),
+    Lnreader(Arc<str>),
+    Tachiyomi(Arc<str>),
+    Aniyomi(Arc<str>),
+    Sora(Arc<str>),
 }
 
 #[derive(Debug, Clone)]

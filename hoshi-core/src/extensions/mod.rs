@@ -4,7 +4,7 @@ pub mod types;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 use serde::de::DeserializeOwned;
 use tokio::fs;
 use tracing::{debug, error, info, instrument, warn};
@@ -22,10 +22,13 @@ const BASE: &str  = include_str!("base/Base.js");
 const ANIME: &str = include_str!("base/Anime.js");
 const MANGA: &str = include_str!("base/Manga.js");
 const NOVEL: &str = include_str!("base/Novel.js");
-
 const TACHIYOMI: &str = include_str!("compatibility/tachiyomi.js");
 const LNREADER: &str = include_str!("compatibility/lnreader.js");
 const SORA: &str = include_str!("compatibility/sora.js");
+
+static LNREADER_ARC: OnceLock<Arc<str>> = OnceLock::new();
+static TACHIYOMI_SHIMMED_ARC: OnceLock<Arc<str>> = OnceLock::new();
+static SORA_ARC: OnceLock<Arc<str>> = OnceLock::new();
 const SANDBOX_BOOTSTRAP: &str = include_str!("sandbox_bootstrap.js");
 
 pub struct ExtensionManager {
@@ -645,10 +648,18 @@ impl ExtensionManager {
         let extension_code = fs::read_to_string(&extension.script_path).await.map_err(CoreError::Io)?;
 
         let compat = match extension.source.as_deref() {
-            Some("lnreader") => Some(CompatLayer::Lnreader(LNREADER.to_string())),
-            Some("tachiyomi") => Some(CompatLayer::Tachiyomi(format!("{}{}", apktojs::SHIMS, TACHIYOMI))),
-            Some("aniyomi") => Some(CompatLayer::Aniyomi(format!("{}{}", apktojs::SHIMS, TACHIYOMI))),
-            Some("sora") => Some(CompatLayer::Sora(SORA.to_string())),
+            Some("lnreader") => Some(CompatLayer::Lnreader(
+                LNREADER_ARC.get_or_init(|| LNREADER.into()).clone()
+            )),
+            Some("tachiyomi") => Some(CompatLayer::Tachiyomi(
+                TACHIYOMI_SHIMMED_ARC.get_or_init(|| format!("{}{}", apktojs::SHIMS, TACHIYOMI).into()).clone()
+            )),
+            Some("aniyomi") => Some(CompatLayer::Aniyomi(
+                TACHIYOMI_SHIMMED_ARC.get_or_init(|| format!("{}{}", apktojs::SHIMS, TACHIYOMI).into()).clone()
+            )),
+            Some("sora") => Some(CompatLayer::Sora(
+                SORA_ARC.get_or_init(|| SORA.into()).clone()
+            )),
             _ => None,
         };
 
