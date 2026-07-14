@@ -97,7 +97,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 [[package]]
 name = "apktojs"
 version = "0.1.0"
-source = "git+https://github.com/hoshi-io/apktojs.git#267e06a0e5ad46d980d41e9c1de6feb6c0a2f096"
+source = "git+https://github.com/hoshi-io/apktojs.git#652e77d2f9912171963fad8ceb1336e478a8b5a9"
 dependencies = [
  "axmldecoder",
  "dex",

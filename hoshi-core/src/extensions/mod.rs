@@ -646,8 +646,8 @@ impl ExtensionManager {
 
         let compat = match extension.source.as_deref() {
             Some("lnreader") => Some(CompatLayer::Lnreader(LNREADER.to_string())),
-            Some("tachiyomi") => Some(CompatLayer::Tachiyomi(TACHIYOMI.to_string())),
-            Some("aniyomi") => Some(CompatLayer::Aniyomi(TACHIYOMI.to_string())),
+            Some("tachiyomi") => Some(CompatLayer::Tachiyomi(format!("{}{}", apktojs::SHIMS, TACHIYOMI))),
+            Some("aniyomi") => Some(CompatLayer::Aniyomi(format!("{}{}", apktojs::SHIMS, TACHIYOMI))),
             Some("sora") => Some(CompatLayer::Sora(SORA.to_string())),
             _ => None,
         };

@@ -6,7 +6,6 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use regex::Regex;
-use rquickjs::prelude::Opt;
 use scraper::{Html, Selector};
 use tracing::{debug, error, instrument, warn};
 

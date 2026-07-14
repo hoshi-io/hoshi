@@ -1481,6 +1481,42 @@ Filter.Sort.Selection = class Selection {
     component2()   { return this.ascending; }
 };
 
+globalThis["Filter_Header"]    = Filter.Header;
+globalThis["AnimeFilter_Header"] = Filter.Header;
+globalThis["Filter$Header"] = Filter.Header;
+
+globalThis["Filter_Separator"] = Filter.Separator;
+globalThis["Filter$Separator"] = Filter.Separator;
+globalThis["AnimeFilter_Separator"] = Filter.Separator;
+
+globalThis["Filter_Select"]    = Filter.Select;
+globalThis["Filter$Select"]    = Filter.Select;
+globalThis["AnimeFilter_Select"] = Filter.Select;
+
+globalThis["Filter_Text"]      = Filter.Text;
+globalThis["Filter$Text"]      = Filter.Text;
+globalThis["AnimeFilter_Text"] = Filter.Text;
+
+globalThis["Filter_CheckBox"]  = Filter.CheckBox;
+globalThis["Filter$CheckBox"]  = Filter.CheckBox;
+globalThis["AnimeFilter_CheckBox"] = Filter.CheckBox;
+
+globalThis["Filter_TriState"]  = Filter.TriState;
+globalThis["Filter$TriState"]  = Filter.TriState;
+globalThis["AnimeFilter_TriState"] = Filter.TriState;
+
+globalThis["Filter_Group"]     = Filter.Group;
+globalThis["Filter$Group"]     = Filter.Group;
+globalThis["AnimeFilter_Group"] = Filter.Group;
+
+globalThis["Filter_Sort"]      = Filter.Sort;
+globalThis["Filter$Sort"]      = Filter.Sort;
+globalThis["AnimeFilter_Sort"] = Filter.Sort;
+
+globalThis["Filter_Sort_Selection"] = Filter.Sort.Selection;
+globalThis["Filter$Sort$Selection"] = Filter.Sort.Selection;
+globalThis["AnimeFilter_Sort_Selection"] = Filter.Sort.Selection;
+
 AnimeHttpSource.prototype._doRequest = _doRequest;
 HttpSource.prototype._doRequest = _doRequest;
 
