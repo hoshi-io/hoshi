@@ -1,5 +1,6 @@
 mod sandbox;
 pub mod types;
+pub mod html_query;
 
 use serde_json::{json, Value};
 use std::collections::HashMap;
