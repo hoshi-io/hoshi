@@ -27,8 +27,7 @@
         const enrichedEpisodes = (contentUnits ?? [])
             .filter(u =>
                 u.contentType === 'episode' &&
-                u.title &&
-                u.thumbnailUrl
+                u.title
             )
             .sort((a, b) => a.unitNumber - b.unitNumber);
 
@@ -37,7 +36,7 @@
                 number: u.unitNumber,
                 title: u.title,
                 description: u.description || null,
-                thumbnail: u.thumbnailUrl.replace('_m.', '_w.'),
+                thumbnail: u.thumbnailUrl?.replace("_m.", "_w.") ?? "",
                 enriched: true,
                 duration: duration,
             }));

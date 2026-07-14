@@ -61,7 +61,9 @@
     }
 
     const airingEntry = $derived(
-        scheduleStore.entries.find(e => String(e.trackerId) === fullContent.trackerMappings.find(e => e.trackerName === "anilist")?.trackerId)
+        scheduleStore.upcoming.find(e =>
+            String(e.fullContent.content.cid) === fullContent.content.cid
+        )
     );
 
     const countdownText = $derived.by(() => {

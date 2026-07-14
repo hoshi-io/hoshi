@@ -66,7 +66,9 @@
     }
 
     const airingEntry = $derived(
-        currentItem ? scheduleStore.entries.find(e => String(e.trackerId) === String(currentItem.anilistId)) : undefined
+        scheduleStore.upcoming.find(e =>
+            String(e.fullContent.content.cid) === currentItem.cid
+        )
     );
 
     const countdownText = $derived.by(() => {
