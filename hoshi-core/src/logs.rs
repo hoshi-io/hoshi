@@ -90,9 +90,17 @@ impl<S: Subscriber> Layer<S> for MemoryLogLayer {
         event.record(&mut visitor);
         let message = message.trim().to_string();
 
+        const MAX_MESSAGE_LEN: usize = 4000;
+        let message = if message.chars().count() > MAX_MESSAGE_LEN {
+            let mut truncated: String = message.chars().take(MAX_MESSAGE_LEN).collect();
+            truncated.push_str("... [truncated]");
+            truncated
+        } else {
+            message
+        };
+
         let now = chrono::Utc::now();
 
-        // 1. Write to Memory Store (for Live View)
         let entry = LogEntry {
             timestamp: now.timestamp_millis(),
             level: event.metadata().level().to_string(),
