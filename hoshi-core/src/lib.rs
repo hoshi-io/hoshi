@@ -21,7 +21,7 @@ pub mod mpv;
 
 use crate::error::{CoreError, CoreResult};
 use headless::HeadlessHandle;
-use state::AppState;
+pub use state::AppState;
 use paths::AppPaths;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
