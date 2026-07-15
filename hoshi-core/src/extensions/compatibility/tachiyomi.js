@@ -1,3 +1,21 @@
+async function _resolveCloudflare(url) {
+    const result = await headless.fetch(url, {
+        waitFor: "network_idle",
+        timeoutMs: 30000,
+        javascript: `({ userAgent: navigator.userAgent })`,
+    });
+
+    if (result?.cookies?.length) {
+        for (const c of result.cookies) _cookieStore.set(c.name, c.value);
+        state?.set?.("cookies", Object.fromEntries(_cookieStore));
+    }
+
+    return {
+        cookies: result?.cookies ?? [],
+        userAgent: result?.result?.userAgent ?? null,
+    };
+}
+
 globalThis.SManga = class SManga {
     static UNKNOWN            = 0;
     static ONGOING            = 1;
@@ -12,14 +30,14 @@ globalThis.SManga = class SManga {
     constructor() {
         this.url             = "";
         this.title           = "";
-        this.artist          = null;
-        this.author          = null;
-        this.description     = null;
-        this.genre           = null;
+        this.artist          = 0;
+        this.author          = 0;
+        this.description     = 0;
+        this.genre           = 0;
         this.status          = 0;
-        this.thumbnail_url   = null;
+        this.thumbnail_url   = 0;
         this.update_strategy = UpdateStrategy.ALWAYS_UPDATE;
-        this.initialized     = false;
+        this.initialized     = 0;
     }
 
     // setters (used by translated bytecode)
@@ -47,7 +65,7 @@ globalThis.SManga = class SManga {
     setUpdate_strategy(strat) {this.update_strategy = strat; }
 
     getGenres() {
-        if (!this.genre) return null;
+        if (!this.genre) return 0;
         return [...new Set(
             this.genre.split(", ").map(s => s.trim()).filter(s => s.length > 0)
         )];
@@ -175,7 +193,7 @@ globalThis.FilterList = class FilterList extends Array {
         let i = 0;
         const arr = this;
         return {
-            hasNext: () => i < arr.length ? true : 0,
+            hasNext: () => i < arr.length ? 1 : 0,
             next: () => {
                 if (i >= arr.length) {
                     throw new Error("NoSuchElementException");
@@ -623,17 +641,17 @@ globalThis.SAnime = class SAnime {
     constructor() {
         this.url             = "";
         this.title           = "";
-        this.artist          = null;
-        this.author          = null;
-        this.description     = null;
-        this.genre           = null;
+        this.artist          = 0;
+        this.author          = 0;
+        this.description     = 0;
+        this.genre           = 0;
         this.status          = 0;
-        this.thumbnail_url   = null;
-        this.background_url  = null;
+        this.thumbnail_url   = 0;
+        this.background_url  = 0;
         this.season_number   = 0;
         this.fetch_type      = 0;
         this.update_strategy = 0;
-        this.initialized     = false;
+        this.initialized     = 0;
     }
 
     // setters
@@ -705,9 +723,9 @@ globalThis.SEpisode = class SEpisode {
         this.name           = "";
         this.date_upload    = 0;
         this.episode_number = -1;
-        this.scanlator      = null;
-        this.summary        = null;
-        this.preview_url    = null;
+        this.scanlator      = 0;
+        this.summary        = 0;
+        this.preview_url    = 0;
         this.fillermark     = false;
     }
 

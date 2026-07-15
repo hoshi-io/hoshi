@@ -133,6 +133,8 @@ export class MangaReaderState extends BaseReaderState {
                 contentApi.play(currentCid, currentExt, currentChapterNum),
             ]);
 
+            console.log(playRes)
+
             if (playRes.type.toLowerCase() !== "reader") {
                 throw { key: "reader.no_data" } as import("@/api/client").CoreError;
             }
@@ -146,7 +148,6 @@ export class MangaReaderState extends BaseReaderState {
                 const firstUrl = typeof rawImages[0] === "string" ? rawImages[0] : rawImages[0].url;
                 try {
                     tachiyomiHeaders = await extensionsApi.getImageRequestHeaders(currentExt, firstUrl, this.allChapters[this.currentChapterIndex].id);
-                    console.log(tachiyomiHeaders, this.allChapters[this.currentChapterIndex].id)
                 } catch (e) {
                     console.warn("Could not fetch tachiyomi image headers", e);
                 }
