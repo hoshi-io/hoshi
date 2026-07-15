@@ -5,7 +5,6 @@ use rquickjs::{
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use scraper::{Selector};
 use tracing::{debug, error, instrument, warn};
 
 use crate::error::{CoreError, CoreResult};
@@ -13,6 +12,10 @@ use crate::extensions::{html_query, ExtensionStateStore};
 use crate::extensions::{ANIME, BASE, MANGA, NOVEL, SANDBOX_BOOTSTRAP};
 use crate::extensions::types::{CompatLayer, ExtensionType};
 use crate::headless::{HeadlessHandle, HeadlessOptions};
+
+const SCRIPT_DEADLINE: std::time::Duration = std::time::Duration::from_secs(25);
+const HEADLESS_FETCH_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(20);
+const MAX_SLEEP_MS: u64 = 30_000;
 
 pub(crate) async fn execute_in_quickjs(
     extension_code: String,
@@ -70,10 +73,19 @@ pub(crate) async fn execute_in_quickjs(
         while let Ok(req) = req_rx.recv() {
             let headless = headless.clone();
             let result = rt.block_on(async move {
-                match headless.fetch(&req.url, req.options).await {
-                    Ok(resp) => serde_json::to_string(&resp)
+                match tokio::time::timeout(
+                    HEADLESS_FETCH_TIMEOUT,
+                    headless.fetch(&req.url, req.options),
+                )
+                    .await
+                {
+                    Ok(Ok(resp)) => serde_json::to_string(&resp)
                         .unwrap_or_else(|e| error_json(e.to_string())),
-                    Err(e) => error_json(e.to_string()),
+                    Ok(Err(e)) => error_json(e.to_string()),
+                    Err(_) => {
+                        warn!("Headless fetch exceeded internal deadline, aborting future");
+                        error_json("headless fetch timed out".into())
+                    }
                 }
             });
             let _ = req.reply.send(result);
@@ -147,6 +159,12 @@ async fn run_quickjs_local(
 
     rt.set_memory_limit(64 * 1024 * 1024).await;
     rt.set_max_stack_size(512 * 1024).await;
+
+    let deadline = std::time::Instant::now() + SCRIPT_DEADLINE;
+    rt.set_interrupt_handler(Some(Box::new(move || {
+        std::time::Instant::now() >= deadline
+    })))
+        .await;
 
     let ctx = AsyncContext::full(&rt).await.map_err(|e| {
         error!(error = ?e, "Failed to create QuickJS context");
@@ -234,16 +252,25 @@ async fn run_quickjs_local(
                 (None, None) => (String::new(), 0, 0, "unknown"),
             };
 
-            warn!(
-                error = %e,
-                line = line,
-                col = col,
-                source = source_label,
-                snippet = %snippet,
-                "Sandbox JS exception"
-            );
+            const MAX_SNIPPET_LEN: usize = 2000;
+            let snippet = if snippet.len() > MAX_SNIPPET_LEN {
+                let mut truncated: String = snippet.chars().take(MAX_SNIPPET_LEN).collect();
+                truncated.push_str(&format!("... [truncated, {} bytes total]", snippet.len()));
+                truncated
+            } else {
+                snippet
+            };
 
-            CoreError::Internal("error.sandbox.thread_panicked".into())
+            warn!(
+            error = %e,
+            line = line,
+            col = col,
+            source = source_label,
+            snippet = %snippet,
+            "Sandbox JS exception"
+        );
+
+            CoreError::Internal(format!("error.sandbox.js_exception: {e}"))
         })
         .map(|json_str| {
             let updated_state_json = {
@@ -532,7 +559,7 @@ fn register_native_apis(
     })?)?;
 
     globals.set("__native_sleep", Function::new(ctx.clone(), |ms: u64| {
-        std::thread::sleep(std::time::Duration::from_millis(ms));
+        std::thread::sleep(std::time::Duration::from_millis(ms.min(MAX_SLEEP_MS)));
         Ok::<(), rquickjs::Error>(())
     })?)?;
 
