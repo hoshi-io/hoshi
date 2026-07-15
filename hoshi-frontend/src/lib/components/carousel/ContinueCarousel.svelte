@@ -6,6 +6,7 @@
     import { appConfig } from "@/stores/config.svelte.js";
     import * as Carousel from "@/components/ui/carousel";
     import MpvLauncher from "@/components/mpv/MpvLauncher.svelte";
+    import SmartImage from "@/components/SmartImage.svelte";
 
     let {
         items,
@@ -95,10 +96,11 @@
                             >
                                 <div class="relative w-full aspect-video overflow-hidden bg-muted/20 border border-border/30 rounded-sm">
                                     {#if imageUrl}
-                                        <img
+                                        <SmartImage
                                                 src={imageUrl}
                                                 alt={displayTitle}
-                                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03] {isBlurred(item) ? 'blur-xl scale-110' : ''}"
+                                                shouldBlur={isBlurred(item)}
+                                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                                         />
                                     {:else}
                                         <div class="w-full h-full flex items-center justify-center">
@@ -149,10 +151,11 @@
                             >
                                 <div class="relative w-full aspect-[2/3] overflow-hidden bg-muted/15 border border-border/30 rounded-sm shadow-sm">
                                     {#if coverImg}
-                                        <img
+                                        <SmartImage
                                                 src={coverImg}
                                                 alt={displayTitle}
-                                                class="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.04] group-hover:brightness-110 {isBlurred(item) ? 'blur-xl scale-110' : ''}"
+                                                shouldBlur={isBlurred(item)}
+                                                class="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.04] group-hover:brightness-110"
                                         />
                                     {:else}
                                         <div class="w-full h-full flex items-center justify-center bg-muted/20">
