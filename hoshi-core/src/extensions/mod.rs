@@ -6,6 +6,7 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, OnceLock};
+use std::time::Duration;
 use serde::de::DeserializeOwned;
 use tokio::fs;
 use tracing::{debug, error, info, instrument, warn};
@@ -315,12 +316,22 @@ impl ExtensionManager {
             .map_err(|e| CoreError::Network(e.to_string()))?
             .to_vec();
 
-        let translated = tokio::task::spawn_blocking(move || {
+        const APK_TO_JS_TIMEOUT: Duration = Duration::from_secs(20);
+
+        let handle = tokio::task::spawn_blocking(move || {
             apktojs::apk_to_js(&bytes)
-        })
-            .await
-            .map_err(|e| CoreError::Internal(e.to_string()))?
-            .map_err(|e| CoreError::Parse(e.to_string()))?;
+        });
+
+        let translated = match tokio::time::timeout(APK_TO_JS_TIMEOUT, handle).await {
+            Ok(Ok(Ok(t))) => t,
+            Ok(Ok(Err(e))) => return Err(CoreError::Parse(e.to_string())),
+            Ok(Err(e)) => return Err(CoreError::Internal(e.to_string())), // join error / panic
+            Err(_) => {
+                return Err(CoreError::Internal(
+                    format!("apk_to_js exceeded {}s timeout (pkg processing aborted, but blocking thread may still be running)", APK_TO_JS_TIMEOUT.as_secs())
+                ));
+            }
+        };
 
         let source = if entry.pkg.contains("animeextension") {
             "aniyomi"
@@ -731,7 +742,6 @@ impl ExtensionManager {
     }
 
     pub async fn search(&self, ext_id: &str, query: &str, filters: Value, page: u32) -> CoreResult<Vec<ExtensionSearchResult>> {
-
         self.call_typed_function(ext_id, "search", vec![json!(query), filters, json!(page)], self.http_client.clone()).await
     }
 
