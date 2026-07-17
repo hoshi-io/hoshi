@@ -21,6 +21,7 @@ struct SelectorStep {
 #[derive(Debug, Clone)]
 enum PseudoFilter {
     Contains(String),
+    ContainsData(String),
     Has(String),
     Not(String),
 }
@@ -138,7 +139,16 @@ fn parse_step(combinator: Combinator, step_str: &str) -> SelectorStep {
         let c = chars[i];
         if c == ':' && depth == 0 {
             let remaining: String = chars[i..].iter().collect();
-            if remaining.starts_with(":contains(") {
+            if remaining.starts_with(":containsData(") {
+                if !current.is_empty() {
+                    if base_selector.is_empty() { base_selector = current.trim().to_string(); }
+                    current.clear();
+                }
+                let (content, next_idx) = extract_parenthesized(&chars, i + 14);
+                filters.push(PseudoFilter::ContainsData(content));
+                i = next_idx;
+                continue;
+            } else if remaining.starts_with(":contains(") {
                 if !current.is_empty() {
                     if base_selector.is_empty() { base_selector = current.trim().to_string(); }
                     current.clear();
@@ -298,6 +308,12 @@ fn matches_filters(el: scraper::ElementRef, filters: &[PseudoFilter]) -> bool {
             PseudoFilter::Contains(text) => {
                 let el_text: String = el.text().collect();
                 if !el_text.contains(text) { return false; }
+            }
+            PseudoFilter::ContainsData(text) => {
+                let data: String = el.children()
+                    .filter_map(|child| child.value().as_text().map(|t| t.to_string()))
+                    .collect();
+                if !data.contains(text) { return false; }
             }
             PseudoFilter::Has(selector_str) => {
                 let nested_steps = parse_group(selector_str);
