@@ -96,66 +96,235 @@ struct ExtensionReport {
     error_normalized: String,
 }
 
+/// Strip known generic wrapper prefixes so we bucket errors by the actual
+/// underlying cause (e.g. the JS exception text) rather than by the
+/// wrapper wording that precedes *every* sandboxed error.
+///
+///   "Parse error: Failed to discover extension preferences: Internal error:
+///    error.sandbox.js_exception: Error: ConcurrentHashMap is not defined"
+///   -> "ConcurrentHashMap is not defined"
+fn unwrap_error(raw: &str) -> &str {
+    let mut s = raw;
+    loop {
+        let mut progressed = false;
+        for marker in [
+            "Parse error: Failed to discover extension preferences: ",
+            "Internal error: ",
+            "error.sandbox.js_exception: ",
+            "error.sandbox.bad_json_response: ",
+            "Error: ",
+        ] {
+            if let Some(rest) = s.strip_prefix(marker) {
+                s = rest;
+                progressed = true;
+            }
+        }
+        if !progressed {
+            // marker may appear mid-string in a nested "X: Y: <marker>Z" chain
+            if let Some(pos) = s.find("error.sandbox.js_exception: ") {
+                s = &s[pos + "error.sandbox.js_exception: ".len()..];
+                progressed = true;
+            } else if let Some(pos) = s.find("Internal error: ") {
+                s = &s[pos + "Internal error: ".len()..];
+                progressed = true;
+            }
+        }
+        if !progressed {
+            break;
+        }
+    }
+    s
+}
+
+/// Extract the bare identifier immediately preceding `suffix`, e.g.
+/// extract_ident_before("ConcurrentHashMap is not defined", " is not defined", false)
+///   -> Some("ConcurrentHashMap")
+fn extract_ident_before<'a>(text: &'a str, suffix: &str, allow_dot: bool) -> Option<&'a str> {
+    let pos = text.find(suffix)?;
+    let before = &text[..pos];
+    let ident_start = before
+        .rfind(|c: char| !(c.is_alphanumeric() || c == '_' || c == '$' || (allow_dot && c == '.')))
+        .map(|i| i + 1)
+        .unwrap_or(0);
+    let ident = &before[ident_start..];
+    if ident.is_empty() { None } else { Some(ident) }
+}
+
 fn normalize_error(raw: &str) -> String {
     if raw.contains("headless.fetch: not available") {
         return "headless not available".to_string();
     }
 
-    // "<ident> is not defined"
-    if let Some(pos) = raw.find(" is not defined") {
-        let before = &raw[..pos];
-        let ident_start = before
-            .rfind(|c: char| !(c.is_alphanumeric() || c == '_' || c == '$'))
-            .map(|i| i + 1)
-            .unwrap_or(0);
-        let ident = &before[ident_start..];
-        if !ident.is_empty() {
-            return "<ident> is not defined".to_string();
+    // Peel back the generic wrapper text so we bucket by the *actual* cause
+    // instead of by the boilerplate that precedes every sandboxed error.
+    let inner = unwrap_error(raw);
+
+    // Fixed, well-known error codes from CoreError -- map 1:1 to readable
+    // text. These are engine/plumbing failures (network, manifest parsing,
+    // sandbox init) as opposed to bugs in a specific extension's JS, so
+    // it's worth keeping them distinct from the js_exception buckets below.
+    const KNOWN_CODES: &[(&str, &str)] = &[
+        ("error.extension.install_network_failed", "network error downloading extension/apk"),
+        ("error.extension.invalid_manifest", "generated/parsed manifest invalid"),
+        ("error.extension.unsupported_type", "unsupported extension type"),
+        ("error.extension.invalid_script", "invalid extension script"),
+        ("error.extension.script_missing", "extension script file missing on disk"),
+        ("error.extension.not_found", "extension not found (installed but unregistered?)"),
+        ("error.extension.not_tachiyomi", "not a tachiyomi-sourced extension"),
+        ("error.sandbox.serialization_failed", "sandbox: failed to serialize args/settings/state"),
+        ("error.sandbox.runtime_init_failed", "sandbox: QuickJS runtime init failed"),
+        ("error.sandbox.thread_panicked", "sandbox: worker thread panicked"),
+        ("error.sandbox.bad_json_response", "sandbox: extension returned non-JSON result"),
+        ("error.content.invalid_extension_response", "invalid extension response"),
+    ];
+    for (code, label) in KNOWN_CODES {
+        if inner.contains(code) {
+            return label.to_string();
         }
-        return "<expr> is not defined".to_string();
     }
 
-    if raw.contains("Cannot read property") || raw.contains("Cannot read properties") {
+    // "<ident> is not defined" -- keep the identifier, so extensions missing
+    // the *same* shim/global (e.g. ConcurrentHashMap) group together, and
+    // extensions missing a *different* one don't get lumped together.
+    if let Some(ident) = extract_ident_before(inner, " is not defined", false) {
+        return format!("ReferenceError: {} is not defined", ident);
+    }
+    if inner.contains(" is not defined") {
+        return "ReferenceError: <expr> is not defined".to_string();
+    }
+
+    if inner.contains("Cannot read property") || inner.contains("cannot read property")
+        || inner.contains("Cannot read properties") || inner.contains("cannot read properties")
+    {
+        // Pull out the property name, e.g. "cannot read property 'isEmpty' of undefined"
+        if let Some(start) = inner.find('\'') {
+            if let Some(end) = inner[start + 1..].find('\'') {
+                let prop = &inner[start + 1..start + 1 + end];
+                return format!("cannot read property '{}' of undefined/null", prop);
+            }
+        }
         return "cannot read property of undefined/null".to_string();
     }
 
-    if let Some(pos) = raw.find(" is not a function") {
-        let before = &raw[..pos];
-        let ident_start = before
-            .rfind(|c: char| !(c.is_alphanumeric() || c == '_' || c == '$' || c == '.'))
-            .map(|i| i + 1)
-            .unwrap_or(0);
-        let ident = &before[ident_start..];
-        if !ident.is_empty() {
-            return format!("shim missing: {} is not a function", ident);
-        }
-        return "<expr> is not a function".to_string();
+    if let Some(ident) = extract_ident_before(inner, " is not a function", true) {
+        return format!("shim missing: {} is not a function", ident);
+    }
+    if inner.contains(" is not a function") {
+        return "shim missing: <expr> is not a function".to_string();
     }
 
-    if raw.contains("not found on") || raw.contains("does not exist on") {
+    if inner.contains("not found on") || inner.contains("does not exist on") {
         return "method not found on object".to_string();
     }
 
-    if raw.contains("timeout") || raw.contains("timed out") {
+    if inner.contains("UnsupportedOperationException") {
+        return "UnsupportedOperationException (shim missing)".to_string();
+    }
+
+    if inner.contains("Missing required field") {
+        if let Some(pos) = inner.find("Missing required field in ") {
+            let rest = &inner[pos + "Missing required field in ".len()..];
+            let field = rest
+                .split_whitespace()
+                .next()
+                .unwrap_or("")
+                .trim_matches(|c: char| !c.is_alphanumeric() && c != '_');
+            if !field.is_empty() {
+                return format!("missing required field in {}", field);
+            }
+        }
+        return "missing required field".to_string();
+    }
+
+    if inner.contains("timeout") || inner.contains("timed out") {
         return "timeout".to_string();
     }
 
-    if raw.contains("error.sandbox.bad_json_response") {
-        return "bad json response from sandbox".to_string();
-    }
-
-    if raw.contains("Network") || raw.contains("network") || raw.contains("dns error")
-        || raw.contains("connection")
+    if inner.contains("Network") || inner.contains("network") || inner.contains("dns error")
+        || inner.contains("connection")
     {
         return "network error".to_string();
     }
 
-    let trimmed = raw.trim();
-    if trimmed.len() > 80 {
-        format!("{}...", &trimmed[..80])
+    let trimmed = inner.trim();
+    if trimmed.len() > 100 {
+        format!("{}...", &trimmed[..100])
     } else {
         trimmed.to_string()
     }
+}
+
+const BAR_WIDTH: usize = 28;
+
+fn status_color(status: Status) -> &'static str {
+    match status {
+        Status::Working => "\x1b[32m",       // green
+        Status::Partial => "\x1b[33m",       // yellow
+        Status::Broken => "\x1b[31m",        // red
+        Status::NeedsHeadless => "\x1b[36m", // cyan
+    }
+}
+const RESET: &str = "\x1b[0m";
+const DIM: &str = "\x1b[2m";
+const BOLD: &str = "\x1b[1m";
+
+fn truncate(s: &str, max: usize) -> String {
+    if s.chars().count() > max {
+        let mut t: String = s.chars().take(max.saturating_sub(1)).collect();
+        t.push('…');
+        t
+    } else {
+        s.to_string()
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn print_progress(
+    i: usize,
+    total: usize,
+    name: &str,
+    pkg: &str,
+    report: &ExtensionReport,
+    n_working: usize,
+    n_partial: usize,
+    n_broken: usize,
+    n_needs_headless: usize,
+) {
+    let filled = if total == 0 { 0 } else { (i * BAR_WIDTH) / total };
+    let bar: String = "█".repeat(filled) + &"░".repeat(BAR_WIDTH - filled);
+    let pct = if total == 0 { 100.0 } else { (i as f64 / total as f64) * 100.0 };
+
+    let color = status_color(report.status);
+    let status_tag = format!("{}{:<13}{}", color, report.status.as_str(), RESET);
+
+    let detail = if report.failed_stage != Stage::None {
+        format!(
+            " {DIM}@ {}: {}{RESET}",
+            report.failed_stage.as_str(),
+            truncate(&report.error_normalized, 60)
+        )
+    } else {
+        String::new()
+    };
+
+    // Clear the line, then print the current item on a rewritable line.
+    print!(
+        "\r\x1b[2K{BOLD}[{bar}] {i:>5}/{total:<5}{RESET} ({pct:>5.1}%)  {status_tag} {} {DIM}({}){RESET}{detail}",
+        truncate(name, 28),
+        truncate(pkg, 30),
+    );
+
+
+    if report.status != Status::Working {
+        println!();
+    }
+
+    print!(
+        "  {DIM}[\x1b[32mworking={}{RESET}{DIM} \x1b[33mpartial={}{RESET}{DIM} \x1b[31mbroken={}{RESET}{DIM} \x1b[36mneeds_headless={}{RESET}{DIM}]{RESET}",
+        n_working, n_partial, n_broken, n_needs_headless
+    );
+
+    std::io::stdout().flush().ok();
 }
 
 #[tokio::test]
@@ -239,24 +408,17 @@ async fn tachiyomi_marketplace_pipeline() {
             Status::NeedsHeadless => n_needs_headless += 1,
         }
 
-        print!(
-            "[{}/{}] {} ({}) -> {}{}  || running totals: working={} partial={} broken={} needs_headless={}\r\n",
+        print_progress(
             i + 1,
             total,
-            name_for_log,
-            pkg_for_log,
-            report.status.as_str(),
-            if report.failed_stage != Stage::None {
-                format!(" @ {}: {}", report.failed_stage.as_str(), report.error_normalized)
-            } else {
-                String::new()
-            },
+            &name_for_log,
+            &pkg_for_log,
+            &report,
             n_working,
             n_partial,
             n_broken,
             n_needs_headless,
         );
-        std::io::stdout().flush().ok();
 
         fn csv_field(s: &str) -> String {
             format!("\"{}\"", s.replace('"', "\"\""))
