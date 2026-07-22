@@ -30,7 +30,7 @@
 <div class="card-ct group relative" class:no-preview={disablePreview} onmouseenter={() => isHovering = true} onmouseleave={() => isHovering = false}>
     <a
             href={card.href}
-            class="card-base block w-full outline-none cursor-pointer h-full overflow-hidden {disablePreview ? '' : 'transition-opacity duration-300 group-hover:opacity-0'}"
+            class="card-base block w-full outline-none cursor-pointer h-full overflow-hidden {disablePreview || isMobile ? '' : 'transition-opacity duration-300 group-hover:opacity-0'}"
     >
         <CardContainer
                 {title}
