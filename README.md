@@ -20,9 +20,6 @@
   <a href="https://github.com/hoshi-io/hoshi/blob/master/LICENSE">
     <img src="https://img.shields.io/github/license/hoshi-io/hoshi?style=for-the-badge&color=2a2a2a" alt="License" />
   </a>
-    <a href="https://play.google.com/store/apps/details?id=com.ninelfx.hoshi">
-      <img src="https://img.shields.io/badge/Google_Play-Available-2a2a2a?style=for-the-badge&logo=google-play&logoColor=green" alt="Google Play" />
-    </a>
 </p>
 
 
