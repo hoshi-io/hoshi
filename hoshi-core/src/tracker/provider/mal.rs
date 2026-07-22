@@ -2,7 +2,7 @@ pub(crate) use super::{
     TokenData, TrackerAuthConfig, TrackerMedia, TrackerProvider, TrackerRelation, UpdateEntryParams,
     UserListEntry,
 };
-use crate::content::models::{Character, ContentType, EpisodeData, Metadata, StaffMember, Status};
+use crate::content::models::{ContentType, EpisodeData, Metadata, StaffMember, Status};
 use crate::error::{CoreError, CoreResult};
 use async_trait::async_trait;
 use chrono::Utc;
@@ -11,7 +11,6 @@ use serde::Deserialize;
 use serde_json::json;
 use std::collections::HashMap;
 
-const JIKAN_BASE_URL: &str = "https://api.jikan.moe/v4";
 const MAL_API_BASE_URL: &str = "https://api.myanimelist.net/v2";
 const MAL_CLIENT_ID: &str = "f3dbcf33c69b584ced3f4ee8c12d9df5";
 
@@ -132,19 +131,14 @@ impl MalProvider {
         })
     }
 
-    fn mal_node_to_entry(
-        node: MalListNodeWrapper,
-        content_type: ContentType,
-        score_format: Option<&str>,
-    ) -> UserListEntry {
-        let _ = score_format; // MAL scores are always POINT_10
-        let media  = node.node;
-        let status = node.list_status;
-
+    /// Builds a TrackerMedia from a raw MAL media node. Shared by list-import
+    /// (`mal_node_to_entry`) and single-entry lookup (`get_by_id`), since MAL's
+    /// official API returns the same node shape in both places.
+    fn mal_media_to_tracker_media(media: &MalMediaNode, content_type: ContentType) -> TrackerMedia {
         let alt_titles = Self::build_alt_titles(media.alternative_titles.as_ref());
         let title_i18n = Self::build_title_i18n(&media.title, media.alternative_titles.as_ref());
 
-        let genres: Vec<String> = media.genres.unwrap_or_default()
+        let genres: Vec<String> = media.genres.clone().unwrap_or_default()
             .into_iter().map(|g| g.name).collect();
 
         let nsfw = Self::is_nsfw(
@@ -153,7 +147,7 @@ impl MalProvider {
             &genres,
         );
 
-        let relations = Self::build_relations(media.related_anime, media.related_manga);
+        let relations = Self::build_relations(media.related_anime.clone(), media.related_manga.clone());
 
         let prefix = match content_type {
             ContentType::Manga | ContentType::Novel => "manga",
@@ -162,7 +156,7 @@ impl MalProvider {
         let mal_url = format!("https://myanimelist.net/{}/{}", prefix, media.id);
 
         let staff: Vec<StaffMember> = if matches!(content_type, ContentType::Manga | ContentType::Novel) {
-            media.authors.unwrap_or_default()
+            media.authors.clone().unwrap_or_default()
                 .into_iter()
                 .filter_map(|a| {
                     let name = Self::join_author_name(a.first_name.as_deref(), a.last_name.as_deref());
@@ -181,7 +175,7 @@ impl MalProvider {
             .and_then(|studios| studios.first())
             .map(|s| s.name.clone());
 
-        let tracker_media = TrackerMedia {
+        TrackerMedia {
             tracker_id:       format!("{}:{}", prefix, media.id),
             tracker_url:      Some(mal_url),
             cross_ids:        HashMap::from([("mal".to_string(), format!("{}:{}", prefix, media.id))]),
@@ -189,26 +183,40 @@ impl MalProvider {
             title:            media.title.clone(),
             alt_titles,
             title_i18n,
-            synopsis:         media.synopsis,
-            cover_image:      cover.clone(),
+            synopsis:         media.synopsis.clone(),
+            cover_image:      cover,
             banner_image:     None,
             episode_count:    media.num_episodes,
             chapter_count:    media.num_chapters,
-            status:           media.status,
+            status:           media.status.clone(),
             genres,
             tags:             vec![],
             nsfw,
-            release_date:     media.start_date,
-            end_date:         media.end_date,
+            release_date:     media.start_date.clone(),
+            end_date:         media.end_date.clone(),
             rating:           media.mean,
+            // MAL's official API doesn't expose a trailer URL; AniList fills this in the UI.
             trailer_url:      None,
             format:           media.media_type.clone(),
-            studio:           studio.clone(), // resolved from MAL list endpoint's node.studios
+            studio,
+            // MAL's official API has no characters endpoint; AniList fills this in the UI.
             characters:       vec![],
             staff,
             relations,
             episode_duration: None,
-        };
+        }
+    }
+
+    fn mal_node_to_entry(
+        node: MalListNodeWrapper,
+        content_type: ContentType,
+        score_format: Option<&str>,
+    ) -> UserListEntry {
+        let _ = score_format; // MAL scores are always POINT_10
+        let media  = node.node;
+        let status = node.list_status;
+
+        let tracker_media = Self::mal_media_to_tracker_media(&media, content_type.clone());
 
         let (progress, repeat_count, total_episodes, total_chapters) =
             match content_type {
@@ -227,7 +235,7 @@ impl MalProvider {
             };
 
         UserListEntry {
-            tracker_media_id: format!("{}:{}", prefix, media.id),
+            tracker_media_id: tracker_media.tracker_id.clone(),
             title:            media.title,
             poster:           media.main_picture.map(|p| p.large.unwrap_or(p.medium)),
             content_type,
@@ -309,65 +317,31 @@ impl TrackerProvider for MalProvider {
 
     async fn search(
         &self,
-        query: Option<&str>,
-        content_type: ContentType,
-        limit: usize,
-        page: usize,
-        sort: Option<&str>,
-        genre: Option<&str>,
-        format: Option<&str>,
-        nsfw: Option<bool>,
-        status: Option<&str>,
+        _query: Option<&str>,
+        _content_type: ContentType,
+        _limit: usize,
+        _page: usize,
+        _sort: Option<&str>,
+        _genre: Option<&str>,
+        _format: Option<&str>,
+        _nsfw: Option<bool>,
+        _status: Option<&str>,
     ) -> CoreResult<Vec<TrackerMedia>> {
-        let endpoint = match content_type {
-            ContentType::Anime                      => "anime",
-            ContentType::Manga | ContentType::Novel => "manga",
-        };
-
-        let mut url = format!("{}/{}?limit={}&page={}", JIKAN_BASE_URL, endpoint, limit, page.max(1));
-
-        if let Some(q) = query  { url.push_str(&format!("&q={}", q)); }
-        if let Some(s) = sort   { url.push_str(&format!("&order_by={}&sort=desc", s)); }
-        if let Some(g) = genre  { url.push_str(&format!("&genres={}", g)); }
-        if let Some(f) = format { url.push_str(&format!("&type={}", f)); }
-        if let Some(s) = status {
-            let jikan_status = match s {
-                "completed" => "complete",
-                "ongoing"   => "airing",
-                "upcoming"  => "upcoming",
-                other       => other,
-            };
-            url.push_str(&format!("&status={}", jikan_status));
-        }
-        if matches!(content_type, ContentType::Novel) && format.is_none() {
-            url.push_str("&type=light_novel");
-        }
-        if !nsfw.unwrap_or(false) {
-            url.push_str("&sfw=true");
-        }
-
-        let res = self.client.get(&url).send().await
-            .map_err(|e| CoreError::Network(e.to_string()))?;
-
-        if !res.status().is_success() {
-            let status = res.status();
-            let body = res.text().await.unwrap_or_default();
-            return Err(CoreError::Network(format!(
-                "Jikan returned {status}: {body}"
-            )));
-        }
-
-        let jikan_res: JikanSearchResponse = res.json().await
-            .map_err(|e| CoreError::Parse(e.to_string()))?;
-
-        Ok(jikan_res.data.into_iter()
-            .map(|item| item.into_tracker_media(content_type.clone()))
-            .collect())
+        // MAL search is disabled: it relied on Jikan (which is going away) and
+        // the frontend no longer exposes search for this provider. AniList is
+        // the search/discovery source of truth; MAL is list-import/manage only.
+        Ok(vec![])
     }
 
     async fn get_by_id(&self, tracker_id: &str) -> CoreResult<Option<TrackerMedia>> {
         let (media_type, id) = Self::parse_media_id(tracker_id);
-        let url = format!("{}/{}/{}/full", JIKAN_BASE_URL, media_type, id);
+
+        let fields = "id,title,main_picture,alternative_titles,start_date,end_date,\
+            synopsis,mean,nsfw,genres,media_type,status,rating,studios,\
+            related_anime,related_manga,\
+            num_episodes,num_chapters,authors{first_name,last_name}";
+
+        let url = format!("{}/{}/{}?fields={}", MAL_API_BASE_URL, media_type, id, fields);
 
         let res = self.client.get(&url).send().await
             .map_err(|e| CoreError::Network(e.to_string()))?;
@@ -376,76 +350,27 @@ impl TrackerProvider for MalProvider {
             return Ok(None);
         }
 
-        let jikan_res: JikanSingleResponse = res.json().await
+        if !res.status().is_success() {
+            let status = res.status();
+            let body = res.text().await.unwrap_or_default();
+            return Err(CoreError::Network(format!(
+                "MAL returned {status}: {body}"
+            )));
+        }
+
+        let media: MalMediaNode = res.json().await
             .map_err(|e| CoreError::Parse(e.to_string()))?;
 
-        let c_type = if media_type == "manga" { ContentType::Manga } else { ContentType::Anime };
-        let mut tracker_media = jikan_res.data.into_tracker_media(c_type);
-
-        // Enrich with characters (parallel with staff fetch below)
-        let chars_url = format!("{}/{}/{}/characters", JIKAN_BASE_URL, media_type, id);
-        let staff_url = format!("{}/{}/{}/staff",      JIKAN_BASE_URL, media_type, id);
-
-        let (chars_res, staff_res) = tokio::join!(
-            self.client.get(&chars_url).send(),
-            self.client.get(&staff_url).send(),
-        );
-
-        if let Ok(c_res) = chars_res {
-            if let Ok(c_data) = c_res.json::<JikanCharacterResponse>().await {
-                tracker_media.characters = c_data.data.into_iter().take(10).map(|c| {
-                    let image = c.character.images.and_then(|i| i.jpg).and_then(|j| j.image_url);
-                    let actor = c.voice_actors.unwrap_or_default().into_iter()
-                        .find(|va| va.language == "Japanese")
-                        .map(|va| va.person.name);
-                    Character { name: c.character.name, role: c.role, image, actor }
-                }).collect();
-            }
-        }
-
-        if media_type == "anime" {
-            if let Ok(s_res) = staff_res {
-                if let Ok(s_data) = s_res.json::<JikanStaffResponse>().await {
-                    tracker_media.staff = s_data.data.into_iter().take(8).map(|s| {
-                        let image = s.person.images.and_then(|i| i.jpg).and_then(|j| j.image_url);
-                        StaffMember { name: s.person.name, role: s.positions.join(", "), image }
-                    }).collect();
-                }
-            }
-        }
+        let content_type = if media_type == "manga" { ContentType::Manga } else { ContentType::Anime };
+        let tracker_media = Self::mal_media_to_tracker_media(&media, content_type);
 
         Ok(Some(tracker_media))
     }
 
     async fn get_home(&self) -> CoreResult<HashMap<String, Vec<TrackerMedia>>> {
-        let top_anime_url = format!("{}/top/anime?limit=10", JIKAN_BASE_URL);
-        let top_manga_url = format!("{}/top/manga?limit=10", JIKAN_BASE_URL);
-
-        let (anime_res, manga_res) = tokio::join!(
-            self.client.get(&top_anime_url).send(),
-            self.client.get(&top_manga_url).send(),
-        );
-
-        let mut home = HashMap::new();
-
-        if let Ok(res) = anime_res {
-            if let Ok(j_res) = res.json::<JikanSearchResponse>().await {
-                home.insert(
-                    "Top Anime".to_string(),
-                    j_res.data.into_iter().map(|i| i.into_tracker_media(ContentType::Anime)).collect(),
-                );
-            }
-        }
-        if let Ok(res) = manga_res {
-            if let Ok(j_res) = res.json::<JikanSearchResponse>().await {
-                home.insert(
-                    "Top Manga".to_string(),
-                    j_res.data.into_iter().map(|i| i.into_tracker_media(ContentType::Manga)).collect(),
-                );
-            }
-        }
-
-        Ok(home)
+        // Home is always served via AniList; MAL is list-import/manage + single-entry
+        // lookup only, so there's nothing to fetch here.
+        Ok(HashMap::new())
     }
 
     async fn get_user_list(
@@ -617,7 +542,7 @@ struct MalMediaNode {
     authors:            Option<Vec<MalAuthor>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 struct MalAuthor {
     first_name: Option<String>,
     last_name:  Option<String>,
@@ -630,7 +555,7 @@ struct MalAlternativeTitles {
     ja:       Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 struct MalGenre {
     #[serde(rename = "id")]
     _id: i32,
@@ -644,7 +569,7 @@ struct MalStudio {
     name: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 struct MalRelatedEdge {
     node:                    MalRelatedNode,
     relation_type:           String,
@@ -652,7 +577,7 @@ struct MalRelatedEdge {
     _relation_type_formatted: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 struct MalRelatedNode {
     id:         i32,
     title:      String,
@@ -676,234 +601,4 @@ struct MalListStatus {
 struct MalPicture {
     medium: String,
     large:  Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanSearchResponse {
-    data: Vec<JikanMedia>,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanSingleResponse {
-    data: JikanMedia,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanMedia {
-    mal_id:          i32,
-    url:             Option<String>,
-    images:          JikanImages,
-    title:           String,
-    title_english:   Option<String>,
-    title_japanese:  Option<String>,
-    title_synonyms:  Option<Vec<String>>,
-    #[serde(rename = "type")]
-    media_type:      Option<String>,
-    episodes:        Option<i32>,
-    chapters:        Option<i32>,
-    status:          Option<String>,
-    score:           Option<f32>,
-    rating:          Option<String>,
-    synopsis:        Option<String>,
-    genres:          Option<Vec<JikanEntity>>,
-    explicit_genres: Option<Vec<JikanEntity>>,
-    studios:         Option<Vec<JikanEntity>>,
-    authors:         Option<Vec<JikanEntity>>,
-    trailer:         Option<JikanTrailer>,
-    aired:           Option<JikanDateRange>,
-    published:       Option<JikanDateRange>,
-    relations:       Option<Vec<JikanRelation>>,
-    duration:        Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanImages {
-    jpg: JikanImageFormat,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanImageFormat {
-    large_image_url: Option<String>,
-    image_url:       Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanTrailer {
-    url: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanDateRange {
-    from: Option<String>,
-    to:   Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanRelation {
-    relation: String,
-    entry:    Vec<JikanEntity>,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanEntity {
-    mal_id:      Option<i32>,
-    #[serde(rename = "type")]
-    entity_type: String,
-    name:        String,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanCharacterResponse {
-    data: Vec<JikanCharacterEdge>,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanCharacterEdge {
-    character:    JikanPersonEntity,
-    role:         String,
-    voice_actors: Option<Vec<JikanVoiceActorEdge>>,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanVoiceActorEdge {
-    person:   JikanPersonEntity,
-    language: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanStaffResponse {
-    data: Vec<JikanStaffEdge>,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanStaffEdge {
-    person:    JikanPersonEntity,
-    positions: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanPersonEntity {
-    name:   String,
-    images: Option<JikanPersonImages>,
-}
-
-#[derive(Debug, Deserialize)]
-struct JikanPersonImages {
-    jpg: Option<JikanImageFormat>,
-}
-
-impl JikanMedia {
-    fn into_tracker_media(self, content_type: ContentType) -> TrackerMedia {
-        let prefix = match content_type {
-            ContentType::Manga | ContentType::Novel => "manga",
-            ContentType::Anime                      => "anime",
-        };
-
-        let mut alt_titles = Vec::new();
-        if let Some(t) = self.title_english.clone()  { alt_titles.push(t); }
-        if let Some(t) = self.title_japanese.clone() { alt_titles.push(t); }
-        if let Some(s) = self.title_synonyms         { alt_titles.extend(s); }
-
-        let mut title_i18n: HashMap<String, String> = HashMap::new();
-        title_i18n.insert("romaji".to_string(), self.title.clone());
-        if let Some(s) = &self.title_japanese { if !s.is_empty() { title_i18n.insert("native".to_string(),  s.clone()); } }
-        if let Some(s) = &self.title_english  { if !s.is_empty() { title_i18n.insert("english".to_string(), s.clone()); } }
-
-        let (release_date, end_date) = match (self.aired, self.published) {
-            (Some(a), _) => (a.from, a.to),
-            (_, Some(p)) => (p.from, p.to),
-            _            => (None, None),
-        };
-
-        let studio = self.studios
-            .and_then(|mut s| if s.is_empty() { None } else { Some(s.remove(0).name) });
-
-        let mut all_genres = Vec::new();
-        if let Some(g)  = self.genres          { all_genres.extend(g.into_iter().map(|e| e.name)); }
-        if let Some(eg) = self.explicit_genres  { all_genres.extend(eg.into_iter().map(|e| e.name)); }
-
-        let rating_str = self.rating.as_deref().unwrap_or("").to_lowercase();
-        let is_nsfw = rating_str.contains("rx")
-            || rating_str.contains("hentai")
-            || all_genres.iter().any(|g| { let gl = g.to_lowercase(); gl == "hentai" || gl == "erotica" });
-
-        let episode_duration = self.duration.as_deref().and_then(parse_duration_mins);
-
-        let relations = if let Some(jikan_rels) = self.relations {
-            jikan_rels.into_iter().flat_map(|rel| {
-                rel.entry.into_iter().filter_map(move |entry| {
-                    let id = entry.mal_id?; // skip relation entries with no MAL id
-                    let c_type = if entry.entity_type.to_lowercase() == "manga" {
-                        ContentType::Manga
-                    } else {
-                        ContentType::Anime
-                    };
-                    Some(TrackerRelation {
-                        relation_type: rel.relation.clone(),
-                        media: MalProvider::relation_stub(id, entry.name, c_type, Some(entry.entity_type)),
-                    })
-                })
-            }).collect()
-        } else {
-            vec![]
-        };
-
-        let staff: Vec<StaffMember> = if matches!(content_type, ContentType::Manga | ContentType::Novel) {
-            self.authors.unwrap_or_default().into_iter().map(|a| StaffMember {
-                name:  a.name,
-                role:  "Author".to_string(),
-                image: None,
-            }).collect()
-        } else {
-            vec![]
-        };
-
-        TrackerMedia {
-            tracker_id:       format!("{}:{}", prefix, self.mal_id),
-            tracker_url:      self.url,
-            cross_ids:        HashMap::from([("mal".to_string(), format!("{}:{}", prefix, self.mal_id))]),
-            content_type,
-            title:            self.title,
-            alt_titles,
-            title_i18n,
-            synopsis:         self.synopsis,
-            cover_image:      self.images.jpg.large_image_url.or(self.images.jpg.image_url),
-            banner_image:     None,
-            episode_count:    self.episodes,
-            chapter_count:    self.chapters,
-            status:           self.status,
-            genres:           all_genres,
-            tags:             vec![],
-            nsfw:             is_nsfw,
-            release_date,
-            end_date,
-            rating:           self.score,
-            trailer_url:      self.trailer.and_then(|t| t.url),
-            format:           self.media_type,
-            studio,
-            characters:       vec![],
-            staff,
-            relations,
-            episode_duration,
-        }
-    }
-}
-
-fn parse_duration_mins(d: &str) -> Option<i32> {
-    let d = d.to_lowercase();
-    if d.contains("unknown") { return None; }
-
-    let mut mins = 0i32;
-    if let Some(h) = d.split("hr").next()
-        .and_then(|s| s.trim().parse::<i32>().ok())
-    {
-        mins += h * 60;
-    }
-    if let Some(m) = d.split("min").next()
-        .and_then(|s| s.split_whitespace().last())
-        .and_then(|s| s.parse::<i32>().ok())
-    {
-        mins += m;
-    }
-    if mins > 0 { Some(mins) } else { None }
 }

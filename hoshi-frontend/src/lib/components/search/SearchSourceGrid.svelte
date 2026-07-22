@@ -80,15 +80,6 @@
 
                 <button
                         type="button"
-                        onclick={() => onSelectSource('tracker', '', 'mal', isMobile)}
-                        class="{rowClasses} {searchState.searchMode === 'tracker' && searchState.tracker === 'mal' ? activeRow : inactiveRow}"
-                >
-                    <img src={getTrackerFavicon('mal')} alt="MAL" class="w-5 h-5 rounded-sm object-contain {searchState.searchMode === 'tracker' && searchState.tracker === 'mal' ? '' : 'grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100'}" />
-                    <span class="truncate">MAL</span>
-                </button>
-
-                <button
-                        type="button"
                         onclick={() => onSelectSource('tracker', '', 'kitsu', isMobile)}
                         class="{rowClasses} {searchState.searchMode === 'tracker' && searchState.tracker === 'kitsu' ? activeRow : inactiveRow}"
                 >
