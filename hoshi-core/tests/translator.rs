@@ -48,6 +48,7 @@ enum Status {
     Partial,
     Broken,
     NeedsHeadless,
+    UnsupportedByExtension,
 }
 
 impl Status {
@@ -57,6 +58,7 @@ impl Status {
             Status::Partial => "Partial",
             Status::Broken => "Broken",
             Status::NeedsHeadless => "NeedsHeadless",
+            Status::UnsupportedByExtension => "UnsupportedByExtension",
         }
     }
 }
@@ -136,6 +138,22 @@ fn unwrap_error(raw: &str) -> &str {
     s
 }
 
+fn extract_top_frame(raw: &str) -> Option<(&str, &str, u32, u32)> {
+    for line in raw.lines() {
+        let line = line.trim();
+        let Some(rest) = line.strip_prefix("at ") else { continue };
+        let Some((name, loc)) = rest.split_once(" (") else { continue };
+        let Some(loc) = loc.strip_suffix(')') else { continue };
+        let Some((kind, pos)) = loc.split_once(':') else { continue };
+        let mut parts = pos.splitn(2, ':');
+        let (Some(l), Some(c)) = (parts.next(), parts.next()) else { continue };
+        let Ok(line_num) = l.parse::<u32>() else { continue };
+        let Ok(col) = c.trim_end_matches(|ch: char| !ch.is_numeric()).parse::<u32>() else { continue };
+        return Some((name, kind, line_num, col));
+    }
+    None
+}
+
 /// Extract the bare identifier immediately preceding `suffix`, e.g.
 /// extract_ident_before("ConcurrentHashMap is not defined", " is not defined", false)
 ///   -> Some("ConcurrentHashMap")
@@ -148,6 +166,21 @@ fn extract_ident_before<'a>(text: &'a str, suffix: &str, allow_dot: bool) -> Opt
         .unwrap_or(0);
     let ident = &before[ident_start..];
     if ident.is_empty() { None } else { Some(ident) }
+}
+
+/// Extract the dotted call expression immediately before the `(` on the
+/// marked (">>> ") line of a snippet, e.g. "StringsKt.split$default".
+fn extract_call_target(snippet: &str) -> Option<String> {
+    let marked = snippet.lines().find(|l| l.trim_start().starts_with(">>>"))?;
+    let code = marked.split('|').nth(1)?.split("<--").next()?.trim();
+    let paren = code.find('(')?;
+    let before = &code[..paren];
+    let start = before
+        .rfind(|c: char| !(c.is_alphanumeric() || c == '_' || c == '$' || c == '.'))
+        .map(|i| i + 1)
+        .unwrap_or(0);
+    let ident = &before[start..];
+    (!ident.is_empty()).then(|| ident.to_string())
 }
 
 fn normalize_error(raw: &str) -> String {
@@ -206,11 +239,14 @@ fn normalize_error(raw: &str) -> String {
         return "cannot read property of undefined/null".to_string();
     }
 
-    if let Some(ident) = extract_ident_before(inner, " is not a function", true) {
-        return format!("shim missing: {} is not a function", ident);
-    }
-    if inner.contains(" is not a function") {
-        return "shim missing: <expr> is not a function".to_string();
+    if inner.contains("not a function") {
+        if let Some(target) = extract_call_target(inner) {
+            return format!("not a function: {}", target);
+        }
+        return match extract_top_frame(inner) {
+            Some((name, kind, line, col)) => format!("not a function: {} ({}:{}:{})", name, kind, line, col),
+            None => "not a function (no stack frame found)".to_string(),
+        };
     }
 
     if inner.contains("not found on") || inner.contains("does not exist on") {
@@ -262,6 +298,7 @@ fn status_color(status: Status) -> &'static str {
         Status::Partial => "\x1b[33m",       // yellow
         Status::Broken => "\x1b[31m",        // red
         Status::NeedsHeadless => "\x1b[36m", // cyan
+        Status::UnsupportedByExtension => "\x1b[35m", // magenta
     }
 }
 const RESET: &str = "\x1b[0m";
@@ -289,6 +326,7 @@ fn print_progress(
     n_partial: usize,
     n_broken: usize,
     n_needs_headless: usize,
+    n_unsupported: usize,
 ) {
     let filled = if total == 0 { 0 } else { (i * BAR_WIDTH) / total };
     let bar: String = "█".repeat(filled) + &"░".repeat(BAR_WIDTH - filled);
@@ -320,8 +358,8 @@ fn print_progress(
     }
 
     print!(
-        "  {DIM}[\x1b[32mworking={}{RESET}{DIM} \x1b[33mpartial={}{RESET}{DIM} \x1b[31mbroken={}{RESET}{DIM} \x1b[36mneeds_headless={}{RESET}{DIM}]{RESET}",
-        n_working, n_partial, n_broken, n_needs_headless
+        "  {DIM}[\x1b[32mworking={}{RESET}{DIM} \x1b[33mpartial={}{RESET}{DIM} \x1b[31mbroken={}{RESET}{DIM} \x1b[36mneeds_headless={}{RESET}{DIM} \x1b[35munsupported={}{RESET}{DIM}]{RESET}",
+        n_working, n_partial, n_broken, n_needs_headless, n_unsupported
     );
 
     std::io::stdout().flush().ok();
@@ -394,6 +432,7 @@ async fn tachiyomi_marketplace_pipeline() {
     let mut n_partial = 0usize;
     let mut n_broken = 0usize;
     let mut n_needs_headless = 0usize;
+    let mut n_unsupported = 0usize;
 
     for (i, entry) in entries.into_iter().enumerate() {
         let pkg_for_log = entry.pkg.clone();
@@ -406,6 +445,7 @@ async fn tachiyomi_marketplace_pipeline() {
             Status::Partial => n_partial += 1,
             Status::Broken => n_broken += 1,
             Status::NeedsHeadless => n_needs_headless += 1,
+            Status::UnsupportedByExtension => n_unsupported += 1,
         }
 
         print_progress(
@@ -418,6 +458,7 @@ async fn tachiyomi_marketplace_pipeline() {
             n_partial,
             n_broken,
             n_needs_headless,
+            n_unsupported,
         );
 
         fn csv_field(s: &str) -> String {
@@ -459,8 +500,8 @@ async fn tachiyomi_marketplace_pipeline() {
     }
 
     println!(
-        "\n=== FINAL: {} total | working={} partial={} broken={} needs_headless={} ===",
-        total, n_working, n_partial, n_broken, n_needs_headless
+        "\n=== FINAL: {} total | working={} partial={} broken={} needs_headless={} unsupported={} ===",
+        total, n_working, n_partial, n_broken, n_needs_headless, n_unsupported
     );
 
     write_markdown_summary(&reports, "tachiyomi_report.md", &repo_url);
@@ -487,6 +528,12 @@ async fn run_pipeline_for_entry(
             let normalized = normalize_error(&raw);
             let status = if normalized == "headless not available" {
                 Status::NeedsHeadless
+            } else if normalized == "UnsupportedOperationException (shim missing)" {
+                // The extension itself deliberately throws to say "this operation
+                // isn't supported" (e.g. no search support) -- that's a known,
+                // intentional limitation of the extension, not a bug we broke.
+                // Keep it out of Broken/Partial so it doesn't skew those buckets.
+                Status::UnsupportedByExtension
             } else if $stage == Stage::Install || $stage == Stage::Search {
                 Status::Broken
             } else {
@@ -610,6 +657,7 @@ fn write_markdown_summary(reports: &[ExtensionReport], path: &str, repo_url: &st
     let partial = count(Status::Partial);
     let broken = count(Status::Broken);
     let needs_headless = count(Status::NeedsHeadless);
+    let unsupported = count(Status::UnsupportedByExtension);
 
     let pct = |n: usize| {
         if total == 0 {
@@ -629,9 +677,14 @@ fn write_markdown_summary(reports: &[ExtensionReport], path: &str, repo_url: &st
     out.push_str(&format!("| Partial | {} | {:.1}% |\n", partial, pct(partial)));
     out.push_str(&format!("| Broken | {} | {:.1}% |\n", broken, pct(broken)));
     out.push_str(&format!(
-        "| Needs Headless | {} | {:.1}% |\n\n",
+        "| Needs Headless | {} | {:.1}% |\n",
         needs_headless,
         pct(needs_headless)
+    ));
+    out.push_str(&format!(
+        "| Unsupported by extension | {} | {:.1}% |\n\n",
+        unsupported,
+        pct(unsupported)
     ));
 
     // Breakdown by failed stage (excludes Working entries, which have Stage::None)

@@ -270,7 +270,12 @@ async fn run_quickjs_local(
             "Sandbox JS exception"
         );
 
-            CoreError::Internal(format!("error.sandbox.js_exception: {e}"))
+            let context = if !snippet.is_empty() {
+                format!("\n--- {} @ {}:{} ---\n{}", source_label, line, col, snippet)
+            } else {
+                String::new()
+            };
+            CoreError::Internal(format!("error.sandbox.js_exception: {e}{context}"))
         })
         .map(|json_str| {
             let updated_state_json = {
