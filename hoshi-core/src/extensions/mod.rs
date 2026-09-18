@@ -6,7 +6,6 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, OnceLock};
-use std::time::Duration;
 use serde::de::DeserializeOwned;
 use tokio::fs;
 use tracing::{debug, error, info, instrument, warn};
@@ -15,7 +14,7 @@ use types::{Extension, ExtensionManifest, ExtensionType, SettingDefinition};
 pub type ExtensionStateStore = Arc<Mutex<HashMap<String, HashMap<String, Value>>>>;
 
 use crate::error::{CoreError, CoreResult};
-use crate::extensions::types::{normalize_sora_type, Chapter, CompatLayer, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, LNReaderMarketplaceEntry, Page, SoraMarketplaceEntry, SoraModuleManifest, TachiyomiMarketplaceEntry};
+use crate::extensions::types::{normalize_sora_type, Chapter, CompatLayer, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, LNReaderMarketplaceEntry, Page, SoraMarketplaceEntry, SoraModuleManifest};
 use crate::headless::{noop_headless, HeadlessHandle};
 use crate::paths::AppPaths;
 use crate::state::AppState;
@@ -24,12 +23,11 @@ const BASE: &str  = include_str!("base/Base.js");
 const ANIME: &str = include_str!("base/Anime.js");
 const MANGA: &str = include_str!("base/Manga.js");
 const NOVEL: &str = include_str!("base/Novel.js");
-const TACHIYOMI: &str = include_str!("compatibility/tachiyomi.js");
+// const TACHIYOMI: &str = include_str!("compatibility/tachiyomi.js"); abandoned support for apk based extensions
 const LNREADER: &str = include_str!("compatibility/lnreader.js");
 const SORA: &str = include_str!("compatibility/sora.js");
 
 static LNREADER_ARC: OnceLock<Arc<str>> = OnceLock::new();
-static TACHIYOMI_SHIMMED_ARC: OnceLock<Arc<str>> = OnceLock::new();
 static SORA_ARC: OnceLock<Arc<str>> = OnceLock::new();
 const SANDBOX_BOOTSTRAP: &str = include_str!("sandbox_bootstrap.js");
 
@@ -302,173 +300,6 @@ impl ExtensionManager {
         Ok(extension)
     }
 
-    pub async fn install_tachiyomi_extension(
-        &mut self,
-        state: &AppState,
-        download_url: &str,
-        entry: TachiyomiMarketplaceEntry,
-    ) -> CoreResult<Extension> {
-        let bytes = state.http_client
-            .get(download_url)
-            .send().await
-            .map_err(|e| CoreError::Network(e.to_string()))?
-            .bytes().await
-            .map_err(|e| CoreError::Network(e.to_string()))?
-            .to_vec();
-
-        const APK_TO_JS_TIMEOUT: Duration = Duration::from_secs(20);
-
-        let handle = tokio::task::spawn_blocking(move || {
-            apktojs::apk_to_js(&bytes)
-        });
-
-        let translated = match tokio::time::timeout(APK_TO_JS_TIMEOUT, handle).await {
-            Ok(Ok(Ok(t))) => t,
-            Ok(Ok(Err(e))) => return Err(CoreError::Parse(e.to_string())),
-            Ok(Err(e)) => return Err(CoreError::Internal(e.to_string())), // join error / panic
-            Err(_) => {
-                return Err(CoreError::Internal(
-                    format!("apk_to_js exceeded {}s timeout (pkg processing aborted, but blocking thread may still be running)", APK_TO_JS_TIMEOUT.as_secs())
-                ));
-            }
-        };
-
-        let source = if entry.pkg.contains("animeextension") {
-            "aniyomi"
-        } else {
-            "tachiyomi"
-        };
-
-        let prefixed_id = format!("tachi_{}", entry.pkg);
-        let ext_dir = self.extensions_dir.join(&prefixed_id);
-        fs::create_dir_all(&ext_dir).await.map_err(CoreError::Io)?;
-
-        let js_path = ext_dir.join("index.js");
-        fs::write(&js_path, &translated.js).await.map_err(CoreError::Io)?;
-
-        let nsfw = entry.nsfw != 0;
-        let icon_url = entry.icon_url.clone().unwrap_or_else(|| {
-            format!("{}/icon/{}.png", entry.repo_url, entry.pkg)
-        });
-
-        let staging_extension = Extension {
-            id: prefixed_id.clone(),
-            name: entry.sources.first().map(|s| s.name.clone()).unwrap_or_else(|| entry.name.clone()),
-            version: entry.version.clone(),
-            icon: Option::from(icon_url.clone()),
-            ext_type: if source == "aniyomi" { ExtensionType::Anime } else { ExtensionType::Manga },
-            script_path: js_path.clone(),
-            language: entry.lang.clone(),
-            nsfw,
-            skip_default_processing: false,
-            setting_definitions: vec![],
-            settings: HashMap::new(),
-            author: source.to_string(),
-            source: Some(source.to_string()),
-        };
-        self.extensions.insert(prefixed_id.clone(), staging_extension);
-
-        let unique_langs: Vec<String> = {
-            let mut seen = std::collections::HashSet::new();
-            entry.sources.iter()
-                .map(|s| s.lang.clone())
-                .filter(|l| seen.insert(l.clone()))
-                .collect()
-        };
-
-        let mut settings: Vec<Value> = if unique_langs.len() > 1 {
-            vec![json!({
-                "key": "language",
-                "label": "Language",
-                "type": "select",
-                "default": unique_langs[0],
-                "options": unique_langs.iter().map(|l| json!({
-                    "value": l,
-                    "label": l.to_uppercase()
-                })).collect::<Vec<_>>()
-            })]
-        } else {
-            vec![]
-        };
-
-        match self.get_tachiyomi_settings(&prefixed_id).await {
-            Ok(discovered) => {
-                let existing_keys: std::collections::HashSet<String> = settings
-                    .iter()
-                    .filter_map(|s| {
-                        s.get("key")
-                            .and_then(|k| k.as_str())
-                            .map(String::from)
-                    })
-                    .collect();
-
-                for pref in discovered {
-                    if let Some(key) = pref.get("key").and_then(|k| k.as_str()) {
-                        if !existing_keys.contains(key) {
-                            settings.push(pref);
-                        }
-                    }
-                }
-            }
-            Err(e) => {
-                //let _ = self.uninstall_extension(&prefixed_id).await;
-
-                return Err(CoreError::Parse(format!(
-                    "Failed to discover extension preferences: {e}"
-                )));
-            }
-        }
-
-        let manifest_json = json!({
-            "id": prefixed_id,
-            "name": entry.sources.first().map(|s| s.name.clone()).unwrap_or_else(|| entry.name),
-            "version": entry.version,
-            "type": if source == "aniyomi" { "anime" } else { "manga" },
-            "language": entry.lang,
-            "main": "index.js",
-            "source": source,
-            "author": source,
-            "nsfw": nsfw,
-            "settings": settings,
-            "icon": icon_url,
-        });
-
-        let manifest_yaml = serde_yaml::to_string(&manifest_json)
-            .map_err(|e| CoreError::Parse(e.to_string()))?;
-
-        fs::write(ext_dir.join("manifest.yaml"), &manifest_yaml)
-            .await.map_err(CoreError::Io)?;
-
-        let manifest: ExtensionManifest = serde_yaml::from_str(&manifest_yaml)
-            .map_err(|e| {
-                error!(error = ?e, "Generated Tachiyomi manifest is invalid");
-                CoreError::Parse("error.extension.invalid_manifest".into())
-            })?;
-
-        let loaded_settings = load_settings(&ext_dir, &manifest.settings).await;
-
-        let extension = Extension {
-            id: manifest.id.clone(),
-            name: manifest.name,
-            version: manifest.version,
-            author: manifest.author.unwrap_or_else(|| "tachiyomi".to_string()),
-            icon: manifest.icon,
-            ext_type: manifest.ext_type,
-            script_path: js_path,
-            language: manifest.language,
-            nsfw: manifest.nsfw,
-            skip_default_processing: manifest.skip_default_processing,
-            setting_definitions: manifest.settings,
-            settings: loaded_settings,
-            source: manifest.source,
-        };
-
-        self.extensions.insert(manifest.id.clone(), extension.clone());
-        info!(ext = %extension.id, "Tachiyomi extension installed and settings reflected successfully");
-
-        Ok(extension)
-    }
-
     #[instrument(skip(self, state, manifest_url))]
     pub async fn install_extension(&mut self, state: &AppState, manifest_url: &str) -> CoreResult<Extension> {
         info!(url = %manifest_url, "Starting extension installation");
@@ -663,12 +494,6 @@ impl ExtensionManager {
             Some("lnreader") => Some(CompatLayer::Lnreader(
                 LNREADER_ARC.get_or_init(|| LNREADER.into()).clone()
             )),
-            Some("tachiyomi") => Some(CompatLayer::Tachiyomi(
-                TACHIYOMI_SHIMMED_ARC.get_or_init(|| format!("{}{}", apktojs::SHIMS, TACHIYOMI).into()).clone()
-            )),
-            Some("aniyomi") => Some(CompatLayer::Aniyomi(
-                TACHIYOMI_SHIMMED_ARC.get_or_init(|| format!("{}{}", apktojs::SHIMS, TACHIYOMI).into()).clone()
-            )),
             Some("sora") => Some(CompatLayer::Sora(
                 SORA_ARC.get_or_init(|| SORA.into()).clone()
             )),
@@ -705,32 +530,6 @@ impl ExtensionManager {
             error!(ext = %extension_id, func = %function_name, error = ?e, "Failed to deserialize response");
             CoreError::Internal("error.content.invalid_extension_response".into())
         })
-    }
-
-    pub async fn get_image_request_headers(
-        &self,
-        ext_id: &str,
-        image_url: &str,
-        chapter_url: &str,
-    ) -> CoreResult<HashMap<String, String>> {
-        let extension = self.extensions.get(ext_id).ok_or_else(|| {
-            CoreError::NotFound("error.extension.not_found".into())
-        })?;
-
-        if extension.source.as_deref() != Some("tachiyomi") {
-            return Err(CoreError::BadRequest("error.extension.not_tachiyomi".into()));
-        }
-
-        self.call_typed_function(
-            ext_id,
-            "getImageRequestHeaders",
-            vec![json!(image_url), json!(chapter_url)],
-            self.http_client.clone()
-        ).await
-    }
-
-    pub async fn get_tachiyomi_settings(&self, ext_id: &str) -> CoreResult<Vec<Value>> {
-        self.call_typed_function(ext_id, "__getTachiyomiSettings", vec![], self.http_client.clone()).await
     }
 
     pub async fn get_settings(&self, ext_id: &str) -> CoreResult<ExtensionFeatures> {

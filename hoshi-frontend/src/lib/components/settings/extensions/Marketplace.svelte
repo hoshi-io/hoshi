@@ -2,7 +2,7 @@
     import { extensions } from "@/stores/extensions.svelte.js";
     import type {
         AnyMarketplaceEntry, LNReaderMarketplaceEntry, NativeMarketplaceEntry,
-        SoraMarketplaceEntry, TachiyomiMarketplaceEntry
+        SoraMarketplaceEntry
     } from "@/api/extensions/types";
     import { fade, slide, fly } from "svelte/transition";
     import { extensionsApi } from "@/api/extensions/extensions";
@@ -254,7 +254,6 @@
     }
 
     function getItemId(item: AnyMarketplaceEntry): string {
-        if (isTachiyomi(item)) return item.pkg;
         return item.id;
     }
 
@@ -266,25 +265,13 @@
         return "url" in item && "iconUrl" in item;
     }
 
-    function isTachiyomi(item: AnyMarketplaceEntry): item is TachiyomiMarketplaceEntry {
-        return "pkg" in item && "apk" in item;
-    }
-
     function getRepoBaseUrl(url: string): string {
         return url.replace(/\/(index(\.min)?\.json)?$/, "");
     }
 
-    function getTachiyomiIconUrl(item: TachiyomiMarketplaceEntry): string {
-        return `${getRepoBaseUrl(activeRepoUrl)}/icon/${item.pkg}.png`;
-    }
-
-    function getTachiyomiApkUrl(item: TachiyomiMarketplaceEntry): string {
-        return `${getRepoBaseUrl(activeRepoUrl)}/apk/${item.apk}`;
-    }
 
     function getExpectedId(item: AnyMarketplaceEntry): string {
         if (isLNReader(item)) return `lnr_${item.id}`;
-        if (isTachiyomi(item)) return `tachi_${item.pkg}`;
         if (isSora(item)) return `sora_${item.id}`;
         return item.id;
     }
@@ -317,7 +304,6 @@
 
     function getItemName(item: AnyMarketplaceEntry): string {
         if (isSora(item)) return item.sourceName;
-        if (isTachiyomi(item)) return item.sources?.[0]?.name ?? item.pkg;
         return item.name ?? '';
     }
 
@@ -326,11 +312,6 @@
         try {
             if (isLNReader(item)) {
                 const res = await extensionsApi.installLNReader(item);
-                if (res.ok && res.extension) extensions.installed = [...extensions.installed, res.extension];
-            } else if (isTachiyomi(item)) {
-                const res = await extensionsApi.installTachiyomi(getTachiyomiApkUrl(item), {
-                    ...item, repo_url: getRepoBaseUrl(activeRepoUrl), icon_url: getTachiyomiIconUrl(item),
-                });
                 if (res.ok && res.extension) extensions.installed = [...extensions.installed, res.extension];
             } else if (isSora(item)) {
                 const res = await extensionsApi.installSora(item);
@@ -354,9 +335,6 @@
         try {
             if (isLNReader(item)) {
                 await extensionsApi.installLNReader(item);
-            } else if (isTachiyomi(item)) {
-                const baseRaw = "https://raw.githubusercontent.com/keiyoushi/extensions/repo/apk/";
-                await extensionsApi.installTachiyomi(baseRaw + item.apk, item);
             } else if (isSora(item)) {
                 await extensionsApi.installSora(item);
             } else {
@@ -492,10 +470,7 @@
                                             ext={
     isLNReader(item) ? {
         ...item, ext_type: 'novel', icon: item.iconUrl, language: item.lang, author: 'LNReader'
-    } : isTachiyomi(item) ? {
-        ...item, name: item.sources?.[0]?.name, id: item.pkg, ext_type: 'manga',
-        icon: getTachiyomiIconUrl(item), language: item.lang, author: 'Tachiyomi'
-} : isSora(item) ? {
+    } : isSora(item) ? {
     ...item,
     name: item.sourceName,
     icon: item.iconUrl,
@@ -504,7 +479,7 @@
     author: item.author?.name ?? 'Unknown'
 } : item
 }
-                                            source={isLNReader(item) ? 'lnreader' : isTachiyomi(item) ? 'tachiyomi' : isSora(item) ? 'sora' : undefined}
+                                            source={isLNReader(item) ? 'lnreader' : isSora(item) ? 'sora' : undefined}
                                             mode="marketplace"
                                             isMarketplaceInstalled={isInstalled(item)}
                                             hasUpdate={hasUpdate(item)}

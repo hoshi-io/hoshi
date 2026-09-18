@@ -3,8 +3,8 @@ import type {
     Extension,
     ExtensionFiltersResponse,
     ExtensionSettingsResponse,
-    InstallExtensionResponse, LNReaderMarketplaceEntry, NativeMarketplaceEntry,
-    SoraMarketplaceEntry, TachiyomiMarketplaceEntry,
+    InstallExtensionResponse, LNReaderMarketplaceEntry,
+    SoraMarketplaceEntry,
     UninstallExtensionResponse, UpdateExtensionResponse,
     UpdateExtensionSettingsResponse,
 } from "./types";
@@ -49,12 +49,6 @@ export const extensionsApi = {
     installSora(entry: SoraMarketplaceEntry) {
         return call<InstallExtensionResponse>({
             tauri: { cmd: "install_sora_extension", args: { entry } },
-        });
-    },
-
-    installTachiyomi(downloadUrl: string, entry: TachiyomiMarketplaceEntry) {
-        return call<InstallExtensionResponse>({
-            tauri: { cmd: "install_tachiyomi_extension", args: { downloadUrl, entry } },
         });
     },
 

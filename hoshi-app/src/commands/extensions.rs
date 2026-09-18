@@ -7,7 +7,7 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::State;
-use hoshi_core::extensions::types::{Extension, ExtensionFeatures, LNReaderMarketplaceEntry, SoraMarketplaceEntry, TachiyomiMarketplaceEntry};
+use hoshi_core::extensions::types::{Extension, ExtensionFeatures, LNReaderMarketplaceEntry, SoraMarketplaceEntry};
 
 #[derive(Serialize)]
 pub struct ExtensionsResponse<T> {
@@ -55,17 +55,6 @@ pub async fn install_sora_extension(
 ) -> Result<Value, CoreError> {
     let mut manager = state.inner().extension_manager.write().await;
     let extension = manager.install_sora_extension(state.inner(), entry).await?;
-    Ok(json!({ "ok": true, "extension": extension }))
-}
-
-#[tauri::command]
-pub async fn install_tachiyomi_extension(
-    state: State<'_, Arc<AppState>>,
-    download_url: String,
-    entry: TachiyomiMarketplaceEntry,
-) -> Result<Value, CoreError> {
-    let mut manager = state.inner().extension_manager.write().await;
-    let extension = manager.install_tachiyomi_extension(state.inner(), &download_url, entry).await?;
     Ok(json!({ "ok": true, "extension": extension }))
 }
 
@@ -130,15 +119,4 @@ pub async fn update_extension(
     let mut manager = state.inner().extension_manager.write().await;
     let extension = manager.update_extension(state.inner(), &id, &manifest_url).await?;
     Ok(json!({ "ok": true, "extension": extension }))
-}
-
-#[tauri::command]
-pub async fn get_image_request_headers(
-    state: State<'_, Arc<AppState>>,
-    extension_id: String,
-    image_url: String,
-    chapter_url: String,
-) -> Result<HashMap<String, String>, CoreError> {
-    let manager = state.inner().extension_manager.read().await;
-    manager.get_image_request_headers(&extension_id, &image_url, &chapter_url).await
 }

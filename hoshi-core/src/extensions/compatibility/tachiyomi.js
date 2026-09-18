@@ -242,6 +242,8 @@ globalThis.InjektKt = class InjektKt {
 
                     // Application / SharedPreferences
                     getSharedPreferences(name, mode) { return new SharedPreferences(name); },
+                    getCacheDir() { return globalThis.__cacheDir ||= new File("cache"); },
+                    getExternalCacheDir() { return globalThis.__cacheDir ||= new File("cache"); },
 
                     // OkHttpClient
                     newCall(request) { return new OkHttpCall(request); },
@@ -498,21 +500,16 @@ class HttpSource extends _SandboxManga {
         }
 
         if (!query && !hasFilters) {
-            const res = await this._doRequest(this.popularMangaRequest(page));
-            return this._parsePage(this.popularMangaParse(res));
+            return this._parsePage(await _callSuspend(this.getPopularManga, this, [page]));
         }
 
-        const res = await this._doRequest(
-            this.searchMangaRequest(page, query, filterList)
-        );
-        return this._parsePage(this.searchMangaParse(res));
+        return this._parsePage(await _callSuspend(this.getSearchManga, this, [page, query, filterList]));
     }
 
     async getMetadata(id) {
         const manga = SManga.create();
         manga.url   = id;
-        const res   = await this._doRequest(this.mangaDetailsRequest(manga));
-        const m     = this.mangaDetailsParse(res);
+        const { manga: m } = await _callSuspend(this.getMangaUpdate, this, [manga, [], true, false]);
         return {
             title:           m.title,
             synopsis:        m.description   ?? null,
@@ -531,8 +528,7 @@ class HttpSource extends _SandboxManga {
     async findChapters(contentId) {
         const manga = SManga.create();
         manga.url   = contentId;
-        const res   = await this._doRequest(this.chapterListRequest(manga));
-        const list  = this.chapterListParse(res);
+        const { chapters: list } = await _callSuspend(this.getMangaUpdate, this, [manga, [], false, true]);
         const arr   = Array.isArray(list) ? list : [...list];
         return arr.map((ch, i) => ({
             id:     ch.url      ?? ch.getUrl?.(),
@@ -545,21 +541,110 @@ class HttpSource extends _SandboxManga {
     }
 
     async findChapterPages(chapterId) {
-        const ch  = SChapter.create();
-        ch.url    = chapterId;
-        const res = await this._doRequest(this.pageListRequest(ch));
-        return this.pageListParse(res).map(p => ({ url: p.imageUrl ?? p.url }));
+        const ch   = SChapter.create();
+        ch.url     = chapterId;
+        const list = await _callSuspend(this.getPageList, this, [ch]);
+        return list.map(p => ({ url: p.imageUrl ?? p.url }));
+    }
+
+    // Canonical suspend-API entry points (real Mihon's `Source`/`CatalogueSource`
+    // interfaces -- see source-api/.../source/{Source,CatalogueSource}.kt).
+    // These sit ABOVE the legacy Request/Parse split in the prototype chain:
+    // a newer extension that overrides `getSearchManga` etc. directly
+    // (bypassing searchMangaRequest/searchMangaParse entirely, which is a
+    // valid override in the real interface) shadows these via normal JS
+    // prototype dispatch, no branching needed. An older extension that only
+    // overrides the legacy *Request/*Parse hooks never touches these, so it
+    // falls through to these defaults, which reproduce exactly what `search`/
+    // `getMetadata`/`findChapters`/`findChapterPages` used to do inline.
+    async getPopularManga(page) {
+        const res = await this._doRequest(this.popularMangaRequest(page));
+        return this.popularMangaParse(res);
+    }
+
+    async getSearchManga(page, query, filters) {
+        const res = await this._doRequest(this.searchMangaRequest(page, query, filters));
+        return this.searchMangaParse(res);
+    }
+
+    async getLatestUpdates(page) {
+        const res = await this._doRequest(this.latestUpdatesRequest(page));
+        return this.latestUpdatesParse(res);
+    }
+
+    async getMangaUpdate(manga, chapters, fetchDetails, fetchChapters) {
+        let newManga = manga;
+        let newChapters = chapters;
+        if (fetchDetails) {
+            const res = await this._doRequest(this.mangaDetailsRequest(manga));
+            newManga = this.mangaDetailsParse(res);
+        }
+        if (fetchChapters) {
+            const res = await this._doRequest(this.chapterListRequest(manga));
+            newChapters = this.chapterListParse(res);
+        }
+        return { manga: newManga, chapters: newChapters };
+    }
+
+    async getPageList(chapter) {
+        const res = await this._doRequest(this.pageListRequest(chapter));
+        return this.pageListParse(res);
     }
 
     //  default Tachiyomi method stubs
     // subclasses override these
 
     popularMangaRequest(page)                        { throw new Error("not implemented"); }
-    popularMangaParse(response)                      { throw new Error("not implemented"); }
+    // Real Tachiyomi's ParsedHttpSource gives popular/search/latest a
+    // concrete default *Parse implementation that scrapes the response via
+    // three hook methods (selector / fromElement / nextPageSelector) the
+    // subclass overrides instead -- only sources doing raw JSON/API parsing
+    // override *Parse directly, which (since a subclass method always wins
+    // over this one in the prototype chain) is completely unaffected by
+    // adding this. This only helps extensions that don't override *Parse:
+    // previously they always threw "not implemented" the moment *Parse
+    // itself was called; now they only do if they ALSO never provided the
+    // selector hooks, which is no worse than before.
+    popularMangaSelector()                           { throw new Error("not implemented"); }
+    popularMangaFromElement(element)                 { throw new Error("not implemented"); }
+    popularMangaNextPageSelector()                   { return null; }
+    popularMangaParse(response) {
+        return this._parsedListPage(
+            response, this.popularMangaSelector(),
+            el => this.popularMangaFromElement(el), this.popularMangaNextPageSelector(),
+        );
+    }
     searchMangaRequest(page, query, filters)         { throw new Error("not implemented"); }
-    searchMangaParse(response)                       { throw new Error("not implemented"); }
+    searchMangaSelector()                            { throw new Error("not implemented"); }
+    searchMangaFromElement(element)                  { throw new Error("not implemented"); }
+    searchMangaNextPageSelector()                    { return null; }
+    searchMangaParse(response) {
+        return this._parsedListPage(
+            response, this.searchMangaSelector(),
+            el => this.searchMangaFromElement(el), this.searchMangaNextPageSelector(),
+        );
+    }
     latestUpdatesRequest(page)                       { throw new Error("not implemented"); }
-    latestUpdatesParse(response)                     { throw new Error("not implemented"); }
+    latestUpdatesSelector()                          { throw new Error("not implemented"); }
+    latestUpdatesFromElement(element)                { throw new Error("not implemented"); }
+    latestUpdatesNextPageSelector()                  { return null; }
+    latestUpdatesParse(response) {
+        return this._parsedListPage(
+            response, this.latestUpdatesSelector(),
+            el => this.latestUpdatesFromElement(el), this.latestUpdatesNextPageSelector(),
+        );
+    }
+    // Shared by popular/search/latestUpdates *Parse above -- mirrors
+    // ParsedHttpSource.*Parse(response): scrape `selector` matches into
+    // SManga-shaped objects via `fromElement`, and check `nextPageSelector`
+    // (if the subclass provides one) for a next-page link.
+    _parsedListPage(response, selector, fromElement, nextPageSelector) {
+        const baseUri = response.request().url().toString();
+        const document = JsoupExtensionsKt.asJsoup(response.body(), baseUri);
+        const mangas = document.select(selector)._els.map(fromElement);
+        const hasNextPage = nextPageSelector ? document.select(nextPageSelector).first() !== 0 : false;
+        return { mangas, hasNextPage };
+    }
     mangaDetailsRequest(manga)                       { return GET(this.getBaseUrl() + manga.url, this.headers); }
     mangaDetailsParse(response)                      { throw new Error("not implemented"); }
     chapterListRequest(manga)                        { return GET(this.getBaseUrl() + manga.url, this.headers); }
@@ -622,9 +707,17 @@ globalThis.HttpSource       = HttpSource;
 globalThis.ParsedHttpSource = HttpSource;
 globalThis.Manga            = HttpSource;
 
-_networkHelper.getCloudflareClient = function() { return _makeOkHttpClient(true); };
-_networkHelper.getClient            = function() { return _makeOkHttpClient(true); };
-_networkHelper.getNonCloudflareClient = function() { return _makeOkHttpClient(false); };
+// Kotlin properties always compile to `getXxx()` invocations at the JVM
+// level (there's no separate "property access" bytecode) -- translated
+// extension code calls these methods, never the `.client`-style getters
+// apktojs's own shim (07_network.js) also defines, so the default
+// interceptor stack (see `_defaultInterceptors` there) must be threaded
+// through here too, or the "UncaughtExceptionInterceptor must be present"
+// class of defensive check an extension may run against its own client
+// throws even though the property-getter path was fixed.
+_networkHelper.getCloudflareClient = function() { return _makeOkHttpClient(true, [..._defaultInterceptors]); };
+_networkHelper.getClient            = function() { return _makeOkHttpClient(true, [..._defaultInterceptors]); };
+_networkHelper.getNonCloudflareClient = function() { return _makeOkHttpClient(false, [..._defaultInterceptors]); };
 
 
 globalThis.SAnime = class SAnime {
