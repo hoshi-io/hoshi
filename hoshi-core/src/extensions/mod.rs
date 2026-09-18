@@ -411,7 +411,7 @@ impl ExtensionManager {
                 }
             }
             Err(e) => {
-                let _ = self.uninstall_extension(&prefixed_id).await;
+                //let _ = self.uninstall_extension(&prefixed_id).await;
 
                 return Err(CoreError::Parse(format!(
                     "Failed to discover extension preferences: {e}"
