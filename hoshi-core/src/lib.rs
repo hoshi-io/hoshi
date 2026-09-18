@@ -46,7 +46,6 @@ pub async fn build_app_state(
     })?;
 
     info!("Initializing unified database...");
-    db::init_all_databases(&paths).await?;
 
     let db_manager = db::DatabaseManager::new(&paths).await?;
     let pool = db_manager.pool().clone();
