@@ -6,8 +6,8 @@ use serde_json::Value;
 
 pub enum CompatLayer {
     Lnreader(Arc<str>),
-    Tachiyomi(Arc<str>),
-    Aniyomi(Arc<str>),
+    //Tachiyomi(Arc<str>),
+    //Aniyomi(Arc<str>),
     Sora(Arc<str>),
 }
 
