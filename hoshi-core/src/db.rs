@@ -1,8 +1,8 @@
-use crate::error::{CoreError, CoreResult};
+use crate::error::CoreResult;
+use crate::core_err;
 use crate::paths::AppPaths;
-use sqlx::migrate::Migrator;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool, SqlitePoolOptions};
-use std::path::Path;
+use sqlx::migrate::Migrator;
 use std::str::FromStr;
 use tracing::{info, instrument};
 
@@ -10,7 +10,10 @@ pub struct DatabaseManager {
     pool: SqlitePool,
 }
 
+static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
+
 impl DatabaseManager {
+
     #[instrument(skip(paths))]
     pub async fn new(paths: &AppPaths) -> CoreResult<Self> {
         let pool = SqlitePoolOptions::new()
@@ -18,20 +21,20 @@ impl DatabaseManager {
             .connect_with(connect_options(paths)?)
             .await?;
 
-        info!(path = %paths.database_path.display(), "Running database schema migrations");
-        let migrator = Migrator::new(Path::new("../migrations"))
-            .await
-            .map_err(|e| CoreError::Internal(format!("migration setup failed: {e}")))?;
-        migrator
+        info!(
+        path = %paths.database_path.display(),
+        "Running database schema migrations"
+    );
+
+        MIGRATOR
             .run(&pool)
             .await
-            .map_err(|e| CoreError::Internal(format!("migration run failed: {e}")))?;
+            .map_err(|e| core_err!(Internal, "error.system.migration_run_failed", e))?;
+
         info!("All database schemas applied successfully");
 
-        info!(path = %paths.database_path.display(), "Connected to SQLite database (sqlx pool)");
         Ok(Self { pool })
     }
-
     pub fn pool(&self) -> &SqlitePool {
         &self.pool
     }
@@ -43,5 +46,8 @@ fn connect_options(paths: &AppPaths) -> CoreResult<SqliteConnectOptions> {
     Ok(SqliteConnectOptions::from_str(&url)?
         .create_if_missing(true)
         .journal_mode(SqliteJournalMode::Wal)
-        .foreign_keys(true))
+        .foreign_keys(true)
+        .pragma("synchronous", "NORMAL")
+        .pragma("temp_store", "MEMORY")
+        .pragma("mmap_size", "30000000000"))
 }
