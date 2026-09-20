@@ -138,10 +138,6 @@ impl HomeService {
     }
 
     async fn import_and_load(state: &Arc<AppState>, media: &TrackerMedia) -> CoreResult<FullContent> {
-        // Removed the find_cid_by_tracker pre-check that used to be here --
-        // EnrichmentService::create_enriched_content already does this exact
-        // lookup as its first step, so this was a guaranteed duplicate query
-        // on every single import.
         EnrichmentService::create_enriched_content(
             state,
             &media.content_type,

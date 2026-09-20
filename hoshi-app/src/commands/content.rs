@@ -57,7 +57,7 @@ pub async fn search_local_content(
         "novel" => ContentType::Novel,
         _ => return Err(CoreError::Internal("invalid content_type".into())),
     };
-    ContentService::search_local(state.inner(), &query, &content_type).await
+    SearchService::search_local(state.inner(), &query, &content_type).await
 }
 
 #[tauri::command(rename_all = "snake_case")]

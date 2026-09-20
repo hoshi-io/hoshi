@@ -78,7 +78,7 @@ pub async fn require_auth(session_state: &TauriSession) -> Result<i32, CoreError
     })
 }
 
-pub fn run_inner() -> anyhow::Result<()> {
+pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let log_store = new_log_store();
 
     let memory_layer = MemoryLogLayer {
@@ -122,7 +122,7 @@ pub fn run_inner() -> anyhow::Result<()> {
         .register_asynchronous_uri_scheme_protocol("proxy", proxy_protocol::handle_async)
         .setup(move |app| {
             let base_dir = app.path().app_data_dir()
-                .map_err(|e| anyhow::anyhow!("Failed to obtain app_data_dir: {}", e))?;
+                .map_err(|e| format!("Failed to obtain app_data_dir: {e}"))?;
 
             let paths = hoshi_core::paths::AppPaths::from_base(base_dir);
             let headless = std::sync::Arc::new(headless::headless::TauriHeadless::new(app.handle().clone()));
@@ -130,23 +130,20 @@ pub fn run_inner() -> anyhow::Result<()> {
 
             #[cfg(any(windows, target_os = "linux"))]
             {
-                app.deep_link().register_all().map_err(|e| {
-                    error!("Failed to register deep link protocol: {}", e);
-                    e
-                })?;
+                app.deep_link().register_all()?;
             }
 
             async_runtime::block_on(async {
                 let state = hoshi_core::build_app_state(paths, headless, log_store).await
                     .map_err(|e| {
                         error!(error = ?e, "FATAL: Failed to build AppState during startup");
-                        anyhow::anyhow!("AppState Error: {}", e)
+                        e
                     })?;
 
                 app.manage(state);
                 app.manage(TauriSession::default());
 
-                Ok::<(), anyhow::Error>(())
+                Ok::<(), CoreError>(())
             })?;
             Ok(())
         })
@@ -192,13 +189,13 @@ pub fn run_inner() -> anyhow::Result<()> {
             exit_fullscreen,
         ])
         .run(tauri::generate_context!())
-        .map_err(|e| anyhow::anyhow!("Tauri runtime error: {}", e))?;
+        .map_err(|e| format!("Tauri runtime error: {e}"))?;
 
     Ok(())
 }
 
 #[cfg(not(mobile))]
-pub fn run() -> anyhow::Result<()> {
+pub fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     run_inner()
 }
 

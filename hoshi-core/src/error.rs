@@ -65,3 +65,17 @@ impl Serialize for CoreError {
 }
 
 pub type CoreResult<T> = Result<T, CoreError>;
+
+#[macro_export]
+macro_rules! core_err {
+    ($variant:ident, $key:expr, $err:expr) => {{
+        let __e = &$err;
+        tracing::error!(error = ?__e, $key);
+        $crate::error::CoreError::$variant($key.into())
+    }};
+    ($variant:ident, $key:expr, $err:expr, $($fields:tt)+) => {{
+        let __e = &$err;
+        tracing::error!(error = ?__e, $($fields)+, $key);
+        $crate::error::CoreError::$variant($key.into())
+    }};
+}

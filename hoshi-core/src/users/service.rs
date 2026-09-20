@@ -1,6 +1,6 @@
 use bcrypt::{hash, verify, DEFAULT_COST};
 use tracing::{error, info, instrument, warn};
-
+use crate::core_err;
 use crate::error::{CoreError, CoreResult};
 use crate::state::AppState;
 use crate::users::repository::UserRepo;
@@ -47,10 +47,7 @@ impl UserService {
             if password.is_empty() {
                 Some(None)
             } else {
-                let h = hash(password.trim(), DEFAULT_COST).map_err(|e| {
-                    error!(error = ?e, "Failed to hash new password during update");
-                    CoreError::Internal("error.user.hashing_failed".into())
-                })?;
+                let h = hash(password.trim(), DEFAULT_COST).map_err(|e| core_err!(Internal, "error.user.hashing_failed", e))?;
                 Some(Some(h))
             }
         } else {
@@ -117,10 +114,7 @@ impl UserService {
         let has_new_password = body.new_password.is_some();
         let new_hash = match &body.new_password {
             Some(pass) if !pass.is_empty() => {
-                Some(hash(pass.trim(), DEFAULT_COST).map_err(|e| {
-                    error!(error = ?e, "Failed to hash new password during change");
-                    CoreError::Internal("error.user.hashing_failed".into())
-                })?)
+                Some(hash(pass.trim(), DEFAULT_COST).map_err(|e| core_err!(Internal, "error.user.hashing_failed", e))?)
             }
             _ => None,
         };

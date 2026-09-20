@@ -1,10 +1,13 @@
 use std::collections::HashMap;
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
 
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use tracing::{info, warn};
-
+use crate::AppState;
+use crate::config::model::TitleLanguage;
+use crate::config::repository::ConfigRepository;
+use crate::content::models::FullContent;
 use crate::error::{CoreError, CoreResult};
 
 const CHINESE_TITLES_URL: &str =
@@ -86,5 +89,39 @@ impl ChineseTitleService {
             .collect();
 
         Ok(map)
+    }
+
+    pub async fn maybe_inject_chinese_title(state: &Arc<AppState>, full: &mut FullContent) {
+        let config = match ConfigRepository::get_config(&state.pool, 1).await {
+            Ok(c) => c,
+            Err(e) => {
+                warn!(error = ?e, "Could not read user config for Chinese title check");
+                return;
+            }
+        };
+
+        if !matches!(config.ui.title_language, TitleLanguage::Chinese) {
+            ChineseTitleService::evict().await;
+            return;
+        }
+
+        ChineseTitleService::ensure_loaded().await;
+
+        let Some(mapping) = full.tracker_mappings.iter().find(|m| m.tracker_name == "anilist") else {
+            return;
+        };
+
+        let Ok(anilist_id) = mapping.tracker_id.parse::<u32>() else {
+            warn!(tracker_id = %mapping.tracker_id, "AniList tracker_id is not a valid u32, skipping Chinese title");
+            return;
+        };
+
+        let Some(chinese_title) = ChineseTitleService::lookup(anilist_id).await else {
+            return;
+        };
+
+        for meta in &mut full.metadata {
+            meta.title_i18n.insert("chinese".into(), chinese_title.clone());
+        }
     }
 }

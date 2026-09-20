@@ -6,6 +6,7 @@ use crate::content::{repositories::content::ContentRepository};
 use crate::content::repositories::cache::CacheRepository;
 use crate::content::services::content_units;
 use crate::content::services::import::ImportService;
+use crate::core_err;
 use crate::error::{CoreError, CoreResult};
 use crate::list::repository::ListRepository;
 use crate::schedule::types::{AiringEntryEnriched, ScheduleWindow};
@@ -47,9 +48,8 @@ impl ScheduleService {
         let raw: Vec<AiringEntryEnriched> =
             if let Some(cached) = CacheRepository::get(pool, &key).await? {
                 debug!("Schedule cache hit");
-                serde_json::from_value(cached).map_err(|e| {
-                    CoreError::Internal(format!("Failed to deserialise schedule cache: {e}"))
-                })?
+                serde_json::from_value(cached).map_err(|e| core_err!(Internal, "Failed to deserialise schedule cache", e))?
+
             } else {
                 debug!("Schedule cache miss, fetching from AniList");
 

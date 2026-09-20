@@ -15,11 +15,10 @@ pub mod proxy;
 pub mod progress;
 pub mod discord;
 pub mod logs;
-
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 pub mod mpv;
 
-use crate::error::{CoreError, CoreResult};
+use crate::error::CoreResult;
 use headless::HeadlessHandle;
 pub use state::AppState;
 use paths::AppPaths;
@@ -28,22 +27,14 @@ use std::time::Duration;
 use reqwest::Client;
 use tokio::sync::RwLock;
 use tracker::provider::build_registry;
-use tracing::{info, error, instrument};
+use tracing::{info, instrument};
 use crate::content::services::home::HomeService;
 use crate::tracker::sync::StartupSyncService;
 
 #[instrument(skip(log_store, paths, headless))]
-pub async fn build_app_state(
-    paths: AppPaths,
-    headless: HeadlessHandle,
-    log_store: logs::LogStore,
-) -> CoreResult<Arc<AppState>> {
+pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_store: logs::LogStore, ) -> CoreResult<Arc<AppState>> {
     info!("Starting Hoshi Core initialization...");
-
-    paths.ensure_dirs().map_err(|e| {
-        error!("Failed to create application directories: {}", e);
-        CoreError::Internal("error.system.setup_failed".into())
-    })?;
+    paths.ensure_dirs().map_err(|e| core_err!(Internal, "error.system.setup_failed", e))?;
 
     info!("Initializing unified database...");
 
@@ -57,18 +48,14 @@ pub async fn build_app_state(
         .pool_idle_timeout(Duration::from_secs(90))
         .pool_max_idle_per_host(10)
         .build()
-        .map_err(|e| CoreError::Internal(format!("Failed to create HTTP client: {}", e)))?;
+        .map_err(|e| core_err!(Internal, "error.system.http_client_failed", e))?;
 
     info!("Loading extensions from disk...");
-    let mut extension_manager = extensions::ExtensionManager::new(&paths, http_client.clone()).map_err(|e| {
-        error!("Failed to initialize extension manager: {}", e);
-        CoreError::Internal("error.system.setup_failed".into())
-    })?;
+    let mut extension_manager = extensions::ExtensionManager::new(&paths, http_client.clone())
+        .map_err(|e| core_err!(Internal, "error.system.setup_failed", e))?;
 
-    extension_manager.load_extensions().await.map_err(|e| {
-        error!("Failed to load extensions: {}", e);
-        CoreError::Internal("error.system.setup_failed".into())
-    })?;
+    extension_manager.load_extensions().await
+        .map_err(|e| core_err!(Internal, "error.system.setup_failed", e))?;
 
     extension_manager.set_headless(headless.clone());
     let ext_manager_arc = Arc::new(RwLock::new(extension_manager));

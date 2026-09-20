@@ -1,8 +1,9 @@
 use bcrypt::{hash, verify, DEFAULT_COST};
-use tracing::{error, info, instrument, warn};
+use tracing::{info, instrument, warn};
 
 use crate::auth::repository::AuthRepository;
 use crate::auth::types::{LoginRequest, RegisterRequest, UserInfo};
+use crate::core_err;
 use crate::error::{CoreError, CoreResult};
 use crate::state::AppState;
 use crate::users::repository::UserRepo;
@@ -32,10 +33,8 @@ impl AuthService {
                 CoreError::AuthError("error.auth.password_required".into())
             })?;
 
-            let is_valid = verify(&password_input, &hash_str).map_err(|e| {
-                error!(error = ?e, "Failed to verify password hash");
-                CoreError::Internal("error.auth.password_verification_failed".into())
-            })?;
+            let is_valid = verify(&password_input, &hash_str)
+                .map_err(|e| core_err!(Internal, "error.auth.password_verification_failed", e))?;
 
             if !is_valid {
                 warn!("Login rejected: incorrect password");
@@ -66,10 +65,8 @@ impl AuthService {
             .map(str::trim)
             .filter(|p| !p.is_empty())
             .map(|p| {
-                hash(p, DEFAULT_COST).map_err(|e| {
-                    error!(error = ?e, "Failed to hash password");
-                    CoreError::Internal("error.auth.hashing_failed".into())
-                })
+                hash(p, DEFAULT_COST)
+                    .map_err(|e| core_err!(Internal, "error.auth.hashing_failed", e))
             })
             .transpose()?;
 

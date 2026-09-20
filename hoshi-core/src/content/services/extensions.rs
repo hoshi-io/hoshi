@@ -1,20 +1,22 @@
+use std::future::Future;
 use std::sync::Arc;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
+use sqlx::SqlitePool;
 use tracing::{debug, error, info, instrument, warn};
 use crate::content::models::ContentType;
 use crate::content::repositories::cache::CacheRepository;
 use crate::content::repositories::extension::ExtensionRepository;
 use crate::content::repositories::content::ContentRepository;
+use crate::content::services::aniskip::AniSkipService;
 use crate::content::services::resolver::ContentResolverService;
 use crate::error::{CoreError, CoreResult};
-use crate::tracker::repository::TrackerRepository;
-use crate::content::types::AniSkipResponse;
-use crate::extensions::types::{ContentItems, EpisodeChapter, PlayContentResult};
+use crate::extensions::types::{ContentItems, PlayContentResult};
 use crate::state::AppState;
 
 pub struct ExtensionService;
 
 impl ExtensionService {
-
     #[instrument(skip(state))]
     pub async fn save_extension_metadata(
         state: &Arc<AppState>,
@@ -40,6 +42,33 @@ impl ExtensionService {
             Err(e) => error!(cid = %cid, source = %ext_name, error = ?e, "Failed to upsert extension metadata"),
         }
     }
+    
+    async fn cached_or<T, F, Fut>(
+        pool: &SqlitePool,
+        cache_key: &str,
+        ext_name: &str,
+        cache_type: &str,
+        fetch: F,
+    ) -> CoreResult<T>
+    where
+        T: Serialize + DeserializeOwned,
+        F: FnOnce() -> Fut,
+        Fut: Future<Output = CoreResult<(T, i64)>>,
+    {
+        if let Ok(Some(cached)) = CacheRepository::get(pool, cache_key).await {
+            if let Ok(value) = serde_json::from_value(cached) {
+                return Ok(value);
+            }
+        }
+
+        let (value, ttl) = fetch().await?;
+
+        if let Ok(json) = serde_json::to_value(&value) {
+            let _ = CacheRepository::set(pool, cache_key, ext_name, cache_type, &json, ttl).await;
+        }
+
+        Ok(value)
+    }
 
     #[instrument(skip(state))]
     pub async fn get_content_items(
@@ -49,38 +78,21 @@ impl ExtensionService {
     ) -> CoreResult<ContentItems> {
         let cache_key = format!("items:{}:{}", ext_name, cid);
 
-        if let Ok(Some(cached_val)) = CacheRepository::get(&state.pool, &cache_key).await {
-            if let Ok(items) = serde_json::from_value::<ContentItems>(cached_val) {
-                return Ok(items);
-            }
-        }
+        Self::cached_or(&state.pool, &cache_key, ext_name, "content_items", || async {
+            let (content_type, ext_id) = ContentResolverService::ensure_extension_link(state, cid, ext_name).await?;
+            let manager = state.extension_manager.read().await;
 
-        let (content_type, ext_id) =
-            ContentResolverService::ensure_extension_link(state, cid, ext_name).await?;
+            let items = match content_type {
+                ContentType::Anime => ContentItems::Episodes(manager.find_episodes(ext_name, &ext_id).await?),
+                _ => ContentItems::Chapters(manager.find_chapters(ext_name, &ext_id).await?),
+            };
 
-        let manager = state.extension_manager.read().await;
-
-        let items = match content_type {
-            ContentType::Anime => {
-                let eps = manager.find_episodes(ext_name, &ext_id).await?;
-                ContentItems::Episodes(eps)
-            }
-            _ => {
-                let ch = manager.find_chapters(ext_name, &ext_id).await?;
-                ContentItems::Chapters(ch)
-            }
-        };
-
-        let ttl = match content_type {
-            ContentType::Anime => 10800,
-            _ => 86400,
-        };
-
-        if let Ok(val) = serde_json::to_value(&items) {
-            let _ = CacheRepository::set(&state.pool, &cache_key, ext_name, "content_items", &val, ttl).await;
-        }
-
-        Ok(items)
+            let ttl = match content_type {
+                ContentType::Anime => 10800,
+                _ => 86400,
+            };
+            Ok((items, ttl))
+        }).await
     }
 
     #[instrument(skip(state, server, category))]
@@ -104,25 +116,7 @@ impl ExtensionService {
             (ct, id)
         };
 
-        let real_id = match &items_list {
-            ContentItems::Episodes(eps) => eps
-                .iter()
-                .find(|ep| {
-                    ep.number
-                        .map(|n| (n - number).abs() < 0.01)
-                        .unwrap_or(false)
-                })
-                .map(|ep| ep.id.clone()),
-
-            ContentItems::Chapters(ch) => ch
-                .iter()
-                .find(|c| {
-                    c.number
-                        .map(|n| (n - number).abs() < 0.01)
-                        .unwrap_or(false)
-                })
-                .map(|c| c.id.clone()),
-        }
+        let real_id = Self::find_item_id(&items_list, number)
             .ok_or_else(|| {
                 warn!(cid = %cid, ext = %ext_name, number = %number, "Item number not found");
                 CoreError::NotFound("error.content.item_number_not_found".into())
@@ -136,120 +130,46 @@ impl ExtensionService {
                 let cat = category.unwrap_or_else(|| "sub".into());
                 let cache_key = format!("play:anime:{}:{}:{}:{}", ext_name, real_id, srv, cat);
 
-                if let Ok(Some(cached_val)) = CacheRepository::get(&state.pool, &cache_key).await {
-                    if let Ok(res) = serde_json::from_value::<PlayContentResult>(cached_val) {
-                        return Ok(res);
+                Self::cached_or(&state.pool, &cache_key, ext_name, "play_anime", || async {
+                    debug!(ext = %ext_name, id = %real_id, server = %srv, "Fetching video servers");
+                    let mut data = manager.find_episode_server(ext_name, &real_id, &srv, &cat).await?;
+
+                    if data.source.chapters.is_empty() {
+                        data.source.chapters = AniSkipService::fetch_chapters(state, cid, number).await;
                     }
-                }
 
-                debug!(ext = %ext_name, id = %real_id, server = %srv, "Fetching video servers");
-
-                let mut data = manager.find_episode_server(ext_name, &real_id, &srv, &cat).await?;
-
-                if data.source.chapters.is_empty() {
-                    let mappings = TrackerRepository::get_mappings_by_cid(&state.pool, cid).await.unwrap_or_default();
-
-                    let mal_id = mappings.iter()
-                        .find(|m| m.tracker_name == "mal")
-                        .and_then(|m| {
-                            m.tracker_id.strip_prefix("anime:")?.parse::<i64>().ok()
-                        });
-
-                    if let Some(id) = mal_id {
-                        debug!(mal_id = %id, ep = %number, "Chapters empty, fetching from AniSkip");
-
-                        let url = format!("https://api.aniskip.com/v2/skip-times/{}/{}", id, number);
-
-                        let res = state.http_client
-                            .get(url)
-                            .query(&[
-                                ("types", "op"),
-                                ("types", "ed"),
-                                ("types", "recap"),
-                                ("types", "mixed-op"),
-                                ("types", "mixed-ed"),
-                                ("episodeLength", "0"),
-                            ])
-                            .send()
-                            .await;
-
-                        if let Ok(response) = res {
-                            if let Ok(skip_data) = response.json::<AniSkipResponse>().await {
-                                let mut chapters: Vec<EpisodeChapter> = skip_data.results.into_iter().map(|r| {
-                                    let title = match r.skip_type.as_str() {
-                                        "op" => "Opening",
-                                        "ed" => "Ending",
-                                        "recap" => "Recap",
-                                        "mixed-op" => "Mixed Opening",
-                                        "mixed-ed" => "Mixed Ending",
-                                        _ => "Skip",
-                                    };
-
-                                    EpisodeChapter {
-                                        start: r.interval.start_time,
-                                        end: r.interval.end_time,
-                                        title: title.to_string(),
-                                    }
-                                }).collect();
-
-                                chapters.sort_by(|a, b| a.start.partial_cmp(&b.start).unwrap());
-                                data.source.chapters = chapters;
-                            }
-                        }
-                    }
-                }
-
-                let result = PlayContentResult::Video(data);
-
-                // Cache stream links with a low TTL (30 minutes)
-                if let Ok(val) = serde_json::to_value(&result) {
-                    let _ = CacheRepository::set(&state.pool, &cache_key, ext_name, "play_anime", &val, 1800).await;
-                }
-
-                Ok(result)
+                    Ok((PlayContentResult::Video(data), 1800)) // stream links: short TTL
+                }).await
             }
 
             ContentType::Manga => {
                 let cache_key = format!("play:manga:{}:{}", ext_name, real_id);
 
-                if let Ok(Some(cached_val)) = CacheRepository::get(&state.pool, &cache_key).await {
-                    if let Ok(res) = serde_json::from_value::<PlayContentResult>(cached_val) {
-                        return Ok(res);
-                    }
-                }
-
-                debug!(ext = %ext_name, id = %real_id, "Fetching chapter pages");
-
-                let data = manager.find_manga_pages(ext_name, &real_id).await?;
-                let result = PlayContentResult::Reader(data);
-
-                if let Ok(val) = serde_json::to_value(&result) {
-                    let _ = CacheRepository::set(&state.pool, &cache_key, ext_name, "play_manga", &val, 86400).await;
-                }
-
-                Ok(result)
+                Self::cached_or(&state.pool, &cache_key, ext_name, "play_manga", || async {
+                    debug!(ext = %ext_name, id = %real_id, "Fetching chapter pages");
+                    let data = manager.find_manga_pages(ext_name, &real_id).await?;
+                    Ok((PlayContentResult::Reader(data), 86400))
+                }).await
             }
 
             ContentType::Novel => {
                 let cache_key = format!("play:novel:{}:{}", ext_name, real_id);
 
-                if let Ok(Some(cached_val)) = CacheRepository::get(&state.pool, &cache_key).await {
-                    if let Ok(res) = serde_json::from_value::<PlayContentResult>(cached_val) {
-                        return Ok(res);
-                    }
-                }
-
-                debug!(ext = %ext_name, id = %real_id, "Fetching novel HTML");
-
-                let html = manager.find_novel_html(ext_name, &real_id).await?;
-                let result = PlayContentResult::Novel(html);
-
-                if let Ok(val) = serde_json::to_value(&result) {
-                    let _ = CacheRepository::set(&state.pool, &cache_key, ext_name, "play_novel", &val, 86400).await;
-                }
-
-                Ok(result)
+                Self::cached_or(&state.pool, &cache_key, ext_name, "play_novel", || async {
+                    debug!(ext = %ext_name, id = %real_id, "Fetching novel HTML");
+                    let html = manager.find_novel_html(ext_name, &real_id).await?;
+                    Ok((PlayContentResult::Novel(html), 86400))
+                }).await
             }
+        }
+    }
+
+    fn find_item_id(items: &ContentItems, number: f64) -> Option<String> {
+        let matches_number = |n: Option<f64>| n.map(|n| (n - number).abs() < 0.01).unwrap_or(false);
+
+        match items {
+            ContentItems::Episodes(eps) => eps.iter().find(|ep| matches_number(ep.number)).map(|ep| ep.id.clone()),
+            ContentItems::Chapters(ch) => ch.iter().find(|c| matches_number(c.number)).map(|c| c.id.clone()),
         }
     }
 }

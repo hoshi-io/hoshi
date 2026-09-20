@@ -1,7 +1,9 @@
 use std::sync::Arc;
 use serde_json::{json, Value};
 use tracing::{error, instrument};
-use crate::content::types::{parse_content_type, SearchParams};
+use crate::content::models::ContentType;
+use crate::content::repositories::content::ContentRepository;
+use crate::content::types::{parse_content_type, SearchParams, SearchResult};
 use crate::content::utils::show_adult;
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::types::ExtensionSearchResult;
@@ -88,5 +90,16 @@ impl SearchService {
         }
 
         Ok(results)
+    }
+
+    pub async fn search_local(
+        state: &AppState,
+        query: &str,
+        content_type: &ContentType,
+    ) -> CoreResult<Vec<SearchResult>> {
+        if query.trim().len() < 2 {
+            return Ok(vec![]);
+        }
+        ContentRepository::search_local(&state.pool, query, content_type).await
     }
 }

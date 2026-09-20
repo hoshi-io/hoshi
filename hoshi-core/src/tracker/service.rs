@@ -5,6 +5,7 @@ use tracing::{error, info, instrument, warn};
 
 use crate::content::models::ContentType;
 use crate::content::services::enrichment::EnrichmentService;
+use crate::core_err;
 use crate::error::{CoreError, CoreResult};
 use crate::list::merge::MergeService;
 use crate::state::AppState;
@@ -114,14 +115,14 @@ impl TrackerService {
                     ("redirect_uri", "hoshi://auth"),
                 ])
                 .send().await
-                .map_err(|_| CoreError::Network("error.tracker.token_exchange_network_error".into()))?;
+                .map_err(|e| core_err!(Network, "error.tracker.token_exchange_network_error", e))?;
 
             if !res.status().is_success() {
                 return Err(CoreError::AuthError("error.tracker.token_exchange_failed".into()));
             }
             #[derive(serde::Deserialize)] struct R { access_token: String }
             res.json::<R>().await
-                .map_err(|_| CoreError::Parse("error.system.serialization".into()))?.access_token
+                .map_err(|e| core_err!(Parse, "error.system.serialization", e))?.access_token
 
         } else if let Some(token) = body.access_token {
             token
@@ -142,14 +143,14 @@ impl TrackerService {
                     ("client_id", client_id),
                 ])
                 .send().await
-                .map_err(|_| CoreError::Network("error.tracker.auth_network_error".into()))?;
+                .map_err(|e| core_err!(Network, "error.tracker.auth_network_error", e))?;
 
             if !res.status().is_success() {
                 return Err(CoreError::AuthError("error.tracker.invalid_credentials".into()));
             }
             #[derive(serde::Deserialize)] struct R { access_token: String }
             res.json::<R>().await
-                .map_err(|_| CoreError::Parse("error.system.serialization".into()))?.access_token
+                .map_err(|e| core_err!(Parse, "error.system.serialization", e))?.access_token
         } else {
             return Err(CoreError::AuthError("error.tracker.missing_credentials".into()));
         };
@@ -366,13 +367,10 @@ async fn fetch_anime_tsv(
         .get(ANIME_TSV_URL)
         .send()
         .await
-        .map_err(|e| {
-            error!(error = ?e, "TSV download failed");
-            CoreError::Network("error.import.tsv_download_failed".into())
-        })?
+        .map_err(|e| core_err!(Network, "error.import.tsv_download_failed", e))?
         .text()
         .await
-        .map_err(|_| CoreError::Parse("error.import.tsv_parse_failed".into()))?;
+        .map_err(|e| core_err!(Parse, "error.import.tsv_parse_failed", e))?;
 
     let mut lines = text.lines();
     let header_line = lines.next()

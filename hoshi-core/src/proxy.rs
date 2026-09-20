@@ -7,8 +7,9 @@ use futures::{Stream, TryStreamExt};
 use std::pin::Pin;
 use bytes::Bytes;
 use regex::Regex;
-use tracing::{debug, warn, error, instrument};
+use tracing::{debug, warn, instrument};
 
+use crate::core_err;
 use crate::error::{CoreError, CoreResult};
 use crate::state::AppState;
 
@@ -92,7 +93,7 @@ impl ProxyService {
         }
 
         let response = upstream_res.ok_or_else(|| {
-            error!(error = ?last_error, "Proxy upstream failed after all retries");
+            tracing::error!(error = ?last_error, "error.proxy.upstream_timeout");
             CoreError::Network("error.proxy.upstream_timeout".into())
         })?;
 
@@ -103,10 +104,8 @@ impl ProxyService {
         let mut headers = HeaderMap::new();
 
         let ua = params.user_agent.as_deref().unwrap_or("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-        headers.insert("User-Agent", HeaderValue::from_str(ua).map_err(|e| {
-            warn!(error = ?e, "Invalid User-Agent string provided");
-            CoreError::BadRequest("error.proxy.invalid_header".into())
-        })?);
+        headers.insert("User-Agent", HeaderValue::from_str(ua)
+            .map_err(|e| core_err!(BadRequest, "error.proxy.invalid_header", e))?);
 
         headers.insert("Accept", HeaderValue::from_static("*/*"));
         headers.insert("Accept-Language", HeaderValue::from_static("en-US,en;q=0.9"));
@@ -163,16 +162,10 @@ impl ProxyService {
         if is_m3u8 {
             debug!("Processing response as HLS m3u8 playlist");
             let body_text = response.text().await
-                .map_err(|e| {
-                    error!(error = ?e, "Failed to read m3u8 body text");
-                    CoreError::Network("error.proxy.body_read_failed".into())
-                })?;
+                .map_err(|e| core_err!(Network, "error.proxy.body_read_failed", e))?;
 
             let base_url = Url::parse(&params.url)
-                .map_err(|e| {
-                    error!(error = ?e, url = %params.url, "Invalid upstream URL");
-                    CoreError::Internal("error.proxy.invalid_upstream_url".into())
-                })?;
+                .map_err(|e| core_err!(Internal, "error.proxy.invalid_upstream_url", e, url = %params.url))?;
 
             let processed = Self::process_m3u8_content(&body_text, &base_url, params)?;
 
@@ -193,10 +186,7 @@ impl ProxyService {
 
         if is_subtitle {
             let body_text = response.text().await
-                .map_err(|e| {
-                    error!(error = ?e, "Failed to read subtitle body text");
-                    CoreError::Network("error.proxy.body_read_failed".into())
-                })?;
+                .map_err(|e| core_err!(Network, "error.proxy.body_read_failed", e))?;
 
             let mime_type = if params.url.contains(".srt") || content_type_str.as_deref().map(|ct| ct.contains("srt")).unwrap_or(false) {
                 "text/plain"
@@ -269,10 +259,7 @@ impl ProxyService {
         let mut result = Vec::with_capacity(lines.len());
 
         let uri_regex = Regex::new(r#"URI="([^"]+)""#)
-            .map_err(|e| {
-                error!(error = ?e, "Failed to compile regex");
-                CoreError::Internal("error.system.serialization".into())
-            })?;
+            .map_err(|e| core_err!(Internal, "error.system.serialization", e))?;
 
         for line in lines {
             let trimmed = line.trim();

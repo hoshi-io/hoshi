@@ -116,13 +116,12 @@ impl UserRepo {
             return Ok(0);
         }
 
-        // Construimos la query dinámicamente con QueryBuilder
         let set_clause = fields.iter()
             .map(|f| format!("{} = ?", f))
             .collect::<Vec<_>>()
             .join(", ");
-        let sql = format!("UPDATE User SET {} WHERE id = ?", set_clause);
 
+        let sql = format!("UPDATE User SET {} WHERE id = ?", set_clause);
         let mut query = sqlx::query(&sql);
 
         if let Some(username) = &updates.username {
