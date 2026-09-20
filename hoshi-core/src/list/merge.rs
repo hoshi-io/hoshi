@@ -99,9 +99,25 @@ impl MergeService {
         ).await? {
             Some(cid) => cid,
             None => {
+                let owned_media;
                 let media = match &entry.media {
                     Some(m) => m,
-                    None => return Ok(false),
+                    None => {
+                        let provider = state.tracker_registry.get(tracker_name).ok_or_else(|| {
+                            crate::error::CoreError::Internal("error.tracker.not_in_registry".into())
+                        })?;
+                        match provider.get_by_id(&entry.tracker_media_id).await {
+                            Ok(Some(m)) => { owned_media = m; &owned_media }
+                            Ok(None) => {
+                                warn!(tracker = %tracker_name, id = %entry.tracker_media_id, "No inline media and get_by_id returned nothing, skipping entry");
+                                return Ok(false);
+                            }
+                            Err(e) => {
+                                warn!(error = ?e, tracker = %tracker_name, id = %entry.tracker_media_id, "No inline media and get_by_id failed, skipping entry");
+                                return Ok(false);
+                            }
+                        }
+                    }
                 };
                 let full = EnrichmentService::create_enriched_content(
                     state, &entry.content_type, media,
@@ -116,13 +132,15 @@ impl MergeService {
 
         let local = ListRepository::get_entry(&state.pool, user_id, &cid).await?;
 
-        let (final_progress, final_status, final_score, final_start, final_end) = match &local {
+        let (final_progress, final_status, final_score, final_start, final_end, final_notes, final_repeat_count) = match &local {
             None => (
                 entry.progress,
                 Self::normalize_tracker_status(&entry.status.clone().unwrap_or_else(|| "PLANNING".into())),
                 entry.score,
                 entry.start_date.clone(),
                 entry.end_date.clone(),
+                entry.notes.clone(),
+                entry.repeat_count,
             ),
             Some(l) => {
                 let remote_status = Self::normalize_tracker_status(&entry.status.clone().unwrap_or_else(|| "PLANNING".into()));
@@ -130,10 +148,12 @@ impl MergeService {
                     MergeStrategy::KeepLocal => (
                         l.progress, l.status.clone(), l.score,
                         l.start_date.clone(), l.end_date.clone(),
+                        l.notes.clone(), l.repeat_count,
                     ),
                     MergeStrategy::KeepRemote => (
                         entry.progress, remote_status, entry.score,
                         entry.start_date.clone(), entry.end_date.clone(),
+                        entry.notes.clone(), entry.repeat_count,
                     ),
                     MergeStrategy::KeepHighest => (
                         entry.progress.max(l.progress),
@@ -141,46 +161,57 @@ impl MergeService {
                         entry.score.or(l.score),
                         l.start_date.clone().or(entry.start_date.clone()),
                         l.end_date.clone().or(entry.end_date.clone()),
+                        entry.notes.clone().or_else(|| l.notes.clone()),
+                        entry.repeat_count.max(l.repeat_count),
                     ),
                     MergeStrategy::KeepLatest => (
                         entry.progress, remote_status, entry.score,
                         entry.start_date.clone(), entry.end_date.clone(),
+                        entry.notes.clone(), entry.repeat_count,
                     ),
                     MergeStrategy::AnilistFirst => {
                         if tracker_name == "anilist" {
                             (entry.progress, remote_status, entry.score,
-                             entry.start_date.clone(), entry.end_date.clone())
+                             entry.start_date.clone(), entry.end_date.clone(),
+                             entry.notes.clone(), entry.repeat_count)
                         } else {
                             (l.progress, l.status.clone(), l.score,
-                             l.start_date.clone(), l.end_date.clone())
+                             l.start_date.clone(), l.end_date.clone(),
+                             l.notes.clone(), l.repeat_count)
                         }
                     },
                     MergeStrategy::MalFirst => {
                         if tracker_name == "myanimelist" || tracker_name == "mal" {
                             (entry.progress, remote_status, entry.score,
-                             entry.start_date.clone(), entry.end_date.clone())
+                             entry.start_date.clone(), entry.end_date.clone(),
+                             entry.notes.clone(), entry.repeat_count)
                         } else {
                             (l.progress, l.status.clone(), l.score,
-                             l.start_date.clone(), l.end_date.clone())
+                             l.start_date.clone(), l.end_date.clone(),
+                             l.notes.clone(), l.repeat_count)
                         }
                     },
                     MergeStrategy::KitsuFirst => {
                         if tracker_name == "kitsu" {
                             (entry.progress, remote_status, entry.score,
-                             entry.start_date.clone(), entry.end_date.clone())
+                             entry.start_date.clone(), entry.end_date.clone(),
+                             entry.notes.clone(), entry.repeat_count)
                         } else {
                             (l.progress, l.status.clone(), l.score,
-                             l.start_date.clone(), l.end_date.clone())
+                             l.start_date.clone(), l.end_date.clone(),
+                             l.notes.clone(), l.repeat_count)
                         }
                     },
 
                     MergeStrategy::SimklFirst => {
                         if tracker_name == "simkl" {
                             (entry.progress, remote_status, entry.score,
-                             entry.start_date.clone(), entry.end_date.clone())
+                             entry.start_date.clone(), entry.end_date.clone(),
+                             entry.notes.clone(), entry.repeat_count)
                         } else {
                             (l.progress, l.status.clone(), l.score,
-                             l.start_date.clone(), l.end_date.clone())
+                             l.start_date.clone(), l.end_date.clone(),
+                             l.notes.clone(), l.repeat_count)
                         }
                     },
                 }
@@ -189,7 +220,15 @@ impl MergeService {
 
         let needs_update = match &local {
             None => true,
-            Some(l) => l.progress != final_progress || l.status != final_status,
+            Some(l) => {
+                l.progress != final_progress
+                    || l.status != final_status
+                    || l.score != final_score
+                    || l.start_date != final_start
+                    || l.end_date != final_end
+                    || l.notes != final_notes
+                    || l.repeat_count != final_repeat_count
+            }
         };
 
         let pool = &state.pool;
@@ -202,8 +241,8 @@ impl MergeService {
                 score:        final_score,
                 start_date:   final_start.clone(),
                 end_date:     final_end.clone(),
-                repeat_count: Some(entry.repeat_count),
-                notes:        entry.notes.clone(),
+                repeat_count: Some(final_repeat_count),
+                notes:        final_notes.clone(),
                 is_private:   Some(config.list.private_by_default || entry.is_private),
             };
 
@@ -213,21 +252,22 @@ impl MergeService {
             ).await?;
         }
 
-        if let Ok(Some(saved)) = ListRepository::get_entry(pool, user_id, &cid).await {
-            if let Some(entry_id) = saved.id {
-                if needs_update {
-                    let changes = Self::diff_entry(local.as_ref(), &saved);
-                    if !changes.is_empty() {
-                        if let Err(e) = ListRepository::insert_changes(
-                            pool, entry_id, user_id,
-                            "REMOTE_SYNC", Some(tracker_name), &changes,
-                        ).await {
-                            warn!(error = ?e, "Failed to write sync changelog");
+        match ListRepository::get_entry(pool, user_id, &cid).await {
+            Ok(Some(saved)) => {
+                if let Some(entry_id) = saved.id {
+                    if needs_update {
+                        let changes = Self::diff_entry(local.as_ref(), &saved);
+                        if !changes.is_empty() {
+                            if let Err(e) = ListRepository::insert_changes(
+                                pool, entry_id, user_id,
+                                "REMOTE_SYNC", Some(tracker_name), &changes,
+                            ).await {
+                                warn!(error = ?e, "Failed to write sync changelog");
+                            }
                         }
                     }
-                }
 
-                let snapshot = serde_json::json!({
+                    let snapshot = serde_json::json!({
                     "status": entry.status,
                     "progress": entry.progress,
                     "score": entry.score,
@@ -236,11 +276,18 @@ impl MergeService {
                     "repeatCount": entry.repeat_count,
                 });
 
-                if let Err(e) = ListRepository::upsert_entry_source(
-                    pool, entry_id, user_id, tracker_name, &entry.tracker_media_id, &snapshot,
-                ).await {
-                    warn!(error = ?e, "Failed to write entry source on sync");
+                    if let Err(e) = ListRepository::upsert_entry_source(
+                        pool, entry_id, user_id, tracker_name, &entry.tracker_media_id, &snapshot,
+                    ).await {
+                        warn!(error = ?e, "Failed to write entry source on sync");
+                    }
                 }
+            }
+            Ok(None) => {
+                warn!(cid = %cid, user_id, "Entry vanished immediately after upsert -- changelog and entry-source snapshot were skipped");
+            }
+            Err(e) => {
+                warn!(error = ?e, cid = %cid, user_id, "Failed to re-fetch entry after upsert -- changelog and entry-source snapshot were skipped");
             }
         }
 

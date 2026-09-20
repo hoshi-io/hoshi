@@ -1,4 +1,4 @@
-use sqlx::SqlitePool;
+use sqlx::{Sqlite, SqlitePool};
 
 use crate::content::models::ContentUnit;
 use crate::error::CoreResult;
@@ -6,7 +6,11 @@ use crate::error::CoreResult;
 pub struct UnitRepository;
 
 impl UnitRepository {
-    pub async fn upsert(pool: &SqlitePool, unit: &ContentUnit) -> CoreResult<()> {
+
+    pub async fn upsert<'e, E>(executor: E, unit: &ContentUnit) -> CoreResult<()>
+    where
+        E: sqlx::Executor<'e, Database = Sqlite>,
+    {
         sqlx::query(
             r#"
         INSERT INTO content_units (
@@ -32,7 +36,7 @@ impl UnitRepository {
             .bind(unit.absolute_number)
             .bind(unit.created_at)
             .bind(unit.created_at)
-            .execute(pool)
+            .execute(executor)
             .await?;
 
         Ok(())

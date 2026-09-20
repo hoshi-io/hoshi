@@ -8,3 +8,4 @@ pub mod home;
 pub mod enrichment;
 pub mod content_units;
 mod chinese_title;
+pub mod relation_tree;

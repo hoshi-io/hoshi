@@ -11,6 +11,7 @@ use hoshi_core::content::services::content::ContentService;
 use hoshi_core::content::services::extensions::ExtensionService;
 use hoshi_core::content::services::home::HomeService;
 use hoshi_core::content::services::mapping::MappingService;
+use hoshi_core::content::services::relation_tree::RelationTreeService;
 use hoshi_core::content::services::search::SearchService;
 use hoshi_core::content::types::{ContentListResponse, HomeView, RelationGraph, SearchParams, SearchResult, UpdateExtensionMappingRequest, UpdateTrackerMappingRequest};
 use hoshi_core::extensions::types::{ContentItems, ExtensionSearchResult, PlayContentResult};
@@ -197,7 +198,7 @@ pub async fn get_relation_tree(
     state: State<'_, Arc<AppState>>,
     cid: String,
 ) -> Result<RelationGraph, CoreError> {
-    ContentService::get_relation_tree(state.inner(), &cid).await
+    RelationTreeService::get_relation_tree(state.inner(), &cid).await
 }
 
 #[tauri::command]

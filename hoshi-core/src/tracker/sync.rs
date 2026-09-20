@@ -1,10 +1,13 @@
 use std::sync::Arc;
 use tracing::{error, info, warn};
 use crate::config::repository::ConfigRepository;
+use crate::content::models::ContentType;
 use crate::state::AppState;
 use crate::tracker::repository::TrackerRepository;
 use crate::users::repository::UserRepo;
 use crate::list::merge::MergeService;
+
+const MANGA_RATE_LIMIT_MS: u64 = 500;
 
 pub struct StartupSyncService;
 
@@ -77,6 +80,9 @@ impl StartupSyncService {
                         let mut skipped  = 0usize;
 
                         for entry in entries {
+                            if matches!(entry.content_type, ContentType::Manga | ContentType::Novel) {
+                                tokio::time::sleep(tokio::time::Duration::from_millis(MANGA_RATE_LIMIT_MS)).await;
+                            }
                             match MergeService::merge_entry(&state, integration.user_id, &integration.tracker_name, &entry).await {
                                 Ok(true)  => imported += 1,
                                 Ok(false) => skipped  += 1,

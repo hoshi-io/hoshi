@@ -420,5 +420,8 @@ async fn fetch_anime_tsv(
     }
 
     info!(rows = index.len(), source = %source_tracker, "TSV index built");
+    if index.is_empty() {
+        warn!("Anime TSV index is empty after parsing -- headers may have changed upstream, silently falling back to per-item mapping calls for every anime in this import");
+    }
     Ok(index)
 }

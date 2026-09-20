@@ -56,14 +56,20 @@ impl EnrichmentService {
                 tracker_url: None,
                 created_at: now,
                 updated_at: now,
-            }).await.ok();
+            }).await.unwrap_or_else(|e| warn!(error = ?e, cid = %cid, tracker = %tracker, "Failed to persist tracker mapping"));
             return Ok(ContentRepository::get_full_content(&state.pool, &cid).await?);
         }
+        
+        let lookups = media.cross_ids.iter().map(|(cross_tracker, cross_id)| {
+            let pool = &state.pool;
+            async move {
+                let result = TrackerRepository::find_cid_by_tracker(pool, cross_tracker, cross_id).await;
+                (cross_tracker.clone(), result)
+            }
+        });
 
-        for (cross_tracker, cross_id) in &media.cross_ids {
-            if let Ok(Some(cid)) = TrackerRepository::find_cid_by_tracker(
-                &state.pool, cross_tracker, cross_id
-            ).await {
+        for (cross_tracker, result) in futures::future::join_all(lookups).await {
+            if let Ok(Some(cid)) = result {
                 info!(cid = %cid, via = %cross_tracker, "Found existing CID via cross-ID, linking");
                 let now = chrono::Utc::now().timestamp();
                 MappingService::add_tracker_mapping(&state.pool, TrackerMapping {
@@ -73,7 +79,7 @@ impl EnrichmentService {
                     tracker_url: None,
                     created_at: now,
                     updated_at: now,
-                }).await.ok();
+                }).await.unwrap_or_else(|e| warn!(error = ?e, cid = %cid, "Failed to persist tracker mapping"));
                 return Ok(ContentRepository::get_full_content(&state.pool, &cid).await?);
             }
         }
@@ -129,7 +135,7 @@ impl EnrichmentService {
                     error!(error = ?e, "Failed to parse anime mappings");
                     CoreError::Parse("error.system.parse".into())
                 })?;
-                
+
                 let ids = Self::extract_anime_cross_ids(&data);
                 ids
             }

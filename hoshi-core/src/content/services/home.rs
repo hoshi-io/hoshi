@@ -4,14 +4,12 @@ use tokio::sync::Semaphore;
 use tracing::{error, info, warn};
 use crate::content::models::FullContent;
 use crate::content::repositories::cache::CacheRepository;
-use crate::content::repositories::content::ContentRepository;
 use crate::content::services::enrichment::EnrichmentService;
 use crate::content::types::{HomeView, AnimeSection, MangaSection, NovelSection};
 use crate::content::utils::show_adult;
 use crate::error::{CoreError, CoreResult};
 use crate::state::AppState;
 use crate::tracker::provider::TrackerMedia;
-use crate::tracker::repository::TrackerRepository;
 
 const HOME_CACHE_KEY: &str = "home_view_v1";
 const HOME_CACHE_TTL: i64  = 6 * 3600;
@@ -140,15 +138,10 @@ impl HomeService {
     }
 
     async fn import_and_load(state: &Arc<AppState>, media: &TrackerMedia) -> CoreResult<FullContent> {
-        let existing = TrackerRepository::find_cid_by_tracker(
-            &state.pool, "anilist", &media.tracker_id,
-        ).await?;
-
-        if let Some(cid) = existing {
-            return ContentRepository::get_full_content(&state.pool, &cid).await?
-                .ok_or_else(|| CoreError::NotFound("error.content.not_found".into()));
-        }
-
+        // Removed the find_cid_by_tracker pre-check that used to be here --
+        // EnrichmentService::create_enriched_content already does this exact
+        // lookup as its first step, so this was a guaranteed duplicate query
+        // on every single import.
         EnrichmentService::create_enriched_content(
             state,
             &media.content_type,

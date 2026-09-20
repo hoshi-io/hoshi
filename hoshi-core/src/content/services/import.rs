@@ -1,7 +1,6 @@
 use sqlx::SqlitePool;
 use serde_json::json;
 use tracing::{info, instrument, warn};
-use async_recursion::async_recursion;
 
 use crate::content::models::{ContentType, EpisodeData, Metadata, Relation, RelationType, Status};
 use crate::content::repositories::content::ContentRepository;
@@ -16,7 +15,6 @@ pub struct ImportService;
 
 impl ImportService {
     #[instrument(skip(pool, media))]
-    #[async_recursion]
     pub async fn import_media(
         pool: &SqlitePool,
         tracker_name: &str,
@@ -58,7 +56,9 @@ impl ImportService {
                 owner = %existing_cid,
                 "Tracker ID already owned by another CID, discarding new entry"
             );
-                    ContentRepository::delete(pool, &new_cid).await.ok();
+                    if let Err(e) = ContentRepository::delete(pool, &new_cid).await {
+                        warn!(error = ?e, orphan = %new_cid, "Failed to clean up orphaned duplicate cid");
+                    }
                     existing_cid.clone()
                 }
                 _ => new_cid,

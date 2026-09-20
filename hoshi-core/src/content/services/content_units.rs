@@ -74,6 +74,8 @@ impl SimklUnitsService {
             .map_err(|e| CoreError::Parse(format!("Simkl response parse error: {e}")))?;
 
         let now = chrono::Utc::now().timestamp();
+
+        let mut tx = state.pool.begin().await.map_err(CoreError::Database)?;
         let mut upserted = 0usize;
 
         for ep in &episodes {
@@ -101,9 +103,11 @@ impl SimklUnitsService {
                 created_at: now,
             };
 
-            UnitRepository::upsert(&state.pool, &unit).await?;
+            UnitRepository::upsert(&mut *tx, &unit).await?;
             upserted += 1;
         }
+
+        tx.commit().await.map_err(CoreError::Database)?;
 
         info!(cid = %cid, count = upserted, "Simkl unit sync complete");
         Ok(())

@@ -1,26 +1,22 @@
 use std::sync::Arc;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use tracing::{info, instrument, warn};
 use crate::config::model::TitleLanguage;
 use crate::config::repository::ConfigRepository;
-use crate::content::models::{ContentType, FullContent, Metadata, Relation, RelationType};
+use crate::content::models::{ContentType, FullContent, Metadata};
 use crate::content::repositories::content::ContentRepository;
 use crate::content::repositories::extension::ExtensionRepository;
-use crate::content::repositories::relations::RelationRepository;
 use crate::content::services::chinese_title::ChineseTitleService;
 pub(crate) use crate::content::services::content_units::SimklUnitsService;
 use crate::content::services::enrichment::EnrichmentService;
 use crate::content::services::extensions::ExtensionService;
 use crate::content::services::resolver::ContentResolverService;
-use crate::content::types::{RelationEdge, RelationGraph, RelationNode, SearchResult};
+use crate::content::types::SearchResult;
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::types::ExtensionMetadata;
 use crate::state::AppState;
 use crate::tracker::provider::TrackerMedia;
 use crate::tracker::repository::TrackerRepository;
-
-const MAX_TREE_NODES: usize = 150;
-const MAX_TREE_DEPTH: usize = 4;
 
 const TRACKER_SOURCES: &[&str] = &["anilist", "mal", "kitsu", "simkl"];
 const FUZZY_SCORE_THRESHOLD: f64 = 0.85;
@@ -120,8 +116,10 @@ impl ContentService {
         if let Err(e) = SimklUnitsService::sync_units_if_needed(state, &full.content.cid).await {
             warn!(cid = %full.content.cid, error = ?e, "Failed to sync units synchronously");
         }
-
-        let _ = ContentResolverService::load_full_content(state, &full.content.cid).await;
+        
+        let full = ContentResolverService::load_full_content(state, &full.content.cid)
+            .await
+            .unwrap_or(full);
 
         Ok(full)
     }
@@ -312,50 +310,55 @@ impl ContentService {
                 .fold(0.0_f64, f64::max)
         };
 
-        if let Some(provider) = state.tracker_registry.get("anilist") {
-            match provider.search(Some(query.as_str()), content_type.clone(), 10, 1, None, None, None, None, None).await {
-                Ok(results) => {
-                    for item in results {
-                        if best_score(&item) < FUZZY_SCORE_THRESHOLD {
-                            continue;
-                        }
-                        if let Some(mal_id) = item.cross_ids.get("mal") {
-                            if seen_mal_ids.insert(mal_id.clone()) {
-                                candidates.push(("mal".into(), mal_id.clone()));
-                            }
-                        }
-                        candidates.push(("anilist".into(), item.tracker_id.clone()));
-                    }
-                }
-                Err(e) => warn!(error = ?e, "AniList fuzzy search failed"),
+        let anilist_fut = async {
+            match state.tracker_registry.get("anilist") {
+                Some(provider) => provider.search(Some(query.as_str()), content_type.clone(), 10, 1, None, None, None, None, None).await,
+                None => Ok(vec![]),
             }
-        }
+        };
+        let mal_fut = async {
+            match state.tracker_registry.get("mal") {
+                Some(provider) => provider.search(Some(query.as_str()), content_type.clone(), 10, 1, None, None, None, None, None).await,
+                None => Ok(vec![]),
+            }
+        };
+        let (anilist_result, mal_result) = tokio::join!(anilist_fut, mal_fut);
 
-        if let Some(provider) = state.tracker_registry.get("mal") {
-            match provider.search(Some(query.as_str()), content_type.clone(), 10, 1, None, None, None, None, None).await {
-                Ok(results) => {
-                    for item in results {
-                        if best_score(&item) < FUZZY_SCORE_THRESHOLD {
-                            continue;
-                        }
-                        if !seen_mal_ids.contains(&item.tracker_id) {
-                            candidates.push((
-                                "mal".into(),
-                                item.tracker_id.clone()
-                            ));
+        match anilist_result {
+            Ok(results) => {
+                for item in results {
+                    if best_score(&item) < FUZZY_SCORE_THRESHOLD {
+                        continue;
+                    }
+                    if let Some(mal_id) = item.cross_ids.get("mal") {
+                        if seen_mal_ids.insert(mal_id.clone()) {
+                            candidates.push(("mal".into(), mal_id.clone()));
                         }
                     }
+                    candidates.push(("anilist".into(), item.tracker_id.clone()));
                 }
-                Err(e) => warn!(error = ?e, "MAL fuzzy search failed"),
             }
+            Err(e) => warn!(error = ?e, "AniList fuzzy search failed"),
         }
 
-        for (tracker, tracker_id) in candidates {
-            if let Some(full) = ContentResolverService::link_or_enrich_tracker(
+        match mal_result {
+            Ok(results) => {
+                for item in results {
+                    if best_score(&item) < FUZZY_SCORE_THRESHOLD {
+                        continue;
+                    }
+                    if !seen_mal_ids.contains(&item.tracker_id) {
+                        candidates.push(("mal".into(), item.tracker_id.clone()));
+                    }
+                }
+            }
+            Err(e) => warn!(error = ?e, "MAL fuzzy search failed"),
+        }
+
+        if let Some((tracker, tracker_id)) = candidates.into_iter().next() {
+            return ContentResolverService::link_or_enrich_tracker(
                 state, ext_name, ext_id, ext_nsfw, &tracker, &tracker_id, content_type,
-            ).await? {
-                return Ok(Some(full));
-            }
+            ).await;
         }
 
         Ok(None)
@@ -567,137 +570,6 @@ impl ContentService {
         }
 
         Ok(())
-    }
-
-    fn is_traversable(rel_type: &RelationType) -> bool {
-        matches!(
-        rel_type,
-        RelationType::Prequel
-            | RelationType::Sequel
-            | RelationType::Parent
-            | RelationType::SideStory
-            | RelationType::Summary
-            | RelationType::Alternative
-            | RelationType::Adaptation
-            | RelationType::Source
-            | RelationType::Compilation
-            | RelationType::Contains
-    )
-        // excluded on purpose: Character, SpinOff, Other
-    }
-
-    #[instrument(skip(state))]
-    pub async fn get_relation_tree(
-        state: &Arc<AppState>,
-        root_cid: &str,
-    ) -> CoreResult<RelationGraph> {
-        const MAX_TREE_EAGER_RESOLVES: usize = 12;
-        let mut visited_cids: HashSet<String> = HashSet::new();
-        let mut visited_leaves: HashSet<(String, String)> = HashSet::new();
-        let mut queue: VecDeque<(String, usize)> = VecDeque::new();
-        let mut nodes = Vec::new();
-        let mut edges = Vec::new();
-        let mut seen_edges: HashSet<(String, String)> = HashSet::new();
-        let mut eager_resolves = 0usize;
-
-        queue.push_back((root_cid.to_string(), 0));
-
-        while let Some((cid, depth)) = queue.pop_front() {
-            if visited_cids.contains(&cid) || visited_cids.len() >= MAX_TREE_NODES {
-                continue;
-            }
-            visited_cids.insert(cid.clone());
-
-            let Some(full) = ContentRepository::get_full_content(&state.pool, &cid).await? else {
-                continue;
-            };
-
-            let title = full.metadata.first().map(|m| m.title.clone()).unwrap_or_default();
-            let cover = full.metadata.first().and_then(|m| m.cover_image.clone());
-
-            nodes.push(RelationNode {
-                cid: Some(cid.clone()),
-                tracker_name: None,
-                tracker_id: None,
-                title,
-                cover_image: cover,
-            });
-
-            if depth >= MAX_TREE_DEPTH {
-                continue;
-            }
-
-            let relations = RelationRepository::get_by_source(&state.pool, &cid).await?;
-
-            for rel in relations {
-                if !Self::is_traversable(&rel.relation_type) {
-                    continue;
-                }
-
-                let mut target_cid = rel.target_cid.clone();
-                if target_cid.is_none() && eager_resolves < MAX_TREE_EAGER_RESOLVES {
-                    eager_resolves += 1;
-                    target_cid = Self::eager_resolve_relation_target(state, &rel).await;
-                }
-
-                let edge_key = match &target_cid {
-                    Some(tcid) if cid < *tcid => (cid.clone(), tcid.clone()),
-                    Some(tcid) => (tcid.clone(), cid.clone()),
-                    None => (cid.clone(), format!("{}:{}", rel.target_tracker_name, rel.target_tracker_id)),
-                };
-
-                if seen_edges.contains(&edge_key) {
-                    continue;
-                }
-                seen_edges.insert(edge_key);
-
-                edges.push(RelationEdge {
-                    source_cid: cid.clone(),
-                    target_cid: target_cid.clone(),
-                    target_tracker_name: rel.target_tracker_name.clone(),
-                    target_tracker_id: rel.target_tracker_id.clone(),
-                    relation_type: rel.relation_type.clone(),
-                });
-
-                match &target_cid {
-                    Some(tcid) if !visited_cids.contains(tcid) => {
-                        queue.push_back((tcid.clone(), depth + 1));
-                    }
-                    None => {
-                        let leaf_key = (rel.target_tracker_name.clone(), rel.target_tracker_id.clone());
-                        if visited_leaves.insert(leaf_key) {
-                            nodes.push(RelationNode {
-                                cid: None,
-                                tracker_name: Some(rel.target_tracker_name.clone()),
-                                tracker_id: Some(rel.target_tracker_id.clone()),
-                                title: rel.target_title.clone(),
-                                cover_image: rel.target_cover_image.clone(),
-                            });
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        }
-
-        Ok(RelationGraph { nodes, edges })
-    }
-
-    async fn eager_resolve_relation_target(state: &Arc<AppState>, rel: &Relation) -> Option<String> {
-        let media = ContentResolverService::fetch_tracker_media(
-            state, &rel.target_tracker_name, &rel.target_tracker_id,
-        ).await.ok()?;
-
-        let full = EnrichmentService::create_enriched_content(
-            state, &media.content_type, &media,
-            &rel.target_tracker_id, &rel.target_tracker_name, None,
-        ).await.ok()?;
-
-        let _ = RelationRepository::backfill_target_cid(
-            &state.pool, &rel.target_tracker_name, &rel.target_tracker_id, &full.content.cid,
-        ).await;
-
-        Some(full.content.cid)
     }
 
     pub async fn merge_content(
