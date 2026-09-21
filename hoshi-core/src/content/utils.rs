@@ -1,7 +1,6 @@
 use uuid::Uuid;
 use crate::state::AppState;
 use crate::config::repository::ConfigRepository;
-use crate::tracker::provider::TrackerMedia;
 
 pub async fn show_adult(state: &AppState, user_id: i32) -> bool {
     ConfigRepository::get_config(&state.pool, user_id)
@@ -10,38 +9,8 @@ pub async fn show_adult(state: &AppState, user_id: i32) -> bool {
         .unwrap_or(false)
 }
 
-pub fn similarity_score(
-    query_title: &str,
-    candidate: &TrackerMedia,
-    query_year: Option<i64>,
-) -> f64 {
-    let q = normalize_title_svc(query_title);
-    let mut best = similarity(&q, &normalize_title_svc(&candidate.title));
-    for alt in &candidate.alt_titles {
-        if alt.trim().is_empty() { continue; }
-        let s = similarity(&q, &normalize_title_svc(alt));
-        if s > best { best = s; }
-    }
-    if let (Some(qy), Some(release)) = (query_year, &candidate.release_date) {
-        if let Ok(dy) = release.chars().take(4).collect::<String>().parse::<i64>() {
-            if (qy - dy).abs() > 1 { return best * 0.6; }
-        }
-    }
-    best
-}
-
-pub fn normalize_title_svc(s: &str) -> String {
-    s.to_lowercase()
-        .replace([':', '-', '!', '?', '.', ',', '\'', '"', '·', '~'], " ")
-        .split_whitespace().collect::<Vec<_>>().join(" ")
-}
-
 pub fn generate_cid() -> String {
     Uuid::new_v4().to_string()
-}
-
-pub fn generate_semantic_cid(tracker: &str, tracker_id: &str) -> String {
-    format!("{}:{}", tracker, tracker_id)
 }
 
 pub fn normalize_title(s: &str) -> String {
@@ -77,4 +46,27 @@ pub fn similarity(s1: &str, s2: &str) -> f64 {
     if max_len == 0 { return 1.0; }
     let dist = levenshtein_distance(s1, s2);
     1.0 - (dist as f64 / max_len as f64)
+}
+
+pub fn best_title_match<'a>(
+    query_normalized: &str,
+    titles: impl Iterator<Item = &'a str>,
+) -> (f64, Option<&'a str>) {
+    titles
+        .filter(|t| !t.trim().is_empty())
+        .map(|t| (similarity(query_normalized, &normalize_title(t)), t))
+        .fold((0.0_f64, None), |acc, (score, t)| {
+            if score > acc.0 { (score, Some(t)) } else { acc }
+        })
+}
+
+pub fn apply_year_penalty(score: f64, query_year: Option<i64>, candidate_release_date: Option<&str>) -> f64 {
+    if let (Some(qy), Some(release)) = (query_year, candidate_release_date) {
+        if let Ok(dy) = release.chars().take(4).collect::<String>().parse::<i64>() {
+            if (qy - dy).abs() > 1 {
+                return score * 0.6;
+            }
+        }
+    }
+    score
 }

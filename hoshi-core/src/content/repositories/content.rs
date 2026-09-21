@@ -9,7 +9,7 @@ use crate::content::repositories::extension::ExtensionRepository;
 use crate::content::repositories::relations::RelationRepository;
 use crate::content::repositories::unit::UnitRepository;
 use crate::content::types::SearchResult;
-use crate::content::utils::{normalize_title, similarity};
+use crate::content::utils::{best_title_match, normalize_title};
 use crate::error::{CoreError, CoreResult};
 use crate::tracker::repository::TrackerRepository;
 
@@ -164,7 +164,7 @@ impl ContentRepository {
             Some(t) => t,
             None => return Ok(None),
         };
-        
+
         type MatchRow = (String, String, String, String);
 
         let rows: Vec<MatchRow> = if let Some(year) = release_year {
@@ -202,23 +202,19 @@ impl ContentRepository {
         const THRESHOLD: f64 = 0.85;
 
         for (cid, db_title, db_alt_titles_json, db_title_i18n_json) in rows {
-            let mut max_local_score = similarity(&target_normalized, &normalize_title(&db_title));
+            let mut candidate_titles: Vec<String> = vec![db_title];
 
             if let Ok(alt_titles) = serde_json::from_str::<Vec<String>>(&db_alt_titles_json) {
-                for alt in alt_titles {
-                    if alt.trim().is_empty() { continue; }
-                    let score = similarity(&target_normalized, &normalize_title(&alt));
-                    if score > max_local_score { max_local_score = score; }
-                }
+                candidate_titles.extend(alt_titles);
+            }
+            if let Ok(i18n) = serde_json::from_str::<std::collections::HashMap<String, String>>(&db_title_i18n_json) {
+                candidate_titles.extend(i18n.into_values());
             }
 
-            if let Ok(i18n) = serde_json::from_str::<std::collections::HashMap<String, String>>(&db_title_i18n_json) {
-                for (_, localized) in i18n {
-                    if localized.trim().is_empty() { continue; }
-                    let score = similarity(&target_normalized, &normalize_title(&localized));
-                    if score > max_local_score { max_local_score = score; }
-                }
-            }
+            let (max_local_score, _) = best_title_match(
+                &target_normalized,
+                candidate_titles.iter().map(String::as_str),
+            );
 
             if max_local_score >= THRESHOLD && max_local_score > highest_score {
                 highest_score = max_local_score;
@@ -484,31 +480,21 @@ impl ContentRepository {
         let mut scored: Vec<(f64, SearchResult)> = Vec::new();
 
         for (cid, title, cover_image, alt_titles_json, title_i18n_json) in rows {
-            let mut best = similarity(&normalized_query, &normalize_title(&title));
-            let mut best_title = title.clone();
+            let mut candidate_titles: Vec<String> = vec![title.clone()];
 
             if let Ok(alts) = serde_json::from_str::<Vec<String>>(&alt_titles_json) {
-                for alt in alts {
-                    if alt.trim().is_empty() { continue; }
-                    let score = similarity(&normalized_query, &normalize_title(&alt));
-                    if score > best {
-                        best = score;
-                        best_title = alt;
-                    }
-                }
+                candidate_titles.extend(alts);
+            }
+            if let Ok(i18n) = serde_json::from_str::<std::collections::HashMap<String, String>>(&title_i18n_json) {
+                candidate_titles.extend(i18n.into_values());
             }
 
-            if let Ok(i18n) = serde_json::from_str::<std::collections::HashMap<String, String>>(&title_i18n_json) {
-                for (_, localized) in i18n {
-                    if localized.trim().is_empty() { continue; }
-                    let score = similarity(&normalized_query, &normalize_title(&localized));
-                    if score > best {
-                        best = score;
-                        best_title = localized;
-                    }
-                }
-            }
-            
+            let (best, best_title_match_str) = best_title_match(
+                &normalized_query,
+                candidate_titles.iter().map(String::as_str),
+            );
+            let best_title = best_title_match_str.map(str::to_string).unwrap_or(title.clone());
+
             const MIN_SCORE: f64 = 0.3;
             if best >= MIN_SCORE || title.to_lowercase().contains(&query.to_lowercase()) {
                 scored.push((best, SearchResult {

@@ -13,7 +13,7 @@ use crate::content::services::content_units::SimklUnitsService;
 use crate::content::services::enrichment::EnrichmentService;
 use crate::content::services::extensions::ExtensionService;
 use crate::content::services::mapping::MappingService;
-use crate::content::utils::{generate_cid, normalize_title, similarity};
+use crate::content::utils::{apply_year_penalty, best_title_match, generate_cid, normalize_title};
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::types::ExtensionMetadata;
 use crate::state::AppState;
@@ -81,20 +81,15 @@ impl ContentResolverService {
         let mut all_titles: Vec<String> = Vec::with_capacity(meta.title_i18n.len() + 1);
         all_titles.push(title.clone());
         all_titles.extend(meta.title_i18n.values().cloned());
-        
-        let normalized_queries: Vec<String> = all_titles
-            .iter()
-            .map(|t| normalize_title(t))
-            .collect();
 
         let best_candidate = search_results
             .iter()
             .filter_map(|item| {
                 let normalized_item = normalize_title(&item.title);
-                let best_score = normalized_queries
-                    .iter()
-                    .map(|q| similarity(q, &normalized_item))
-                    .fold(0.0_f64, f64::max);
+                let (best_score, _) = best_title_match(
+                    &normalized_item,
+                    all_titles.iter().map(String::as_str),
+                );
                 if best_score >= MIN_SIMILARITY {
                     Some((best_score, item))
                 } else {
@@ -313,11 +308,11 @@ impl ContentResolverService {
         let mut seen_mal_ids: HashSet<String> = HashSet::new();
 
         let best_score = |item: &TrackerMedia| -> f64 {
-            std::iter::once(item.title.as_str())
+            let titles = std::iter::once(item.title.as_str())
                 .chain(item.alt_titles.iter().map(|s| s.as_str()))
-                .chain(item.title_i18n.values().map(|s| s.as_str()))
-                .map(|t| similarity(&normalized_query, &normalize_title(t)))
-                .fold(0.0_f64, f64::max)
+                .chain(item.title_i18n.values().map(|s| s.as_str()));
+            let (score, _) = best_title_match(&normalized_query, titles);
+            apply_year_penalty(score, ext_meta.year.map(|y| y as i64), item.release_date.as_deref())
         };
 
         let (anilist_result, mal_result) = tokio::join!(
@@ -426,7 +421,7 @@ impl ContentResolverService {
             updated_at: now,
         }
     }
-    
+
     fn tracker_ids_from_ext_meta(
         ext_meta: &ExtensionMetadata,
         content_type: &ContentType,
@@ -536,7 +531,7 @@ impl ContentResolverService {
         serde_json::from_str::<ContentType>(&format!("\"{}\"", s))
             .unwrap_or(ContentType::Anime)
     }
-    
+
     pub async fn backfill_via_preferred_mapping(state: Arc<AppState>, cid: String) {
         let Ok(config) = ConfigRepository::get_config(&state.pool, 1).await else { return };
         let preferred = config.content.preferred_metadata_provider.clone();
@@ -561,7 +556,7 @@ impl ContentResolverService {
         let _ = Self::backfill_preferred_metadata(&state, &cid, &full, &tracker, &tracker_id).await;
         let _ = Self::backfill_cross_ids(&state, &cid, &full, &tracker, &tracker_id).await;
     }
-    
+
     async fn resolve_preferred_tracker_id(
         state: &Arc<AppState>,
         cid: &str,
@@ -574,7 +569,7 @@ impl ContentResolverService {
         }
         TrackerRepository::find_tracker_id_by_cid(&state.pool, cid, preferred).await
     }
-    
+
     async fn fetch_and_store_preferred_metadata(
         state: &Arc<AppState>,
         cid: &str,
@@ -595,7 +590,7 @@ impl ContentResolverService {
         let meta = provider.to_core_metadata(cid, &media);
         ContentRepository::upsert_metadata(&state.pool, &meta).await
     }
-    
+
     async fn ensure_preferred_metadata(
         state: &Arc<AppState>,
         cid: &str,
