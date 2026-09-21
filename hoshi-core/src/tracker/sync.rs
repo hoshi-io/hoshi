@@ -6,6 +6,7 @@ use crate::state::AppState;
 use crate::tracker::repository::TrackerRepository;
 use crate::users::repository::UserRepo;
 use crate::list::merge::MergeService;
+use crate::tracker::types::TrackerIntegration;
 
 const MANGA_RATE_LIMIT_MS: u64 = 500;
 
@@ -24,87 +25,102 @@ impl StartupSyncService {
             info!(users = users.len(), "Starting tracker startup sync");
 
             for user in users {
-                let config = match ConfigRepository::get_config(&state.pool, user.id).await {
-                    Ok(c) => c,
-                    Err(e) => { warn!(error = ?e, user_id = user.id, "Failed to fetch config, skipping"); continue; }
-                };
-
-                if !config.list.sync_on_startup {
-                    info!(user_id = user.id, "Startup sync disabled, skipping");
-                    continue;
-                }
-
-                let integrations = match TrackerRepository::get_user_integrations(&state.pool, user.id).await {
-                    Ok(i) => i,
-                    Err(e) => { warn!(error = ?e, user_id = user.id, "Failed to fetch integrations"); continue; }
-                };
-
-                for integration in integrations {
-                    if !integration.sync_enabled { continue; }
-
-                    let state = state.clone();
-                    tokio::spawn(async move {
-                        let provider = match state.tracker_registry.get(&integration.tracker_name) {
-                            Some(p) => p,
-                            None => { warn!(tracker = %integration.tracker_name, "Not in registry, skipping"); return; }
-                        };
-
-                        let score_format = match provider.refresh_score_format(&integration.access_token).await {
-                            Ok(fmt) => {
-                                if fmt.is_some() {
-                                    if let Err(e) = TrackerRepository::update_score_format(
-                                        &state.pool, integration.user_id, &integration.tracker_name, fmt.as_deref(),
-                                    ).await {
-                                        warn!(error = ?e, "Failed to update score_format");
-                                    }
-                                }
-                                fmt.or(integration.score_format.clone())
-                            }
-                            Err(e) => {
-                                warn!(error = ?e, "Failed to refresh score_format, using stored");
-                                integration.score_format.clone()
-                            }
-                        };
-
-                        let entries = match provider.get_user_list(
-                            &integration.access_token,
-                            &integration.tracker_user_id,
-                            score_format.as_deref(),
-                        ).await {
-                            Ok(e) => e,
-                            Err(e) => { warn!(error = ?e, tracker = %integration.tracker_name, user_id = integration.user_id, "Failed to fetch remote list"); return; }
-                        };
-
-                        let total = entries.len() as i64;
-                        let mut imported = 0usize;
-                        let mut skipped  = 0usize;
-
-                        for entry in entries {
-                            if matches!(entry.content_type, ContentType::Manga | ContentType::Novel) {
-                                tokio::time::sleep(tokio::time::Duration::from_millis(MANGA_RATE_LIMIT_MS)).await;
-                            }
-                            match MergeService::merge_entry(&state, integration.user_id, &integration.tracker_name, &entry).await {
-                                Ok(true)  => imported += 1,
-                                Ok(false) => skipped  += 1,
-                                Err(e)    => warn!(error = ?e, tracker_id = %entry.tracker_media_id, "Failed to merge entry"),
-                            }
-                        }
-
-                        if let Err(e) = TrackerRepository::update_sync_stats(
-                            &state.pool, integration.user_id, &integration.tracker_name, total,
-                        ).await {
-                            warn!(error = ?e, "Failed to update sync stats");
-                        }
-
-                        info!(
-                            tracker = %integration.tracker_name,
-                            user_id = integration.user_id,
-                            imported, skipped,
-                            "Tracker sync complete"
-                        );
-                    });
-                }
+                Self::sync_user(state.clone(), user.id).await;
             }
         });
+    }
+
+    async fn sync_user(state: Arc<AppState>, user_id: i32) {
+        let config = match ConfigRepository::get_config(&state.pool, user_id).await {
+            Ok(c) => c,
+            Err(e) => { warn!(error = ?e, user_id, "Failed to fetch config, skipping"); return; }
+        };
+
+        if !config.list.sync_on_startup {
+            info!(user_id, "Startup sync disabled, skipping");
+            return;
+        }
+
+        let integrations = match TrackerRepository::get_user_integrations(&state.pool, user_id).await {
+            Ok(i) => i,
+            Err(e) => { warn!(error = ?e, user_id, "Failed to fetch integrations"); return; }
+        };
+
+        for integration in integrations {
+            if !integration.sync_enabled { continue; }
+            tokio::spawn(Self::sync_integration(state.clone(), integration));
+        }
+    }
+
+    async fn sync_integration(state: Arc<AppState>, integration: TrackerIntegration) {
+        let provider = match state.tracker_registry.get(&integration.tracker_name) {
+            Some(p) => p,
+            None => { warn!(tracker = %integration.tracker_name, "Not in registry, skipping"); return; }
+        };
+
+        let score_format = Self::refresh_score_format(&state, &provider, &integration).await;
+
+        let entries = match provider.get_user_list(
+            &integration.access_token,
+            &integration.tracker_user_id,
+            score_format.as_deref(),
+        ).await {
+            Ok(e) => e,
+            Err(e) => {
+                warn!(error = ?e, tracker = %integration.tracker_name, user_id = integration.user_id, "Failed to fetch remote list");
+                return;
+            }
+        };
+
+        let total = entries.len() as i64;
+        let mut imported = 0usize;
+        let mut skipped  = 0usize;
+
+        for entry in entries {
+            if matches!(entry.content_type, ContentType::Manga | ContentType::Novel) {
+                tokio::time::sleep(tokio::time::Duration::from_millis(MANGA_RATE_LIMIT_MS)).await;
+            }
+            match MergeService::merge_entry(&state, integration.user_id, &integration.tracker_name, &entry).await {
+                Ok(true)  => imported += 1,
+                Ok(false) => skipped  += 1,
+                Err(e)    => warn!(error = ?e, tracker_id = %entry.tracker_media_id, "Failed to merge entry"),
+            }
+        }
+
+        if let Err(e) = TrackerRepository::update_sync_stats(
+            &state.pool, integration.user_id, &integration.tracker_name, total,
+        ).await {
+            warn!(error = ?e, "Failed to update sync stats");
+        }
+
+        info!(
+            tracker = %integration.tracker_name,
+            user_id = integration.user_id,
+            imported, skipped,
+            "Tracker sync complete"
+        );
+    }
+
+    async fn refresh_score_format(
+        state: &Arc<AppState>,
+        provider: &Arc<dyn crate::tracker::provider::TrackerProvider>,
+        integration: &TrackerIntegration,
+    ) -> Option<String> {
+        match provider.refresh_score_format(&integration.access_token).await {
+            Ok(fmt) => {
+                if fmt.is_some() {
+                    if let Err(e) = TrackerRepository::update_score_format(
+                        &state.pool, integration.user_id, &integration.tracker_name, fmt.as_deref(),
+                    ).await {
+                        warn!(error = ?e, "Failed to update score_format");
+                    }
+                }
+                fmt.or(integration.score_format.clone())
+            }
+            Err(e) => {
+                warn!(error = ?e, "Failed to refresh score_format, using stored");
+                integration.score_format.clone()
+            }
+        }
     }
 }
