@@ -202,3 +202,10 @@ impl_from_row!(ListEntryChange { id, entry_id, user_id, changed_at, source, trac
 pub struct EntryHistoryResponse {
     pub changes: Vec<ListEntryChange>,
 }
+
+pub struct FinalFields {
+    pub status: String,
+    pub progress: i32,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+}

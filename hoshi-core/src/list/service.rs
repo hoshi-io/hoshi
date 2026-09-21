@@ -6,11 +6,12 @@ use sqlx::SqlitePool;
 use tracing::{debug, error, info, instrument, warn};
 use crate::content::models::EpisodeData;
 use crate::content::repositories::content::ContentRepository;
+use crate::diff_field;
 use crate::error::{CoreError, CoreResult};
 use crate::list::repository::ListRepository;
 use crate::tracker::repository::TrackerRepository;
 use crate::tracker::types::TrackerIntegration;
-use crate::list::types::{ChangeSource, EnrichedListEntry, EntryHistoryResponse, FilterQuery, ListEntry, ListResponse, SingleEntryResponse, SuccessResponse, UpsertEntryBody, UpsertEntryResponse, UserStats};
+use crate::list::types::{ChangeSource, EnrichedListEntry, EntryHistoryResponse, FilterQuery, FinalFields, ListEntry, ListResponse, SingleEntryResponse, SuccessResponse, UpsertEntryBody, UpsertEntryResponse, UserStats};
 use crate::tracker::provider::UpdateEntryParams;
 use crate::state::AppState;
 
@@ -80,6 +81,39 @@ impl ListService {
 
         Ok(stats)
     }
+    
+    fn compute_final_fields(
+        prev_entry: Option<&ListEntry>,
+        body: &UpsertEntryBody,
+        total_units: Option<i32>,
+        new_progress: i32,
+    ) -> FinalFields {
+        let today = Utc::now().format("%Y-%m-%d").to_string();
+        let mut final_start_date = body.start_date.clone();
+        let mut final_end_date   = body.end_date.clone();
+        let mut final_status     = body.status.clone();
+
+        if let Some(prev) = prev_entry {
+            if final_start_date.is_none() && prev.start_date.is_some() {
+                final_start_date = prev.start_date.clone();
+            }
+        }
+
+        if final_start_date.is_none() && new_progress == 1 {
+            final_start_date = Some(today.clone());
+        }
+
+        if let Some(total) = total_units {
+            if new_progress >= total && total > 0 {
+                final_status = "COMPLETED".to_string();
+                if final_end_date.is_none() {
+                    final_end_date = Some(today);
+                }
+            }
+        }
+
+        FinalFields { status: final_status, progress: new_progress, start_date: final_start_date, end_date: final_end_date }
+    }
 
     #[instrument(skip(state, body), fields(cid = %body.cid, status = %body.status))]
     pub async fn upsert_entry(
@@ -112,65 +146,9 @@ impl ListService {
             return Ok(UpsertEntryResponse { success: true, changes: 0, is_new: false });
         }
 
-        let today = Utc::now().format("%Y-%m-%d").to_string();
-        let mut final_start_date = body.start_date.clone();
-        let mut final_end_date   = body.end_date.clone();
-        let mut final_status     = body.status.clone();
+        let fields = Self::compute_final_fields(prev_entry.as_ref(), &body, total_units, new_progress);
 
-        if let Some(ref prev) = prev_entry {
-            if final_start_date.is_none() && prev.start_date.is_some() {
-                final_start_date = prev.start_date.clone();
-            }
-        }
-
-        if final_start_date.is_none() && new_progress == 1 {
-            final_start_date = Some(today.clone());
-        }
-
-        if let Some(total) = total_units {
-            if new_progress >= total && total > 0 {
-                final_status = "COMPLETED".to_string();
-                if final_end_date.is_none() {
-                    final_end_date = Some(today);
-                }
-            }
-        }
-
-        let changes = ListRepository::upsert_entry(
-            &state.pool,
-            user_id,
-            &body,
-            &final_status,
-            new_progress,
-            final_start_date.clone(),
-            final_end_date.clone(),
-        ).await?;
-
-        let changes_rows = Self::diff_entry(
-            prev_entry.as_ref(),
-            &final_status,
-            new_progress,
-            &body,
-            &final_start_date,
-            &final_end_date,
-        );
-
-        if !changes_rows.is_empty() {
-            if let Ok(Some(saved)) = ListRepository::get_entry(&state.pool, user_id, &body.cid).await {
-                if let Some(entry_id) = saved.id {
-                    if let Err(e) = ListRepository::insert_changes(
-                        &state.pool,
-                        entry_id,
-                        user_id,
-                        ChangeSource::Local.as_str(),
-                        None,
-                        &changes_rows,
-                    ).await {
-                        error!(error = ?e, "Failed to write changelog");
-                    }
-                }
-            }
-        }
+        let changes = Self::persist_and_diff(&state.pool, user_id, &body, prev_entry.as_ref(), &fields).await?;
 
         info!(is_new = is_new, "List entry successfully saved");
 
@@ -185,6 +163,52 @@ impl ListService {
         });
 
         Ok(UpsertEntryResponse { success: true, changes, is_new })
+    }
+    
+    async fn persist_and_diff(
+        pool: &SqlitePool,
+        user_id: i32,
+        body: &UpsertEntryBody,
+        prev_entry: Option<&ListEntry>,
+        fields: &FinalFields,
+    ) -> CoreResult<usize> {
+        let changes = ListRepository::upsert_entry(
+            pool,
+            user_id,
+            body,
+            &fields.status,
+            fields.progress,
+            fields.start_date.clone(),
+            fields.end_date.clone(),
+        ).await?;
+
+        let changes_rows = Self::diff_entry(
+            prev_entry,
+            &fields.status,
+            fields.progress,
+            body,
+            &fields.start_date,
+            &fields.end_date,
+        );
+
+        if !changes_rows.is_empty() {
+            if let Ok(Some(saved)) = ListRepository::get_entry(pool, user_id, &body.cid).await {
+                if let Some(entry_id) = saved.id {
+                    if let Err(e) = ListRepository::insert_changes(
+                        pool,
+                        entry_id,
+                        user_id,
+                        ChangeSource::Local.as_str(),
+                        None,
+                        &changes_rows,
+                    ).await {
+                        error!(error = ?e, "Failed to write changelog");
+                    }
+                }
+            }
+        }
+
+        Ok(changes)
     }
 
     #[instrument(skip(state))]
@@ -399,45 +423,30 @@ impl ListService {
         final_end_date: &Option<String>,
     ) -> Vec<(&'static str, Option<String>, String)> {
         let mut changes = vec![];
+        let prev_is_none = prev.is_none();
 
-        macro_rules! diff {
-        ($field:expr, $old:expr, $new:expr) => {
-            let old_s = $old.as_ref().map(|v: &String| v.clone());
-            let new_s = $new.clone();
-            if prev.is_none() || old_s.as_deref() != Some(new_s.as_str()) {
-                changes.push(($field, old_s, new_s));
-            }
-        };
-    }
+        diff_field!(changes, prev_is_none, "status",
+            prev.map(|e| e.status.clone()), final_status.to_string());
 
-        diff!("status",
-        prev.map(|e| e.status.clone()),
-        final_status.to_string());
-
-        diff!("progress",
-        prev.map(|e| e.progress.to_string()),
-        new_progress.to_string());
+        diff_field!(changes, prev_is_none, "progress",
+            prev.map(|e| e.progress.to_string()), new_progress.to_string());
 
         if let Some(score) = body.score {
-            diff!("score",
-            prev.and_then(|e| e.score).map(|s| s.to_string()),
-            score.to_string());
+            diff_field!(changes, prev_is_none, "score",
+                prev.and_then(|e| e.score).map(|s| s.to_string()), score.to_string());
         }
 
-        diff!("start_date",
-        prev.and_then(|e| e.start_date.clone()),
-        final_start_date.clone().unwrap_or_default());
+        diff_field!(changes, prev_is_none, "start_date",
+            prev.and_then(|e| e.start_date.clone()), final_start_date.clone().unwrap_or_default());
 
         if let Some(ed) = final_end_date {
-            diff!("end_date",
-            prev.and_then(|e| e.end_date.clone()),
-            ed.clone());
+            diff_field!(changes, prev_is_none, "end_date",
+                prev.and_then(|e| e.end_date.clone()), ed.clone());
         }
 
         if let Some(notes) = &body.notes {
-            diff!("notes",
-            prev.and_then(|e| e.notes.clone()),
-            notes.clone());
+            diff_field!(changes, prev_is_none, "notes",
+                prev.and_then(|e| e.notes.clone()), notes.clone());
         }
 
         changes

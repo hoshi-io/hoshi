@@ -70,3 +70,14 @@ pub fn apply_year_penalty(score: f64, query_year: Option<i64>, candidate_release
     }
     score
 }
+
+#[macro_export]
+macro_rules! diff_field {
+    ($changes:expr, $prev_is_none:expr, $field:expr, $old:expr, $new:expr) => {{
+        let old_s: Option<String> = $old;
+        let new_s: String = $new;
+        if $prev_is_none || old_s.as_deref() != Some(new_s.as_str()) {
+            $changes.push(($field, old_s, new_s));
+        }
+    }};
+}
