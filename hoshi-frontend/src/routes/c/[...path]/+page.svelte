@@ -21,43 +21,7 @@
     import ListEditorButton from "@/components/ListEditorButton.svelte";
     import { progressApi } from "@/api/progress/progress";
     import type { AnimeProgress, ChapterProgress } from "@/api/progress/types";
-    import MpvLauncher from "@/components/mpv/MpvLauncher.svelte";
     import MergeContent from "@/components/modals/MergeContent.svelte";
-
-    let mpvOpen = $state(false);
-    let mpvEpNumber = $state(1);
-    let mpvEpTitle = $state("");
-
-    function handleWatchNowClick() {
-        if (appConfig.data?.mpv?.useMpv){
-            if (!detail.fullContent) return;
-
-            const inProgress = animeProgress
-                .filter(p => !p.completed && (p.timestampSeconds ?? 0) > 0)
-                .sort((a, b) => b.lastAccessed - a.lastAccessed)[0];
-
-            if (inProgress) {
-                mpvEpNumber = inProgress.episode;
-            } else {
-                const completedNums = new Set(animeProgress.filter(p => p.completed).map(p => p.episode));
-                mpvEpNumber = animeProgress.length > 0
-                    ? (animeProgress.filter(p => !completedNums.has(p.episode)).sort((a, b) => a.episode - b.episode)[0]?.episode ?? 1)
-                    : 1;
-            }
-
-            const matchingUnit = detail.fullContent.contentUnits?.find(
-                u => u.contentType === 'episode' && u.unitNumber === mpvEpNumber
-            );
-
-            mpvEpTitle = matchingUnit?.title
-                ? i18n.t('watch.episode_with_title', { num: mpvEpNumber, title: matchingUnit.title })
-                : i18n.t('watch.episode_number', { num: mpvEpNumber });
-
-            mpvOpen = true;
-        } else {
-            return detail.watchNow();
-        }
-    }
 
     const detail = new ContentDetailState();
 
@@ -179,7 +143,7 @@
                 bind:showExtensionModal
                 bind:showMergeModal
                 watchUrl={isAnime ? watchUrl : null}
-                onWatchNow={handleWatchNowClick}
+                onWatchNow={() => detail.watchNow()}
                 headers={detail.headers}
         />
 
@@ -194,9 +158,6 @@
                                 contentUnits={detail.fullContent.contentUnits}
                                 duration={meta?.episodeDuration}
                                 progress={animeProgress}
-                                animeTitle={meta?.titleI18n?.[pref] || meta?.title || ''}
-                                isNsfw={detail.fullContent.content.nsfw || meta?.genres?.some(g => ['hentai', 'adult'].includes(g.toLowerCase()))}
-                                coverImage={meta?.coverImage}
                         />
                     {:else}
                         <Chapters
@@ -224,19 +185,6 @@
 
         <TrackerManager bind:open={showTrackerModal} cid={detail.fullContent.content.cid} trackers={detail.fullContent.trackerMappings} metadata={meta} />
         <ExtensionManager bind:open={showExtensionModal} cid={detail.fullContent.content.cid} metadata={meta} isNsfw={isAdultContent} extensions={detail.fullContent.extensionSources} contentType={detail.fullContent.content.contentType} />
-        {#if mpvOpen && isAnime}
-            <MpvLauncher
-                    cid={detail.fullContent.content.cid}
-                    epNumber={mpvEpNumber}
-                    epTitle={mpvEpTitle}
-                    animeTitle={meta?.titleI18n?.[pref] || meta?.title || ''}
-                    totalEpisodes={meta?.epsOrChapters ?? 0}
-                    isNsfw={isAdultContent}
-                    coverImage={meta?.coverImage}
-                    startTime={animeProgress.find(p => p.episode === mpvEpNumber)?.timestampSeconds ?? 0}
-                    bind:open={mpvOpen}
-            />
-        {/if}
         <MergeContent
                 bind:open={showMergeModal}
                 cid={detail.fullContent.content.cid}

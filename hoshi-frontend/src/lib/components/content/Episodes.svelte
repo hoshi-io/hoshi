@@ -4,17 +4,12 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { CheckCircle2, Play } from "lucide-svelte";
     import ResponsiveSelect from "$lib/components/ResponsiveSelect.svelte";
-    import MpvLauncher from "@/components/mpv/MpvLauncher.svelte";
-    import {appConfig} from "@/stores/config.svelte";
 
-    let { cid, epsOrChapters, contentUnits = [], duration, progress = [], animeTitle = "", isNsfw, coverImage }: {
+    let { cid, epsOrChapters, contentUnits = [], duration, progress = [] }: {
         cid: string,
         epsOrChapters?: number | null,
         contentUnits?: ContentUnit[],
         duration?: number | null,
-        animeTitle?: string,
-        isNsfw?: boolean,
-        coverImage?: string,
         progress?: AnimeProgress[],
     } = $props();
 
@@ -134,22 +129,6 @@
         };
     }
 
-    // Launcher state
-    let mpvOpen = $state(false);
-    let mpvEpNumber = $state(1);
-    let mpvEpTitle = $state("");
-
-    function handleEpisodeClick(e: MouseEvent, ep: { number: number; title: string | null }) {
-        if (appConfig.data?.mpv?.useMpv){
-            e.preventDefault();
-            mpvEpNumber = ep.number;
-            mpvEpTitle = ep.title
-                ? i18n.t('watch.episode_with_title', { num: ep.number, title: ep.title })
-                : i18n.t('watch.episode_number', { num: ep.number });
-            mpvOpen = true;
-            return;
-        }
-    }
 </script>
 
 <div class="space-y-4">
@@ -187,7 +166,6 @@
             <a
                     use:scrollIfResume={isResume}
                     {href}
-                    onclick={(e) => handleEpisodeClick(e, ep)}
                     class="group flex flex-col"
             >
                 <div class="relative w-full aspect-video overflow-hidden rounded-sm bg-muted/20
@@ -261,17 +239,3 @@
         {/each}
     </div>
 </div>
-
-{#if mpvOpen}
-    <MpvLauncher
-            {cid}
-            epNumber={mpvEpNumber}
-            epTitle={mpvEpTitle}
-            {animeTitle}
-            totalEpisodes={epsOrChapters ?? 0}
-            {isNsfw}
-            {coverImage}
-            startTime={progressMap.get(mpvEpNumber)?.timestampSeconds ?? 0}
-            bind:open={mpvOpen}
-    />
-{/if}

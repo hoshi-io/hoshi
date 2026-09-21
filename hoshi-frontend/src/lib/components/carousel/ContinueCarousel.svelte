@@ -5,7 +5,6 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { appConfig } from "@/stores/config.svelte.js";
     import * as Carousel from "@/components/ui/carousel";
-    import MpvLauncher from "@/components/mpv/MpvLauncher.svelte";
     import SmartImage from "@/components/SmartImage.svelte";
 
     let {
@@ -15,24 +14,6 @@
         items: ContinueItem[];
         mode: ContentType;
     } = $props();
-
-    let mpvOpen = $state(false);
-    let mpvItem = $state<ContinueItem | null>(null);
-    let mpvEpTitle = $state("");
-
-    function handleAnimeClick(e: MouseEvent, item: ContinueItem) {
-        if (!item.episode) return;
-        if (appConfig.data?.mpv?.useMpv){
-            e.preventDefault();
-
-            mpvItem = item;
-            mpvEpTitle = item.unit?.title
-                ? i18n.t('watch.episode_with_title', { num: item.episode, title: item.unit.title })
-                : i18n.t('watch.episode_number', { num: item.episode });
-
-            mpvOpen = true;
-        }
-    }
 
     let visibleItems = $derived(items.filter(item => {
         return !(item.nsfw && !appConfig.data?.general?.showAdultContent);
@@ -91,7 +72,6 @@
                     <Carousel.Item class="pl-5 {mode === 'anime' ? 'basis-[275px] sm:basis-[360px]' : 'basis-[155px] sm:basis-[185px]'}">
                         {#if mode === 'anime'}
                             <a href={getContinueUrl(item)}
-                               onclick={(e) => handleAnimeClick(e, item)}
                                class="anime-card group flex flex-col gap-4 focus-visible:outline-none"
                             >
                                 <div class="relative w-full aspect-video overflow-hidden bg-muted/20 border border-border/30 rounded-sm">
@@ -205,18 +185,4 @@
             </Carousel.Content>
         </Carousel.Root>
     </div>
-{/if}
-
-{#if mpvOpen && mpvItem}
-    <MpvLauncher
-            cid={mpvItem.cid}
-            epNumber={mpvItem.episode ?? 1}
-            epTitle={mpvEpTitle}
-            animeTitle={mpvItem.title}
-            totalEpisodes={0}
-            isNsfw={mpvItem.nsfw}
-            coverImage={mpvItem.coverImage ?? undefined}
-            startTime={mpvItem.timestampSeconds ?? 0}
-            bind:open={mpvOpen}
-    />
 {/if}

@@ -2,20 +2,17 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { appConfig } from "@/stores/config.svelte.js";
     import * as Carousel from "@/components/ui/carousel";
-    import MpvLauncher from "@/components/mpv/MpvLauncher.svelte";
     import {type RecentlyAiredItem, scheduleStore} from "@/app/schedule.svelte";
 
     $effect(() => {
         scheduleStore.load();
     });
 
-    let mpvOpen = $state(false);
-    let mpvItem = $state<RecentlyAiredItem | null>(null);
-    let mpvEpTitle = $state("");
-
     let visibleItems = $derived(
         scheduleStore.recentlyAired.filter(item => {
-            return !(item.card.nsfw && !appConfig.data?.general?.showAdultContent);
+            if (item.card.nsfw && !appConfig.data?.general?.showAdultContent) return false;
+            if (item.card.score == null || item.card.score < 6) return false;
+            return true;
         })
     );
 
@@ -36,19 +33,6 @@
 
     function getWatchUrl(item: RecentlyAiredItem) {
         return `/watch/${item.card.cid}/${item.episode}`;
-    }
-
-    function handleClick(e: MouseEvent, item: RecentlyAiredItem) {
-        if (appConfig.data?.mpv?.useMpv) {
-            e.preventDefault();
-
-            mpvItem = item;
-            mpvEpTitle = item.unitTitle
-                ? i18n.t('watch.episode_with_title', { num: item.episode, title: item.unitTitle })
-                : i18n.t('watch.episode_number', { num: item.episode });
-
-            mpvOpen = true;
-        }
     }
 
     function getMs(ts: number) {
@@ -82,7 +66,6 @@
 
                     <Carousel.Item class="pl-5 basis-[275px] sm:basis-[360px]">
                         <a href={getWatchUrl(item)}
-                           onclick={(e) => handleClick(e, item)}
                            class="anime-card group flex flex-col gap-4 focus-visible:outline-none"
                         >
                             <div class="relative w-full aspect-video overflow-hidden bg-muted/20 border border-border/30 rounded-sm">
@@ -135,18 +118,4 @@
             </Carousel.Content>
         </Carousel.Root>
     </div>
-{/if}
-
-{#if mpvOpen && mpvItem}
-    <MpvLauncher
-            cid={mpvItem.card.cid}
-            epNumber={mpvItem.episode}
-            epTitle={mpvEpTitle}
-            animeTitle={mpvItem.card.titleDefault}
-            totalEpisodes={0}
-            isNsfw={mpvItem.card.nsfw}
-            coverImage={mpvItem.card.cover ?? undefined}
-            startTime={0}
-            bind:open={mpvOpen}
-    />
 {/if}

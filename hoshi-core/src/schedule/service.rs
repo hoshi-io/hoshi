@@ -5,7 +5,6 @@ use futures::future::join_all;
 use tracing::{debug, info, instrument, warn};
 use crate::content::{repositories::content::ContentRepository};
 use crate::content::repositories::cache::CacheRepository;
-use crate::content::services::content_units;
 use crate::content::services::import::ImportService;
 use crate::core_err;
 use crate::error::{CoreError, CoreResult};
@@ -119,12 +118,6 @@ impl ScheduleService {
                     }
                 },
             };
-
-            if episode.airing_at <= now {
-                if let Err(e) = content_units::SimklUnitsService::sync_units_if_needed(state, &cid).await {
-                    warn!(cid = %cid, error = ?e, "Failed to sync units for airing entry");
-                }
-            }
 
             let full_content = match ContentRepository::get_full_content(pool, &cid).await? {
                 Some(fc) => fc,

@@ -4,7 +4,6 @@
     import { Minus, Square, X } from 'lucide-svelte';
     import { layoutState } from '@/stores/layout.svelte.js';
     import { themeManager } from '@/stores/theme.svelte.js';
-    import MpvPopover from '@/components/mpv/MpvPopover.svelte';
     import HistoryMenu from "@/components/history/HistoryMenu.svelte";
 
     const isTauri = browser && '__TAURI__' in window;
@@ -34,12 +33,6 @@
     <div class="absolute top-0 left-0 h-8 grid grid-cols-3 items-center bg-transparent select-none z-[60] w-full">
 
         <div data-tauri-drag-region class="h-full flex items-center gap-2.5 pl-5 overflow-hidden">
-        </div>
-
-        <div data-tauri-drag-region class="h-full w-full relative flex justify-center items-center">
-            {#if layoutState.mpv}
-                <MpvPopover />
-            {/if}
         </div>
 
         <div class="flex h-full shrink-0 justify-end">
