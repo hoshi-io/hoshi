@@ -9,8 +9,5 @@ pub mod config;
 pub mod progress;
 pub mod logs;
 pub mod i18n;
-
-#[cfg(not(mobile))]
-pub mod mpv;
 #[cfg(feature = "discord-rpc")]
 pub mod discord;

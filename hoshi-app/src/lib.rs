@@ -53,9 +53,6 @@ use crate::commands::progress::{get_content_progress, get_continue_watching, upd
 use crate::commands::intergations::{list_trackers, add_integration, remove_integration, set_sync_enabled};
 use crate::commands::logs::{get_system_logs, list_log_files, get_log_file, delete_log_file};
 
-#[cfg(not(mobile))]
-use crate::commands::mpv::{launch_mpv, is_mpv_running, download_osc, download_known_script};
-
 #[cfg(feature = "discord-rpc")]
 use crate::commands::discord::{set_activity, clear_activity};
 
@@ -159,15 +156,6 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             get_user_config, patch_user_config,
             get_content_progress, get_continue_watching, update_anime_progress, update_chapter_progress,
             list_trackers, add_integration, remove_integration, set_sync_enabled,
-
-            #[cfg(not(mobile))]
-            launch_mpv,
-            #[cfg(not(mobile))]
-            is_mpv_running,
-            #[cfg(not(mobile))]
-            download_osc,
-            #[cfg(not(mobile))]
-            download_known_script,
 
             #[cfg(feature = "discord-rpc")]
             set_activity,

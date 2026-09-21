@@ -15,8 +15,6 @@ pub mod proxy;
 pub mod progress;
 pub mod discord;
 pub mod logs;
-#[cfg(not(any(target_os = "android", target_os = "ios")))]
-pub mod mpv;
 
 use crate::error::CoreResult;
 use headless::HeadlessHandle;
@@ -37,7 +35,6 @@ pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_stor
     paths.ensure_dirs().map_err(|e| core_err!(Internal, "error.system.setup_failed", e))?;
 
     info!("Initializing unified database...");
-
     let db_manager = db::DatabaseManager::new(&paths).await?;
     let pool = db_manager.pool().clone();
     let db = Arc::new(db_manager);
@@ -78,9 +75,6 @@ pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_stor
         headless,
         log_store,
         http_client,
-
-        #[cfg(not(any(target_os = "android", target_os = "ios")))]
-        mpv: Arc::new(Mutex::new(None)),
 
         #[cfg(feature = "discord-rpc")]
         discord_rpc,

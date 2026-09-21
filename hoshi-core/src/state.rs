@@ -13,9 +13,6 @@ use crate::logs::LogStore;
 #[cfg(feature = "discord-rpc")]
 use crate::discord::DiscordRpcService;
 
-#[cfg(not(any(target_os = "android", target_os = "ios")))]
-use crate::mpv::launch::MpvService;
-
 #[derive(Clone)]
 pub struct AppState {
     pub db:                Arc<DatabaseManager>,
@@ -26,9 +23,6 @@ pub struct AppState {
     pub headless:          HeadlessHandle,
     pub log_store:         LogStore,
     pub http_client:       Client,
-
-    #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    pub mpv: Arc<Mutex<Option<MpvService>>>,
 
     #[cfg(feature = "discord-rpc")]
     pub discord_rpc: Arc<DiscordRpcService>,
