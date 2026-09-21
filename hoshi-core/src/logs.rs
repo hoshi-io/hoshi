@@ -5,7 +5,7 @@ use std::io::Write as IoWrite;
 use std::fs::{File, OpenOptions};
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
-use tracing::Subscriber;
+use tracing::{warn, Subscriber};
 use tracing_subscriber::Layer;
 use tracing::field::{Field, Visit};
 
@@ -72,7 +72,7 @@ pub fn new_log_file(logs_dir: &PathBuf) -> Option<Arc<RwLock<File>>> {
     match OpenOptions::new().create(true).append(true).open(&path) {
         Ok(f) => Some(Arc::new(RwLock::new(f))),
         Err(e) => {
-            eprintln!("[logs] Failed to open log file {:?}: {}", path, e);
+            warn!("[logs] Failed to open log file {:?}: {}", path, e);
             None
         }
     }
