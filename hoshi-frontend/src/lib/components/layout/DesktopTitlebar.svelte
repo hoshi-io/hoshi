@@ -35,6 +35,10 @@
         <div data-tauri-drag-region class="h-full flex items-center gap-2.5 pl-5 overflow-hidden">
         </div>
 
+
+        <div data-tauri-drag-region class="h-full w-full relative flex justify-center items-center">
+        </div>
+
         <div class="flex h-full shrink-0 justify-end">
             <button onclick={minimize} class="h-full w-[42px] hover:bg-muted/20 text-muted-foreground/60 hover:text-foreground transition-colors inline-flex items-center justify-center" tabindex="-1">
                 <Minus class="size-[12px] stroke-[2]" />
