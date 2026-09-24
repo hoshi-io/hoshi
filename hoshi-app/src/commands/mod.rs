@@ -9,5 +9,6 @@ pub mod config;
 pub mod progress;
 pub mod logs;
 pub mod i18n;
+pub mod playback;
 #[cfg(feature = "discord-rpc")]
 pub mod discord;

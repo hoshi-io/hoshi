@@ -15,18 +15,20 @@ pub mod proxy;
 pub mod progress;
 pub mod discord;
 pub mod logs;
+pub mod playback;
 
 use crate::error::CoreResult;
 use headless::HeadlessHandle;
 pub use state::AppState;
 use paths::AppPaths;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc};
 use std::time::Duration;
 use reqwest::Client;
 use tokio::sync::RwLock;
 use tracker::provider::build_registry;
 use tracing::{info, instrument};
 use crate::content::services::home::HomeService;
+use crate::playback::PlaybackHandle;
 use crate::tracker::sync::StartupSyncService;
 
 #[instrument(skip(log_store, paths, headless))]
@@ -36,8 +38,6 @@ pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_stor
 
     info!("Initializing unified database...");
     let db_manager = db::DatabaseManager::new(&paths).await?;
-    let pool = db_manager.pool().clone();
-    let db = Arc::new(db_manager);
 
     let http_client = Client::builder()
         .timeout(Duration::from_secs(45))
@@ -55,7 +55,6 @@ pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_stor
         .map_err(|e| core_err!(Internal, "error.system.setup_failed", e))?;
 
     extension_manager.set_headless(headless.clone());
-    let ext_manager_arc = Arc::new(RwLock::new(extension_manager));
 
     #[cfg(feature = "discord-rpc")]
     let discord_rpc = {
@@ -63,16 +62,12 @@ pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_stor
         Arc::new(crate::discord::DiscordRpcService::new("1486110945452228719"))
     };
 
-    info!("Building tracker registry");
-    let tracker_registry = Arc::new(build_registry(http_client.clone()));
-
     let state = Arc::new(AppState {
-        db,
-        pool,
-        extension_manager: ext_manager_arc,
-        tracker_registry,
+        pool: db_manager.pool().clone(),
+        extension_manager: Arc::new(RwLock::new(extension_manager)),
+        tracker_registry: Arc::new(build_registry(http_client.clone())),
         paths: Arc::new(paths),
-        headless,
+        playback: PlaybackHandle::new(),
         log_store,
         http_client,
 
@@ -84,18 +79,4 @@ pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_stor
     StartupSyncService::run(state.clone());
     info!("Hoshi Core initialization completed successfully");
     Ok(state)
-}
-
-#[macro_export]
-macro_rules! impl_from_row {
-    ($struct:ty { $($field:ident),* $(,)? }) => {
-        impl sqlx::FromRow<'_, sqlx::sqlite::SqliteRow> for $struct {
-            fn from_row(row: &sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
-                use sqlx::Row;
-                Ok(Self {
-                    $($field: row.try_get(stringify!($field))?,)*
-                })
-            }
-        }
-    };
 }

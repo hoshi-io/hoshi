@@ -1,26 +1,31 @@
 import { page } from "$app/state";
-import { goto } from "$app/navigation";
 import { untrack } from "svelte";
 
 import { contentApi } from "@/api/content/content";
 import { extensionsApi } from "@/api/extensions/extensions";
 import { extensions as extensionsStore } from "@/stores/extensions.svelte.js";
-import { buildTauriProxyUrl, proxyApi } from "@/api/proxy";
 import { type CoreError } from "@/api/client";
 import { progressApi } from "@/api/progress/progress";
-import { listApi } from "@/api/list/list";
 import { appConfig } from "@/stores/config.svelte.js";
 import { i18n } from "@/stores/i18n.svelte.js";
-import { discordApi } from "@/api/discord/discord";
 import { primaryMetadata } from "@/api/content/types";
 import type { FullContent } from "@/api/content/types";
 import { invoke } from "@tauri-apps/api/core";
 
-import type { Subtitle, Chapter } from "@/components/player/types";
-import {listStore} from "@/app/list.svelte";
-import type {Extension} from "@/api/extensions/types";
+import type { Extension } from "@/api/extensions/types";
 
-export class PlayerState {
+export interface SubtitleSource {
+    url: string;
+    title?: string;
+    lang?: string;
+}
+
+export interface ChapterMark {
+    title?: string;
+    time: number;
+}
+
+export class WatchState {
     params      = $derived(page.params as Record<string, string>);
     cid         = $derived(this.params.cid || "");
     epNumber    = $derived(Number(this.params.number));
@@ -72,27 +77,29 @@ export class PlayerState {
 
     isLoadingPlay   = $state(false);
     error           = $state<CoreError | null>(null);
-    m3u8Url         = $state<string | null>(null);
-    subtitles       = $state<Subtitle[]>([]);
-    chapters        = $state<Chapter[]>([]);
+    isStreamLoaded  = $state(false);
+    subtitles       = $state<SubtitleSource[]>([]);
+    chapters        = $state<ChapterMark[]>([]);
     initialTime     = $state(0);
 
     isMappingError = $derived(!!this.error?.key?.includes("match"));
 
-    isPaused            = $state(true);
-    currentDuration     = $state(0);
-    lastCurrentTime     = $state(0);
-    lastSyncTime        = $state(0);
-    hasUpdatedList      = $state(false);
-    discordStatusUpdated = $state(false);
-
     private currentLoadedCid    = $state<string | null>(null);
     private currentLoadedEp     = $state<number | null>(null);
-    private subtitleBlobUrls: string[] = [];
     private destroyed = false;
 
     constructor() {
         invoke("lock_orientation", { orientation: "landscape" }).catch(() => {});
+
+        // Best-effort guess pending the actual app architecture: mpv's
+        // `initialize()` is idempotent on the backend, so calling it once
+        // here (rather than per-episode in loadPlay) is safe either way.
+        // What's NOT decided yet is whether mpv should live only for the
+        // duration of this page (shutdown_player in destroy(), below) or
+        // persist across navigation as an app-shell singleton. Revisit once
+        // that's settled — if it's app-shell-owned, both this call and the
+        // shutdown_player call in destroy() should move out of here.
+        invoke("initialize_player").catch(() => {});
 
         $effect(() => {
             const { cid, epNumber } = this;
@@ -101,47 +108,18 @@ export class PlayerState {
             }
         });
 
-        $effect(() => () => this.revokeSubtitleBlobs());
-
-        $effect(() => {
-            if (this.m3u8Url && "mediaSession" in navigator && this.animeData) {
-                const meta = primaryMetadata(this.animeData, appConfig.data?.content?.preferredMetadataProvider);
-                const coverImage = meta?.coverImage || meta?.bannerImage || "";
-
-                const setMediaSession = (artworkArray: MediaImage[]) => {
-                    navigator.mediaSession.metadata = new MediaMetadata({
-                        title: this.episodeTitle || i18n.t("watch.episode"),
-                        artist: this.animeTitle,
-                        album: "Hoshi",
-                        artwork: artworkArray,
-                    });
-                };
-
-                if (coverImage) {
-                    fetch(coverImage)
-                        .then(res => res.blob())
-                        .then(blob => {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                                setMediaSession([{ src: reader.result as string }]);
-                            };
-                            reader.readAsDataURL(blob);
-                        })
-                        .catch(() => setMediaSession([{ src: coverImage }]));
-                } else {
-                    setMediaSession([]);
-                }
-            }
-
-            return () => {
-                if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
-            };
-        });
+        // TODO(media session): navigator.mediaSession used to be driven off
+        // the <video> element's own state. There's no DOM media element
+        // anymore (mpv renders behind the webview via GtkGLArea on Linux),
+        // so this needs to be rethought — at minimum re-populating
+        // metadata (title/artist/artwork) from `this.animeData` still seems
+        // possible, but action handlers (play/pause/seek) would need to
+        // invoke the corresponding Tauri commands instead of manipulating a
+        // media element. Left out entirely for now rather than half-done.
     }
 
     async loadPageData(targetCid: string, targetEp: number) {
         try {
-            this.discordStatusUpdated = false;
             this.currentLoadedEp = targetEp;
 
             if (!extensionsStore.initialized) {
@@ -208,26 +186,30 @@ export class PlayerState {
         await this.loadPlay();
     }
 
+    /// Core flow: get the resume position, ask the extension for a source,
+    /// then hand url + headers + subtitles + chapters + start position to
+    /// mpv in one `load_stream` call.
     async loadPlay() {
         if (!this.selectedExtension) return;
 
         this.isLoadingPlay = true;
-        this.m3u8Url = null;
+        this.isStreamLoaded = false;
         this.error = null;
-        this.revokeSubtitleBlobs();
-        this.lastSyncTime = 0;
-        this.hasUpdatedList = false;
+        this.subtitles = [];
+        this.chapters = [];
 
         try {
+            let initialTime = 0;
             if (appConfig.data?.player.resumeFromLastPos) {
                 try {
                     const res = await progressApi.getContentProgress(this.cid);
                     const prog = res.animeProgress.find((p: any) => p.episode === this.epNumber);
-                    this.initialTime = prog?.timestampSeconds ?? 0;
+                    initialTime = prog?.timestampSeconds ?? 0;
                 } catch {
-                    this.initialTime = 0;
+                    initialTime = 0;
                 }
             }
+            this.initialTime = initialTime;
 
             const isSora = extensionsStore.anime.find(e => e.id === this.selectedExtension)?.source === 'sora';
 
@@ -253,13 +235,28 @@ export class PlayerState {
             }
 
             const data = res.data as any;
-            const headers = data.headers ?? {};
+            const rawHeaders = data.headers ?? {};
 
-            this.m3u8Url = buildTauriProxyUrl({ url: data.source.url, ...this.extractHeaders(headers) });
+            this.subtitles = (data.source.subtitles ?? []).map((s: any) => ({
+                url: s.url,
+                title: s.title,
+                lang: s.lang,
+            }));
             this.chapters = data.source.chapters ?? [];
-            this.subtitles = [];
 
-            this.fetchSubtitles(data.source.subtitles ?? [], headers);
+            // No more proxy/blob-url dance: mpv fetches the stream and its
+            // subtitles itself, headers and all, so we just hand it the raw
+            // url + headers directly. See playback.rs for why this replaces
+            // buildTauriProxyUrl rather than sitting alongside it.
+            await invoke("load_stream", {
+                url: data.source.url,
+                headers: this.toHeaderList(rawHeaders),
+                subtitles: this.subtitles,
+                chapters: this.chapters,
+                startPosition: initialTime > 0 ? initialTime : undefined,
+            });
+
+            this.isStreamLoaded = true;
 
         } catch (e: any) {
             console.log(e);
@@ -269,178 +266,33 @@ export class PlayerState {
         }
     }
 
-    private async fetchSubtitles(rawSubs: any[], headers: Record<string, string>) {
-        const results = await Promise.all(
-            rawSubs.map(async (s: any) => {
-                const proxyParams = { url: s.url, ...this.extractHeaders(headers) };
-                try {
-                    const blob = await proxyApi.fetch(proxyParams);
-                    const isAss = s.url.toLowerCase().endsWith(".ass") || s.url.toLowerCase().endsWith(".ssa");
-                    let finalBlob = blob;
-                    if (isAss) {
-                        const textData = await blob.text();
-                        finalBlob = new Blob([this.convertAssToVtt(textData)], { type: "text/vtt" });
-                    }
-                    const blobUrl = URL.createObjectURL(finalBlob);
-                    this.subtitleBlobUrls.push(blobUrl);
-                    return { ...s, url: blobUrl, type: "vtt" };
-                } catch {
-                    return null;
-                }
-            })
-        );
-        this.subtitles = results.filter((s): s is Subtitle => s !== null);
+    private toHeaderList(headers: Record<string, string>): { key: string; value: string }[] {
+        return Object.entries(headers)
+            .filter(([, value]) => !!value)
+            .map(([key, value]) => ({ key, value }));
     }
 
-    onTimeUpdate(data: { currentTime: number; duration: number; paused: boolean }) {
-        this.lastCurrentTime = data.currentTime;
-        this.currentDuration = data.duration;
-        this.isPaused = data.paused;
-        this.handlePlayerProgress(data);
-    }
-
-    onPlay() {
-        this.syncDiscord(false);
-    }
-
-    onPause() {
-        this.syncDiscord(true);
-    }
-
-    onSeek(time: number) {
-        this.lastCurrentTime = time;
-        this.syncDiscord(this.isPaused);
-    }
-
-    onEnded() {
-        discordApi.clearActivity();
-        if (this.hasNext) goto(`/watch/${this.cid}/${this.epNumber + 1}`);
-    }
-
-    private handlePlayerProgress({ currentTime, duration }: { currentTime: number; duration: number }) {
-        if (!appConfig.data) return;
-
-        if (!this.discordStatusUpdated && duration > 0) {
-            const meta = primaryMetadata(this.animeData, appConfig.data?.content?.preferredMetadataProvider);
-            const coverImage = meta?.coverImage || "";
-            const now = Math.floor(Date.now() / 1000);
-            const start = now - Math.floor(currentTime);
-            const end = start + Math.floor(duration);
-
-            discordApi.setActivity({
-                title: this.animeTitle,
-                details: this.episodeTitle,
-                imageUrl: coverImage,
-                startTime: start,
-                endTime: end,
-                isVideo: true,
-                isNsfw: this.animeData?.content?.nsfw ?? false,
-            }).catch(() => {});
-
-            this.discordStatusUpdated = true;
-        }
-
-        if (Math.abs(currentTime - this.lastSyncTime) >= 10 || (this.lastSyncTime === 0 && currentTime > 2)) {
-            this.lastSyncTime = currentTime;
-            progressApi.updateAnimeProgress({
-                cid: this.cid,
-                episode: this.epNumber,
-                timestampSeconds: Math.floor(currentTime),
-                episodeDurationSeconds: duration > 0 ? Math.floor(duration) : undefined,
-                completed: duration > 0 && currentTime / duration >= 0.9,
-            }).catch(() => {});
-        }
-
-        if (!this.hasUpdatedList && duration > 0 && appConfig.data.content.autoUpdateProgress) {
-            if (currentTime / duration >= 0.8) {
-                this.hasUpdatedList = true;
-                const status =
-                    this.totalEpisodes > 0 && this.epNumber >= this.totalEpisodes
-                        ? "COMPLETED"
-                        : "CURRENT";
-                listApi.upsert({ cid: this.cid, status, progress: this.epNumber }).catch(() => {});
-                listStore.updateEntryProgressLocal(this.cid, this.epNumber, status);
-            }
-        }
-    }
-
-    private async syncDiscord(paused: boolean) {
-        if (!this.animeData) return;
-        this.isPaused = paused;
-
-        const meta = primaryMetadata(this.animeData, appConfig.data?.content?.preferredMetadataProvider);
-        const nowInSeconds = Math.floor(Date.now() / 1000);
-        const startTime = !paused ? nowInSeconds - Math.floor(this.lastCurrentTime) : null;
-        const endTime =
-            !paused && this.currentDuration > 0
-                ? startTime! + Math.floor(this.currentDuration)
-                : null;
-
-        await discordApi.setActivity({
-            title: this.animeTitle,
-            details: this.episodeTitle,
-            imageUrl: meta?.coverImage || null,
-            startTime,
-            endTime,
-            isVideo: true,
-            isNsfw: this.animeData.content.nsfw,
-        }).catch(() => {});
-    }
-
-    private revokeSubtitleBlobs() {
-        this.subtitleBlobUrls.forEach(u => URL.revokeObjectURL(u));
-        this.subtitleBlobUrls = [];
-    }
-
-    private convertAssToVtt(assData: string): string {
-        const lines = assData.split(/\r?\n/);
-        let vtt = "WEBVTT\n\n";
-        let isEvents = false;
-        let format: string[] = [];
-
-        for (let line of lines) {
-            line = line.trim();
-            if (line === "[Events]") { isEvents = true; continue; }
-            if (!isEvents) continue;
-            if (line.startsWith("Format:")) {
-                format = line.substring(7).split(",").map(s => s.trim());
-                continue;
-            }
-            if (line.startsWith("Dialogue:")) {
-                const parts = line.substring(9).split(",");
-                const startIdx = format.indexOf("Start");
-                const endIdx = format.indexOf("End");
-                const textIdx = format.indexOf("Text");
-                if (startIdx === -1 || endIdx === -1 || textIdx === -1) continue;
-
-                const start = this.formatAssTime(parts[startIdx]);
-                const end = this.formatAssTime(parts[endIdx]);
-                let text = parts.slice(textIdx).join(",");
-                text = text.replace(/\{[^}]+\}/g, "").replace(/\\N/gi, "\n");
-                vtt += `${start} --> ${end}\n${text}\n\n`;
-            }
-        }
-        return vtt;
-    }
-
-    private formatAssTime(assTime: string): string {
-        const [hms, msPart = "00"] = assTime.trim().split(".");
-        const [h, m, s] = hms.split(":");
-        return `${h.padStart(2, "0")}:${m.padStart(2, "0")}:${s.padStart(2, "0")}.${msPart.padEnd(3, "0").substring(0, 3)}`;
-    }
-
-    private extractHeaders(headers: Record<string, string>) {
-        return {
-            referer: headers["Referer"],
-            origin: headers["Origin"],
-            userAgent: headers["User-Agent"],
-        };
-    }
+    // TODO(backend): progress persistence, Discord RPC, and the
+    // auto-"mark as watching/completed" list update all used to live here,
+    // driven by the old player component's onTimeUpdate/onPlay/onPause/
+    // onSeek/onEnded callbacks (removed along with hls.js/<video>). There's
+    // no equivalent signal yet now that mpv owns playback natively — no
+    // Tauri event for position/pause/eof, and nothing here polling
+    // get_position/get_duration. Once that exists, this needs to come back,
+    // but per your note, ideally implemented on the Rust side: it already
+    // has direct access to mpv's property-change/eof-reached events and
+    // doesn't need a webview round trip just to know the playhead moved.
+    // Auto-advance to the next episode (old onEnded -> goto(...)) falls in
+    // the same bucket: it's frontend-appropriate (navigation isn't mpv's
+    // job) but still needs an "eof-reached" signal from somewhere.
 
     destroy() {
         if (this.destroyed) return;
         this.destroyed = true;
-        discordApi.clearActivity().catch(() => {});
         invoke("unlock_orientation").catch(() => {});
+        // See constructor note: shutdown_player pairing with the
+        // initialize_player call there is a guess, not a confirmed
+        // lifecycle decision.
+        invoke("shutdown_player").catch(() => {});
     }
 }

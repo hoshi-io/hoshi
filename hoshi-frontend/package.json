@@ -47,13 +47,11 @@
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
-		"@smbcloud/tauri-plugin-android-tv-check-api": "^1.1.5",
 		"@tauri-apps/api": "^2.10.1",
 		"@tauri-apps/plugin-deep-link": "^2.4.7",
 		"@tauri-apps/plugin-opener": "^2.5.3",
 		"@tauri-apps/plugin-os": "^2.3.2",
 		"@tauri-apps/plugin-store": "^2.4.2",
-		"hls.js": "^1.6.15",
 		"lucide-svelte": "^0.564.0",
 		"svelte-flag-icons": "^3.0.1"
 	}

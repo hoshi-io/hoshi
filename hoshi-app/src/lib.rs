@@ -12,6 +12,7 @@ pub mod headless;
 pub mod orientation;
 pub mod intent;
 pub mod immersive;
+pub mod player_surface;
 
 pub mod proxy_protocol;
 
@@ -52,6 +53,7 @@ use crate::commands::config::{get_user_config, patch_user_config};
 use crate::commands::progress::{get_content_progress, get_continue_watching, update_anime_progress, update_chapter_progress};
 use crate::commands::intergations::{list_trackers, add_integration, remove_integration, set_sync_enabled};
 use crate::commands::logs::{get_system_logs, list_log_files, get_log_file, delete_log_file};
+use crate::commands::playback::{initialize_player, shutdown_player, load_stream, toggle_pause};
 
 #[cfg(feature = "discord-rpc")]
 use crate::commands::discord::{set_activity, clear_activity};
@@ -85,7 +87,7 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "hoshi_app=debug,hoshi_core=debug,sandbox_js=debug".into()),
+                .unwrap_or_else(|_| "hoshi_app=debug,hoshi_core=debug,sandbox_js=debug".into()), //this is wrong
         )
         .with(tracing_subscriber::fmt::layer())
         .with(memory_layer)
@@ -142,6 +144,16 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
                 Ok::<(), CoreError>(())
             })?;
+
+            #[cfg(target_os = "linux")]
+            {
+                let state = app.state::<std::sync::Arc<hoshi_core::AppState>>().inner().clone();
+                let window = app
+                    .get_webview_window("main")
+                    .ok_or("main window not found during setup")?;
+                player_surface::attach(&window, state)?;
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -156,6 +168,7 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             get_user_config, patch_user_config,
             get_content_progress, get_continue_watching, update_anime_progress, update_chapter_progress,
             list_trackers, add_integration, remove_integration, set_sync_enabled,
+            initialize_player, shutdown_player, load_stream, toggle_pause,
 
             #[cfg(feature = "discord-rpc")]
             set_activity,

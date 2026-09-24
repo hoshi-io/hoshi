@@ -21,8 +21,8 @@
     import { layoutState } from "@/stores/layout.svelte";
     import { setupImportListener } from "@/stores/importStatus.svelte";
     import ImportStatus from "@/components/ImportStatus.svelte";
-    import {check} from "@smbcloud/tauri-plugin-android-tv-check-api";
-    import {enableSpatialNav} from "@/tv/spatialNav";
+    //import {check} from "@smbcloud/tauri-plugin-android-tv-check-api";
+    //import {enableSpatialNav} from "@/tv/spatialNav";
 
     let { children } = $props();
 
@@ -165,7 +165,7 @@
 <svelte:window bind:innerWidth />
 <svelte:document onclickcapture={handleGlobalLinks} />
 
-<div class="h-dvh w-full bg-background text-foreground flex flex-col overflow-hidden relative">
+<div class="h-dvh w-full {isViewer ? 'bg-transparent' : 'bg-background'} text-foreground flex flex-col overflow-hidden relative">
 
     {#if !layoutState.isTV}
         <DesktopTitlebar />
@@ -179,7 +179,7 @@
             </div>
         {/if}
 
-        <div class="flex-1 flex flex-col relative overflow-hidden bg-background">
+        <div class="flex-1 flex flex-col relative overflow-hidden {isViewer ? 'bg-transparent' : 'bg-background'}">
 
             {#if showNav && !layoutState.isTV}
                 <div class="w-full z-50 lg:hidden absolute top-0 left-0 transition-transform duration-300 ease-in-out {isNavHidden ? '-translate-y-full' : 'translate-y-0'}">

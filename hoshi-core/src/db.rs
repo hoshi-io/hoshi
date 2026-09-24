@@ -51,3 +51,17 @@ fn connect_options(paths: &AppPaths) -> CoreResult<SqliteConnectOptions> {
         .pragma("temp_store", "MEMORY")
         .pragma("mmap_size", "30000000000"))
 }
+
+#[macro_export]
+macro_rules! impl_from_row {
+    ($struct:ty { $($field:ident),* $(,)? }) => {
+        impl sqlx::FromRow<'_, sqlx::sqlite::SqliteRow> for $struct {
+            fn from_row(row: &sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
+                use sqlx::Row;
+                Ok(Self {
+                    $($field: row.try_get(stringify!($field))?,)*
+                })
+            }
+        }
+    };
+}
