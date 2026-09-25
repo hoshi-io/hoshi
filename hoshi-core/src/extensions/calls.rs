@@ -1,3 +1,4 @@
+use std::sync::{Arc, Mutex};
 use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
 use tokio::fs;
@@ -5,19 +6,49 @@ use tracing::{error, instrument};
 
 use super::{sandbox, ExtensionManager, LNREADER, LNREADER_ARC, SORA, SORA_ARC};
 use crate::error::{CoreError, CoreResult};
+use crate::extensions::sandbox::native_apis::ConsoleBuffer;
 use crate::extensions::types::{
     Chapter, CompatLayer, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters,
     ExtensionMetadata, ExtensionSearchResult, Page,
 };
 
 impl ExtensionManager {
-    #[instrument(skip(self, args))]
     pub async fn call_extension_function(
         &self,
         extension_id: &str,
         function_name: &str,
         args: Vec<Value>,
         http_client: reqwest::Client,
+    ) -> CoreResult<Value> {
+        self.call_extension_function_inner(extension_id, function_name, args, http_client, None)
+            .await
+    }
+
+    pub async fn call_extension_function_with_console(
+        &self,
+        extension_id: &str,
+        function_name: &str,
+        args: Vec<Value>,
+        http_client: reqwest::Client,
+    ) -> (CoreResult<Value>, Vec<String>) {
+        let buffer: ConsoleBuffer = Arc::new(Mutex::new(Vec::new()));
+
+        let result = self.call_extension_function_inner(
+            extension_id, function_name, args, http_client, Some(Arc::clone(&buffer)),
+        ).await;
+
+        let lines = buffer.lock().unwrap_or_else(|p| p.into_inner()).clone();
+        (result, lines)
+    }
+
+    #[instrument(skip(self, args))]
+    async fn call_extension_function_inner(
+        &self,
+        extension_id: &str,
+        function_name: &str,
+        args: Vec<Value>,
+        http_client: reqwest::Client,
+        console_buffer: Option<ConsoleBuffer>,
     ) -> CoreResult<Value> {
         let extension = self.extensions.get(extension_id).ok_or_else(|| {
             error!(ext = %extension_id, func = %function_name, "Attempted to call function on unloaded extension");
@@ -50,10 +81,11 @@ impl ExtensionManager {
             self.headless.clone(),
             extension.settings.clone(),
             extension_id.to_string(),
-            std::sync::Arc::clone(&self.extension_state),
+            Arc::clone(&self.extension_state),
             compat,
             ext_type,
-            http_client
+            http_client,
+            console_buffer
         ).await
     }
 

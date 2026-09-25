@@ -12,3 +12,4 @@ pub mod i18n;
 pub mod playback;
 #[cfg(feature = "discord-rpc")]
 pub mod discord;
+pub mod dev;

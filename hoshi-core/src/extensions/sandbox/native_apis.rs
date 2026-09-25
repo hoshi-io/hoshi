@@ -7,6 +7,7 @@ use tracing::warn;
 
 use super::{error_json, FetchRequest, HeadlessRequest, MAX_SLEEP_MS};
 use crate::extensions::html_query;
+pub(crate) type ConsoleBuffer = Arc<Mutex<Vec<String>>>;
 
 pub(super) fn register_native_apis(
     ctx: &rquickjs::Ctx<'_>,
@@ -15,6 +16,7 @@ pub(super) fn register_native_apis(
     fetch_tx: Arc<std::sync::mpsc::SyncSender<FetchRequest>>,
     state_map: Arc<Mutex<HashMap<String, Value>>>,
     extension_id: String,
+    console_buffer: Option<ConsoleBuffer>,
 ) -> rquickjs::Result<()> {
     let globals = ctx.globals();
 
@@ -24,6 +26,10 @@ pub(super) fn register_native_apis(
             let extension_id = extension_id.clone();
             move |msg: String| {
                 debug!(target: "sandbox_js", extension = %extension_id, "{}", msg);
+                if let Some(buf) = &console_buffer {
+                    let mut guard = buf.lock().unwrap_or_else(|p| p.into_inner());
+                    guard.push(msg);
+                }
                 Ok::<(), rquickjs::Error>(())
             }
         })?,

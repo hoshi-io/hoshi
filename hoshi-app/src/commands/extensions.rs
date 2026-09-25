@@ -11,7 +11,7 @@ use hoshi_core::extensions::types::{Extension, ExtensionFeatures, LNReaderMarket
 
 #[derive(Serialize)]
 pub struct ExtensionsResponse<T> {
-    extensions: T,
+    pub extensions: T,
 }
 
 #[tauri::command]

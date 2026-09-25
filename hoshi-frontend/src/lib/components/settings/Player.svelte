@@ -9,7 +9,6 @@
     import { platform } from "@tauri-apps/plugin-os";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import * as Kbd from "$lib/components/ui/kbd";
-    import PlayerSubtitleSettings from "@/components/settings/PlayerSubtitleSettings.svelte";
     import PlayerMpvSettings from "@/components/settings/PlayerMpvSettings.svelte";
 
     let {
@@ -147,9 +146,6 @@
             </div>
         </Tabs.Content>
 
-        <Tabs.Content value="player_subtitles" class="focus-visible:outline-none mt-0">
-            <PlayerSubtitleSettings />
-        </Tabs.Content>
 
         <Tabs.Content value="player_mpv" class="focus-visible:outline-none mt-0">
             <PlayerMpvSettings bind:mpvConfig {isAndroid} {onSave} />

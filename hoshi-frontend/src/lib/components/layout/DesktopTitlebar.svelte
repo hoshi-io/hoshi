@@ -2,9 +2,8 @@
     import { browser } from '$app/environment';
     import { type } from '@tauri-apps/plugin-os';
     import { Minus, Square, X } from 'lucide-svelte';
-    import { layoutState } from '@/stores/layout.svelte.js';
-    import { themeManager } from '@/stores/theme.svelte.js';
-    import HistoryMenu from "@/components/history/HistoryMenu.svelte";
+
+    let { title = '', iconSrc = '' }: { title?: string; iconSrc?: string } = $props();
 
     const isTauri = browser && '__TAURI__' in window;
     const osType = isTauri ? type() : null;
@@ -14,7 +13,7 @@
     function getWin() {
         if (!showTitlebar) return null;
         if (!winPromise) {
-            winPromise = import('@tauri-apps/api/window').then(m => m.getCurrentWindow());
+            winPromise = import('@tauri-apps/api/window').then((m) => m.getCurrentWindow());
         }
         return winPromise;
     }
@@ -33,11 +32,15 @@
     <div class="absolute top-0 left-0 h-8 grid grid-cols-3 items-center bg-transparent select-none z-[60] w-full">
 
         <div data-tauri-drag-region class="h-full flex items-center gap-2.5 pl-5 overflow-hidden">
+            {#if title}
+                {#if iconSrc}
+                    <img src={iconSrc} alt="" class="h-3.5 w-3.5 rounded-[3px] opacity-90" draggable="false" />
+                {/if}
+                <span class="text-[11px] font-medium text-muted-foreground/70 tracking-wide">{title}</span>
+            {/if}
         </div>
 
-
-        <div data-tauri-drag-region class="h-full w-full relative flex justify-center items-center">
-        </div>
+        <div data-tauri-drag-region class="h-full w-full relative flex justify-center items-center"></div>
 
         <div class="flex h-full shrink-0 justify-end">
             <button onclick={minimize} class="h-full w-[42px] hover:bg-muted/20 text-muted-foreground/60 hover:text-foreground transition-colors inline-flex items-center justify-center" tabindex="-1">

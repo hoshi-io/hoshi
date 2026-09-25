@@ -32,6 +32,7 @@ impl Extension {
             setting_definitions: manifest.settings,
             settings,
             source: manifest.source,
+            dev: manifest.dev,
         }
     }
 }

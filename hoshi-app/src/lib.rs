@@ -54,6 +54,7 @@ use crate::commands::progress::{get_content_progress, get_continue_watching, upd
 use crate::commands::intergations::{list_trackers, add_integration, remove_integration, set_sync_enabled};
 use crate::commands::logs::{get_system_logs, list_log_files, get_log_file, delete_log_file};
 use crate::commands::playback::{initialize_player, shutdown_player, load_stream, toggle_pause};
+use crate::commands::dev::{list_dev_extensions, create_dev_extension, read_extension_source, write_extension_source, read_manifest_raw, write_manifest_raw, run_extension_function, delete_dev_extension};
 
 #[cfg(feature = "discord-rpc")]
 use crate::commands::discord::{set_activity, clear_activity};
@@ -169,6 +170,7 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             get_content_progress, get_continue_watching, update_anime_progress, update_chapter_progress,
             list_trackers, add_integration, remove_integration, set_sync_enabled,
             initialize_player, shutdown_player, load_stream, toggle_pause,
+            list_dev_extensions, create_dev_extension, read_extension_source, write_extension_source, read_manifest_raw, write_manifest_raw, run_extension_function, delete_dev_extension,
 
             #[cfg(feature = "discord-rpc")]
             set_activity,

@@ -3,6 +3,7 @@ mod calls;
 mod sandbox;
 pub mod types;
 pub mod html_query;
+pub mod dev;
 
 use serde_json::Value;
 use std::collections::HashMap;
@@ -53,6 +54,8 @@ impl ExtensionManager {
     pub fn list_extensions(&self) -> Vec<&Extension> {
         self.extensions.values().collect()
     }
+
+    pub fn list_dev_extensions(&self) -> Vec<&Extension> { self.extensions.values().filter(|e| e.dev).collect() }
 
     pub fn get_extensions_by_type(&self, target_type: ExtensionType) -> Vec<String> {
         self.extensions.values()
@@ -145,7 +148,8 @@ impl ExtensionManager {
                 skip_default_processing: manifest.skip_default_processing,
                 setting_definitions: manifest.settings,
                 settings,
-                source: manifest.source
+                source: manifest.source,
+                dev: manifest.dev,
             };
 
             self.extensions.insert(manifest.id, extension);

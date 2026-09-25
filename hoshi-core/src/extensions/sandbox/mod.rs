@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex};
 use tracing::{error, instrument, warn};
 
 mod script_builder;
-mod native_apis;
+pub mod native_apis;
 
 use script_builder::build_sandbox_script;
 use native_apis::register_native_apis;
@@ -14,6 +14,7 @@ use native_apis::register_native_apis;
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::ExtensionStateStore;
 use crate::extensions::{ANIME, BASE, MANGA, NOVEL};
+use crate::extensions::sandbox::native_apis::ConsoleBuffer;
 use crate::extensions::types::{CompatLayer, ExtensionType};
 use crate::headless::{HeadlessHandle, HeadlessOptions};
 
@@ -46,6 +47,7 @@ pub(crate) async fn execute_in_quickjs(
     compat_layer: Option<CompatLayer>,
     ext_type: ExtensionType,
     http_client: reqwest::Client,
+    console_buffer: Option<ConsoleBuffer>,
 ) -> CoreResult<Value> {
     let base_classes = format!("{}\n{}\n{}\n{}", BASE, ANIME, MANGA, NOVEL);
 
@@ -176,6 +178,7 @@ pub(crate) async fn execute_in_quickjs(
         let req_tx = req_tx.clone();
         let fetch_tx = fetch_tx.clone();
         let extension_id = extension_id.clone();
+        let console_buffer = console_buffer.clone();
         move || {
             let rt = tokio::runtime::Builder::new_current_thread()
                 .enable_all()
@@ -186,7 +189,7 @@ pub(crate) async fn execute_in_quickjs(
                 })?;
             tokio::task::LocalSet::new().block_on(
                 &rt,
-                run_quickjs_local(full_script, extension_code, headless_available, req_tx, fetch_tx, state_json, extension_id),
+                run_quickjs_local(full_script, extension_code, headless_available, req_tx, fetch_tx, state_json, extension_id, console_buffer),
             )
         }
     })
@@ -223,6 +226,7 @@ async fn run_quickjs_local(
     fetch_tx: std::sync::mpsc::SyncSender<FetchRequest>,
     state_json: String,
     extension_id: String,
+    console_buffer: Option<ConsoleBuffer>,
 ) -> CoreResult<(String, String)> {
     unsafe {
         let locale = std::ffi::CString::new("C").unwrap();
@@ -258,7 +262,7 @@ async fn run_quickjs_local(
     let state_map_for_output = Arc::clone(&state_map);
 
     let result: Result<String, String> = async_with!(ctx => |ctx| {
-        register_native_apis(&ctx, headless_available, req_tx, fetch_tx, Arc::clone(&state_map), extension_id)
+        register_native_apis(&ctx, headless_available, req_tx, fetch_tx, Arc::clone(&state_map), extension_id, console_buffer)
             .catch(&ctx)
             .map_err(|e| e.to_string())?;
 
@@ -320,8 +324,11 @@ async fn run_quickjs_local(
                 }
             }
 
+            const INPUT_LINE_OFFSET: usize = 2;
+
             let (snippet, line, col, source_label) = match (input_loc, eval_loc) {
-                (Some((line, col)), _) => {
+                (Some((raw_line, col)), _) => {
+                    let line = raw_line.saturating_sub(INPUT_LINE_OFFSET);
                     (make_snippet(&extension_code, line, col), line, col, "extension_code")
                 }
                 (None, Some((line, col))) => {

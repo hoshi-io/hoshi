@@ -1,12 +1,13 @@
 <script lang="ts">
     import { auth } from '@/stores/auth.svelte.js';
-    import { Users } from 'lucide-svelte';
+    import { Users, Code2 } from 'lucide-svelte';
     import { Button } from '$lib/components/ui/button';
     import * as Avatar from '$lib/components/ui/avatar';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { page } from "$app/state";
     import HistoryMenu from "@/components/history/HistoryMenu.svelte";
     import { layoutState } from "@/stores/layout.svelte";
+    import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 
     let { mainRoutes, profileRoutes, showSwitchProfileModal = $bindable(false) } = $props();
 
@@ -15,9 +16,28 @@
             ? page.url.pathname === '/'
             : page.url.pathname.startsWith(path);
     }
+
+    async function openIde() {
+        const existing = await WebviewWindow.getByLabel('extension-ide');
+        if (existing) {
+            await existing.setFocus();
+            return;
+        }
+
+        const ideWindow = new WebviewWindow('extension-ide', {
+            url: '/ide',
+            title: 'Extension IDE',
+            width: 1200,
+            height: 800,
+            decorations: false
+        });
+
+        ideWindow.once('tauri://error', (e) => {
+            console.error('Failed to open IDE window:', e);
+        });
+    }
 </script>
 
-<!-- Added 'group/sidebar' and conditional width/background handling for TV expansion -->
 <aside
         class="{layoutState.isTV ? 'flex absolute top-0 left-0 bg-background/95 backdrop-blur-md shadow-2xl w-20 focus-within:w-56 hover:w-56 transition-all duration-300 ease-in-out' : 'hidden md:flex bg-transparent w-20'} flex-col h-full shrink-0 pt-8 pb-6 z-50 justify-between group/sidebar"
 >
@@ -32,13 +52,10 @@
                 />
             </div>
         </div>
-
         {#each mainRoutes as route}
             {@const Icon = route.icon}
             {@const active = isActive(route.path)}
-            <!-- Added outline-none and px-3 to handle focus rings cleanly -->
             <a href={route.path} class="flex w-full group outline-none px-3">
-                <!-- Added focus-visible states for D-pad navigation -->
                 <Button
                         variant="ghost"
                         class="w-full h-11 rounded-xl transition-all duration-300 {layoutState.isTV ? 'justify-start gap-4 overflow-hidden' : 'justify-center px-0'}
@@ -49,7 +66,6 @@
         ? 'rotate-4 scale-105 opacity-100'
         : 'opacity-70 group-hover:rotate-8 group-hover:scale-105 group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-visible:scale-105'}" />
 
-                    <!-- Text label only rendered on TV and fades in on focus/hover -->
                     {#if layoutState.isTV}
                         <span class="whitespace-nowrap font-medium opacity-0 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100 transition-opacity duration-300">
                             {route.name}
@@ -61,7 +77,7 @@
         <HistoryMenu />
     </nav>
 
-    <div class="flex flex-col items-center space-y-4 px-3 w-full">
+    <div class="flex flex-col px-3 w-full">
         <div class="w-full space-y-4">
             {#each profileRoutes as route}
                 {@const Icon = route.icon}
@@ -85,6 +101,26 @@
                     </Button>
                 </a>
             {/each}
+
+            <button
+                    onclick={openIde}
+                    class="flex w-full group outline-none"
+                    title="Extension IDE"
+            >
+                <Button
+                        variant="ghost"
+                        class="w-full h-11 rounded-xl transition-all duration-300 {layoutState.isTV ? 'justify-start gap-4 overflow-hidden' : 'justify-center px-0'}
+                    text-muted-foreground hover:bg-muted/30 focus-visible:bg-muted/30 focus-visible:ring-2 focus-visible:ring-primary hover:text-foreground focus-visible:text-foreground"
+                >
+                    <Code2 class="shrink-0 size-5.5 opacity-70 transition-transform duration-300 ease-out group-hover:rotate-4 group-hover:scale-105 group-hover:opacity-100 group-focus-visible:opacity-100" />
+
+                    {#if layoutState.isTV}
+                        <span class="whitespace-nowrap font-medium opacity-0 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100 transition-opacity duration-300">
+                            Extension IDE
+                        </span>
+                    {/if}
+                </Button>
+            </button>
         </div>
 
         {#if auth.user}

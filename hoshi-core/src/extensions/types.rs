@@ -83,7 +83,7 @@ pub fn normalize_sora_type(raw: &str) -> &'static str {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ExtensionManifest {
     pub id: String,
     pub name: String,
@@ -102,6 +102,8 @@ pub struct ExtensionManifest {
     pub settings: Vec<SettingDefinition>,
     #[serde(default)]
     pub source: Option<String>,
+    #[serde(default)]
+    pub dev: bool,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -161,6 +163,7 @@ pub struct Extension {
     pub setting_definitions: Vec<SettingDefinition>,
     pub settings: HashMap<String, Value>,
     pub source: Option<String>,
+    pub dev: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
