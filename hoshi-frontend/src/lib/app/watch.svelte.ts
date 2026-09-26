@@ -14,13 +14,16 @@ import { primaryMetadata } from "@/api/content/types";
 import type { FullContent } from "@/api/content/types";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { goto } from "$app/navigation";
 
 import type { Extension } from "@/api/extensions/types";
 
 export interface SubtitleSource {
     url: string;
+    /// Human-readable description as the source gives it, e.g.
+    /// "English - Forced" — there's no separate ISO language code in this
+    /// shape, so this is passed straight through to mpv as the track title.
     title?: string;
-    lang?: string;
 }
 
 export interface EpisodeChapter {
@@ -116,8 +119,14 @@ export class WatchState {
     isMuted     = $state(false);
     tracks      = $state<PlaybackTrack[]>([]);
 
+    bufferedTime = $state(0);
+    bufferedFraction = $derived(
+        this.currentDuration > 0 ? Math.min(this.bufferedTime / this.currentDuration, 1) : 0
+    );
+
     audioTracks = $derived(this.tracks.filter(t => t.track_type === "audio"));
     subtitleTracks = $derived(this.tracks.filter(t => t.track_type === "sub"));
+    videoTracks = $derived(this.tracks.filter(t => t.track_type === "video"));
 
     isMappingError = $derived(!!this.error?.key?.includes("match"));
 
@@ -148,6 +157,7 @@ export class WatchState {
     private async attachPlayerListeners() {
         this.unlistenFns.push(
             await listen<number>("player://position", (e) => this.handlePlayerProgress(e.payload)),
+            await listen<number>("player://buffered", (e) => { this.bufferedTime = e.payload; }),
             await listen<void>("player://eof", () => this.handleEof()),
             await listen<boolean>("player://pause-changed", (e) => { this.isPaused = e.payload; }),
             await listen<string>("player://error", (e) => this.handlePlayerError(e.payload)),
@@ -205,9 +215,6 @@ export class WatchState {
         await this.seek(deltaSeconds, true);
     }
 
-    /// Refetches the current track list from mpv. Called once a stream is
-    /// loaded, and again after any track change so `selected` reflects
-    /// reality rather than being assumed client-side.
     private async refreshTracks() {
         try {
             this.tracks = await invoke<PlaybackTrack[]>("get_tracks");
@@ -222,6 +229,15 @@ export class WatchState {
             await invoke("set_audio_track", { id });
         } catch (e) {
             console.error("Failed to set audio track", e);
+        }
+        await this.refreshTracks();
+    }
+
+    async setVideoTrack(id: number) {
+        try {
+            await invoke("set_video_track", { id });
+        } catch (e) {
+            console.error("Failed to set video track", e);
         }
         await this.refreshTracks();
     }
@@ -249,10 +265,9 @@ export class WatchState {
         await this.loadPlay();
     }
 
-    /// Set while a duration fetch is in flight, so handlePlayerProgress
-    /// doesn't fire a new get_duration call on every single tick while
-    /// waiting for the first one to resolve.
     private durationFetchInFlight = false;
+
+    private tracksFetchedThisLoad = false;
 
     private handlePlayerProgress(currentTime: number) {
         this.currentTime = currentTime;
@@ -262,7 +277,13 @@ export class WatchState {
         if (this.currentDuration <= 0 && !this.durationFetchInFlight) {
             this.durationFetchInFlight = true;
             invoke<number>("get_duration")
-                .then((d) => { this.currentDuration = d; })
+                .then((d) => {
+                    this.currentDuration = d;
+                    if (d > 0 && !this.tracksFetchedThisLoad) {
+                        this.tracksFetchedThisLoad = true;
+                        this.refreshTracks();
+                    }
+                })
                 .catch(() => {})
                 .finally(() => { this.durationFetchInFlight = false; });
         }
@@ -301,8 +322,13 @@ export class WatchState {
     }
 
     goToEpisode(episode: number) {
-        // TODO: hook up to SvelteKit's router (e.g. `goto` from
-        // `$app/navigation`) with this content's route.
+        if (!Number.isFinite(episode) || episode < 1) return;
+        if (this.totalEpisodes > 0 && episode > this.totalEpisodes) return;
+        if (episode === this.epNumber) return;
+
+        const segments = page.url.pathname.split("/");
+        segments[segments.length - 1] = String(episode);
+        goto(segments.join("/"));
     }
 
     async loadPageData(targetCid: string, targetEp: number) {
@@ -347,7 +373,10 @@ export class WatchState {
 
     private updateEpisodeTitle(ep: number) {
         const unit = this.animeData?.contentUnits?.find((u: any) => u.unitNumber === ep);
-        this.episodeTitle = unit?.title
+
+        const isGenericTitle = unit?.title?.trim().toLowerCase() === `episode ${ep}`;
+
+        this.episodeTitle = (unit?.title && !isGenericTitle)
             ? i18n.t("watch.episode_with_title", { num: ep, title: unit.title })
             : i18n.t("watch.episode_number", { num: ep });
     }
@@ -386,9 +415,11 @@ export class WatchState {
         this.chapters = [];
         this.currentDuration = 0;
         this.durationFetchInFlight = false;
+        this.tracksFetchedThisLoad = false;
         this.currentTime = 0;
         this.isPaused = false;
         this.tracks = [];
+        this.bufferedTime = 0;
         this.lastSyncTime = 0;
         this.hasUpdatedList = false;
 
@@ -433,8 +464,7 @@ export class WatchState {
 
             this.subtitles = (data.source.subtitles ?? []).map((s: any) => ({
                 url: s.url,
-                title: s.title,
-                lang: s.lang,
+                title: s.language,
             }));
             this.chapters = data.source.chapters ?? [];
 
@@ -484,6 +514,6 @@ export class WatchState {
 
         invoke("unlock_orientation").catch(() => {});
         invoke("clear_activity").catch(() => {});
-        invoke("shutdown_player").catch(() => {});
+        invoke("stop_playback").catch(() => {});
     }
 }

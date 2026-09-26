@@ -93,6 +93,7 @@ pub struct NowPlaying {
 #[serde(tag = "type", content = "data")]
 pub enum PlaybackEvent {
     Position(f64),
+    Buffered(f64),
     Eof,
     PauseChanged(bool),
     Error(String),
@@ -161,6 +162,20 @@ impl PlaybackHandle {
     }
 
     #[instrument(skip(self))]
+    pub async fn stop(&self) -> CoreResult<()> {
+        let mpv = self.require_mpv().await?;
+
+        self.cleanup_chapters_file();
+        *self.now_playing.lock().unwrap() = None;
+
+        self.run(move || -> libmpv2::Result<()> {
+            mpv.command("stop", &[])?;
+            mpv.set_property("vid", "no")
+        })
+            .await
+    }
+
+    #[instrument(skip(self))]
     pub async fn shutdown(&self) -> CoreResult<()> {
         let mut guard = self.inner.write().await;
         let Some(mpv) = guard.take() else {
@@ -207,9 +222,6 @@ impl PlaybackHandle {
             self.run(move || mpv.set_property("http-header-fields", header_value))
                 .await?;
         }
-        // Reset to mpv's own default (empty string restores it) when this
-        // load doesn't specify one, so a previous episode's UA can't leak
-        // into one that doesn't set it.
         {
             let mpv = mpv.clone();
             let ua = user_agent.unwrap_or_default();
@@ -221,9 +233,6 @@ impl PlaybackHandle {
         *self.now_playing.lock().unwrap() = spec.now_playing.clone();
 
         let mut options: Vec<String> = Vec::new();
-        for sub in &spec.subtitles {
-            options.push(format!("sub-file={}", mpv_list_escape(&sub.url)));
-        }
 
         if let Some(start) = spec.start_position {
             if start > 0.0 {
@@ -242,7 +251,20 @@ impl PlaybackHandle {
         let options_str = options.join(",");
         let mode_str = mode.as_str();
         let url = spec.url;
-        self.run(move || mpv.command("loadfile", &[&url, mode_str, "-1", &options_str]))
+        let subtitles = spec.subtitles;
+
+        self.run(move || -> libmpv2::Result<()> {
+            mpv.set_property("vid", "auto")?;
+
+            mpv.command("loadfile", &[&url, mode_str, "-1", &options_str])?;
+
+            for sub in &subtitles {
+                let title = sub.title.as_deref().unwrap_or("");
+                let lang = sub.lang.as_deref().unwrap_or("");
+                let _ = mpv.command("sub-add", &[&sub.url, "auto", title, lang]);
+            }
+            Ok(())
+        })
             .await
     }
 
@@ -448,6 +470,9 @@ fn spawn_event_loop(mpv: Arc<Mpv>, events: broadcast::Sender<PlaybackEvent>) {
         if let Err(e) = mpv.observe_property("pause", libmpv2::Format::Flag, 2) {
             warn!(?e, "failed to observe pause, pause events disabled");
         }
+        if let Err(e) = mpv.observe_property("demuxer-cache-time", libmpv2::Format::Double, 3) {
+            warn!(?e, "failed to observe demuxer-cache-time, buffer events disabled");
+        }
 
         loop {
             match mpv.wait_event(1.0) {
@@ -464,6 +489,15 @@ fn spawn_event_loop(mpv: Arc<Mpv>, events: broadcast::Sender<PlaybackEvent>) {
                             ..
                         })) => {
                     let _ = events.send(PlaybackEvent::PauseChanged(paused));
+                }
+                Some(Ok(libmpv2::events::Event::PropertyChange {
+                            name: "demuxer-cache-time",
+                            change: libmpv2::events::PropertyData::Double(cache_time),
+                            ..
+                        })) => {
+                    if cache_time >= 0.0 {
+                        let _ = events.send(PlaybackEvent::Buffered(cache_time));
+                    }
                 }
                 Some(Ok(libmpv2::events::Event::EndFile(reason))) => {
                     if matches!(reason, libmpv2::mpv_end_file_reason::Eof) {

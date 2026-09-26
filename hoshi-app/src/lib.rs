@@ -57,6 +57,7 @@ fn spawn_player_event_listener(app_handle: tauri::AppHandle, state: std::sync::A
                 hoshi_core::playback::PlaybackEvent::Eof => app_handle.emit("player://eof", ()),
                 hoshi_core::playback::PlaybackEvent::PauseChanged(paused) => app_handle.emit("player://pause-changed", paused),
                 hoshi_core::playback::PlaybackEvent::Error(msg) => app_handle.emit("player://error", msg),
+                hoshi_core::playback::PlaybackEvent::Buffered(t) => app_handle.emit("player://buffered", t),
             };
 
             if let Err(e) = emit_result {
@@ -106,7 +107,7 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .plugin(intent_plugin_init());
     }
 
-    builder
+    let app = builder
         .register_asynchronous_uri_scheme_protocol("proxy", proxy_protocol::handle_async)
         .setup(move |app| {
             let base_dir = app.path().app_data_dir()
@@ -161,8 +162,20 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             Ok(())
         })
         .invoke_handler(commands::generate_handlers())
-        .run(tauri::generate_context!())
+        .build(tauri::generate_context!())
         .map_err(|e| format!("Tauri runtime error: {e}"))?;
+
+
+    app.run(|app_handle, event| {
+        if let tauri::RunEvent::ExitRequested { .. } = event {
+            let state = app_handle.state::<std::sync::Arc<hoshi_core::AppState>>().inner().clone();
+            async_runtime::block_on(async {
+                if let Err(e) = state.playback.shutdown().await {
+                    error!(error = ?e, "failed to shut down playback core on exit");
+                }
+            });
+        }
+    });
 
     Ok(())
 }

@@ -25,6 +25,11 @@ pub async fn shutdown_player(state: State<'_, Arc<AppState>>) -> Result<(), Core
     state.playback.shutdown().await
 }
 
+#[tauri::command]
+pub async fn stop_playback(state: State<'_, Arc<AppState>>) -> Result<(), CoreError> {
+    state.playback.stop().await
+}
+
 /// A single `Key: Value` HTTP header, as an object rather than a
 /// `[key, value]` tuple so the JS side isn't juggling arrays-of-arrays.
 #[derive(Deserialize)]
@@ -40,10 +45,6 @@ pub struct SubtitleInput {
     pub lang: Option<String>,
 }
 
-/// Matches core's `EpisodeChapter` — a real start/end range from the
-/// extension source, not a bare timestamp. Core no longer infers `end` from
-/// the next chapter, so if a source only ever gives single timestamps that
-/// needs to be turned into ranges on the frontend before this arrives.
 #[derive(Deserialize)]
 pub struct ChapterInput {
     pub start: f64,
@@ -51,11 +52,6 @@ pub struct ChapterInput {
     pub title: String,
 }
 
-/// What the frontend knows about what's about to play. `user_id` is
-/// deliberately not part of this — it's not something the frontend should
-/// be trusted to supply, and it wouldn't know it as reliably as the
-/// session does anyway. `load_stream` below resolves it from `TauriSession`
-/// via `require_auth` and fills it in before this reaches core.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NowPlayingInput {
@@ -80,11 +76,6 @@ pub async fn load_stream(
     start_position: Option<f64>,
     now_playing: Option<NowPlayingInput>,
 ) -> Result<(), CoreError> {
-    // Playback is user-scoped (progress persistence, per-user Discord RPC
-    // config), so this requires an authenticated session the same as any
-    // other user-scoped command — not previously enforced here since
-    // load_stream had no user-specific side effects before now_playing
-    // existed.
     let user_id = crate::require_auth(&session).await?;
 
     let mode = match mode.as_deref() {

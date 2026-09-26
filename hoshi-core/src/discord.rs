@@ -211,6 +211,9 @@ pub async fn run_activity_bridge(state: Arc<AppState>) {
                 sent = false;
                 state.discord_rpc.clear_activity();
             }
+            PlaybackEvent::Buffered(_) => {
+                // Buffering progress doesn't affect Discord presence.
+            }
         }
     }
 }
