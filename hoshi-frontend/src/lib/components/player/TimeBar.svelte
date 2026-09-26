@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { WatchState } from "@/app/watch.svelte.js";
+    import {i18n} from "@/stores/i18n.svelte.js";
 
     let { pageState, buffered = 0 }: { pageState: WatchState; buffered?: number } = $props();
 
@@ -119,7 +120,7 @@
         onmouseleave={onMouseLeave}
         role="slider"
         tabindex="0"
-        aria-label="Seek"
+        aria-label={i18n.t('watch.player.seek')}
         aria-valuemin={0}
         aria-valuemax={pageState.currentDuration}
         aria-valuenow={pageState.currentTime}

@@ -332,30 +332,7 @@
 
   "watch": {
     "episode_with_title": "第{{num}}話 - {{title}}",
-    "episode_number": "第{{num}}話",
-    "no_stream": "再生可能なストリームが見つかりません。",
-    "retry": "再試行",
-    "back": "戻る",
-    "loading": "読み込み中",
-    "select_extension": "拡張機能を選択",
-    "auto_server": "自動",
-    "default_server": "デフォルトサーバー",
-    "dub": "DUB",
-    "no_extensions": "拡張機能がインストールされていません。",
-    "no_extensions_desc": "視聴を開始するにはマーケットプレイスから拡張機能をインストールしてください。",
-    "previous": "前へ",
-    "next": "次へ",
-    "server": "サーバー",
-    "error_playing": "再生エラー",
-    "loading_stream": "ストリームを読み込んでいます...",
-    "invalid_response_type": "拡張機能が互換性のないフォーマットを返しました。",
-    "no_stream_url": "選択したサーバーに動画のURLが見つかりませんでした。",
-    "skip_op": "オープニングをスキップ",
-    "skip_ed": "エンディングをスキップ",
-    "open": "開く",
-    "launching": "起動中...",
-    "mark_watched": "視聴済みにする",
-    "relaunch": "MPVを再起動"
+    "episode_number": "第{{num}}話"
   },
   "content": {
     "resume": "再開",
@@ -635,34 +612,7 @@
     },
 
     "player_section": {
-      "player_desc": "再生設定や言語を設定します。",
-      "preferred_sub_lang": "優先字幕言語",
-      "preferred_sub_lang_desc": "言語コードをカンマ区切りで入力 (例: en, es, fr)。",
-      "preferred_dub_lang": "優先音声言語",
-      "preferred_dub_lang_desc": "言語コードをカンマ区切りで入力 (例: ja, en)",
-      "default_ep_layout": "デフォルトエピソード表示",
-      "default_ep_layout_desc": "エピソード表示方法を選択します。",
-      "grid": "グリッド",
-      "list": "リスト",
-      "seek_step": "スキップ時間",
-      "seek_step_desc": "シーク時にスキップする秒数を設定します。",
-      "seconds": "{{num}}秒",
-      "autoplay": "次のエピソード自動再生",
-      "autoplay_desc": "現在のエピソード終了後に自動再生します。",
-      "resume_playback": "再生位置を記憶",
-      "resume_playback_desc": "前回の再生位置から再開します。",
-      "auto_skip_intro": "イントロ自動スキップ",
-      "auto_skip_intro_desc": "オープニングを自動スキップします",
-      "auto_skip_outro": "アウトロ自動スキップ",
-      "auto_skip_outro_desc": "エンディングを自動スキップします。",
-      "use_mpv": "MPVを使用する",
-      "use_mpv_desc": "内蔵プレイヤーの代わりにmpvを使用します。mpvが環境変数PATHに通っている必要があります。",
-      "let_hoshi": "Hoshiにmpvの構成を管理させる",
-      "let_hoshi_desc": "Hoshiがmpvの設定ディレクトリ（スクリプト、フォント、OSC）を自動生成・管理します。",
-      "osc": "MPVスキン (OSC)",
-      "osc_desc": "OSCのスタイルを選択します。自動的にダウンロードされ、適用されます。",
-      "scripts": "スクリプト",
-      "scripts_desc": "mpvの機能を拡張するスクリプトを有効にします。これらは自動的にダウンロードされます。"
+
     },
 
     "readers_section": {

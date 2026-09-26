@@ -325,30 +325,7 @@
     },
     "watch": {
         "episode_with_title": "Episode {{num}} - {{title}}",
-        "episode_number": "Episode {{num}}",
-        "no_stream": "Kein abspielbarer Stream gefunden.",
-        "retry": "Erneut versuchen",
-        "back": "Zurück",
-        "loading": "Lädt",
-        "select_extension": "Erweiterung wählen",
-        "auto_server": "Auto",
-        "default_server": "Standard-Server",
-        "dub": "DUB",
-        "no_extensions": "Keine Erweiterungen installiert.",
-        "no_extensions_desc": "Bitte installiere eine Erweiterung vom Marktplatz, um mit dem Schauen zu beginnen.",
-        "previous": "Vorherige",
-        "next": "Nächste",
-        "server": "Server",
-        "error_playing": "Wiedergabefehler",
-        "loading_stream": "Stream wird geladen...",
-        "invalid_response_type": "Die Erweiterung hat ein inkompatibles Format zurückgegeben.",
-        "no_stream_url": "Keine Video-URL auf dem gewählten Server gefunden.",
-        "skip_op": "Intro überspringen",
-        "skip_ed": "Outro überspringen",
-        "open": "Öffnen",
-        "launching": "Wird gestartet...",
-        "mark_watched": "Als gesehen markieren",
-        "relaunch": "MPV neu starten"
+        "episode_number": "Episode {{num}}"
     },
     "content": {
         "details": "Details",
@@ -628,34 +605,7 @@
         },
 
         "player_section": {
-            "player_desc": "Konfiguriere Wiedergabeeinstellungen, Sprachen und Automatisierung.",
-            "preferred_sub_lang": "Bevorzugte Untertitelsprache",
-            "preferred_sub_lang_desc": "Gib eine kommagetrennte Liste von Sprachcodes ein (z.B. de, en, ja).",
-            "preferred_dub_lang": "Bevorzugte Audiosprache",
-            "preferred_dub_lang_desc": "Gib eine kommagetrennte Liste von Sprachcodes ein (z.B. ja, de, en).",
-            "default_ep_layout": "Standard-Episodenlayout",
-            "default_ep_layout_desc": "Wähle, wie Episoden standardmäßig angezeigt werden.",
-            "grid": "Gitter",
-            "list": "Liste",
-            "seek_step": "Intervall für Vor-/Zurückspringen",
-            "seek_step_desc": "Lege die Sekunden fest, die beim Spulen übersprungen werden.",
-            "seconds": "{{num}} Sekunden",
-            "autoplay": "Nächste Episode automatisch abspielen",
-            "autoplay_desc": "Startet automatisch die nächste Folge, wenn die aktuelle endet.",
-            "resume_playback": "Wiedergabe fortsetzen",
-            "resume_playback_desc": "Merkt sich, wo du aufgehört hast, und setzt die Wiedergabe dort fort.",
-            "auto_skip_intro": "Intros automatisch überspringen",
-            "auto_skip_intro_desc": "Überspringt automatisch Openings, falls erkannt.",
-            "auto_skip_outro": "Outros automatisch überspringen",
-            "auto_skip_outro_desc": "Überspringt automatisch Endings, falls erkannt.",
-            "use_mpv": "MPV verwenden",
-            "use_mpv_desc": "Verwendet mpv anstelle des integrierten Players. mpv muss in der Umgebungsvariable PATH enthalten sein.",
-            "let_hoshi": "Hoshi die mpv-Konfiguration verwalten lassen",
-            "let_hoshi_desc": "Hoshi schreibt und verwaltet das Konfigurationsverzeichnis von mpv: Skripte, Schriftarten und OSC.",
-            "osc": "MPV-Skin (OSC)",
-            "osc_desc": "Wählen Sie einen OSC-Stil. Er wird automatisch heruntergeladen und angewendet.",
-            "scripts": "Skripte",
-            "scripts_desc": "Aktiviert Skripte zur Erweiterung der mpv-Funktionalität. Sie werden automatisch heruntergeladen."
+
         }
         },
 
@@ -691,9 +641,7 @@
             "btn_refresh": "Aktualisieren",
             "btn_copy": "Kopieren",
             "btn_clear_ui": "Leeren"
-        }
-    },
-
+        },
     "player": {
         "cc_off": "Untertitel deaktivieren",
         "cc_on": "Untertitel aktivieren",

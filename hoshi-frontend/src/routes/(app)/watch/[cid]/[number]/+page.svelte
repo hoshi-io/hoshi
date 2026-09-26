@@ -3,7 +3,6 @@
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import * as Drawer from "$lib/components/ui/drawer";
     import { WatchState } from "@/app/watch.svelte.js";
-    import SettingsMenu from "@/components/player/settings/SettingsMenu.svelte";
     import { appConfig } from "@/stores/config.svelte.js";
 
     import PlayerHeader from "@/components/player/PlayerHeader.svelte";
@@ -11,6 +10,8 @@
     import SeekOverlay from "@/components/player/SeekOverlay.svelte";
     import DesktopControls from "@/components/player/DesktopControls.svelte";
     import MobileControls from "@/components/player/MobileControls.svelte";
+	import { i18n } from "@/stores/i18n.svelte";
+    import SettingsMenu from "@/components/player/settings/SettingsMenu.svelte";
 
     let layoutState = $state({ isMobile: false });
 
@@ -221,7 +222,7 @@
 </script>
 
 <svelte:head>
-    <title>{pageState.animeTitle ? `${pageState.animeTitle} - ${pageState.episodeTitle}` : 'Player'}</title>
+    <title>{pageState.animeTitle ? `${pageState.animeTitle} - ${pageState.episodeTitle}` : i18n.t('watch.title_fallback')}</title>
 </svelte:head>
 
 <div class="relative w-full h-screen overflow-hidden font-sans select-none text-foreground {showControls ? '' : 'cursor-none'}">

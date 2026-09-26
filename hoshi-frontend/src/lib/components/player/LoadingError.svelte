@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Spinner } from "$lib/components/ui/spinner";
     import { AlertCircle } from "lucide-svelte";
+    import {i18n} from "@/stores/i18n.svelte.js";
 
     let {
         isLoading,
@@ -23,7 +24,7 @@
             <AlertCircle class="w-5 h-5 text-destructive shrink-0 mt-0.5" />
             <div class="flex-1 text-xs space-y-0.5">
                 <p class="font-semibold text-destructive">
-                    {error.key || 'Playback Error'}
+                    {error.key || i18n.t('watch.playback_error')}
                 </p>
                 {#if error.message}
                     <p class="text-destructive/80 leading-relaxed">

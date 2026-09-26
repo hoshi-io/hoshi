@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Volume2, Volume1, VolumeX } from "lucide-svelte";
     import type { WatchState } from "@/app/watch.svelte.js";
+    import {i18n} from "@/stores/i18n.svelte.js";
 
     let { pageState }: { pageState: WatchState } = $props();
 
@@ -28,7 +29,7 @@
     <button
             onclick={() => pageState.toggleMute()}
             class="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/90 hover:text-white shrink-0"
-            aria-label={pageState.isMuted ? "Unmute" : "Mute"}
+            aria-label={pageState.isMuted ? i18n.t('watch.player.unmute') : i18n.t('watch.player.mute')}
     >
         {#if pageState.isMuted || pageState.volume === 0}
             <VolumeX class="w-5 h-5" />
@@ -64,7 +65,7 @@
                         }
                     }}
                     class="absolute -inset-y-2 -inset-x-1 w-[calc(100%+8px)] h-6 opacity-0 cursor-pointer z-10"
-                    aria-label="Volume"
+                    aria-label={i18n.t('watch.player.volume')}
             />
         </div>
     </div>
