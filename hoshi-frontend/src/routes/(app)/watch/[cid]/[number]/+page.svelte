@@ -227,6 +227,20 @@
 
 <div class="relative w-full h-screen overflow-hidden font-sans select-none text-foreground {showControls ? '' : 'cursor-none'}">
 
+    {#if pageState.manualSkipChapter}
+        <div class="absolute bottom-28 right-4 md:bottom-24 md:right-8 z-50 transition-opacity duration-300 {showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}">
+            <button
+                    class="bg-background/80 hover:bg-background text-foreground px-6 py-2 rounded-md border border-border font-semibold shadow-lg backdrop-blur-md transition-all"
+                    onclick={(e) => {
+                    e.stopPropagation();
+                    pageState.executeSkip(pageState.manualSkipChapter);
+                }}
+            >
+                Skip
+            </button>
+        </div>
+    {/if}
+
     {#if !layoutState.isMobile}
         <!-- Desktop Player UI Overlay -->
         <div class="relative w-full h-full flex flex-col justify-between pointer-events-none">

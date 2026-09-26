@@ -170,9 +170,18 @@ export class WatchState {
         // Intro/outro auto-skip — the one effect that's *supposed* to run
         // on every position tick, since it needs the current time.
         $effect(() => {
-            const time = this.currentTime;
-            const chapters = this.chapters;
-            untrack(() => this.maybeAutoSkip(time, chapters));
+            const skippable = this.currentSkippable;
+            const player = appConfig.data?.player;
+
+            if (skippable && player) {
+                const shouldAutoSkip =
+                    (skippable.type === "intro" && player.autoSkipIntro) ||
+                    (skippable.type === "outro" && player.autoSkipOutro);
+
+                if (shouldAutoSkip) {
+                    untrack(() => this.executeSkip(skippable.chapter));
+                }
+            }
         });
 
         untrack(() => this.attachPlayerListeners());
@@ -599,11 +608,9 @@ export class WatchState {
 
     private skippedChapterStarts = new Set<number>();
 
-    private maybeAutoSkip(time: number, chapters: EpisodeChapter[]) {
-        const player = appConfig.data?.player;
-        if (!player) return;
-
-        for (const chapter of chapters) {
+    currentSkippable = $derived.by(() => {
+        const time = this.currentTime;
+        for (const chapter of this.chapters) {
             if (time < chapter.start || time >= chapter.end) continue;
             if (this.skippedChapterStarts.has(chapter.start)) continue;
 
@@ -611,11 +618,27 @@ export class WatchState {
             const isIntro = /intro|opening|^op\b/.test(label);
             const isOutro = /outro|ending|^ed\b/.test(label);
 
-            if ((isIntro && player.autoSkipIntro) || (isOutro && player.autoSkipOutro)) {
-                this.skippedChapterStarts.add(chapter.start);
-                this.seek(chapter.end, false);
-            }
+            if (isIntro) return { chapter, type: "intro" as const };
+            if (isOutro) return { chapter, type: "outro" as const };
         }
+        return null;
+    });
+
+    manualSkipChapter = $derived.by(() => {
+        const skippable = this.currentSkippable;
+        const player = appConfig.data?.player;
+        if (!skippable || !player) return null;
+
+        if (skippable.type === "intro" && !player.autoSkipIntro) return skippable.chapter;
+        if (skippable.type === "outro" && !player.autoSkipOutro) return skippable.chapter;
+
+        return null;
+    });
+
+    // 3. Shared action: handles the actual skipping
+    executeSkip(chapter: EpisodeChapter) {
+        this.skippedChapterStarts.add(chapter.start);
+        this.seek(chapter.end, false);
     }
 
     private toHeaderList(headers: Record<string, string>): { key: string; value: string }[] {
@@ -655,12 +678,9 @@ export class WatchState {
 
         return null;
     }
+
 }
 
-/// Human-readable subtitle description as the extension gives it, e.g.
-/// "English - Forced" — there's no separate ISO language code in this
-/// shape, so `lang`/`variant` are parsed guesses derived from the raw
-/// `title` string, not authoritative metadata from the source.
 export interface SubtitleSource {
     url: string;
     title?: string;
