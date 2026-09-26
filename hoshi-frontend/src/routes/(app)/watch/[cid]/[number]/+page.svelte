@@ -18,6 +18,7 @@
     import TimeBar from "@/components/player/TimeBar.svelte";
     import VolumeControl from "@/components/player/VolumeControl.svelte";
     import {goto} from "$app/navigation";
+    import { appConfig } from "@/stores/config.svelte.js";
 
     let layoutState = $state({ isMobile: false });
 
@@ -57,6 +58,55 @@
         scheduleHide();
     }
 
+    function handleKeydown(e: KeyboardEvent) {
+        const target = e.target as HTMLElement;
+        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+        handleActivity();
+
+        switch (e.key.toLowerCase()) {
+            case " ":
+            case "k":
+                e.preventDefault();
+                pageState.togglePlay();
+                break;
+            case "arrowleft":
+            case "j":
+                e.preventDefault();
+                pageState.seekRelative(-(appConfig.data?.player.seekStep ?? 10));
+                break;
+            case "arrowright":
+            case "l":
+                e.preventDefault();
+                pageState.seekRelative(appConfig.data?.player.seekStep ?? 10);
+                break;
+            case "arrowup":
+                e.preventDefault();
+                pageState.setVolume(Math.min(100, pageState.volume + 5));
+                break;
+            case "arrowdown":
+                e.preventDefault();
+                pageState.setVolume(Math.max(0, pageState.volume - 5));
+                break;
+            case "m":
+                pageState.toggleMute();
+                break;
+            case "f":
+                toggleFullscreen();
+                break;
+            case "n":
+                if (pageState.hasNext) pageState.goToEpisode(pageState.epNumber + 1);
+                break;
+            case "p":
+                if (pageState.hasPrev) pageState.goToEpisode(pageState.epNumber - 1);
+                break;
+            case "escape":
+                if (showSettings) showSettings = false;
+                break;
+        }
+    }
+
     // Re-evaluate whenever pause state or settings menu visibility changes
     $effect(() => {
         // reading these makes the effect reactive to their changes
@@ -74,7 +124,7 @@
     onMount(() => {
         window.addEventListener("mousemove", handleActivity);
         window.addEventListener("mousedown", handleActivity);
-        window.addEventListener("keydown", handleActivity);
+        window.addEventListener("keydown", handleKeydown);
         window.addEventListener("touchstart", handleActivity);
         window.addEventListener("wheel", handleActivity);
         scheduleHide();
@@ -82,7 +132,7 @@
         return () => {
             window.removeEventListener("mousemove", handleActivity);
             window.removeEventListener("mousedown", handleActivity);
-            window.removeEventListener("keydown", handleActivity);
+            window.removeEventListener("keydown", handleKeydown);
             window.removeEventListener("touchstart", handleActivity);
             window.removeEventListener("wheel", handleActivity);
             clearHideTimer();
@@ -193,7 +243,7 @@
                         </button>
 
                         <button
-                                onclick={() => pageState.seekRelative(10)}
+                                onclick={() => pageState.seekRelative(appConfig.data?.player.seekStep ?? 10)}
                                 class="p-2 rounded-lg hover:bg-white/10 transition text-white/90 hover:text-white"
                                 aria-label="Seek forward 10 seconds"
                                 title="Seek forward 10s"

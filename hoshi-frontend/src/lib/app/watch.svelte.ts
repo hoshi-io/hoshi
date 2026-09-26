@@ -139,12 +139,21 @@ export class WatchState {
     private hasUpdatedList = false;
     private unlistenFns: UnlistenFn[] = [];
 
+    private appliedLangPrefs: string | null = null;
+
+
     constructor() {
         invoke("lock_orientation", { orientation: "landscape" }).catch(() => {});
 
         invoke("initialize_player").catch(() => {});
 
         $effect(() => {
+            untrack(() => this.applyLangPreferences());
+
+            const time = this.currentTime;
+            const chapters = this.chapters;
+            untrack(() => this.maybeAutoSkip(time, chapters));
+
             const { cid, epNumber } = this;
             if (cid && epNumber && (cid !== this.currentLoadedCid || epNumber !== this.currentLoadedEp)) {
                 untrack(() => this.loadPageData(cid, epNumber));
@@ -316,8 +325,25 @@ export class WatchState {
     }
 
     private handleEof() {
-        if (this.hasNext) {
+        if (this.hasNext && appConfig.data?.player.autoplayNextEpisode) {
             this.goToEpisode(this.epNumber + 1);
+        }
+    }
+
+    private async applyLangPreferences() {
+        const player = appConfig.data?.player;
+        if (!player) return;
+        const key = `${player.preferredSubLang}|${player.preferredDubLang}`;
+        if (key === this.appliedLangPrefs) return;
+        this.appliedLangPrefs = key;
+
+        try {
+            await invoke("set_lang_preferences", {
+                subLang: player.preferredSubLang || undefined,
+                dubLang: player.preferredDubLang || undefined,
+            });
+        } catch (e) {
+            console.error("Failed to set lang preferences", e);
         }
     }
 
@@ -462,10 +488,12 @@ export class WatchState {
             const data = res.data as any;
             const rawHeaders = data.headers ?? {};
 
-            this.subtitles = (data.source.subtitles ?? []).map((s: any) => ({
-                url: s.url,
-                title: s.language,
-            }));
+            this.subtitles = (data.source.subtitles ?? []).map((s: any) => {
+                const { lang, variant } = parseSubtitleLabel(s.language ?? "");
+                return { url: s.url, title: s.language, lang, variant, isDefault: !!s.is_default };
+            });
+
+            console.log(data.source.subtitles)
             this.chapters = data.source.chapters ?? [];
 
             const meta = primaryMetadata(this.animeData, appConfig.data?.content?.preferredMetadataProvider);
@@ -491,11 +519,37 @@ export class WatchState {
             this.isStreamLoaded = true;
             await this.refreshTracks();
 
+            const preferredId = this.pickPreferredSubtitleTrack();
+            if (preferredId !== null) {
+                await this.setSubtitleTrack(preferredId);
+            }
+
         } catch (e: any) {
             console.log(e);
             this.error = e.key ? e : { key: "errors.unknown_error" };
         } finally {
             this.isLoadingPlay = false;
+        }
+    }
+
+    private skippedChapterStarts = new Set<number>();
+
+    private maybeAutoSkip(time: number, chapters: EpisodeChapter[]) {
+        const player = appConfig.data?.player;
+        if (!player) return;
+
+        for (const chapter of chapters) {
+            if (time < chapter.start || time >= chapter.end) continue;
+            if (this.skippedChapterStarts.has(chapter.start)) continue;
+
+            const label = chapter.title.toLowerCase();
+            const isIntro = /intro|opening|^op\b/.test(label);
+            const isOutro = /outro|ending|^ed\b/.test(label);
+
+            if ((isIntro && player.autoSkipIntro) || (isOutro && player.autoSkipOutro)) {
+                this.skippedChapterStarts.add(chapter.start);
+                this.seek(chapter.end, false);
+            }
         }
     }
 
@@ -516,4 +570,57 @@ export class WatchState {
         invoke("clear_activity").catch(() => {});
         invoke("stop_playback").catch(() => {});
     }
+
+    private pickPreferredSubtitleTrack(): number | null {
+        const prefs = (appConfig.data?.player.preferredSubLang ?? "")
+            .split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+
+        const findTrackId = (source: SubtitleSource) =>
+            this.subtitleTracks.find(t => t.title === source.title)?.id ?? null;
+
+        for (const pref of prefs) {
+            const match = this.subtitles.find(s => s.lang === pref && !s.variant);
+            if (match) {
+                const id = findTrackId(match);
+                if (id !== null) return id;
+            }
+        }
+        const def = this.subtitles.find(s => s.isDefault);
+        if (def) return findTrackId(def);
+
+        return null;
+    }
+}
+
+export interface SubtitleSource {
+    url: string;
+    title?: string;
+    lang: string | null;                          // parsed guess, or null if unrecognized
+    variant: "forced" | "songs" | "sdh" | null;
+    isDefault: boolean;
+}
+
+const LANGUAGE_NAME_TO_CODE: Record<string, string> = {
+    english: "en",
+    spanish: "es",
+    "latin american spanish": "es-419",
+    japanese: "ja",
+    portuguese: "pt",
+    "brazilian portuguese": "pt-br",
+    french: "fr",
+    german: "de",
+    italian: "it",
+    // extend as your extensions surface more languages
+};
+
+function parseSubtitleLabel(raw: string): { lang: string | null; variant: SubtitleSource["variant"] } {
+    const [namePart, ...rest] = raw.split(" - ");
+    const modifier = rest.join(" - ").trim().toLowerCase();
+
+    let variant: SubtitleSource["variant"] = null;
+    if (modifier.includes("forced")) variant = "forced";
+    else if (modifier.includes("song")) variant = "songs";
+    else if (modifier.includes("sdh") || modifier.includes("hearing")) variant = "sdh";
+
+    return { lang: LANGUAGE_NAME_TO_CODE[namePart.trim().toLowerCase()] ?? null, variant };
 }

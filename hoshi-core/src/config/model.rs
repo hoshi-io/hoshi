@@ -21,8 +21,6 @@ pub struct UserConfig {
     #[serde(default)]
     pub discord: DiscordConfig,
     #[serde(default)]
-    pub mpv: MpvConfig,
-    #[serde(default)]
     pub list: ListConfig,
 }
 
@@ -145,34 +143,12 @@ impl Default for PlayerConfig {
     fn default() -> Self {
         Self {
             autoplay_next_episode: true,
-            preferred_sub_lang: "en".into(),
+            preferred_sub_lang: "jp".into(),
             preferred_dub_lang: "en".into(),
             auto_skip_intro: false,
             auto_skip_outro: false,
             seek_step: 10,
             resume_from_last_pos: true,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MpvConfig {
-    pub use_mpv: bool,
-    pub use_hoshi_config: bool,
-    pub active_osc: Option<String>,
-    pub enabled_scripts: Vec<String>,
-    pub extra_options: HashMap<String, String>,
-}
-
-impl Default for MpvConfig {
-    fn default() -> Self {
-        Self {
-            use_mpv: false,
-            use_hoshi_config: false,
-            active_osc: None,
-            enabled_scripts: vec![],
-            extra_options: HashMap::new(),
         }
     }
 }

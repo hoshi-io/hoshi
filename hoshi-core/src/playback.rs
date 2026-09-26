@@ -274,6 +274,21 @@ impl PlaybackHandle {
     }
 
     #[instrument(skip(self))]
+    pub async fn set_lang_preferences(
+        &self,
+        slang: Option<String>,
+        alang: Option<String>,
+    ) -> CoreResult<()> {
+        let mpv = self.require_mpv().await?;
+        self.run(move || -> libmpv2::Result<()> {
+            mpv.set_property("slang", slang.unwrap_or_default())?;
+            mpv.set_property("alang", alang.unwrap_or_default())?;
+            Ok(())
+        })
+            .await
+    }
+
+    #[instrument(skip(self))]
     pub async fn toggle_pause(&self) -> CoreResult<bool> {
         let mpv = self.require_mpv().await?;
         self.run(move || -> libmpv2::Result<bool> {

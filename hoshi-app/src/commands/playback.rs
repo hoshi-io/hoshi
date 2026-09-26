@@ -118,6 +118,15 @@ pub async fn load_stream(
 }
 
 #[tauri::command]
+pub async fn set_lang_preferences(
+    state: State<'_, Arc<AppState>>,
+    sub_lang: Option<String>,
+    dub_lang: Option<String>,
+) -> Result<(), CoreError> {
+    state.playback.set_lang_preferences(sub_lang, dub_lang).await
+}
+
+#[tauri::command]
 pub async fn toggle_pause(state: State<'_, Arc<AppState>>) -> Result<bool, CoreError> {
     state.playback.toggle_pause().await
 }

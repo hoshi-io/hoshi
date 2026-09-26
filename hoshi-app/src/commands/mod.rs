@@ -27,7 +27,7 @@ pub fn generate_handlers() -> impl Fn(tauri::ipc::Invoke) -> bool {
         config::get_user_config, config::patch_user_config,
         progress::get_content_progress, progress::get_continue_watching, progress::update_anime_progress, progress::update_chapter_progress,
         intergations::list_trackers, intergations::add_integration, intergations::remove_integration, intergations::set_sync_enabled,
-        playback::initialize_player, playback::shutdown_player, playback::load_stream, playback::toggle_pause, playback::set_paused, playback::set_volume, playback::get_volume, playback::set_muted, playback::seek, playback::get_position, playback::get_duration, playback::set_speed, playback::get_chapters, playback::set_chapter, playback::get_tracks, playback::set_audio_track, playback::set_video_track, playback::set_subtitle_track, playback::stop_playback,
+        playback::initialize_player, playback::shutdown_player, playback::load_stream, playback::toggle_pause, playback::set_paused, playback::set_volume, playback::get_volume, playback::set_muted, playback::seek, playback::get_position, playback::get_duration, playback::set_speed, playback::get_chapters, playback::set_chapter, playback::get_tracks, playback::set_audio_track, playback::set_video_track, playback::set_subtitle_track, playback::stop_playback, playback::set_lang_preferences,
         dev::list_dev_extensions, dev::create_dev_extension, dev::read_extension_source, dev::write_extension_source, dev::read_manifest_raw, dev::write_manifest_raw, dev::run_extension_function, dev::delete_dev_extension,
 
         #[cfg(feature = "discord-rpc")]
