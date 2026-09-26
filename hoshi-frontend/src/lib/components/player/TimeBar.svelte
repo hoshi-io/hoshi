@@ -141,7 +141,7 @@
                                 style="width: {getSegmentProgress(segment.start, segment.end, buffered * pageState.currentDuration)}%"
                         ></div>
                         <div
-                                class="absolute inset-y-0 left-0 bg-primary pointer-events-none"
+                                class="absolute inset-y-0 left-0 bg-white pointer-events-none"
                                 style="width: {getSegmentProgress(segment.start, segment.end, dragging && dragFrac !== null ? dragFrac * pageState.currentDuration : pageState.currentTime)}%"
                         ></div>
                     </div>
@@ -157,7 +157,7 @@
                             style="width: {buffered * 100}%"
                     ></div>
                     <div
-                            class="absolute inset-y-0 left-0 bg-primary pointer-events-none"
+                            class="absolute inset-y-0 left-0 bg-white pointer-events-none"
                             style="width: {progress * 100}%"
                     ></div>
                 </div>

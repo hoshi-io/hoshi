@@ -45,7 +45,7 @@
         <div class="relative w-20 h-1.5 bg-white/20 rounded-full ml-2 shrink-0 flex items-center">
             <!-- Smooth fill on click, INSTANT tracking while dragging -->
             <div
-                    class="absolute inset-y-0 left-0 bg-primary rounded-full pointer-events-none {isDragging ? 'transition-none' : 'transition-all duration-150 ease-out'}"
+                    class="absolute inset-y-0 left-0 bg-white rounded-full pointer-events-none {isDragging ? 'transition-none' : 'transition-all duration-150 ease-out'}"
                     style="width: {currentVol}%"
             ></div>
 
