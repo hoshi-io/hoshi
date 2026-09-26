@@ -288,6 +288,16 @@ impl PlaybackHandle {
             .await
     }
 
+    pub async fn set_options(&self, options: Vec<(String, String)>) -> CoreResult<()> {
+        let mpv = self.require_mpv().await?;
+        self.run(move || -> libmpv2::Result<()> {
+            for (key, value) in &options {
+                mpv.set_property(key.as_str(), value.as_str())?;
+            }
+            Ok(())
+        }).await
+    }
+
     #[instrument(skip(self))]
     pub async fn toggle_pause(&self) -> CoreResult<bool> {
         let mpv = self.require_mpv().await?;

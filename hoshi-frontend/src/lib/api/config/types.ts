@@ -57,6 +57,28 @@ export interface PlayerConfig {
     autoSkipOutro: boolean;
     seekStep: number;
     resumeFromLastPos: boolean;
+    hwdec: string,
+    scaleAlgorithm: string,
+    interpolation: boolean,
+    deband: boolean,
+}
+
+export interface SubtitleConfig {
+    font: string,
+    fontSize: number,
+    color: string,          // "#RRGGBB" or "#RRGGBBAA"
+    borderColor: string,
+    borderSize: number,
+    backgroundColor?: string,
+    position: number,          // 0-100, sub-pos
+    delay: number,
+    forceStyle: boolean,      // maps to sub-ass-override no/force
+    scale: number;
+    shadowColor: string;
+    shadowOffset: number;
+    justify: "auto" | "left" | "center" | "right";
+    sdhFilter: boolean;
+    sdhFilterHarder: boolean;
 }
 
 export interface MangaConfig {
@@ -98,6 +120,7 @@ export interface AppConfig {
     content: ContentConfig;
     extensions: ExtensionsConfig;
     player: PlayerConfig;
+    subtitles: SubtitleConfig;
     manga: MangaConfig;
     novel: NovelConfig;
     discord: DiscordConfig;

@@ -15,6 +15,8 @@ pub struct UserConfig {
     #[serde(default)]
     pub player: PlayerConfig,
     #[serde(default)]
+    pub subtitles: SubtitleConfig,
+    #[serde(default)]
     pub manga: MangaConfig,
     #[serde(default)]
     pub novel: NovelConfig,
@@ -137,6 +139,10 @@ pub struct PlayerConfig {
     pub auto_skip_outro: bool,
     pub seek_step: u8,
     pub resume_from_last_pos: bool,
+    pub hwdec: String,
+    pub scale_algorithm: String,
+    pub interpolation: bool,
+    pub deband: bool,
 }
 
 impl Default for PlayerConfig {
@@ -149,6 +155,52 @@ impl Default for PlayerConfig {
             auto_skip_outro: false,
             seek_step: 10,
             resume_from_last_pos: true,
+            hwdec: "auto-safe".to_string(),
+            scale_algorithm: "bilinear".to_string(),
+            interpolation: false,
+            deband: true,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubtitleConfig {
+    pub font: String,
+    pub font_size: f64,
+    pub color: String,          // "#RRGGBB" or "#RRGGBBAA"
+    pub border_color: String,
+    pub border_size: f64,
+    pub background_color: Option<String>,
+    pub position: f64,          // 0-100, sub-pos
+    pub delay: f64,
+    pub force_style: bool,      // maps to sub-ass-override no/force
+    pub scale: f64,
+    pub shadow_color: String,
+    pub shadow_offset: f64,
+    pub justify: String,
+    pub sdh_filter: bool,
+    pub sdh_filter_harder: bool,
+}
+
+impl Default for SubtitleConfig {
+    fn default() -> Self {
+        Self {
+            font: "sans-serif".to_string(),
+            font_size: 55.0,
+            color: "#FFFFFF".to_string(),
+            border_color: "#000000".to_string(),
+            border_size: 3.0,
+            background_color: None,
+            position: 95.0,
+            delay: 0.0,
+            force_style: false,
+            scale: 1.0,
+            shadow_color: "#00000000".into(),
+            shadow_offset: 0.0,
+            justify: "auto".into(),
+            sdh_filter: false,
+            sdh_filter_harder: false,
         }
     }
 }

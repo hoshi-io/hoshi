@@ -1,5 +1,6 @@
 <script lang="ts">
     import { fly, fade } from "svelte/transition";
+    import { appConfig } from "@/stores/config.svelte.js";
     import {
         PuzzleIcon,
         Server,
@@ -9,22 +10,19 @@
         Gauge,
         ChevronRight,
         ChevronLeft,
-        Check
+        Check,
+        Cpu,
+        Palette
     } from "lucide-svelte";
     import { Switch } from "@/components/ui/switch";
     import type { WatchState } from "@/app/watch.svelte.js";
     import type { PlaybackTrack } from "@/app/watch.svelte.js";
 
-    let { pageState }: { pageState: WatchState } = $props();
+    let { pageState, isMobile = false }: { pageState: WatchState, isMobile?: boolean } = $props();
 
-    type SectionId = "source" | "server" | "audio" | "subtitles" | "quality";
+    type SectionId = "source" | "server" | "audio" | "subtitles" | "quality" | "video" | "subtitleStyle";
     let activeSection = $state<SectionId | null>(null);
 
-    // Language codes (mpv typically reports ISO 639-2, e.g. "jpn"/"eng", but
-    // some extensions send ISO 639-1 like "ja"/"en") don't mean much to most
-    // people at a glance, so resolve them to a display name when we can.
-    // Falls back to the raw code if the runtime's Intl data doesn't
-    // recognize it, rather than throwing.
     let langDisplayNames: Intl.DisplayNames | null = null;
     try {
         langDisplayNames = new Intl.DisplayNames(["en"], { type: "language" });
@@ -37,8 +35,6 @@
         if (!normalized || normalized === "und" || !langDisplayNames) return null;
         try {
             const name = langDisplayNames.of(normalized);
-            // Some engines just echo back an unrecognized subtag instead of
-            // throwing — treat that as "couldn't resolve it" too.
             if (!name || name.toLowerCase() === normalized) return null;
             return name;
         } catch {
@@ -46,26 +42,16 @@
         }
     }
 
-    /// Some sources hand us the raw subtitle filename as "title" (e.g.
-    /// "0_en.srt") rather than anything descriptive — that's worse than no
-    /// title at all, so treat anything that looks like a subtitle filename
-    /// as noise and fall through to the language name instead.
     function isFilenameLikeTitle(title: string): boolean {
         return /\.(srt|vtt|ass|ssa|sub|ttml)$/i.test(title.trim());
     }
 
-    /// Best label for a single track, ignoring sibling tracks (duplicates
-    /// are disambiguated separately in buildTrackLabels).
     function baseTrackLabel(track: PlaybackTrack): string {
         if (track.title && !isFilenameLikeTitle(track.title)) return track.title;
         if (track.lang) return languageName(track.lang) || track.lang;
-        // Junk filename title beats nothing at all if there's no lang either.
         return track.title || `Track ${track.id}`;
     }
 
-    /// Sources sometimes provide two tracks for the same language (e.g. a
-    /// dialogue track and a separate songs/signs track) with nothing else to
-    /// tell them apart, so number the repeats: "English", "English (2)", ...
     function buildTrackLabels(tracks: PlaybackTrack[]): Map<number, string> {
         const bases = tracks.map(t => ({ id: t.id, base: baseTrackLabel(t) }));
         const totals = new Map<string, number>();
@@ -85,7 +71,6 @@
         return labels;
     }
 
-    /// Label for a quality/resolution variant, e.g. "1080p · 6.0 Mbps".
     function qualityLabel(track: PlaybackTrack): string {
         if (track.title) return track.title;
         const parts: string[] = [];
@@ -97,7 +82,6 @@
         return parts.length ? parts.join(" · ") : `Track ${track.id}`;
     }
 
-    // Derived active selection labels for the main menu rows
     const currentSource = $derived(
         pageState.extensionItems.find(i => i.value === pageState.selectedExtension)?.label || "Default"
     );
@@ -141,12 +125,7 @@
     }
 </script>
 
-<!-- Main Container elevated higher with mb-8 and rounded-sm edges -->
-<div
-        in:fly={{ y: 12, duration: 200 }}
-        out:fade={{ duration: 150 }}
-        class="absolute bottom-full right-0 mb-8 w-72 bg-neutral-900/95 border border-white/15 rounded-sm shadow-2xl backdrop-blur-xl text-sm overflow-hidden flex flex-col p-1.5 z-50 text-white"
->
+{#snippet menuContent()}
     {#if activeSection === null}
         <!-- Main Settings Menu -->
         <div
@@ -206,6 +185,37 @@
                             onCheckedChange={() => pageState.toggleDub()}
                     />
                 </div>
+            {/if}
+
+            {#if appConfig.data?.player}
+                <button
+                        onclick={() => activeSection = "video"}
+                        class="group flex items-center justify-between w-full px-3 py-2.5 rounded-sm hover:bg-white/10 transition text-left"
+                >
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center w-7 h-7 rounded-sm bg-white/10 group-hover:bg-white/20 transition-colors">
+                            <Cpu class="w-4 h-4 text-white/80 group-hover:text-white" />
+                        </div>
+                        <span class="text-sm font-medium text-white/90">Video</span>
+                    </div>
+                    <ChevronRight class="w-4 h-4 text-white/40 group-hover:text-white/70 transition-colors" />
+                </button>
+            {/if}
+
+            {#if appConfig.data?.subtitles}
+                <!-- Subtitle Style Row -->
+                <button
+                        onclick={() => activeSection = "subtitleStyle"}
+                        class="group flex items-center justify-between w-full px-3 py-2.5 rounded-sm hover:bg-white/10 transition text-left"
+                >
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center w-7 h-7 rounded-sm bg-white/10 group-hover:bg-white/20 transition-colors">
+                            <Palette class="w-4 h-4 text-white/80 group-hover:text-white" />
+                        </div>
+                        <span class="text-sm font-medium text-white/90">Subtitle style</span>
+                    </div>
+                    <ChevronRight class="w-4 h-4 text-white/40 group-hover:text-white/70 transition-colors" />
+                </button>
             {/if}
 
             <!-- Divider -->
@@ -286,7 +296,7 @@
             </button>
 
             <!-- Option List -->
-            <div class="flex flex-col max-h-64 overflow-y-auto">
+            <div class="flex flex-col {isMobile ? '' : 'max-h-64 overflow-y-auto'}">
                 {#if activeSection === "source"}
                     {#each pageState.extensionItems as item}
                         {@const isActive = item.value === pageState.selectedExtension}
@@ -334,6 +344,195 @@
                             <span class="flex-1 text-sm truncate">{audioLabels.get(track.id) ?? baseTrackLabel(track)}</span>
                         </button>
                     {/each}
+                {:else if activeSection === "video" && appConfig.data}
+                    <div class="flex flex-col gap-1 px-3 py-2">
+                        <label class="flex flex-col gap-1 py-1.5">
+                            <span class="text-xs text-white/60">Hardware decoding</span>
+                            <select
+                                    class="bg-white/10 rounded-sm px-2 py-1.5 text-sm text-white/90 outline-none"
+                                    value={appConfig.data.player.hwdec}
+                                    onchange={(e) => appConfig.update({ player: { hwdec: e.currentTarget.value } })}
+                            >
+                                <option value="auto-safe">Auto (safe)</option>
+                                <option value="auto">Auto</option>
+                                <option value="no">Software only</option>
+                            </select>
+                        </label>
+
+                        <label class="flex flex-col gap-1 py-1.5">
+                            <span class="text-xs text-white/60">Upscale quality</span>
+                            <select
+                                    class="bg-white/10 rounded-sm px-2 py-1.5 text-sm text-white/90 outline-none"
+                                    value={appConfig.data.player.scaleAlgorithm}
+                                    onchange={(e) => appConfig.update({ player: { scaleAlgorithm: e.currentTarget.value } })}
+                            >
+                                <option value="bilinear">Fast</option>
+                                <option value="spline36">Balanced</option>
+                                <option value="ewa_lanczossharp">Sharp</option>
+                            </select>
+                        </label>
+
+                        <div class="flex items-center justify-between py-1.5">
+                            <span class="text-sm text-white/90">Smooth motion</span>
+                            <Switch
+                                    checked={appConfig.data.player.interpolation}
+                                    onCheckedChange={(v) => appConfig.update({ player: { interpolation: v } })}
+                            />
+                        </div>
+
+                        <div class="flex items-center justify-between py-1.5">
+                            <span class="text-sm text-white/90">Reduce banding</span>
+                            <Switch
+                                    checked={appConfig.data.player.deband}
+                                    onCheckedChange={(v) => appConfig.update({ player: { deband: v } })}
+                            />
+                        </div>
+                    </div>
+
+                {:else if activeSection === "subtitleStyle" && appConfig.data?.subtitles}
+                    <div class="flex flex-col gap-1 px-3 py-2 {isMobile ? '' : 'max-h-72 overflow-y-auto'}">
+                        <label class="flex flex-col gap-1 py-1.5">
+                            <span class="text-xs text-white/60">Font</span>
+                            <input type="text"
+                                   class="bg-white/10 rounded-sm px-2 py-1.5 text-sm text-white/90 outline-none"
+                                   placeholder="sans-serif"
+                                   value={appConfig.data.subtitles.font}
+                                   onchange={(e) => appConfig.update({ subtitles: { font: e.currentTarget.value || "sans-serif" } })}
+                            />
+                        </label>
+                        <label class="flex flex-col gap-1 py-1.5">
+                            <span class="text-xs text-white/60">Font size</span>
+                            <select
+                                    class="bg-white/10 rounded-sm px-2 py-1.5 text-sm text-white/90 outline-none"
+                                    value={appConfig.data.subtitles.fontSize}
+                                    onchange={(e) => appConfig.update({ subtitles: { fontSize: Number(e.currentTarget.value) } })}
+                            >
+                                <option value="36">Small</option>
+                                <option value="55">Medium</option>
+                                <option value="70">Large</option>
+                                <option value="85">Extra large</option>
+                            </select>
+                        </label>
+
+                        <label class="flex flex-col gap-1 py-1.5">
+                            <span class="text-xs text-white/60">Size scale ({appConfig.data.subtitles.scale.toFixed(2)}x)</span>
+                            <input type="range" min="0.5" max="2" step="0.05"
+                                   value={appConfig.data.subtitles.scale}
+                                   oninput={(e) => appConfig.update({ subtitles: { scale: Number(e.currentTarget.value) } })}
+                            />
+                        </label>
+
+                        <div class="flex items-center justify-between py-1.5">
+                            <span class="text-sm text-white/90">Text color</span>
+                            <input type="color" class="w-8 h-8 rounded bg-transparent"
+                                   value={appConfig.data.subtitles.color}
+                                   oninput={(e) => appConfig.update({ subtitles: { color: e.currentTarget.value } })}
+                            />
+                        </div>
+
+                        <div class="flex items-center justify-between py-1.5">
+                            <span class="text-sm text-white/90">Outline color</span>
+                            <input type="color" class="w-8 h-8 rounded bg-transparent"
+                                   value={appConfig.data.subtitles.borderColor}
+                                   oninput={(e) => appConfig.update({ subtitles: { borderColor: e.currentTarget.value } })}
+                            />
+                        </div>
+
+                        <label class="flex flex-col gap-1 py-1.5">
+                            <span class="text-xs text-white/60">Outline size ({appConfig.data.subtitles.borderSize})</span>
+                            <input type="range" min="0" max="6" step="0.5"
+                                   value={appConfig.data.subtitles.borderSize}
+                                   oninput={(e) => appConfig.update({ subtitles: { borderSize: Number(e.currentTarget.value) } })}
+                            />
+                        </label>
+
+                        <div class="flex items-center justify-between py-1.5">
+                            <span class="text-sm text-white/90">Background box</span>
+                            <Switch
+                                    checked={appConfig.data.subtitles.backgroundColor !== null}
+                                    onCheckedChange={(v) => appConfig.update({ subtitles: { backgroundColor: v ? "#000000AA" : null } })}
+                            />
+                        </div>
+                        {#if appConfig.data.subtitles.backgroundColor !== null}
+                            <div class="flex items-center justify-between py-1.5">
+                                <span class="text-sm text-white/90">Background color</span>
+                                <input type="color" class="w-8 h-8 rounded bg-transparent"
+                                       value={appConfig.data.subtitles.backgroundColor.slice(0, 7)}
+                                       oninput={(e) => appConfig.update({ subtitles: { backgroundColor: e.currentTarget.value + "AA" } })}
+                                />
+                            </div>
+                        {/if}
+
+                        <label class="flex flex-col gap-1 py-1.5">
+                            <span class="text-xs text-white/60">Position ({appConfig.data.subtitles.position}%)</span>
+                            <input type="range" min="0" max="100" step="1"
+                                   value={appConfig.data.subtitles.position}
+                                   oninput={(e) => appConfig.update({ subtitles: { position: Number(e.currentTarget.value) } })}
+                            />
+                        </label>
+
+                        <label class="flex flex-col gap-1 py-1.5">
+                            <span class="text-xs text-white/60">Alignment</span>
+                            <select
+                                    class="bg-white/10 rounded-sm px-2 py-1.5 text-sm text-white/90 outline-none"
+                                    value={appConfig.data.subtitles.justify}
+                                    onchange={(e) => appConfig.update({ subtitles: { justify: e.currentTarget.value as any } })}
+                            >
+                                <option value="auto">Auto</option>
+                                <option value="left">Left</option>
+                                <option value="center">Center</option>
+                                <option value="right">Right</option>
+                            </select>
+                        </label>
+
+                        <label class="flex flex-col gap-1 py-1.5">
+                            <span class="text-xs text-white/60">Delay ({appConfig.data.subtitles.delay.toFixed(1)}s)</span>
+                            <input type="range" min="-10" max="10" step="0.1"
+                                   value={appConfig.data.subtitles.delay}
+                                   oninput={(e) => appConfig.update({ subtitles: { delay: Number(e.currentTarget.value) } })}
+                            />
+                        </label>
+
+                        <div class="flex items-center justify-between py-1.5">
+                            <span class="text-sm text-white/90">Shadow color</span>
+                            <input type="color" class="w-8 h-8 rounded bg-transparent"
+                                   value={appConfig.data.subtitles.shadowColor.slice(0, 7)}
+                                   oninput={(e) => appConfig.update({ subtitles: { shadowColor: e.currentTarget.value + "FF" } })}
+                            />
+                        </div>
+                        <label class="flex flex-col gap-1 py-1.5">
+                            <span class="text-xs text-white/60">Shadow offset ({appConfig.data.subtitles.shadowOffset})</span>
+                            <input type="range" min="0" max="6" step="0.5"
+                                   value={appConfig.data.subtitles.shadowOffset}
+                                   oninput={(e) => appConfig.update({ subtitles: { shadowOffset: Number(e.currentTarget.value) } })}
+                            />
+                        </label>
+
+                        <div class="flex items-center justify-between py-1.5">
+                            <span class="text-sm text-white/90">Force my style on styled subs</span>
+                            <Switch
+                                    checked={appConfig.data.subtitles.forceStyle}
+                                    onCheckedChange={(v) => appConfig.update({ subtitles: { forceStyle: v } })}
+                            />
+                        </div>
+
+                        <div class="flex items-center justify-between py-1.5">
+                            <span class="text-sm text-white/90">Hide sound descriptions</span>
+                            <Switch
+                                    checked={appConfig.data.subtitles.sdhFilter}
+                                    onCheckedChange={(v) => appConfig.update({ subtitles: { sdhFilter: v, sdhFilterHarder: v ? appConfig.data!.subtitles.sdhFilterHarder : false } })}
+                            />
+                        </div>
+                        {#if appConfig.data.subtitles.sdhFilter}
+                            <div class="flex items-center justify-between py-1.5 pl-3">
+                                <span class="text-xs text-white/70">More aggressive</span>
+                                <Switch
+                                        checked={appConfig.data.subtitles.sdhFilterHarder}
+                                        onCheckedChange={(v) => appConfig.update({ subtitles: { sdhFilterHarder: v } })}
+                                />
+                            </div>
+                        {/if}
+                    </div>
 
                 {:else if activeSection === "quality"}
                     {#each pageState.videoTracks as track}
@@ -383,4 +582,19 @@
             </div>
         </div>
     {/if}
-</div>
+{/snippet}
+
+{#if !isMobile}
+    <!-- Desktop: Floating Popup -->
+    <div
+            in:fly={{ y: 12, duration: 200 }}
+            out:fade={{ duration: 150 }}
+            class="absolute bottom-full right-0 mb-8 w-72 bg-neutral-900/95 border border-white/15 rounded-sm shadow-2xl backdrop-blur-xl text-sm overflow-hidden flex flex-col p-1.5 z-50 text-white"
+    >
+        {@render menuContent()}
+    </div>
+{:else}
+    <div class="flex flex-col text-sm text-white w-full">
+        {@render menuContent()}
+    </div>
+{/if}

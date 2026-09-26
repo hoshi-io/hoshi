@@ -17,14 +17,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { goto } from "$app/navigation";
 
 import type { Extension } from "@/api/extensions/types";
-
-export interface SubtitleSource {
-    url: string;
-    /// Human-readable description as the source gives it, e.g.
-    /// "English - Forced" — there's no separate ISO language code in this
-    /// shape, so this is passed straight through to mpv as the track title.
-    title?: string;
-}
+import type { PlayerConfig, SubtitleConfig } from "@/api/config/types.js";
 
 export interface EpisodeChapter {
     start: number;
@@ -139,25 +132,47 @@ export class WatchState {
     private hasUpdatedList = false;
     private unlistenFns: UnlistenFn[] = [];
 
+    // ---- config -> mpv property sync, each deduped independently --------
     private appliedLangPrefs: string | null = null;
-
+    private appliedVideoKey: string | null = null;
+    private appliedSubStyleKey: string | null = null;
 
     constructor() {
         invoke("lock_orientation", { orientation: "landscape" }).catch(() => {});
-
         invoke("initialize_player").catch(() => {});
 
+        // Episode/content loading — reacts only to route params.
         $effect(() => {
-            untrack(() => this.applyLangPreferences());
-
-            const time = this.currentTime;
-            const chapters = this.chapters;
-            untrack(() => this.maybeAutoSkip(time, chapters));
-
             const { cid, epNumber } = this;
             if (cid && epNumber && (cid !== this.currentLoadedCid || epNumber !== this.currentLoadedEp)) {
                 untrack(() => this.loadPageData(cid, epNumber));
             }
+        });
+
+        // Video pipeline + language preference sync — reacts only to
+        // `appConfig.data.player` changing, not to playback progress.
+        $effect(() => {
+            const player = appConfig.data?.player;
+            if (!player) return;
+            untrack(() => this.applyVideoOptions(player));
+            untrack(() => this.applyLangPreferences());
+        });
+
+        // Subtitle style sync — reacts only to `appConfig.data.subtitles`
+        // changing, kept separate so a video-setting tweak doesn't
+        // redundantly resend subtitle properties and vice versa.
+        $effect(() => {
+            const subs = appConfig.data?.subtitles;
+            if (!subs) return;
+            untrack(() => this.applySubtitleStyle(subs));
+        });
+
+        // Intro/outro auto-skip — the one effect that's *supposed* to run
+        // on every position tick, since it needs the current time.
+        $effect(() => {
+            const time = this.currentTime;
+            const chapters = this.chapters;
+            untrack(() => this.maybeAutoSkip(time, chapters));
         });
 
         untrack(() => this.attachPlayerListeners());
@@ -347,6 +362,56 @@ export class WatchState {
         }
     }
 
+    private async applyVideoOptions(player: PlayerConfig) {
+        const key = JSON.stringify([player.hwdec, player.scaleAlgorithm, player.interpolation, player.deband]);
+        if (key === this.appliedVideoKey) return;
+        this.appliedVideoKey = key;
+
+        try {
+            await invoke("set_player_options", {
+                options: [
+                    ["hwdec", player.hwdec],
+                    ["scale", player.scaleAlgorithm],
+                    ["cscale", player.scaleAlgorithm],
+                    ["interpolation", player.interpolation ? "yes" : "no"],
+                    ["deband", player.deband ? "yes" : "no"],
+                ],
+            });
+        } catch (e) {
+            console.error("Failed to apply video options", e);
+        }
+    }
+
+    private async applySubtitleStyle(subs: SubtitleConfig) {
+        const key = JSON.stringify(subs);
+        if (key === this.appliedSubStyleKey) return;
+        this.appliedSubStyleKey = key;
+
+        try {
+            await invoke("set_player_options", {
+                options: [
+                    ["sub-font", subs.font],
+                    ["sub-font-size", String(subs.fontSize)],
+                    ["sub-color", subs.color],
+                    ["sub-border-color", subs.borderColor],
+                    ["sub-border-size", String(subs.borderSize)],
+                    ["sub-back-color", subs.backgroundColor ?? "#00000000"],
+                    ["sub-shadow-color", subs.shadowColor],
+                    ["sub-shadow-offset", String(subs.shadowOffset)],
+                    ["sub-pos", String(subs.position)],
+                    ["sub-scale", String(subs.scale)],
+                    ["sub-justify", subs.justify],
+                    ["sub-delay", String(subs.delay)],
+                    ["sub-ass-override", subs.forceStyle ? "force" : "no"],
+                    ["sub-filter-sdh", subs.sdhFilter ? "yes" : "no"],
+                    ["sub-filter-sdh-harder", subs.sdhFilterHarder ? "yes" : "no"],
+                ],
+            });
+        } catch (e) {
+            console.error("Failed to apply subtitle style", e);
+        }
+    }
+
     goToEpisode(episode: number) {
         if (!Number.isFinite(episode) || episode < 1) return;
         if (this.totalEpisodes > 0 && episode > this.totalEpisodes) return;
@@ -448,6 +513,7 @@ export class WatchState {
         this.bufferedTime = 0;
         this.lastSyncTime = 0;
         this.hasUpdatedList = false;
+        this.skippedChapterStarts = new Set();
 
         try {
             let initialTime = 0;
@@ -493,7 +559,6 @@ export class WatchState {
                 return { url: s.url, title: s.language, lang, variant, isDefault: !!s.is_default };
             });
 
-            console.log(data.source.subtitles)
             this.chapters = data.source.chapters ?? [];
 
             const meta = primaryMetadata(this.animeData, appConfig.data?.content?.preferredMetadataProvider);
@@ -592,10 +657,14 @@ export class WatchState {
     }
 }
 
+/// Human-readable subtitle description as the extension gives it, e.g.
+/// "English - Forced" — there's no separate ISO language code in this
+/// shape, so `lang`/`variant` are parsed guesses derived from the raw
+/// `title` string, not authoritative metadata from the source.
 export interface SubtitleSource {
     url: string;
     title?: string;
-    lang: string | null;                          // parsed guess, or null if unrecognized
+    lang: string | null;
     variant: "forced" | "songs" | "sdh" | null;
     isDefault: boolean;
 }
@@ -610,7 +679,6 @@ const LANGUAGE_NAME_TO_CODE: Record<string, string> = {
     french: "fr",
     german: "de",
     italian: "it",
-    // extend as your extensions surface more languages
 };
 
 function parseSubtitleLabel(raw: string): { lang: string | null; variant: SubtitleSource["variant"] } {

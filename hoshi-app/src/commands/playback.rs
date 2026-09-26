@@ -127,6 +127,14 @@ pub async fn set_lang_preferences(
 }
 
 #[tauri::command]
+pub async fn set_player_options(
+    state: State<'_, Arc<AppState>>,
+    options: Vec<(String, String)>,
+) -> Result<(), CoreError> {
+    state.playback.set_options(options).await
+}
+
+#[tauri::command]
 pub async fn toggle_pause(state: State<'_, Arc<AppState>>) -> Result<bool, CoreError> {
     state.playback.toggle_pause().await
 }
