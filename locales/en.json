@@ -360,7 +360,8 @@
       "fullscreen_exit": "Exit fullscreen",
       "next_episode": "Next episode",
       "previous_episode": "Previous episode",
-      "settings": "Settings"
+      "settings": "Settings",
+      "close_settings": "Close settings"
     },
 
     "settings": {
@@ -690,7 +691,52 @@
     },
 
     "player_section": {
-
+      "player_desc": "Configure your playback experience",
+      "seconds": "{{num}} Seconds",
+      "preferred_sub_lang": "Preferred Subtitle Language",
+      "preferred_sub_lang_desc": "Comma-separated list of language codes (e.g., en, es)",
+      "preferred_dub_lang": "Preferred Audio Language",
+      "preferred_dub_lang_desc": "Comma-separated list of language codes (e.g., ja, en)",
+      "seek_step": "Seek Step",
+      "seek_step_desc": "Amount of time to skip forward or backward",
+      "autoplay": "Autoplay Next Episode",
+      "autoplay_desc": "Automatically play the next episode when the current one ends",
+      "resume_playback": "Resume Playback",
+      "resume_playback_desc": "Remember and resume from the last watched position",
+      "auto_skip_intro": "Auto Skip Intro",
+      "auto_skip_intro_desc": "Automatically skip episode openings",
+      "auto_skip_outro": "Auto Skip Outro",
+      "auto_skip_outro_desc": "Automatically skip episode endings",
+      "hwdec": "Hardware Decoding",
+      "hwdec_desc": "Video decoding method (e.g., auto, no, vaapi)",
+      "scale_algorithm": "Scaling Algorithm",
+      "scale_algorithm_desc": "Algorithm used for video upscaling/downscaling",
+      "interpolation": "Video Interpolation",
+      "interpolation_desc": "Enable motion interpolation (smooth video)",
+      "deband": "Debanding",
+      "deband_desc": "Reduce color banding in video playback",
+      "sub_font": "Font Family",
+      "sub_font_desc": "System font name for subtitles",
+      "sub_font_size": "Font Size",
+      "sub_font_size_desc": "Size of the subtitle text",
+      "sub_color": "Text Color",
+      "sub_color_desc": "Hex color code (#RRGGBB or #RRGGBBAA)",
+      "sub_border_color": "Border Color",
+      "sub_border_size": "Border Size",
+      "sub_bg_color": "Background Color",
+      "sub_position": "Vertical Position",
+      "sub_position_desc": "Subtitle position (0-100)",
+      "sub_delay": "Subtitle Delay (ms)",
+      "sub_force_style": "Force Custom Style",
+      "sub_force_style_desc": "Override original ASS subtitle styles",
+      "sub_scale": "Subtitle Scale",
+      "sub_shadow_color": "Shadow Color",
+      "sub_shadow_offset": "Shadow Offset",
+      "sub_justify": "Text Justification",
+      "sub_sdh_filter": "Filter SDH Tags",
+      "sub_sdh_filter_desc": "Remove hearing-impaired tags from text",
+      "sub_sdh_filter_harder": "Aggressive SDH Filter",
+      "sub_sdh_filter_harder_desc": "Also strip parenthetical sound descriptions and speaker name tags"
     },
 
     "readers_section": {

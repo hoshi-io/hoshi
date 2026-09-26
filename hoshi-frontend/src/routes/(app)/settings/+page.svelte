@@ -337,7 +337,7 @@
                                     <div in:fly={{ y: 8, duration: 250, easing: cubicOut }}>
                                         <Player
                                                 bind:playerConfig={appConfig.data.player}
-                                                bind:mpvConfig={appConfig.data.mpv}
+                                                bind:subConfig={appConfig.data.subtitles}
                                                 onSave={handleSaveConfig}
                                         />
                                     </div>
