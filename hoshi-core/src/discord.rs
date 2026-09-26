@@ -1,12 +1,18 @@
 #[cfg(feature = "discord-rpc")]
 use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
 #[cfg(feature = "discord-rpc")]
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+#[cfg(feature = "discord-rpc")]
+use std::time::{SystemTime, UNIX_EPOCH};
+#[cfg(feature = "discord-rpc")]
+use tokio::sync::broadcast;
 #[cfg(feature = "discord-rpc")]
 use tracing::{warn, error, debug, instrument};
 
 #[cfg(feature = "discord-rpc")]
 use crate::config::repository::ConfigRepository;
+#[cfg(feature = "discord-rpc")]
+use crate::playback::PlaybackEvent;
 #[cfg(feature = "discord-rpc")]
 use crate::state::AppState;
 
@@ -118,6 +124,92 @@ impl DiscordRpcService {
                 warn!(error = ?e, "Failed to clear Discord activity");
             } else {
                 debug!("Discord activity cleared");
+            }
+        }
+    }
+}
+
+/// Runs the Discord-RPC bridge loop, subscribing to `state.playback`'s mpv
+/// event stream and driving Discord entirely from here — no frontend round
+/// trip needed, since this has everything `set_activity` requires
+/// (`AppState` for config lookup, `NowPlaying` for metadata,
+/// `playback.duration()` for the timestamp math) without the frontend
+/// resending anything per tick.
+#[cfg(feature = "discord-rpc")]
+pub async fn run_activity_bridge(state: Arc<AppState>) {
+    let mut rx = state.playback.subscribe_events();
+
+    let mut sent = false;
+
+    loop {
+        let event = match rx.recv().await {
+            Ok(ev) => ev,
+            Err(broadcast::error::RecvError::Lagged(_)) => continue,
+            Err(broadcast::error::RecvError::Closed) => break,
+        };
+
+        match event {
+            PlaybackEvent::Position(pos) => {
+                if sent {
+                    continue;
+                }
+                let Some(np) = state.playback.now_playing() else {
+                    continue;
+                };
+                let duration = state.playback.duration().await.unwrap_or(0.0);
+                let now = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .map(|d| d.as_secs() as i64)
+                    .unwrap_or(0);
+                let start = now - pos.floor() as i64;
+                let end = (duration > 0.0).then(|| start + duration.floor() as i64);
+
+                state
+                    .discord_rpc
+                    .set_activity(
+                        &state,
+                        np.user_id,
+                        &np.title,
+                        &np.episode_title,
+                        np.cover_image.as_deref(),
+                        Some(start),
+                        end,
+                        true,
+                        np.nsfw,
+                    )
+                    .await;
+                sent = true;
+            }
+            PlaybackEvent::PauseChanged(paused) => {
+                let Some(np) = state.playback.now_playing() else {
+                    continue;
+                };
+                if paused {
+                    state
+                        .discord_rpc
+                        .set_activity(
+                            &state,
+                            np.user_id,
+                            &np.title,
+                            &np.episode_title,
+                            np.cover_image.as_deref(),
+                            None,
+                            None,
+                            true,
+                            np.nsfw,
+                        )
+                        .await;
+                } else {
+                    sent = false;
+                }
+            }
+            PlaybackEvent::Eof => {
+                sent = false;
+                state.discord_rpc.clear_activity();
+            }
+            PlaybackEvent::Error(_) => {
+                sent = false;
+                state.discord_rpc.clear_activity();
             }
         }
     }

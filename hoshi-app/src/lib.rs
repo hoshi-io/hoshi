@@ -1,4 +1,4 @@
-use tauri::{Manager, async_runtime};
+use tauri::{Manager, Emitter, async_runtime};
 use tauri_plugin_deep_link::DeepLinkExt;
 use tokio::sync::RwLock;
 use tracing_subscriber::layer::SubscriberExt;
@@ -53,7 +53,12 @@ use crate::commands::config::{get_user_config, patch_user_config};
 use crate::commands::progress::{get_content_progress, get_continue_watching, update_anime_progress, update_chapter_progress};
 use crate::commands::intergations::{list_trackers, add_integration, remove_integration, set_sync_enabled};
 use crate::commands::logs::{get_system_logs, list_log_files, get_log_file, delete_log_file};
-use crate::commands::playback::{initialize_player, shutdown_player, load_stream, toggle_pause};
+use crate::commands::playback::{
+    initialize_player, shutdown_player, load_stream, toggle_pause,
+    set_paused, set_volume, get_volume, set_muted, seek, get_position, get_duration,
+    set_speed, get_chapters, set_chapter, get_tracks, set_audio_track, set_video_track,
+    set_subtitle_track,
+};
 use crate::commands::dev::{list_dev_extensions, create_dev_extension, read_extension_source, write_extension_source, read_manifest_raw, write_manifest_raw, run_extension_function, delete_dev_extension};
 
 #[cfg(feature = "discord-rpc")]
@@ -146,6 +151,53 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 Ok::<(), CoreError>(())
             })?;
 
+            // Forwards core's mpv event stream (position/pause/eof) to the
+            // frontend as player:// Tauri events. Safe to spawn immediately
+            {
+                let state = app.state::<std::sync::Arc<hoshi_core::AppState>>().inner().clone();
+                let app_handle = app.handle().clone();
+                let mut rx = state.playback.subscribe_events();
+                async_runtime::spawn(async move {
+                    loop {
+                        let event = match rx.recv().await {
+                            Ok(ev) => ev,
+                            Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
+                            Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+                        };
+                        let emit_result = match event {
+                            hoshi_core::playback::PlaybackEvent::Position(pos) => {
+                                app_handle.emit("player://position", pos)
+                            }
+                            hoshi_core::playback::PlaybackEvent::Eof => {
+                                app_handle.emit("player://eof", ())
+                            }
+                            hoshi_core::playback::PlaybackEvent::PauseChanged(paused) => {
+                                app_handle.emit("player://pause-changed", paused)
+                            }
+                            hoshi_core::playback::PlaybackEvent::Error(msg) => {
+                                app_handle.emit("player://error", msg)
+                            }
+                        };
+                        if let Err(e) = emit_result {
+                            error!(error = ?e, "failed to emit player:// event to frontend");
+                        }
+                    }
+                });
+            }
+
+            // Discord RPC is driven entirely off the same core event stream
+            // from here on
+            #[cfg(feature = "discord-rpc")]
+            {
+                let state = app.state::<std::sync::Arc<hoshi_core::AppState>>().inner().clone();
+                // Core only hands back the future — see run_activity_bridge's
+                // doc comment for why it can't call tokio::spawn itself.
+                // Spawned via Tauri's async_runtime (not a bare tokio::spawn)
+                // since this runs from setup()'s synchronous context, which
+                // isn't inside a Tokio runtime on its own.
+                async_runtime::spawn(hoshi_core::discord::run_activity_bridge(state));
+            }
+
             #[cfg(target_os = "linux")]
             {
                 let state = app.state::<std::sync::Arc<hoshi_core::AppState>>().inner().clone();
@@ -170,6 +222,9 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             get_content_progress, get_continue_watching, update_anime_progress, update_chapter_progress,
             list_trackers, add_integration, remove_integration, set_sync_enabled,
             initialize_player, shutdown_player, load_stream, toggle_pause,
+            set_paused, set_volume, get_volume, set_muted, seek, get_position, get_duration,
+            set_speed, get_chapters, set_chapter, get_tracks, set_audio_track, set_video_track,
+            set_subtitle_track,
             list_dev_extensions, create_dev_extension, read_extension_source, write_extension_source, read_manifest_raw, write_manifest_raw, run_extension_function, delete_dev_extension,
 
             #[cfg(feature = "discord-rpc")]

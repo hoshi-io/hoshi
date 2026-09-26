@@ -6,11 +6,14 @@ import { extensionsApi } from "@/api/extensions/extensions";
 import { extensions as extensionsStore } from "@/stores/extensions.svelte.js";
 import { type CoreError } from "@/api/client";
 import { progressApi } from "@/api/progress/progress";
+import { listApi } from "@/api/list/list";
+import { listStore } from "@/app/list.svelte.js";
 import { appConfig } from "@/stores/config.svelte.js";
 import { i18n } from "@/stores/i18n.svelte.js";
 import { primaryMetadata } from "@/api/content/types";
 import type { FullContent } from "@/api/content/types";
 import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 import type { Extension } from "@/api/extensions/types";
 
@@ -20,9 +23,32 @@ export interface SubtitleSource {
     lang?: string;
 }
 
-export interface ChapterMark {
-    title?: string;
-    time: number;
+export interface EpisodeChapter {
+    start: number;
+    end: number;
+    title: string;
+}
+
+export interface PlaybackTrack {
+    id: number;
+    track_type: "audio" | "video" | "sub" | string;
+    selected: boolean;
+    title?: string | null;
+    lang?: string | null;
+    codec?: string | null;
+    bitrate?: number | null;
+    w?: number | null;
+    h?: number | null;
+}
+
+interface NowPlaying {
+    cid: string;
+    episode: number;
+    title: string;
+    episodeTitle: string;
+    coverImage: string | null;
+    nsfw: boolean;
+    totalEpisodes: number;
 }
 
 export class WatchState {
@@ -79,8 +105,19 @@ export class WatchState {
     error           = $state<CoreError | null>(null);
     isStreamLoaded  = $state(false);
     subtitles       = $state<SubtitleSource[]>([]);
-    chapters        = $state<ChapterMark[]>([]);
+    chapters        = $state<EpisodeChapter[]>([]);
     initialTime     = $state(0);
+    currentDuration = $state(0);
+
+    // ---- live playback control state, driven by player controls + events -
+    isPaused    = $state(false);
+    currentTime = $state(0);
+    volume      = $state(100);
+    isMuted     = $state(false);
+    tracks      = $state<PlaybackTrack[]>([]);
+
+    audioTracks = $derived(this.tracks.filter(t => t.track_type === "audio"));
+    subtitleTracks = $derived(this.tracks.filter(t => t.track_type === "sub"));
 
     isMappingError = $derived(!!this.error?.key?.includes("match"));
 
@@ -88,17 +125,14 @@ export class WatchState {
     private currentLoadedEp     = $state<number | null>(null);
     private destroyed = false;
 
+    // ---- progress/list sync driven by player://* events ----------------
+    private lastSyncTime  = 0;
+    private hasUpdatedList = false;
+    private unlistenFns: UnlistenFn[] = [];
+
     constructor() {
         invoke("lock_orientation", { orientation: "landscape" }).catch(() => {});
 
-        // Best-effort guess pending the actual app architecture: mpv's
-        // `initialize()` is idempotent on the backend, so calling it once
-        // here (rather than per-episode in loadPlay) is safe either way.
-        // What's NOT decided yet is whether mpv should live only for the
-        // duration of this page (shutdown_player in destroy(), below) or
-        // persist across navigation as an app-shell singleton. Revisit once
-        // that's settled — if it's app-shell-owned, both this call and the
-        // shutdown_player call in destroy() should move out of here.
         invoke("initialize_player").catch(() => {});
 
         $effect(() => {
@@ -108,14 +142,167 @@ export class WatchState {
             }
         });
 
-        // TODO(media session): navigator.mediaSession used to be driven off
-        // the <video> element's own state. There's no DOM media element
-        // anymore (mpv renders behind the webview via GtkGLArea on Linux),
-        // so this needs to be rethought — at minimum re-populating
-        // metadata (title/artist/artwork) from `this.animeData` still seems
-        // possible, but action handlers (play/pause/seek) would need to
-        // invoke the corresponding Tauri commands instead of manipulating a
-        // media element. Left out entirely for now rather than half-done.
+        untrack(() => this.attachPlayerListeners());
+    }
+
+    private async attachPlayerListeners() {
+        this.unlistenFns.push(
+            await listen<number>("player://position", (e) => this.handlePlayerProgress(e.payload)),
+            await listen<void>("player://eof", () => this.handleEof()),
+            await listen<boolean>("player://pause-changed", (e) => { this.isPaused = e.payload; }),
+            await listen<string>("player://error", (e) => this.handlePlayerError(e.payload)),
+        );
+    }
+
+    private handlePlayerError(raw: string) {
+        console.error("Player error", raw);
+        this.error = { key: "watch.stream_load_failed", message: raw };
+        this.isLoadingPlay = false;
+        this.isStreamLoaded = false;
+    }
+
+    // ---- transport controls ---------------------------------------------
+
+    async togglePlay() {
+        try {
+            this.isPaused = await invoke<boolean>("toggle_pause");
+        } catch (e) {
+            console.error("Failed to toggle pause", e);
+        }
+    }
+
+    async setVolume(volume: number) {
+        this.volume = volume;
+        try {
+            await invoke("set_volume", { volume });
+            if (this.isMuted && volume > 0) {
+                this.isMuted = false;
+                await invoke("set_muted", { muted: false });
+            }
+        } catch (e) {
+            console.error("Failed to set volume", e);
+        }
+    }
+
+    async toggleMute() {
+        this.isMuted = !this.isMuted;
+        try {
+            await invoke("set_muted", { muted: this.isMuted });
+        } catch (e) {
+            console.error("Failed to set muted", e);
+        }
+    }
+
+    async seek(target: number, relative = false) {
+        try {
+            await invoke("seek", { target, relative });
+        } catch (e) {
+            console.error("Failed to seek", e);
+        }
+    }
+
+    async seekRelative(deltaSeconds: number) {
+        await this.seek(deltaSeconds, true);
+    }
+
+    /// Refetches the current track list from mpv. Called once a stream is
+    /// loaded, and again after any track change so `selected` reflects
+    /// reality rather than being assumed client-side.
+    private async refreshTracks() {
+        try {
+            this.tracks = await invoke<PlaybackTrack[]>("get_tracks");
+        } catch (e) {
+            console.error("Failed to fetch tracks", e);
+            this.tracks = [];
+        }
+    }
+
+    async setAudioTrack(id: number | null) {
+        try {
+            await invoke("set_audio_track", { id });
+        } catch (e) {
+            console.error("Failed to set audio track", e);
+        }
+        await this.refreshTracks();
+    }
+
+    async setSubtitleTrack(id: number | null) {
+        try {
+            await invoke("set_subtitle_track", { id });
+        } catch (e) {
+            console.error("Failed to set subtitle track", e);
+        }
+        await this.refreshTracks();
+    }
+
+    /// Switches server within the current extension — triggers a fresh
+    /// `loadPlay()` since a different server means a different stream.
+    async selectServer(server: string) {
+        if (server === this.selectedServer) return;
+        this.selectedServer = server;
+        await this.loadPlay();
+    }
+
+    async toggleDub() {
+        if (!this.supportsDub) return;
+        this.isDub = !this.isDub;
+        await this.loadPlay();
+    }
+
+    /// Set while a duration fetch is in flight, so handlePlayerProgress
+    /// doesn't fire a new get_duration call on every single tick while
+    /// waiting for the first one to resolve.
+    private durationFetchInFlight = false;
+
+    private handlePlayerProgress(currentTime: number) {
+        this.currentTime = currentTime;
+
+        // duration is unavailable (mpv error -10, PROPERTY_UNAVAILABLE)
+        // until mpv has actually opened and started decoding the file
+        if (this.currentDuration <= 0 && !this.durationFetchInFlight) {
+            this.durationFetchInFlight = true;
+            invoke<number>("get_duration")
+                .then((d) => { this.currentDuration = d; })
+                .catch(() => {})
+                .finally(() => { this.durationFetchInFlight = false; });
+        }
+
+        if (!appConfig.data) return;
+        const duration = this.currentDuration;
+
+        if (Math.abs(currentTime - this.lastSyncTime) >= 10 || (this.lastSyncTime === 0 && currentTime > 2)) {
+            this.lastSyncTime = currentTime;
+            progressApi.updateAnimeProgress({
+                cid: this.cid,
+                episode: this.epNumber,
+                timestampSeconds: Math.floor(currentTime),
+                episodeDurationSeconds: duration > 0 ? Math.floor(duration) : undefined,
+                completed: duration > 0 && currentTime / duration >= 0.9,
+            }).catch(() => {});
+        }
+
+        if (!this.hasUpdatedList && duration > 0 && appConfig.data.content.autoUpdateProgress) {
+            if (currentTime / duration >= 0.8) {
+                this.hasUpdatedList = true;
+                const status =
+                    this.totalEpisodes > 0 && this.epNumber >= this.totalEpisodes
+                        ? "COMPLETED"
+                        : "CURRENT";
+                listApi.upsert({ cid: this.cid, status, progress: this.epNumber }).catch(() => {});
+                listStore.updateEntryProgressLocal(this.cid, this.epNumber, status);
+            }
+        }
+    }
+
+    private handleEof() {
+        if (this.hasNext) {
+            this.goToEpisode(this.epNumber + 1);
+        }
+    }
+
+    goToEpisode(episode: number) {
+        // TODO: hook up to SvelteKit's router (e.g. `goto` from
+        // `$app/navigation`) with this content's route.
     }
 
     async loadPageData(targetCid: string, targetEp: number) {
@@ -197,6 +384,13 @@ export class WatchState {
         this.error = null;
         this.subtitles = [];
         this.chapters = [];
+        this.currentDuration = 0;
+        this.durationFetchInFlight = false;
+        this.currentTime = 0;
+        this.isPaused = false;
+        this.tracks = [];
+        this.lastSyncTime = 0;
+        this.hasUpdatedList = false;
 
         try {
             let initialTime = 0;
@@ -244,19 +438,28 @@ export class WatchState {
             }));
             this.chapters = data.source.chapters ?? [];
 
-            // No more proxy/blob-url dance: mpv fetches the stream and its
-            // subtitles itself, headers and all, so we just hand it the raw
-            // url + headers directly. See playback.rs for why this replaces
-            // buildTauriProxyUrl rather than sitting alongside it.
+            const meta = primaryMetadata(this.animeData, appConfig.data?.content?.preferredMetadataProvider);
+            const nowPlaying: NowPlaying = {
+                cid: this.cid,
+                episode: this.epNumber,
+                title: this.animeTitle,
+                episodeTitle: this.episodeTitle,
+                coverImage: meta?.coverImage ?? null,
+                nsfw: this.animeData?.content?.nsfw ?? false,
+                totalEpisodes: this.totalEpisodes,
+            };
+
             await invoke("load_stream", {
                 url: data.source.url,
                 headers: this.toHeaderList(rawHeaders),
                 subtitles: this.subtitles,
                 chapters: this.chapters,
                 startPosition: initialTime > 0 ? initialTime : undefined,
+                nowPlaying,
             });
 
             this.isStreamLoaded = true;
+            await this.refreshTracks();
 
         } catch (e: any) {
             console.log(e);
@@ -272,27 +475,15 @@ export class WatchState {
             .map(([key, value]) => ({ key, value }));
     }
 
-    // TODO(backend): progress persistence, Discord RPC, and the
-    // auto-"mark as watching/completed" list update all used to live here,
-    // driven by the old player component's onTimeUpdate/onPlay/onPause/
-    // onSeek/onEnded callbacks (removed along with hls.js/<video>). There's
-    // no equivalent signal yet now that mpv owns playback natively — no
-    // Tauri event for position/pause/eof, and nothing here polling
-    // get_position/get_duration. Once that exists, this needs to come back,
-    // but per your note, ideally implemented on the Rust side: it already
-    // has direct access to mpv's property-change/eof-reached events and
-    // doesn't need a webview round trip just to know the playhead moved.
-    // Auto-advance to the next episode (old onEnded -> goto(...)) falls in
-    // the same bucket: it's frontend-appropriate (navigation isn't mpv's
-    // job) but still needs an "eof-reached" signal from somewhere.
-
     destroy() {
         if (this.destroyed) return;
         this.destroyed = true;
+
+        for (const unlisten of this.unlistenFns) unlisten();
+        this.unlistenFns = [];
+
         invoke("unlock_orientation").catch(() => {});
-        // See constructor note: shutdown_player pairing with the
-        // initialize_player call there is a guess, not a confirmed
-        // lifecycle decision.
+        invoke("clear_activity").catch(() => {});
         invoke("shutdown_player").catch(() => {});
     }
 }

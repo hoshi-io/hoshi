@@ -6,8 +6,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
 use libmpv2::{Mpv, MpvInitializer};
-use serde::Serialize;
-use tokio::sync::{Notify, RwLock};
+use serde::{Deserialize, Serialize};
+use tokio::sync::{broadcast, Notify, RwLock};
 use tracing::{info, instrument, warn};
 
 use crate::core_err;
@@ -52,18 +52,14 @@ impl LoadMode {
 }
 
 /// Everything needed to start (or queue) a file in mpv in one shot.
-///
-/// Headers, subtitles and chapters are all applied as part of the same
-/// `load()` call rather than as separate follow-up commands, so there's no
-/// window where the file is playing without its subs/headers/chapters
-/// attached.
 #[derive(Debug, Clone, Default)]
 pub struct LoadSpec {
     pub url: String,
     pub headers: Vec<(String, String)>,
     pub subtitles: Vec<ExternalSubtitle>,
-    pub chapters: Vec<ChapterMark>,
+    pub chapters: Vec<EpisodeChapter>,
     pub start_position: Option<f64>,
+    pub now_playing: Option<NowPlaying>,
 }
 
 #[derive(Debug, Clone)]
@@ -73,27 +69,43 @@ pub struct ExternalSubtitle {
     pub lang: Option<String>,
 }
 
-#[derive(Debug, Clone)]
-pub struct ChapterMark {
-    pub title: Option<String>,
-    pub time: f64,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EpisodeChapter {
+    pub start: f64,
+    pub end: f64,
+    pub title: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NowPlaying {
+    pub cid: String,
+    pub episode: i64,
+    pub title: String,
+    pub episode_title: String,
+    pub cover_image: Option<String>,
+    pub nsfw: bool,
+    pub total_episodes: i64,
+    /// The user this session belongs to
+    pub user_id: i32,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(tag = "type", content = "data")]
+pub enum PlaybackEvent {
+    Position(f64),
+    Eof,
+    PauseChanged(bool),
+    Error(String),
 }
 
 #[derive(Clone)]
 pub struct PlaybackHandle {
     inner: Arc<RwLock<Option<Arc<Mpv>>>>,
-    /// Bumped on every successful `initialize()`. Lets long-lived consumers
-    /// (the render surface) tell mpv sessions apart across shutdown/restart.
     session: Arc<AtomicU64>,
-    /// Notified right before `shutdown()` drops the core's own `Arc<Mpv>`.
-    /// Anything else holding a clone (the platform render surface) MUST drop
-    /// its clone in response, or the refcount never reaches 0 and mpv (and
-    /// its audio device) is never actually torn down.
     shutdown_notify: Arc<Notify>,
-    /// Path of the temp FFMETADATA chapters file backing the currently
-    /// loaded file's `chapters-file`, if any. Tracked so we can delete the
-    /// previous one instead of leaking a file into the temp dir per episode.
     chapters_file: Arc<Mutex<Option<PathBuf>>>,
+    now_playing: Arc<Mutex<Option<NowPlaying>>>,
+    events: broadcast::Sender<PlaybackEvent>,
 }
 
 impl PlaybackHandle {
@@ -103,12 +115,19 @@ impl PlaybackHandle {
             session: Arc::new(AtomicU64::new(0)),
             shutdown_notify: Arc::new(Notify::new()),
             chapters_file: Arc::new(Mutex::new(None)),
+            now_playing: Arc::new(Mutex::new(None)),
+            events: broadcast::channel(64).0,
         }
     }
 
-    /// Subscribe to shutdown notifications. Any holder of a cloned
-    /// `Arc<Mpv>` (obtained via `mpv_handle()`) should call this once and,
-    /// each time it fires, drop its clone.
+    pub fn subscribe_events(&self) -> broadcast::Receiver<PlaybackEvent> {
+        self.events.subscribe()
+    }
+
+    pub fn now_playing(&self) -> Option<NowPlaying> {
+        self.now_playing.lock().unwrap().clone()
+    }
+
     pub fn subscribe_shutdown(&self) -> Arc<Notify> {
         self.shutdown_notify.clone()
     }
@@ -131,15 +150,16 @@ impl PlaybackHandle {
             .map_err(|e| core_err!(Internal, "error.playback.init_failed", e))?
             .map_err(|e| core_err!(Internal, "error.playback.init_failed", e))?;
 
-        *guard = Some(Arc::new(mpv));
+        let mpv = Arc::new(mpv);
+        *guard = Some(mpv.clone());
         self.session.fetch_add(1, Ordering::SeqCst);
+
+        spawn_event_loop(mpv, self.events.clone());
+
         info!("playback core initialized");
         Ok(())
     }
 
-    /// Tears down the mpv core safely on a blocking thread. Notifies
-    /// subscribers first so any other `Arc<Mpv>` holder can release its
-    /// clone; otherwise this only decrements a refcount that never hits 0.
     #[instrument(skip(self))]
     pub async fn shutdown(&self) -> CoreResult<()> {
         let mut guard = self.inner.write().await;
@@ -167,33 +187,38 @@ impl PlaybackHandle {
     pub async fn load(&self, spec: LoadSpec, mode: LoadMode) -> CoreResult<()> {
         let mpv = self.require_mpv().await?;
 
-        // Headers: applied as a session-wide property (not a per-file
-        // loadfile option) right before loadfile. `http-header-fields`
-        // isn't documented as reliably scoped to a single playlist entry,
-        // so setting it globally is what actually covers the main stream
-        // *and* whatever segment/sub-file requests mpv makes right after
-        // for this same file. mpv/ffmpeg makes these requests itself, not
-        // the webview, so there's no CORS involved at all here — this
-        // replaces the old proxy-URL approach entirely, it isn't just an
-        // alternative to it.
-        let header_value = if spec.headers.is_empty() {
-            String::new()
-        } else {
-            spec.headers
-                .iter()
-                .map(|(k, v)| mpv_list_escape(&format!("{k}: {v}")))
-                .collect::<Vec<_>>()
-                .join(",")
-        };
+        let mut other_headers = Vec::with_capacity(spec.headers.len());
+        let mut user_agent: Option<String> = None;
+        for (k, v) in &spec.headers {
+            if k.eq_ignore_ascii_case("user-agent") {
+                user_agent = Some(v.clone());
+            } else {
+                other_headers.push((k.clone(), v.clone()));
+            }
+        }
+
+        let header_value = other_headers
+            .iter()
+            .map(|(k, v)| mpv_list_escape(&format!("{k}: {v}")))
+            .collect::<Vec<_>>()
+            .join(",");
         {
             let mpv = mpv.clone();
             self.run(move || mpv.set_property("http-header-fields", header_value))
                 .await?;
         }
+        // Reset to mpv's own default (empty string restores it) when this
+        // load doesn't specify one, so a previous episode's UA can't leak
+        // into one that doesn't set it.
+        {
+            let mpv = mpv.clone();
+            let ua = user_agent.unwrap_or_default();
+            self.run(move || mpv.set_property("user-agent", ua)).await?;
+        }
 
-        // Drop the previous file's temp chapters file before writing a new
-        // one, so these don't pile up in the temp dir across episodes.
         self.cleanup_chapters_file();
+
+        *self.now_playing.lock().unwrap() = spec.now_playing.clone();
 
         let mut options: Vec<String> = Vec::new();
         for sub in &spec.subtitles {
@@ -270,9 +295,6 @@ impl PlaybackHandle {
     }
 
     // ---- seek / position / speed ----------------------------------------
-
-    /// `target` in seconds. `relative` seeks from the current position
-    /// instead of to an absolute position.
     #[instrument(skip(self))]
     pub async fn seek(&self, target: f64, relative: bool) -> CoreResult<()> {
         let mpv = self.require_mpv().await?;
@@ -416,6 +438,50 @@ impl Default for PlaybackHandle {
     }
 }
 
+/// Observes mpv's own event loop for the properties/events we care about
+/// and rebroadcasts them as [`PlaybackEvent`]s.
+fn spawn_event_loop(mpv: Arc<Mpv>, events: broadcast::Sender<PlaybackEvent>) {
+    std::thread::spawn(move || {
+        if let Err(e) = mpv.observe_property("time-pos", libmpv2::Format::Double, 1) {
+            warn!(?e, "failed to observe time-pos, position events disabled");
+        }
+        if let Err(e) = mpv.observe_property("pause", libmpv2::Format::Flag, 2) {
+            warn!(?e, "failed to observe pause, pause events disabled");
+        }
+
+        loop {
+            match mpv.wait_event(1.0) {
+                Some(Ok(libmpv2::events::Event::PropertyChange {
+                            name: "time-pos",
+                            change: libmpv2::events::PropertyData::Double(pos),
+                            ..
+                        })) => {
+                    let _ = events.send(PlaybackEvent::Position(pos));
+                }
+                Some(Ok(libmpv2::events::Event::PropertyChange {
+                            name: "pause",
+                            change: libmpv2::events::PropertyData::Flag(paused),
+                            ..
+                        })) => {
+                    let _ = events.send(PlaybackEvent::PauseChanged(paused));
+                }
+                Some(Ok(libmpv2::events::Event::EndFile(reason))) => {
+                    if matches!(reason, libmpv2::mpv_end_file_reason::Eof) {
+                        let _ = events.send(PlaybackEvent::Eof);
+                    }
+                }
+                Some(Ok(libmpv2::events::Event::Shutdown)) => break,
+                Some(Err(e)) => {
+                    warn!(?e, "mpv event error");
+                    let _ = events.send(PlaybackEvent::Error(format!("{e:?}")));
+                }
+                // Timeout (None) or an event we don't care about: keep polling.
+                _ => continue,
+            }
+        }
+    });
+}
+
 fn build_mpv() -> libmpv2::Result<Mpv> {
     unsafe {
         let c_locale = std::ffi::CString::new("C").expect("no interior nul");
@@ -428,40 +494,30 @@ fn build_mpv() -> libmpv2::Result<Mpv> {
         init.set_option("keep-open", "yes")?;
         init.set_option("idle", "yes")?;
         init.set_option("deband", "yes")?;
+        init.set_option("ytdl", "no")?;
+        init.set_option("demuxer-lavf-o", "multiple_requests=1")?;
+        //init.set_option("msg-level", "all=debug")?;
+        //init.set_option("log-file", "/tmp/hoshi-mpv.log")?;
+
         Ok(())
     })
 }
 
-/// Escapes a value for embedding in an mpv list-style option/property
-/// (e.g. `http-header-fields`, or a value inside a `loadfile` options
-/// string) using mpv's own `%LEN%value` escape: mpv reads exactly `LEN`
-/// raw bytes after the second `%`, so the value can contain commas, colons,
-/// or anything else without needing per-character escaping.
 fn mpv_list_escape(value: &str) -> String {
     format!("%{}%{}", value.len(), value)
 }
 
-/// Writes extension-provided chapter markers out as an FFMETADATA1 chapters
-/// file, suitable for mpv's `chapters-file` option. `END` for each chapter
-/// is set to the next chapter's start (or an arbitrary +1h sentinel for the
-/// last one) — mpv only uses `time` for chapter navigation (see
-/// `chapters()`), so END just needs to not overlap the next entry.
-fn write_chapters_file(chapters: &[ChapterMark], path: &Path) -> std::io::Result<()> {
+fn write_chapters_file(chapters: &[EpisodeChapter], path: &Path) -> std::io::Result<()> {
     let mut f = std::fs::File::create(path)?;
     writeln!(f, ";FFMETADATA1")?;
-    for (i, c) in chapters.iter().enumerate() {
-        let start_ms = (c.time * 1000.0).round() as i64;
-        let end_ms = chapters
-            .get(i + 1)
-            .map(|next| (next.time * 1000.0).round() as i64)
-            .unwrap_or(start_ms + 3_600_000);
+    for c in chapters {
+        let start_ms = (c.start * 1000.0).round() as i64;
+        let end_ms = (c.end * 1000.0).round() as i64;
         writeln!(f, "[CHAPTER]")?;
         writeln!(f, "TIMEBASE=1/1000")?;
         writeln!(f, "START={start_ms}")?;
         writeln!(f, "END={end_ms}")?;
-        if let Some(title) = &c.title {
-            writeln!(f, "title={}", escape_ffmetadata(title))?;
-        }
+        writeln!(f, "title={}", escape_ffmetadata(&c.title))?;
     }
     Ok(())
 }

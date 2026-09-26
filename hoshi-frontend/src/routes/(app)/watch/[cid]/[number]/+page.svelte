@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
-    import { invoke } from "@tauri-apps/api/core";
+    import { getCurrentWindow } from "@tauri-apps/api/window";
     import {
         Play,
         Pause,
@@ -8,27 +8,32 @@
         VolumeX,
         Settings,
         AlertCircle,
-        Loader2
+        Loader2,
+        RotateCcw,
+        RotateCw,
+        SkipBack,
+        SkipForward,
+        Maximize,
+        Minimize,
+        Check,
     } from "lucide-svelte";
-    import {WatchState} from "@/app/watch.svelte.js";
+    import { WatchState } from "@/app/watch.svelte.js";
 
     let layoutState = $state({ isMobile: false });
 
-    // Player State instance
+    // Player State instance — single source of truth for playback state.
+    // The page no longer keeps its own isPaused/currentTime/volume copies;
+    // those live on pageState and are kept live by the player:// event
+    // listeners it wires up itself.
     const pageState = new WatchState();
 
     onDestroy(() => {
         pageState.destroy();
     });
 
-    // Playback control states
-    let isPaused = $state(false);
-    let volume = $state(100);
-    let isMuted = $state(false);
-
-    // Time placeholder states (no Tauri event for live updates yet)
-    let currentTime = $state(0);
-    let duration = $state(0);
+    // Buffered isn't wired up — there's no mpv property exposed for it yet
+    // (no get_buffered command), so the buffered bar just renders at 0 for
+    // now rather than faking a value.
     let buffered = $state(0);
 
     // Timebar drag/hover states
@@ -37,65 +42,33 @@
     let dragFrac = $state<number | null>(null);
     let hoverFrac = $state<number | null>(null);
 
-    async function togglePlay() {
+    // Fullscreen + settings popover — page-local UI state, not playback state.
+    let isFullscreen = $state(false);
+    let showSettings = $state(false);
+
+    async function toggleFullscreen() {
         try {
-            isPaused = await invoke<boolean>("toggle_pause");
+            const win = getCurrentWindow();
+            const next = !isFullscreen;
+            await win.setFullscreen(next);
+            isFullscreen = next;
         } catch (e) {
-            console.error("Failed to toggle pause", e);
+            console.error("Failed to toggle fullscreen", e);
         }
     }
 
-    async function handleVolumeChange(e: Event) {
-        const target = e.target as HTMLInputElement;
-        volume = Number(target.value);
-        try {
-            await invoke("set_volume", { volume });
-            if (isMuted && volume > 0) {
-                isMuted = false;
-                await invoke("set_muted", { muted: false });
-            }
-        } catch (e) {
-            console.error("Failed to set volume", e);
-        }
+    function handleSeek(time: number) {
+        pageState.seek(time, false);
     }
 
-    async function toggleMute() {
-        isMuted = !isMuted;
-        try {
-            await invoke("set_muted", { muted: isMuted });
-        } catch (e) {
-            console.error("Failed to set muted", e);
-        }
-    }
-
-    async function handleSeek(time: number) {
-        try {
-            await invoke("seek", { target: time, relative: false });
-        } catch (e) {
-            console.error("Failed to seek", e);
-        }
-    }
-
-    // Adapt PlayerState chapter marks to timeline chapters
-    const formattedChapters = $derived.by(() => {
-        if (!pageState.chapters || pageState.chapters.length === 0) return [];
-        const sorted = [...pageState.chapters].sort((a, b) => a.time - b.time);
-
-        return sorted.map((ch, idx) => {
-            const nextTime = sorted[idx + 1]?.time ?? duration;
-            return {
-                start: ch.time,
-                end: nextTime,
-                title: ch.title || ''
-            };
-        });
-    });
-
-    // Processed chapter segments for timebar rendering
+    // Chapters already come as real {start, end, title} ranges from core
+    // now (see EpisodeChapter) — no need to infer `end` from the next
+    // chapter's start the way the old {title, time} shape required.
     const processedChapters = $derived.by(() => {
+        const duration = pageState.currentDuration;
         if (duration <= 0) return [];
 
-        const sorted = [...formattedChapters].sort((a, b) => a.start - b.start);
+        const sorted = [...pageState.chapters].sort((a, b) => a.start - b.start);
         let sanitized: { start: number; end: number; title: string }[] = [];
         let currentTimelineTime = 0;
 
@@ -103,43 +76,31 @@
             if (ch.end <= ch.start) continue;
 
             if (ch.start > currentTimelineTime) {
-                sanitized.push({
-                    start: currentTimelineTime,
-                    end: ch.start,
-                    title: ''
-                });
+                sanitized.push({ start: currentTimelineTime, end: ch.start, title: '' });
                 currentTimelineTime = ch.start;
             }
 
             if (ch.start <= currentTimelineTime) {
                 if (ch.end <= currentTimelineTime) continue;
-
-                sanitized.push({
-                    start: currentTimelineTime,
-                    end: ch.end,
-                    title: ch.title
-                });
+                sanitized.push({ start: currentTimelineTime, end: ch.end, title: ch.title });
                 currentTimelineTime = ch.end;
             }
         }
 
         if (currentTimelineTime < duration) {
-            sanitized.push({
-                start: currentTimelineTime,
-                end: duration,
-                title: ''
-            });
+            sanitized.push({ start: currentTimelineTime, end: duration, title: '' });
         }
 
         return sanitized.map(seg => ({
             ...seg,
-            width: ((seg.end - seg.start) / duration) * 100
+            width: ((seg.end - seg.start) / duration) * 100,
         }));
     });
 
     const progress = $derived.by(() => {
         if (dragging && dragFrac !== null) return dragFrac;
-        return duration > 0 ? Math.min(currentTime / duration, 1) : 0;
+        const duration = pageState.currentDuration;
+        return duration > 0 ? Math.min(pageState.currentTime / duration, 1) : 0;
     });
 
     function fracFromEvent(e: MouseEvent | TouchEvent): number {
@@ -162,7 +123,7 @@
     function onMouseUp(e: MouseEvent) {
         if (dragging) {
             const frac = fracFromEvent(e);
-            if (duration > 0) handleSeek(frac * duration);
+            if (pageState.currentDuration > 0) handleSeek(frac * pageState.currentDuration);
             dragging = false;
             dragFrac = null;
         }
@@ -186,9 +147,9 @@
         return ((current - start) / (end - start)) * 100;
     }
 
-    const hoverTime = $derived(hoverFrac !== null ? hoverFrac * duration : null);
+    const hoverTime = $derived(hoverFrac !== null ? hoverFrac * pageState.currentDuration : null);
     const hoverChapter = $derived(
-        hoverTime !== null ? formattedChapters.find(c => hoverTime >= c.start && hoverTime < c.end) : null
+        hoverTime !== null ? processedChapters.find(c => hoverTime >= c.start && hoverTime < c.end) : null
     );
 </script>
 
@@ -201,7 +162,7 @@
         onmouseup={dragging ? onMouseUp : undefined}
 />
 
-<div class="relative w-full h-screen bg-black overflow-hidden font-sans select-none text-white">
+<div class="relative w-full h-screen bg-transparent overflow-hidden font-sans select-none text-white">
 
     {#if !layoutState.isMobile}
         <!-- Desktop Player UI Overlay -->
@@ -220,16 +181,17 @@
                     {/if}
                 </div>
 
-                <!-- Non-blocking Loading Status Badge -->
-                {#if pageState.isLoadingMeta || pageState.isLoadingPlay}
-                    <div class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-black/60 border border-white/10 text-xs font-medium text-white/90 backdrop-blur-md shadow-lg">
-                        <Loader2 class="w-4 h-4 animate-spin text-primary" />
-                        <span>Loading video stream...</span>
-                    </div>
-                {/if}
+                <div class="flex items-center gap-2.5">
+                    {#if pageState.isLoadingMeta || pageState.isLoadingPlay}
+                        <div class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-black/60 border border-white/10 text-xs font-medium text-white/90 backdrop-blur-md shadow-lg">
+                            <Loader2 class="w-4 h-4 animate-spin text-primary" />
+                            <span>Loading video stream...</span>
+                        </div>
+                    {/if}
+                </div>
             </div>
 
-            <!-- MIDDLE OVERLAY: Integrated Non-blocking Status & Error Messages -->
+            <!-- MIDDLE OVERLAY: Error Messages -->
             {#if pageState.error}
                 <div class="absolute inset-x-0 top-20 z-30 flex justify-center px-6 pointer-events-none">
                     <div class="pointer-events-auto max-w-lg w-full bg-red-950/90 border border-red-500/30 text-red-100 p-3.5 rounded-xl shadow-2xl backdrop-blur-md flex items-start gap-3">
@@ -248,7 +210,7 @@
                 </div>
             {/if}
 
-            <!-- BOTTOM BAR: Timebar & Controls (YouTube Style) -->
+            <!-- BOTTOM BAR: Timebar & Controls -->
             <div class="z-20 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col gap-2 pointer-events-auto">
 
                 <!-- TIMEBAR & CHAPTERS -->
@@ -262,8 +224,8 @@
                         tabindex="0"
                         aria-label="Seek"
                         aria-valuemin={0}
-                        aria-valuemax={duration}
-                        aria-valuenow={currentTime}
+                        aria-valuemax={pageState.currentDuration}
+                        aria-valuenow={pageState.currentTime}
                 >
                     <div class="relative flex items-center w-full h-[10px] gap-0.5">
                         {#if processedChapters.length > 0}
@@ -274,16 +236,15 @@
                                 >
                                     <div
                                             class="absolute inset-y-0 left-0 bg-white/30 pointer-events-none"
-                                            style="width: {getSegmentProgress(segment.start, segment.end, buffered * duration)}%"
+                                            style="width: {getSegmentProgress(segment.start, segment.end, buffered * pageState.currentDuration)}%"
                                     ></div>
                                     <div
                                             class="absolute inset-y-0 left-0 bg-primary pointer-events-none"
-                                            style="width: {getSegmentProgress(segment.start, segment.end, dragging && dragFrac !== null ? dragFrac * duration : currentTime)}%"
+                                            style="width: {getSegmentProgress(segment.start, segment.end, dragging && dragFrac !== null ? dragFrac * pageState.currentDuration : pageState.currentTime)}%"
                                     ></div>
                                 </div>
                             {/each}
                         {:else}
-                            <!-- Default Bar fallback if no chapters are loaded -->
                             <div class="relative w-full h-[6px] bg-white/20 rounded-sm overflow-hidden group-hover:h-[8px]">
                                 <div
                                         class="absolute inset-y-0 left-0 bg-white/30 pointer-events-none"
@@ -296,14 +257,12 @@
                             </div>
                         {/if}
 
-                        <!-- Drag/Hover Indicator Thumb -->
                         <div
                                 class="absolute top-1/2 w-3.5 h-3.5 bg-white rounded-full pointer-events-none shadow-md transition-transform duration-150 z-10 origin-center"
                                 style="left: {progress * 100}%; transform: translate(-50%, -50%) scale({dragging || hoverFrac !== null ? '1' : '0'});"
                         ></div>
                     </div>
 
-                    <!-- Hover Time/Chapter Tooltip -->
                     {#if hoverFrac !== null && hoverTime !== null}
                         <div
                                 class="absolute bottom-full mb-3 px-2.5 py-1.5 bg-black/90 text-white rounded-lg shadow-xl pointer-events-none flex flex-col items-center gap-0.5 z-[100] transform -translate-x-1/2 whitespace-nowrap border border-white/10"
@@ -317,35 +276,71 @@
                     {/if}
                 </div>
 
+                <!-- SEEK BUTTONS (beneath the bar) -->
+                <div class="flex items-center justify-center gap-6 -mt-0.5 mb-0.5">
+                    <button
+                            onclick={() => pageState.seekRelative(-10)}
+                            class="p-1 rounded-lg hover:bg-white/10 transition text-white/70 hover:text-white flex items-center gap-1 text-[11px] font-medium"
+                            aria-label="Seek back 10 seconds"
+                    >
+                        <RotateCcw class="w-4 h-4" />
+                        10s
+                    </button>
+                    <button
+                            onclick={() => pageState.seekRelative(10)}
+                            class="p-1 rounded-lg hover:bg-white/10 transition text-white/70 hover:text-white flex items-center gap-1 text-[11px] font-medium"
+                            aria-label="Seek forward 10 seconds"
+                    >
+                        10s
+                        <RotateCw class="w-4 h-4" />
+                    </button>
+                </div>
+
                 <!-- CONTROLS ROW -->
                 <div class="flex items-center justify-between text-white mt-1">
-                    <!-- Left Section: Play/Pause, Time, Volume -->
-                    <div class="flex items-center gap-4">
+                    <!-- Left: prev/play/next, time, volume -->
+                    <div class="flex items-center gap-1">
                         <button
-                                onclick={togglePlay}
-                                class="p-2 -ml-2 rounded-lg hover:bg-white/10 transition text-white/90 hover:text-white"
-                                aria-label={isPaused ? "Play" : "Pause"}
+                                onclick={() => pageState.goToEpisode(pageState.epNumber - 1)}
+                                disabled={!pageState.hasPrev}
+                                class="p-2 rounded-lg hover:bg-white/10 transition text-white/90 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+                                aria-label="Previous episode"
                         >
-                            {#if isPaused}
+                            <SkipBack class="w-4 h-4 fill-current" />
+                        </button>
+
+                        <button
+                                onclick={() => pageState.togglePlay()}
+                                class="p-2 rounded-lg hover:bg-white/10 transition text-white/90 hover:text-white"
+                                aria-label={pageState.isPaused ? "Play" : "Pause"}
+                        >
+                            {#if pageState.isPaused}
                                 <Play class="w-5 h-5 fill-current" />
                             {:else}
                                 <Pause class="w-5 h-5 fill-current" />
                             {/if}
                         </button>
 
-                        <!-- Static Time Display -->
-                        <div class="text-xs font-mono text-white/80 tabular-nums">
-                            {formatTime(currentTime)} / {formatTime(duration)}
+                        <button
+                                onclick={() => pageState.goToEpisode(pageState.epNumber + 1)}
+                                disabled={!pageState.hasNext}
+                                class="p-2 rounded-lg hover:bg-white/10 transition text-white/90 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+                                aria-label="Next episode"
+                        >
+                            <SkipForward class="w-4 h-4 fill-current" />
+                        </button>
+
+                        <div class="text-xs font-mono text-white/80 tabular-nums ml-2">
+                            {formatTime(pageState.currentTime)} / {formatTime(pageState.currentDuration)}
                         </div>
 
-                        <!-- Volume Controls -->
-                        <div class="flex items-center gap-2 group/volume">
+                        <div class="flex items-center gap-2 group/volume ml-3">
                             <button
-                                    onclick={toggleMute}
+                                    onclick={() => pageState.toggleMute()}
                                     class="p-1.5 rounded-lg hover:bg-white/10 transition text-white/90 hover:text-white"
-                                    aria-label={isMuted ? "Unmute" : "Mute"}
+                                    aria-label={pageState.isMuted ? "Unmute" : "Mute"}
                             >
-                                {#if isMuted || volume === 0}
+                                {#if pageState.isMuted || pageState.volume === 0}
                                     <VolumeX class="w-5 h-5" />
                                 {:else}
                                     <Volume2 class="w-5 h-5" />
@@ -356,20 +351,117 @@
                                     type="range"
                                     min="0"
                                     max="100"
-                                    value={isMuted ? 0 : volume}
-                                    oninput={handleVolumeChange}
+                                    value={pageState.isMuted ? 0 : pageState.volume}
+                                    oninput={(e) => pageState.setVolume(Number((e.target as HTMLInputElement).value))}
                                     class="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none"
                             />
                         </div>
                     </div>
 
-                    <!-- Right Section: Settings Cogwheel -->
-                    <div class="flex items-center gap-2">
+                    <!-- Right: settings + fullscreen -->
+                    <div class="relative flex items-center gap-2">
+                        {#if showSettings}
+                            <div class="absolute bottom-full right-0 mb-3 w-64 max-h-96 overflow-y-auto bg-black/95 border border-white/10 rounded-xl shadow-2xl backdrop-blur-md p-3 space-y-4 text-sm">
+
+                                {#if pageState.extensionItems.length > 0}
+                                    <div class="space-y-1.5">
+                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-white/50">Source</p>
+                                        <select
+                                                value={pageState.selectedExtension}
+                                                onchange={(e) => pageState.selectExtension((e.target as HTMLSelectElement).value)}
+                                                class="w-full bg-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none"
+                                        >
+                                            {#each pageState.extensionItems as item}
+                                                <option value={item.value}>{item.label}</option>
+                                            {/each}
+                                        </select>
+                                    </div>
+                                {/if}
+
+                                {#if pageState.serverItems.length > 0}
+                                    <div class="space-y-1.5">
+                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-white/50">Server</p>
+                                        <select
+                                                value={pageState.selectedServer}
+                                                onchange={(e) => pageState.selectServer((e.target as HTMLSelectElement).value)}
+                                                class="w-full bg-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none"
+                                        >
+                                            {#each pageState.serverItems as item}
+                                                <option value={item.value}>{item.label}</option>
+                                            {/each}
+                                        </select>
+                                    </div>
+                                {/if}
+
+                                {#if pageState.supportsDub}
+                                    <label class="flex items-center justify-between text-xs text-white/80 cursor-pointer">
+                                        <span>Dub</span>
+                                        <input
+                                                type="checkbox"
+                                                checked={pageState.isDub}
+                                                onchange={() => pageState.toggleDub()}
+                                                class="accent-primary"
+                                        />
+                                    </label>
+                                {/if}
+
+                                {#if pageState.audioTracks.length > 0}
+                                    <div class="space-y-1">
+                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-white/50">Audio</p>
+                                        {#each pageState.audioTracks as track}
+                                            <button
+                                                    onclick={() => pageState.setAudioTrack(track.id)}
+                                                    class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-white/10 text-xs text-left"
+                                            >
+                                                <span class="truncate">{track.title || track.lang || `Track ${track.id}`}</span>
+                                                {#if track.selected}<Check class="w-3.5 h-3.5 text-primary shrink-0" />{/if}
+                                            </button>
+                                        {/each}
+                                    </div>
+                                {/if}
+
+                                {#if pageState.subtitleTracks.length > 0}
+                                    <div class="space-y-1">
+                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-white/50">Subtitles</p>
+                                        <button
+                                                onclick={() => pageState.setSubtitleTrack(null)}
+                                                class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-white/10 text-xs text-left"
+                                        >
+                                            <span>Off</span>
+                                            {#if pageState.subtitleTracks.every(t => !t.selected)}<Check class="w-3.5 h-3.5 text-primary shrink-0" />{/if}
+                                        </button>
+                                        {#each pageState.subtitleTracks as track}
+                                            <button
+                                                    onclick={() => pageState.setSubtitleTrack(track.id)}
+                                                    class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-white/10 text-xs text-left"
+                                            >
+                                                <span class="truncate">{track.title || track.lang || `Track ${track.id}`}</span>
+                                                {#if track.selected}<Check class="w-3.5 h-3.5 text-primary shrink-0" />{/if}
+                                            </button>
+                                        {/each}
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
+
                         <button
+                                onclick={() => showSettings = !showSettings}
                                 class="p-2 rounded-lg hover:bg-white/10 transition text-white/90 hover:text-white"
                                 aria-label="Settings"
                         >
                             <Settings class="w-5 h-5" />
+                        </button>
+
+                        <button
+                                onclick={toggleFullscreen}
+                                class="p-2 rounded-lg hover:bg-white/10 transition text-white/90 hover:text-white"
+                                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                        >
+                            {#if isFullscreen}
+                                <Minimize class="w-5 h-5" />
+                            {:else}
+                                <Maximize class="w-5 h-5" />
+                            {/if}
                         </button>
                     </div>
                 </div>

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use hoshi_core::error::CoreError;
-use hoshi_core::playback::{Chapter, ChapterMark, ExternalSubtitle, LoadMode, LoadSpec, Track};
+use hoshi_core::playback::{Chapter, EpisodeChapter, ExternalSubtitle, LoadMode, LoadSpec, NowPlaying, Track};
 use hoshi_core::AppState;
 use serde::Deserialize;
 use tauri::State;
@@ -40,22 +40,53 @@ pub struct SubtitleInput {
     pub lang: Option<String>,
 }
 
+/// Matches core's `EpisodeChapter` — a real start/end range from the
+/// extension source, not a bare timestamp. Core no longer infers `end` from
+/// the next chapter, so if a source only ever gives single timestamps that
+/// needs to be turned into ranges on the frontend before this arrives.
 #[derive(Deserialize)]
 pub struct ChapterInput {
-    pub title: Option<String>,
-    pub time: f64,
+    pub start: f64,
+    pub end: f64,
+    pub title: String,
+}
+
+/// What the frontend knows about what's about to play. `user_id` is
+/// deliberately not part of this — it's not something the frontend should
+/// be trusted to supply, and it wouldn't know it as reliably as the
+/// session does anyway. `load_stream` below resolves it from `TauriSession`
+/// via `require_auth` and fills it in before this reaches core.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NowPlayingInput {
+    pub cid: String,
+    pub episode: i64,
+    pub title: String,
+    pub episode_title: String,
+    pub cover_image: Option<String>,
+    pub nsfw: bool,
+    pub total_episodes: i64,
 }
 
 #[tauri::command]
 pub async fn load_stream(
     state: State<'_, Arc<AppState>>,
+    session: State<'_, crate::TauriSession>,
     url: String,
     mode: Option<String>,
     headers: Option<Vec<HeaderInput>>,
     subtitles: Option<Vec<SubtitleInput>>,
     chapters: Option<Vec<ChapterInput>>,
     start_position: Option<f64>,
+    now_playing: Option<NowPlayingInput>,
 ) -> Result<(), CoreError> {
+    // Playback is user-scoped (progress persistence, per-user Discord RPC
+    // config), so this requires an authenticated session the same as any
+    // other user-scoped command — not previously enforced here since
+    // load_stream had no user-specific side effects before now_playing
+    // existed.
+    let user_id = crate::require_auth(&session).await?;
+
     let mode = match mode.as_deref() {
         Some("append") => LoadMode::Append,
         Some("append-play") => LoadMode::AppendPlay,
@@ -77,9 +108,19 @@ pub async fn load_stream(
         chapters: chapters
             .unwrap_or_default()
             .into_iter()
-            .map(|c| ChapterMark { title: c.title, time: c.time })
+            .map(|c| EpisodeChapter { start: c.start, end: c.end, title: c.title })
             .collect(),
         start_position,
+        now_playing: now_playing.map(|np| NowPlaying {
+            cid: np.cid,
+            episode: np.episode,
+            title: np.title,
+            episode_title: np.episode_title,
+            cover_image: np.cover_image,
+            nsfw: np.nsfw,
+            total_episodes: np.total_episodes,
+            user_id,
+        }),
     };
 
     state.playback.load(spec, mode).await
