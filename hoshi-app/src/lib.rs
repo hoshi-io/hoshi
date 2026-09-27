@@ -159,6 +159,15 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 player_surface::attach(&window, state)?;
             }
 
+            // Needed for libmpv integration on windows webview
+            #[cfg(target_os = "windows")]
+            {
+                let window = app
+                    .get_webview_window("main")
+                    .ok_or("main window not found during setup")?;
+                player_surface::attach(&window)?;
+            }
+
             Ok(())
         })
         .invoke_handler(commands::generate_handlers())

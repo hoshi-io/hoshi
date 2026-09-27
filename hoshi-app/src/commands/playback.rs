@@ -9,14 +9,31 @@ use tauri::State;
 #[cfg(target_os = "linux")]
 use crate::player_surface::PlayerReadyNotify;
 
+#[cfg(target_os = "linux")]
 #[tauri::command]
 pub async fn initialize_player(
     state: State<'_, Arc<AppState>>,
-    #[cfg(target_os = "linux")] ready_notify: State<'_, PlayerReadyNotify>,
+    ready_notify: State<'_, PlayerReadyNotify>,
 ) -> Result<(), CoreError> {
-    state.playback.initialize().await?;
-    #[cfg(target_os = "linux")]
+    state.playback.initialize(None).await?;
     ready_notify.0.notify_one();
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+#[tauri::command]
+pub async fn initialize_player(
+    state: State<'_, Arc<AppState>>,
+    embed_wid: State<'_, crate::player_surface::EmbedWid>,
+) -> Result<(), CoreError> {
+    state.playback.initialize(Some(embed_wid.0)).await?;
+    Ok(())
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "windows")))]
+#[tauri::command]
+pub async fn initialize_player(state: State<'_, Arc<AppState>>) -> Result<(), CoreError> {
+    state.playback.initialize(None).await?;
     Ok(())
 }
 

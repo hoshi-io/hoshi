@@ -1,0 +1,20 @@
+{
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "hoshi",
+        "width": 1200,
+        "height": 800,
+        "decorations": false,
+        "transparent": false,
+        "backgroundColor": "#000000"
+      }
+    ]
+  },
+  "bundle": {
+    "resources": {
+      "mpv-windows/libmpv-2.dll": "libmpv-2.dll"
+    }
+  }
+}

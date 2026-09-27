@@ -138,15 +138,22 @@ impl PlaybackHandle {
     }
 
     /// Initializes the mpv core. Idempotent.
+    ///
+    /// `embed_wid` is `Some(hwnd_or_xid)` on platforms where mpv should draw
+    /// directly into a native window handle (Windows) rather than via the
+    /// render-API (Linux, where the caller instead builds a `RenderContext`
+    /// against an already-running mpv core). It must be set *before*
+    /// `mpv_initialize()` runs, since `wid` only takes effect if it's known
+    /// before the video output is created.
     #[instrument(skip(self))]
-    pub async fn initialize(&self) -> CoreResult<()> {
+    pub async fn initialize(&self, embed_wid: Option<i64>) -> CoreResult<()> {
         let mut guard = self.inner.write().await;
         if guard.is_some() {
             warn!("playback core already initialized, ignoring duplicate initialize()");
             return Ok(());
         }
 
-        let mpv = tokio::task::spawn_blocking(build_mpv)
+        let mpv = tokio::task::spawn_blocking(move || build_mpv(embed_wid))
             .await
             .map_err(|e| core_err!(Internal, "error.playback.init_failed", e))?
             .map_err(|e| core_err!(Internal, "error.playback.init_failed", e))?;
@@ -541,22 +548,34 @@ fn spawn_event_loop(mpv: Arc<Mpv>, events: broadcast::Sender<PlaybackEvent>) {
     });
 }
 
-fn build_mpv() -> libmpv2::Result<Mpv> {
+fn build_mpv(embed_wid: Option<i64>) -> libmpv2::Result<Mpv> {
     unsafe {
         let c_locale = std::ffi::CString::new("C").expect("no interior nul");
         libc::setlocale(libc::LC_NUMERIC, c_locale.as_ptr());
     }
 
-    Mpv::with_initializer(|init: MpvInitializer| {
-        init.set_option("vo", "libmpv")?;
+    Mpv::with_initializer(move |init: MpvInitializer| {
+        match embed_wid {
+            None => {
+                // Render-API embedding (Linux): the host owns the GL
+                // context and drives rendering via `create_render_context`.
+                init.set_option("vo", "libmpv")?;
+            }
+            Some(wid) => {
+                // Native-window embedding (Windows): mpv draws directly
+                // into the given HWND via its own D3D11 swapchain.
+                init.set_option("vo", "gpu")?;
+                init.set_option("gpu-context", "d3d11")?;
+                init.set_option("wid", wid)?;
+            }
+        }
+
         init.set_option("hwdec", "auto-safe")?;
         init.set_option("keep-open", "yes")?;
         init.set_option("idle", "yes")?;
         init.set_option("deband", "yes")?;
         init.set_option("ytdl", "no")?;
         init.set_option("demuxer-lavf-o", "multiple_requests=1")?;
-        //init.set_option("msg-level", "all=debug")?;
-        //init.set_option("log-file", "/tmp/hoshi-mpv.log")?;
 
         Ok(())
     })

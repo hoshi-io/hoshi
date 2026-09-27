@@ -69,6 +69,16 @@ jobs:
             libayatana-appindicator3-dev \
             librsvg2-dev
 
+      - name: Setup mpv for Windows
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          curl -sL "https://github.com/zhongfly/mpv-winbuild/releases/download/2026-09-26-a1bf4b6559/mpv-dev-lgpl-x86_64-20260926-git-a1bf4b6559.7z" -o mpv-dev.7z
+          7z x mpv-dev.7z -oext_mpv
+          mkdir -p hoshi-app/mpv-windows
+          mv ext_mpv/libmpv.dll.a hoshi-app/mpv-windows/mpv.lib
+          mv ext_mpv/libmpv-2.dll hoshi-app/mpv-windows/
+
       - name: Build Tauri desktop
         run: tauri build --features discord-rpc
 
