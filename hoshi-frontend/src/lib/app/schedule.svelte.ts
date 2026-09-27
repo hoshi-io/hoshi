@@ -4,6 +4,7 @@ import type { CoreError } from "@/api/client";
 import { i18n } from "@/stores/i18n.svelte.js";
 import type { NormalizedCard } from "@/utils/normalize";
 import { normalizeFullContent } from "@/utils/normalize";
+import { listStore } from "@/app/list.svelte.js";
 
 export type ScheduleGroup = {
     key: string;
@@ -75,14 +76,17 @@ function buildGroups(entries: AiringEntry[]): ScheduleGroup[] {
 }
 
 class ScheduleStore {
-    entries  = $state<AiringEntry[]>([]);
+    entries   = $state<AiringEntry[]>([]);
     isLoading = $state(false);
     error     = $state<CoreError | null>(null);
     myListOnly = $state(false);
 
     filteredEntries = $derived(
         this.myListOnly
-            ? this.entries.filter(e => e.userStatus === "CURRENT" || e.userStatus === "PLANNING")
+            ? this.entries.filter(e => {
+                const entry = listStore.entries.find(le => le.cid === e.fullContent.content.cid);
+                return entry?.status === "CURRENT" || entry?.status === "PLANNING";
+            })
             : this.entries
     );
 

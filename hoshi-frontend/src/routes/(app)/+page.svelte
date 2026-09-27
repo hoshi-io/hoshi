@@ -119,15 +119,16 @@
 
                         <div class="contents">
                             {#if section}
-                                {#if id === 'anime'}
-                                    <RecentlyAiredCarousel/>
-                                {/if}
                                 {#if continueItems.length > 0}
                                     <ContinueCarouselCarousel items={continueItems} mode={id} />
                                 {/if}
 
                                 {#if section.trending.length > 0}
                                     <ContentCardCarousel title={i18n.t("home.trending")} items={section.trending} />
+                                {/if}
+
+                                {#if id === 'anime'}
+                                    <RecentlyAiredCarousel/>
                                 {/if}
 
                                 {#if section.popular.length > 0}

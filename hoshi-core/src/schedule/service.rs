@@ -1,15 +1,11 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 use chrono::Utc;
-use futures::future::join_all;
 use tracing::{debug, info, instrument, warn};
 use crate::content::{repositories::content::ContentRepository};
 use crate::content::repositories::cache::CacheRepository;
 use crate::content::services::import::ImportService;
 use crate::core_err;
 use crate::error::{CoreError, CoreResult};
-use crate::list::repository::ListRepository;
-use crate::list::types::ListEntry;
 use crate::schedule::types::{AiringEntryEnriched, ScheduleWindow};
 use crate::state::AppState;
 use crate::tracker::repository::TrackerRepository;
@@ -29,51 +25,10 @@ impl ScheduleService {
         user_id: i32,
         window: ScheduleWindow,
     ) -> CoreResult<Vec<AiringEntryEnriched>> {
-        let pool = state.pool();
-        let now  = Utc::now().timestamp();
-
-        let list_map = Self::build_list_map(pool, user_id).await?;
-        let raw = Self::fetch_or_build_schedule(&state, user_id, &window, now).await?;
-
-        let enriched = raw
-            .into_iter()
-            .map(|mut e| {
-                if let Some(le) = list_map.get(&e.tracker_id) {
-                    e.user_status   = Some(le.status.clone());
-                    e.user_progress = Some(le.progress);
-                    e.user_score    = le.score;
-                }
-                e
-            })
-            .collect();
-
-        Ok(enriched)
+        let now = Utc::now().timestamp();
+        Self::fetch_or_build_schedule(&state, user_id, &window, now).await
     }
 
-    async fn build_list_map(pool: &sqlx::SqlitePool, user_id: i32) -> CoreResult<HashMap<String, ListEntry>> {
-        let current  = ListRepository::get_entries(pool, user_id, Some("CURRENT")).await?;
-        let planning = ListRepository::get_entries(pool, user_id, Some("PLANNING")).await?;
-        let entries: Vec<ListEntry> = current.into_iter().chain(planning).collect();
-
-        let lookups = entries.into_iter().map(|entry| async move {
-            let mappings = TrackerRepository::get_mappings_by_cid(pool, &entry.cid).await;
-            (entry, mappings)
-        });
-
-        let mut list_map: HashMap<String, ListEntry> = HashMap::new();
-        for (entry, mappings) in join_all(lookups).await {
-            let mappings = match mappings {
-                Ok(m) => m,
-                Err(e) => { warn!(cid = %entry.cid, error = ?e, "Failed to fetch tracker mappings, skipping entry"); continue; }
-            };
-            if let Some(m) = mappings.into_iter().find(|m| m.tracker_name == "anilist") {
-                list_map.insert(m.tracker_id, entry);
-            }
-        }
-
-        Ok(list_map)
-    }
-    
     async fn fetch_or_build_schedule(
         state: &Arc<AppState>,
         user_id: i32,
@@ -132,9 +87,6 @@ impl ScheduleService {
                 episode: episode.episode,
                 airing_at: episode.airing_at,
                 full_content,
-                user_status: None,
-                user_progress: None,
-                user_score: None,
             });
         }
 

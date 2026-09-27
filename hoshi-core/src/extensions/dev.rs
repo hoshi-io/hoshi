@@ -1,8 +1,6 @@
-// dev.rs
-use std::path::PathBuf;
 use tokio::fs;
 use crate::error::{CoreError, CoreResult};
-use super::{ExtensionManager, load_settings, persist_settings};
+use super::{ExtensionManager, load_settings};
 use super::types::{Extension, ExtensionManifest, ExtensionType};
 
 impl ExtensionManager {

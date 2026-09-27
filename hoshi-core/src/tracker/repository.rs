@@ -238,6 +238,41 @@ impl TrackerRepository {
             .collect())
     }
 
+    pub async fn get_mappings_by_cids(
+        pool: &SqlitePool,
+        cids: &[String],
+    ) -> CoreResult<std::collections::HashMap<String, Vec<TrackerMapping>>> {
+        use std::collections::HashMap;
+
+        if cids.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let placeholders = std::iter::repeat("?")
+            .take(cids.len())
+            .collect::<Vec<_>>()
+            .join(",");
+        let query = format!(
+            "SELECT cid, tracker_name, tracker_id, tracker_url, created_at, updated_at
+         FROM tracker_mappings WHERE cid IN ({placeholders})"
+        );
+
+        let mut q = sqlx::query_as::<_, (String, String, String, Option<String>, i64, i64)>(&query);
+        for cid in cids {
+            q = q.bind(cid);
+        }
+        let rows = q.fetch_all(pool).await?;
+
+        let mut map: HashMap<String, Vec<TrackerMapping>> = HashMap::new();
+        for (cid, tracker_name, tracker_id, tracker_url, created_at, updated_at) in rows {
+            map.entry(cid.clone()).or_default().push(TrackerMapping {
+                cid, tracker_name, tracker_id, tracker_url, created_at, updated_at,
+            });
+        }
+
+        Ok(map)
+    }
+
     pub async fn find_tracker_id_by_cid(
         pool: &SqlitePool,
         cid: &str,
