@@ -1,6 +1,6 @@
 use sqlx::SqlitePool;
 use serde_json::json;
-use tracing::{info, instrument, warn};
+use tracing::{debug, instrument, warn};
 
 use crate::content::models::{ContentType, EpisodeData, Metadata, Relation, RelationType, Status};
 use crate::content::repositories::content::ContentRepository;
@@ -30,7 +30,7 @@ impl ImportService {
             cid
         } else {
             let new_cid = generate_cid();
-            info!(cid = %new_cid, title = %media.title, "Creating new entry (direct import)");
+            debug!(cid = %new_cid, title = %media.title, "Creating new entry (direct import)");
 
             let meta = Self::to_content_metadata(&new_cid, tracker_name, media);
             ContentRepository::create_with_type(pool, &media.content_type, media.nsfw, meta).await?;

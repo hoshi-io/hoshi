@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use tracing::{info, instrument, warn};
+use tracing::{debug, info, instrument, warn};
 use crate::content::models::{ExtensionSource, FullContent};
 use crate::content::repositories::content::ContentRepository;
 use crate::content::repositories::extension::ExtensionRepository;
@@ -20,7 +20,7 @@ impl MappingService {
         mapping.updated_at = now;
 
         TrackerRepository::add_mapping(pool, &mapping).await?;
-        info!(cid = %mapping.cid, tracker = %mapping.tracker_name, "Tracker mapping added successfully");
+        debug!(cid = %mapping.cid, tracker = %mapping.tracker_name, "Tracker mapping added successfully");
         Ok(())
     }
 

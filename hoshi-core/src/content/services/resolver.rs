@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use sqlx::SqlitePool;
 use chrono::Utc;
-use tracing::{error, info, instrument, warn};
+use tracing::{debug, error, info, instrument, warn};
 use serde_json::json;
 
 use crate::config::repository::ConfigRepository;
@@ -128,7 +128,7 @@ impl ContentResolverService {
         ext_nsfw: bool,
     ) -> CoreResult<()> {
         if Self::matches_by_tracker_ids(pool, cid, ext_meta, content_type).await? {
-            info!(cid = %cid, ext = %ext_name, "Resolved via tracker ID");
+            debug!(cid = %cid, ext = %ext_name, "Resolved via tracker ID");
             return Self::link(pool, cid, ext_name, ext_id, ext_nsfw).await;
         }
 
@@ -136,7 +136,7 @@ impl ContentResolverService {
             pool, &ext_meta.title, Some(content_type.clone()), ext_meta.year,
         ).await? {
             if matched.cid == cid {
-                info!(cid = %cid, ext = %ext_name, "Resolved via fuzzy title match");
+                debug!(cid = %cid, ext = %ext_name, "Resolved via fuzzy title match");
                 return Self::link(pool, cid, ext_name, ext_id, ext_nsfw).await;
             }
             warn!(expected = %cid, matched = %matched.cid, "Fuzzy matched a different CID — rejecting");

@@ -77,7 +77,7 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "hoshii_lib=debug,hoshi_core=debug,sandbox_js=debug".into()),
+                .unwrap_or_else(|_| "hoshii_lib=info,hoshi_core=info,sandbox_js=info".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .with(memory_layer)

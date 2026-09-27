@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use tracing::{info, instrument, warn};
+use tracing::{debug, instrument, warn};
 
 use crate::content::models::{ContentUnit, Status};
 use crate::content::repositories::content::ContentRepository;
@@ -26,7 +26,7 @@ impl SimklUnitsService {
         let has_units = !units.is_empty();
 
         if !has_units {
-            info!(cid = %cid, simkl_id = %simkl_id, "No units cached, fetching from Simkl");
+            debug!(cid = %cid, simkl_id = %simkl_id, "No units cached, fetching from Simkl");
             return Self::fetch_and_persist(state, cid, &simkl_id).await;
         }
 
@@ -45,7 +45,7 @@ impl SimklUnitsService {
             return Ok(());
         }
 
-        info!(cid = %cid, simkl_id = %simkl_id, "Airing series due for re-sync");
+        debug!(cid = %cid, simkl_id = %simkl_id, "Airing series due for re-sync");
         Self::fetch_and_persist(state, cid, &simkl_id).await
     }
 
@@ -109,7 +109,7 @@ impl SimklUnitsService {
 
         tx.commit().await.map_err(CoreError::Database)?;
 
-        info!(cid = %cid, count = upserted, "Simkl unit sync complete");
+        debug!(cid = %cid, count = upserted, "Simkl unit sync complete");
         Ok(())
     }
 }

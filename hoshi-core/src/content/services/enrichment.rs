@@ -68,7 +68,7 @@ impl EnrichmentService {
         id: &str,
     ) -> CoreResult<Option<FullContent>> {
         if let Ok(Some(cid)) = TrackerRepository::find_cid_by_tracker(&state.pool, tracker, id).await {
-            info!(cid = %cid, tracker = %tracker, id = %id, "Found existing CID via direct mapping");
+            debug!(cid = %cid, tracker = %tracker, id = %id, "Found existing CID via direct mapping");
             return Self::link_tracker_and_load(state, &cid, tracker, id).await;
         }
 
@@ -82,7 +82,7 @@ impl EnrichmentService {
 
         for (cross_tracker, result) in futures::future::join_all(lookups).await {
             if let Ok(Some(cid)) = result {
-                info!(cid = %cid, via = %cross_tracker, "Found existing CID via cross-ID, linking");
+                debug!(cid = %cid, via = %cross_tracker, "Found existing CID via cross-ID, linking");
                 return Self::link_tracker_and_load(state, &cid, tracker, id).await;
             }
         }
@@ -173,7 +173,7 @@ impl EnrichmentService {
         let cid = ImportService::import_media(&state.pool, tracker, media).await?;
         let now = chrono::Utc::now().timestamp();
 
-        info!(cid = %cid, tracker = %tracker, id = %id, "Anime imported, resolving cross IDs");
+        debug!(cid = %cid, tracker = %tracker, id = %id, "Anime imported, resolving cross IDs");
 
         let cross_ids = Self::resolve_anime_cross_ids(state, tracker, id, provided_cross_ids).await?;
 
@@ -181,7 +181,7 @@ impl EnrichmentService {
             warn!(cid = %cid, tracker = %tracker, id = %id, "No cross IDs found for anime, skipping mapping persistence");
         } else {
             let normalized = Self::normalize_mal_prefix(cross_ids, "anime");
-            info!(cid = %cid, count = normalized.len(), mappings = ?normalized, "Persisting anime mappings");
+            debug!(cid = %cid, count = normalized.len(), mappings = ?normalized, "Persisting anime mappings");
             Self::persist_mappings(&state.pool, &cid, &normalized, now).await;
         }
 
@@ -199,7 +199,7 @@ impl EnrichmentService {
         let cid = ImportService::import_media(&state.pool, tracker, media).await?;
         let now = chrono::Utc::now().timestamp();
 
-        info!(cid = %cid, tracker = %tracker, id = %id, "Manga/novel imported, resolving cross IDs");
+        debug!(cid = %cid, tracker = %tracker, id = %id, "Manga/novel imported, resolving cross IDs");
 
         let cross_ids = Self::resolve_manga_cross_ids(state, tracker, id, provided_cross_ids).await?;
 
@@ -207,7 +207,7 @@ impl EnrichmentService {
             warn!(cid = %cid, tracker = %tracker, id = %id, "No cross IDs found for manga/novel, skipping mapping persistence");
         } else {
             let normalized = Self::normalize_mal_prefix(cross_ids, "manga");
-            info!(cid = %cid, count = normalized.len(), mappings = ?normalized, "Persisting manga/novel mappings");
+            debug!(cid = %cid, count = normalized.len(), mappings = ?normalized, "Persisting manga/novel mappings");
             Self::persist_mappings(&state.pool, &cid, &normalized, now).await;
         }
 
