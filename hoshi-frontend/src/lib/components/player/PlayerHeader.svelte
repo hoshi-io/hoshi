@@ -20,7 +20,7 @@
     } = $props();
 </script>
 
-<div class="z-20 {isMobile ? 'p-4' : 'p-6'} flex items-start justify-between gap-4">
+<div class="relative z-20 {isMobile ? 'p-4' : 'p-6'} flex items-start justify-between gap-4">
     <div class="flex items-start gap-3">
         <button
                 onclick={() => goto(`/c/${cid}`)}

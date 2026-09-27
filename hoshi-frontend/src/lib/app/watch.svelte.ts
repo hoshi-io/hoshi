@@ -140,6 +140,7 @@ export class WatchState {
 
     constructor() {
         invoke("lock_orientation", { orientation: "landscape" }).catch(() => {});
+        invoke("enter_fullscreen").catch(() => {});
 
         // Android has no initialize_player command — the mpv core boots
         // itself off the first native surfaceCreated callback (see
@@ -663,6 +664,7 @@ export class WatchState {
         this.unlistenFns = [];
 
         invoke("unlock_orientation").catch(() => {});
+        invoke("exit_fullscreen").catch(() => {});
         invoke("clear_activity").catch(() => {});
         invoke("stop_playback").catch(() => {});
     }

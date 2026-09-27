@@ -12,12 +12,13 @@ import app.tauri.plugin.Invoke
 import android.view.WindowManager
 import android.graphics.Color
 import androidx.annotation.RequiresApi
+import androidx.core.view.WindowCompat
 
 private const val TAG = "ImmersivePlugin"
 
 @TauriPlugin
 class ImmersivePlugin(private val activity: android.app.Activity) : Plugin(activity) {
-  
+
   private var originalLayoutParams: WindowManager.LayoutParams? = null
   private var originalSystemUiVisibility: Int? = null
   private var originalStatusBarColor: Int? = null
@@ -58,6 +59,8 @@ class ImmersivePlugin(private val activity: android.app.Activity) : Plugin(activ
 
         isImmersive = true
 
+        WindowCompat.setDecorFitsSystemWindows(activity.window, false)
+
         val attrs = activity.window.attributes
         attrs.layoutInDisplayCutoutMode =
           WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
@@ -76,7 +79,7 @@ class ImmersivePlugin(private val activity: android.app.Activity) : Plugin(activ
         } else {
           @Suppress("DEPRECATION")
           activity.window.decorView.systemUiVisibility = immersiveFlags
-          
+
           @Suppress("DEPRECATION")
           activity.window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
             if (isImmersive && (visibility and android.view.View.SYSTEM_UI_FLAG_FULLSCREEN == 0)) {
@@ -98,6 +101,8 @@ class ImmersivePlugin(private val activity: android.app.Activity) : Plugin(activ
       try {
         isImmersive = false
 
+        WindowCompat.setDecorFitsSystemWindows(activity.window, true)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
           activity.window.insetsController?.show(
             WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars()
@@ -108,14 +113,14 @@ class ImmersivePlugin(private val activity: android.app.Activity) : Plugin(activ
           @Suppress("DEPRECATION")
           activity.window.decorView.systemUiVisibility = originalSystemUiVisibility ?: 0
         }
-        
+
         originalLayoutParams?.let { saved ->
           val attrs = activity.window.attributes
           attrs.flags = saved.flags
           attrs.layoutInDisplayCutoutMode = saved.layoutInDisplayCutoutMode
           activity.window.attributes = attrs
         }
-        
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
           activity.window.isStatusBarContrastEnforced = false
           activity.window.isNavigationBarContrastEnforced = false
@@ -123,7 +128,7 @@ class ImmersivePlugin(private val activity: android.app.Activity) : Plugin(activ
 
         originalStatusBarColor?.let { activity.window.statusBarColor = it }
         originalNavigationBarColor?.let { activity.window.navigationBarColor = it }
-        
+
         activity.window.decorView.requestApplyInsets()
 
         invoke.resolve(JSObject())
