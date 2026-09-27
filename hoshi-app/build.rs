@@ -24,4 +24,19 @@ fn main() {
         // .so in on its own — it has to be named directly.
         println!("cargo:rustc-link-lib=dylib=avcodec");
     }
+
+    if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("macos") {
+        let mpv_prefix = std::process::Command::new("brew")
+            .args(["--prefix", "mpv"])
+            .output()
+            .expect("failed to find Homebrew mpv");
+
+        let prefix = String::from_utf8(mpv_prefix.stdout)
+            .expect("invalid brew output")
+            .trim()
+            .to_owned();
+
+        println!("cargo:rustc-link-search=native={prefix}/lib");
+        println!("cargo:rustc-link-lib=dylib=mpv");
+    }
 }

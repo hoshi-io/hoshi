@@ -174,6 +174,14 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 player_surface::attach(&window)?;
             }
 
+            // Needed for libmpv integration on macos webview
+            #[cfg(target_os = "macos")]
+            {
+                let state = app.state::<std::sync::Arc<hoshi_core::AppState>>().inner().clone();
+                let window = app.get_webview_window("main").ok_or("main window not found during setup")?;
+                player_surface::attach(&window, state)?;
+            }
+
             Ok(())
         })
         .invoke_handler(commands::generate_handlers())

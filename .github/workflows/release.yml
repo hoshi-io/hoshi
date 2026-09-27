@@ -39,7 +39,7 @@ jobs:
     needs: build-frontend
     strategy:
       matrix:
-        os: [ubuntu-22.04, windows-latest, macos-latest]
+        os: [ubuntu-22.04, windows-latest, macos-latest, macos-13]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -78,29 +78,62 @@ jobs:
           mkdir -p hoshi-app/mpv-windows
           mv ext_mpv/libmpv.dll.a hoshi-app/mpv-windows/mpv.lib
           mv ext_mpv/libmpv-2.dll hoshi-app/mpv-windows/
+          
+      - name: Setup mpv for macOS
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          brew install mpv dylibbundler
+          echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
       - name: Build Tauri desktop
-        run: tauri build --features discord-rpc
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == macos-* ]]; then
+            # Stop at the .app — we patch it before it becomes a .dmg
+            tauri build --features discord-rpc --bundles app
+          else
+            tauri build --features discord-rpc
+          fi
+
+      - name: Bundle macOS dylibs and create DMG
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          APP_PATH=$(find target/release/bundle/macos -maxdepth 1 -name "*.app")
+          APP_NAME=$(basename "$APP_PATH" .app)
+          EXECUTABLE="$APP_PATH/Contents/MacOS/$APP_NAME"
+
+          dylibbundler -cd -of -b \
+            -x "$EXECUTABLE" \
+            -d "$APP_PATH/Contents/Frameworks" \
+            -p "@executable_path/../Frameworks/"
+
+          codesign --force --deep -s - "$APP_PATH"
+
+          if [ "${{ runner.arch }}" = "ARM64" ]; then echo "MAC_ARCH=arm64" >> $GITHUB_ENV
+          else echo "MAC_ARCH=x64" >> $GITHUB_ENV
+          fi
+
+          mkdir -p target/release/bundle/dmg
+          hdiutil create -volname "$APP_NAME" -srcfolder "$APP_PATH" \
+            -ov -format UDZO "target/release/bundle/dmg/${APP_NAME}.dmg"
 
       - name: Rename Desktop Artifacts
         shell: bash
         run: |
           mkdir -p final-desktop
           VERSION=${{ github.ref_name }}
-
-          # Remove AppImage
+          
           find target/release/bundle -name "*.AppImage" -delete
-
-          # Linux
+          
           find target/release/bundle -name "*.deb" -exec mv {} final-desktop/hoshi-desktop-linux-${VERSION}.deb \;
           find target/release/bundle -name "*.rpm" -exec mv {} final-desktop/hoshi-desktop-linux-${VERSION}.rpm \;
-
-          # macOS
-          find target/release/bundle -name "*.dmg" -exec mv {} final-desktop/hoshi-desktop-macos-${VERSION}.dmg \;
-
-          # Windows
+          
+          if [[ "${{ matrix.os }}" == macos-* ]]; then
+            find target/release/bundle -name "*.dmg" -exec mv {} final-desktop/hoshi-desktop-macos-${MAC_ARCH}-${VERSION}.dmg \;
+          fi
+          
           find target/release/bundle -name "*.msi" -exec mv {} final-desktop/hoshi-desktop-windows-${VERSION}.msi \;
-          find target/release/bundle -name "*-setup.exe" -exec mv {} final-desktop/hoshi-desktop-windows-${VERSION}-setup.exe \;
+          find target/release/bundle -name "*-setup.exe" -exec mv {} final-desktop/hoshi-desktop-windows-${VERSION}-setup.exe \
 
       - name: Upload desktop artifact
         uses: actions/upload-artifact@v4

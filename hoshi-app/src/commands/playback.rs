@@ -31,6 +31,17 @@ pub async fn initialize_player(
         .await
 }
 
+#[cfg(target_os = "macos")]
+#[tauri::command]
+pub async fn initialize_player(
+    state: State<'_, Arc<AppState>>,
+    ready_notify: State<'_, crate::player_surface::PlayerReadyNotify>,
+) -> Result<(), CoreError> {
+    state.playback.initialize(RenderTarget::RenderApi).await?;
+    ready_notify.0.notify_one();
+    Ok(())
+}
+
 #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 #[tauri::command]
 pub async fn initialize_player(state: State<'_, Arc<AppState>>) -> Result<(), CoreError> {
