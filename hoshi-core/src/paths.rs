@@ -8,6 +8,7 @@ pub struct AppPaths {
     pub database_path: PathBuf,
     pub extensions_path: PathBuf,
     pub logs_path: PathBuf,
+    pub torrent: PathBuf,
 }
 
 impl AppPaths {
@@ -16,6 +17,7 @@ impl AppPaths {
             database_path: base.join("app.db"),
             extensions_path: base.join("extensions"),
             logs_path: base.join("logs"),
+            torrent: base.join("torrent"),
             base_dir: base,
         }
     }

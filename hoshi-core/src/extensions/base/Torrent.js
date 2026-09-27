@@ -15,6 +15,9 @@ class Torrent extends Base {
         if (item.size !== undefined && item.size !== null)
             this._assertNullableString(item.size, `${ctx}.size`);
 
+        if (item.sizeBytes !== undefined && item.sizeBytes !== null)
+            this._assertNullableNumber(item.sizeBytes, `${ctx}.sizeBytes`);
+
         if (item.seeders !== undefined && item.seeders !== null)
             this._assertNullableNumber(item.seeders, `${ctx}.seeders`);
 
@@ -23,6 +26,21 @@ class Torrent extends Base {
 
         if (item.isBatch !== undefined && typeof item.isBatch !== "boolean")
             throw new Error(`[${this.constructor.name}] ${ctx}.isBatch must be a boolean`);
+
+        if (item.releaseGroup !== undefined && item.releaseGroup !== null)
+            this._assertNullableString(item.releaseGroup, `${ctx}.releaseGroup`);
+
+        if (item.resolution !== undefined && item.resolution !== null)
+            this._assertNullableString(item.resolution, `${ctx}.resolution`);
+
+        if (item.episodeNumber !== undefined && item.episodeNumber !== null)
+            this._assertNullableNumber(item.episodeNumber, `${ctx}.episodeNumber`);
+
+        if (item.infoHash !== undefined && item.infoHash !== null)
+            this._assertNullableString(item.infoHash, `${ctx}.infoHash`);
+
+        if (item.date !== undefined && item.date !== null)
+            this._assertNullableString(item.date, `${ctx}.date`);
     }
 
     _validateTorrentResults(results) {

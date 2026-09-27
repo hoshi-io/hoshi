@@ -290,14 +290,20 @@ pub struct FilterDefinition {
 
 pub type ExtensionFilters = HashMap<String, FilterDefinition>;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct TorrentSearchResult {
     pub id: String,
     pub title: String,
     pub magnet: Option<String>,
     pub size: Option<String>,
+    pub size_bytes: Option<i64>,
     pub seeders: Option<i64>,
     pub leechers: Option<i64>,
-    #[serde(rename = "isBatch", default)]
     pub is_batch: Option<bool>,
+    pub release_group: Option<String>,
+    pub resolution: Option<String>,
+    pub episode_number: Option<f64>,
+    pub info_hash: Option<String>,
+    pub date: Option<String>, // ISO 8601, extension's responsibility to normalize
 }

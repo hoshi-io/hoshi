@@ -71,7 +71,7 @@ pub(super) fn build_sandbox_script(
         None => {
             let runner = format!(
                 r#"(async () => {{
-                    const VALID_BASES = ["Base", "Anime", "Manga", "Novel"];
+                    const VALID_BASES = ["Base", "Anime", "Manga", "Novel", "Torrent"];
 
                     const src            = {ext_repr};
                     const classNameMatch = src.match(/class\s+([a-zA-Z0-9_]+)\s+extends\s+([a-zA-Z0-9_]+)/);
@@ -81,8 +81,8 @@ pub(super) fn build_sandbox_script(
                     if (!VALID_BASES.includes(parentName))
                         throw new Error(`Class must extend one of: ${{VALID_BASES.join(", ")}}. Got: ${{parentName}}`);
 
-                    const ExtClass = new Function("Base", "Anime", "Manga", "Novel", `${{src}}
-return ${{className}};`)(Base, Anime, Manga, Novel);
+                    const ExtClass = new Function("Base", "Anime", "Manga", "Novel", "Torrent", `${{src}}
+return ${{className}};`)(Base, Anime, Manga, Novel, Torrent);
 
                     if (typeof ExtClass !== "function")
                         throw new Error(`Class '${{className}}' could not be loaded`);
