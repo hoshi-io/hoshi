@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
 use serde::Deserialize;
+use sqlx::SqlitePool;
 use tokio::sync::RwLock;
 use tracing::{info, warn};
 use crate::AppState;
@@ -91,37 +92,32 @@ impl ChineseTitleService {
         Ok(map)
     }
 
-    pub async fn maybe_inject_chinese_title(state: &Arc<AppState>, full: &mut FullContent) {
-        let config = match ConfigRepository::get_config(&state.pool, 1).await {
+    pub async fn maybe_inject_chinese_title(
+        pool: &SqlitePool,
+        anilist_tracker_id: &str,
+        title_i18n: &mut HashMap<String, String>,
+    ) {
+        let config = match ConfigRepository::get_config(pool, 1).await {
             Ok(c) => c,
             Err(e) => {
-                warn!(error = ?e, "Could not read user config for Chinese title check");
+                warn!(error = ?e, "Could not read config for Chinese title check");
                 return;
             }
         };
 
         if !matches!(config.ui.title_language, TitleLanguage::Chinese) {
-            ChineseTitleService::evict().await;
             return;
         }
 
-        ChineseTitleService::ensure_loaded().await;
-
-        let Some(mapping) = full.tracker_mappings.iter().find(|m| m.tracker_name == "anilist") else {
+        let Ok(anilist_id) = anilist_tracker_id.parse::<u32>() else {
+            warn!(tracker_id = %anilist_tracker_id, "AniList tracker_id is not a valid u32, skipping Chinese title");
             return;
         };
 
-        let Ok(anilist_id) = mapping.tracker_id.parse::<u32>() else {
-            warn!(tracker_id = %mapping.tracker_id, "AniList tracker_id is not a valid u32, skipping Chinese title");
-            return;
-        };
+        Self::ensure_loaded().await;
 
-        let Some(chinese_title) = ChineseTitleService::lookup(anilist_id).await else {
-            return;
-        };
-
-        for meta in &mut full.metadata {
-            meta.title_i18n.insert("chinese".into(), chinese_title.clone());
+        if let Some(chinese_title) = Self::lookup(anilist_id).await {
+            title_i18n.insert("chinese".into(), chinese_title);
         }
     }
 }

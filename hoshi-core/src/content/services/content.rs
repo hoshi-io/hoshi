@@ -18,7 +18,7 @@ impl ContentService {
         source_id: &str,
     ) -> CoreResult<FullContent> {
         let mut full = ContentResolverService::resolve_source(state, source, source_id).await?;
-        ChineseTitleService::maybe_inject_chinese_title(state, &mut full).await;
+        Self::inject_chinese_titles(state, &mut full).await;
         Ok(full)
     }
 
@@ -37,8 +37,19 @@ impl ContentService {
 
         tokio::spawn(ContentResolverService::backfill_via_preferred_mapping(state.clone(), cid.to_string()));
 
-        ChineseTitleService::maybe_inject_chinese_title(state, &mut full).await;
+        Self::inject_chinese_titles(state, &mut full).await;
         Ok(full)
+    }
+
+    async fn inject_chinese_titles(state: &Arc<AppState>, full: &mut FullContent) {
+        let Some(mapping) = full.tracker_mappings.iter().find(|m| m.tracker_name == "anilist") else {
+            return;
+        };
+        let tracker_id = mapping.tracker_id.clone();
+
+        for meta in &mut full.metadata {
+            ChineseTitleService::maybe_inject_chinese_title(&state.pool, &tracker_id, &mut meta.title_i18n).await;
+        }
     }
 
     #[instrument(skip(state, meta))]

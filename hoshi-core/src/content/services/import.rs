@@ -5,6 +5,7 @@ use tracing::{debug, instrument, warn};
 use crate::content::models::{ContentType, EpisodeData, Metadata, Relation, RelationType, Status};
 use crate::content::repositories::content::ContentRepository;
 use crate::content::repositories::relations::RelationRepository;
+use crate::content::services::chinese_title::ChineseTitleService;
 use crate::content::utils::generate_cid;
 use crate::tracker::repository::TrackerRepository;
 use crate::tracker::provider::TrackerMedia;
@@ -24,7 +25,10 @@ impl ImportService {
 
         let cid = if let Some(cid) = TrackerRepository::find_cid_by_tracker(pool, tracker_name, &media.tracker_id).await? {
             if is_full {
-                let meta = Self::to_content_metadata(&cid, tracker_name, media);
+                let mut meta = Self::to_content_metadata(&cid, tracker_name, media);
+                if tracker_name == "anilist" {
+                    ChineseTitleService::maybe_inject_chinese_title(pool, &media.tracker_id, &mut meta.title_i18n).await;
+                }
                 ContentRepository::upsert_metadata(pool, &meta).await?;
             }
             cid
@@ -32,7 +36,10 @@ impl ImportService {
             let new_cid = generate_cid();
             debug!(cid = %new_cid, title = %media.title, "Creating new entry (direct import)");
 
-            let meta = Self::to_content_metadata(&new_cid, tracker_name, media);
+            let mut meta = Self::to_content_metadata(&new_cid, tracker_name, media);
+            if tracker_name == "anilist" {
+                ChineseTitleService::maybe_inject_chinese_title(pool, &media.tracker_id, &mut meta.title_i18n).await;
+            }
             ContentRepository::create_with_type(pool, &media.content_type, media.nsfw, meta).await?;
 
             let now = chrono::Utc::now().timestamp();
