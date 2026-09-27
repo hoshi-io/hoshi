@@ -7,10 +7,7 @@ use tracing::{error, instrument};
 use super::{sandbox, ExtensionManager, LNREADER, LNREADER_ARC, SORA, SORA_ARC};
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::sandbox::native_apis::ConsoleBuffer;
-use crate::extensions::types::{
-    Chapter, CompatLayer, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters,
-    ExtensionMetadata, ExtensionSearchResult, Page,
-};
+use crate::extensions::types::{Chapter, CompatLayer, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, Page, TorrentSearchResult};
 
 impl ExtensionManager {
     pub async fn call_extension_function(
@@ -143,5 +140,13 @@ impl ExtensionManager {
     
     pub async fn find_novel_html(&self, ext_id: &str, chapter_id: &str) -> CoreResult<String> {
         self.call_typed_function(ext_id, "findChapterPages", vec![json!(chapter_id)], self.http_client.clone()).await
+    }
+
+    pub async fn search_torrents(&self, ext_id: &str, query: &str, filters: Value, page: u32) -> CoreResult<Vec<TorrentSearchResult>> {
+        self.call_typed_function(ext_id, "search", vec![json!(query), filters, json!(page)], self.http_client.clone()).await
+    }
+
+    pub async fn get_magnet(&self, ext_id: &str, content_id: &str) -> CoreResult<String> {
+        self.call_typed_function(ext_id, "getMagnet", vec![json!(content_id)], self.http_client.clone()).await
     }
 }

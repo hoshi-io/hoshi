@@ -120,7 +120,7 @@ export class IdeState {
         }
     }
 
-    async createExtension(name: string, extType: 'anime' | 'manga' | 'novel') {
+    async createExtension(name: string, extType: 'anime' | 'manga' | 'novel' | 'torrent') {
         const ext = await invoke<Extension>('create_dev_extension', {
             name,
             extType,
@@ -172,26 +172,6 @@ export class IdeState {
             values[def.key] = ext.settings[def.key] ?? def.default;
         }
         this.settingsValues = values;
-    }
-
-    async saveSettings() {
-        if (!this.activeExtensionId) return;
-        try {
-            await invoke('update_extension_settings', {
-                id: this.activeExtensionId,
-                settings: this.settingsValues,
-            });
-            // reflect saved values back into the local extension record
-            this.devExtensions = this.devExtensions.map((e) =>
-                e.id === this.activeExtensionId ? { ...e, settings: { ...this.settingsValues } } : e
-            );
-        } catch (e) {
-            this.consoleLines = [`[error] settings: ${String(e)}`];
-        }
-    }
-
-    appendConsoleLine(line: string) {
-        this.consoleLines = [...this.consoleLines, line];
     }
 }
 

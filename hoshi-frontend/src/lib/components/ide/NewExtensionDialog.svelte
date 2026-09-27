@@ -9,7 +9,7 @@
     let { open = $bindable(false) }: { open: boolean } = $props();
 
     let name = $state('');
-    let extType = $state<'anime' | 'manga' | 'novel'>('anime');
+    let extType = $state<'anime' | 'manga' | 'novel' | 'torrent'>('anime');
     let isCreating = $state(false);
     let error = $state<string | null>(null);
 
@@ -75,6 +75,7 @@
                         <Select.Item value="anime">Anime</Select.Item>
                         <Select.Item value="manga">Manga</Select.Item>
                         <Select.Item value="novel">Novel</Select.Item>
+                        <Select.Item value="torrent">Torrent</Select.Item>
                     </Select.Content>
                 </Select.Root>
             </div>

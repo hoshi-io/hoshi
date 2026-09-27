@@ -12,6 +12,7 @@ class ExtensionsStore {
     anime = $derived(this.installed.filter(ext => ext.ext_type === "anime"));
     manga = $derived(this.installed.filter(ext => ext.ext_type === "manga"));
     novel = $derived(this.installed.filter(ext => ext.ext_type === "novel"));
+    torrent = $derived(this.installed.filter(ext => ext.ext_type === "torrent"));
 
     async load(force = false) {
         if (this.initialized && !force) return;
@@ -118,16 +119,6 @@ class ExtensionsStore {
                 useHoshiMpvConfig: opts.use_hoshi_config,
             },
         });
-    }
-
-    async resolveStream(
-        cid: string,
-        epNumber: number,
-        extId: string,
-        opts: { server?: string; category?: string }
-    ) {
-        const playRes = await contentApi.play(cid, extId, epNumber, opts) as any;
-        return playRes.data;
     }
 
     isTachiyomi(extId: string): boolean {

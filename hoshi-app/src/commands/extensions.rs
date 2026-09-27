@@ -7,7 +7,7 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::State;
-use hoshi_core::extensions::types::{Extension, ExtensionFeatures, LNReaderMarketplaceEntry, SoraMarketplaceEntry};
+use hoshi_core::extensions::types::{Extension, ExtensionFeatures, LNReaderMarketplaceEntry, SoraMarketplaceEntry, TorrentSearchResult};
 
 #[derive(Serialize)]
 pub struct ExtensionsResponse<T> {
@@ -119,4 +119,28 @@ pub async fn update_extension(
     let mut manager = state.inner().extension_manager.write().await;
     let extension = manager.update_extension(state.inner(), &id, &manifest_url).await?;
     Ok(json!({ "ok": true, "extension": extension }))
+}
+
+#[tauri::command]
+pub async fn search_torrents(
+    state: State<'_, Arc<AppState>>,
+    id: String,
+    query: String,
+    filters: Value,
+    page: u32,
+) -> Result<Value, CoreError> {
+    let manager = state.inner().extension_manager.read().await;
+    let results: Vec<TorrentSearchResult> = manager.search_torrents(&id, &query, filters, page).await?;
+    Ok(json!({ "results": results }))
+}
+
+#[tauri::command]
+pub async fn get_magnet(
+    state: State<'_, Arc<AppState>>,
+    id: String,
+    content_id: String,
+) -> Result<Value, CoreError> {
+    let manager = state.inner().extension_manager.read().await;
+    let magnet = manager.get_magnet(&id, &content_id).await?;
+    Ok(json!({ "magnet": magnet }))
 }

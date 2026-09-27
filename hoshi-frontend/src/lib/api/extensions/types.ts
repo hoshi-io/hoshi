@@ -1,4 +1,4 @@
-export type ExtensionType = "anime" | "manga" | "novel" | "unknown";
+export type ExtensionType = "anime" | "manga" | "novel" | "torrent" | "unknown";
 
 export type SettingType = "string" | "number" | "boolean" | "select" | "multiselect" | "unknown";
 

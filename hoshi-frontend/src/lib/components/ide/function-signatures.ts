@@ -52,16 +52,31 @@ const NOVEL: FunctionDef[] = [
     { name: 'findChapterPages', params: [{ name: 'chapterId', type: 'string' }] }, // returns HTML string
 ];
 
+const TORRENT: FunctionDef[] = [
+    { name: 'getFilters', params: [] },
+    {
+        name: 'search',
+        params: [
+            { name: 'query', type: 'string' },
+            { name: 'filters', type: 'json' },
+            { name: 'page', type: 'number' },
+        ],
+    },
+    { name: 'getMagnet', params: [{ name: 'id', type: 'string' }] },
+];
+
 export const FUNCTIONS_BY_TYPE: Record<string, FunctionDef[]> = {
     anime: ANIME,
     manga: MANGA,
     novel: NOVEL,
+    torrent: TORRENT,
 };
 
 const ORDER = [
     'getFilters', 'search', 'getMetadata',
     'findEpisodes', 'findEpisodeServer', 'getStreamingSettings',
     'findChapters', 'findChapterPages',
+    'getMagnet',
 ];
 
 export function sortedFunctions(defs: FunctionDef[]): FunctionDef[] {

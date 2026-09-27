@@ -1,6 +1,6 @@
 // @/components/ide/starter-templates.ts
 
-export const STARTER_TEMPLATES: Record<'anime' | 'manga' | 'novel', string> = {
+export const STARTER_TEMPLATES: Record<'anime' | 'manga' | 'novel' | 'torrent', string> = {
     anime: `class MyAnime extends Anime {
     api = "https://example.com";
 
@@ -116,6 +116,27 @@ export const STARTER_TEMPLATES: Record<'anime' | 'manga' | 'novel', string> = {
 
     async findChapterPages(chapterId) {
         return "";
+    }
+}`,
+
+    torrent: `class MyTorrent extends Torrent {
+
+    async search(query, filters, page) {
+        return [
+            {
+                id: "",
+                title: "",
+                magnet: null,
+                size: null,
+                seeders: null,
+                leechers: null,
+                isBatch: false
+            }
+        ];
+    }
+
+    async getMagnet(id) {
+        return "magnet:?xt=urn:btih:...";
     }
 }`,
 };

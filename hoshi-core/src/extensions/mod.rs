@@ -23,6 +23,7 @@ const BASE: &str  = include_str!("base/Base.js");
 const ANIME: &str = include_str!("base/Anime.js");
 const MANGA: &str = include_str!("base/Manga.js");
 const NOVEL: &str = include_str!("base/Novel.js");
+const TORRENT: &str = include_str!("base/Torrent.js");
 // const TACHIYOMI: &str = include_str!("compatibility/tachiyomi.js"); abandoned support for apk based extensions
 const LNREADER: &str = include_str!("compatibility/lnreader.js");
 const SORA: &str = include_str!("compatibility/sora.js");
