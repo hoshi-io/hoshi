@@ -52,10 +52,12 @@ impl ExtensionManager {
     }
 
     pub fn list_extensions(&self) -> Vec<&Extension> {
-        self.extensions.values().collect()
+        self.extensions.values().filter(|e| !e.dev).collect()
     }
 
-    pub fn list_dev_extensions(&self) -> Vec<&Extension> { self.extensions.values().filter(|e| e.dev).collect() }
+    pub fn list_dev_extensions(&self) -> Vec<&Extension> {
+        self.extensions.values().filter(|e| e.dev).collect()
+    }
 
     pub fn get_extensions_by_type(&self, target_type: ExtensionType) -> Vec<String> {
         self.extensions.values()

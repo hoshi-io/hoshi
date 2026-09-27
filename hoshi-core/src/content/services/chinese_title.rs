@@ -1,14 +1,12 @@
 use std::collections::HashMap;
-use std::sync::{Arc, OnceLock};
+use std::sync::{OnceLock};
 
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use tokio::sync::RwLock;
 use tracing::{info, warn};
-use crate::AppState;
 use crate::config::model::TitleLanguage;
 use crate::config::repository::ConfigRepository;
-use crate::content::models::FullContent;
 use crate::error::{CoreError, CoreResult};
 
 const CHINESE_TITLES_URL: &str =
@@ -60,10 +58,6 @@ impl ChineseTitleService {
             .as_ref()?
             .get(&anilist_id)
             .cloned()
-    }
-
-    pub async fn evict() {
-        *cache().write().await = None;
     }
 
     async fn fetch() -> CoreResult<ChineseTitleMap> {
