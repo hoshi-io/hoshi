@@ -1926,6 +1926,7 @@ dependencies = [
  "glib",
  "gtk",
  "hoshi-core",
+ "jni",
  "libc",
  "libmpv2",
  "serde",

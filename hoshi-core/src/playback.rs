@@ -13,6 +13,13 @@ use tracing::{info, instrument, warn};
 use crate::core_err;
 use crate::error::CoreResult;
 
+/// How mpv should present video, chosen per platform.
+#[derive(Debug)]
+pub enum RenderTarget {
+    RenderApi,
+    NativeWindow { wid: i64, gpu_context: &'static str },
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Chapter {
     pub index: i64,
@@ -146,14 +153,14 @@ impl PlaybackHandle {
     /// `mpv_initialize()` runs, since `wid` only takes effect if it's known
     /// before the video output is created.
     #[instrument(skip(self))]
-    pub async fn initialize(&self, embed_wid: Option<i64>) -> CoreResult<()> {
+    pub async fn initialize(&self, target: RenderTarget) -> CoreResult<()> {
         let mut guard = self.inner.write().await;
         if guard.is_some() {
             warn!("playback core already initialized, ignoring duplicate initialize()");
             return Ok(());
         }
 
-        let mpv = tokio::task::spawn_blocking(move || build_mpv(embed_wid))
+        let mpv = tokio::task::spawn_blocking(move || build_mpv(target))
             .await
             .map_err(|e| core_err!(Internal, "error.playback.init_failed", e))?
             .map_err(|e| core_err!(Internal, "error.playback.init_failed", e))?;
@@ -484,6 +491,31 @@ impl PlaybackHandle {
             .map_err(|e| core_err!(Internal, "error.playback.command_failed", e))?
             .map_err(|e| core_err!(Internal, "error.playback.command_failed", e))
     }
+    
+    #[cfg(target_os = "android")]
+    #[instrument(skip(self))]
+    pub async fn attach_surface(&self, wid: i64) -> CoreResult<()> {
+        let mpv = self.require_mpv().await?;
+        self.run(move || -> libmpv2::Result<()> {
+            mpv.set_property("wid", wid)?;
+            mpv.set_property("gpu-context", "android")?;
+            mpv.set_property("vo", "gpu")?;
+            mpv.set_property("force-window", "yes")
+        })
+            .await
+    }
+    
+    #[cfg(target_os = "android")]
+    #[instrument(skip(self))]
+    pub async fn detach_surface(&self) -> CoreResult<()> {
+        let mpv = self.require_mpv().await?;
+        self.run(move || -> libmpv2::Result<()> {
+            mpv.set_property("vo", "null")?;
+            mpv.set_property("force-window", "no")?;
+            mpv.set_property("wid", 0i64)
+        })
+            .await
+    }
 }
 
 impl Default for PlaybackHandle {
@@ -548,24 +580,20 @@ fn spawn_event_loop(mpv: Arc<Mpv>, events: broadcast::Sender<PlaybackEvent>) {
     });
 }
 
-fn build_mpv(embed_wid: Option<i64>) -> libmpv2::Result<Mpv> {
+fn build_mpv(target: RenderTarget) -> libmpv2::Result<Mpv> {
     unsafe {
         let c_locale = std::ffi::CString::new("C").expect("no interior nul");
         libc::setlocale(libc::LC_NUMERIC, c_locale.as_ptr());
     }
 
     Mpv::with_initializer(move |init: MpvInitializer| {
-        match embed_wid {
-            None => {
-                // Render-API embedding (Linux): the host owns the GL
-                // context and drives rendering via `create_render_context`.
+        match target {
+            RenderTarget::RenderApi => {
                 init.set_option("vo", "libmpv")?;
             }
-            Some(wid) => {
-                // Native-window embedding (Windows): mpv draws directly
-                // into the given HWND via its own D3D11 swapchain.
+            RenderTarget::NativeWindow { wid, gpu_context } => {
                 init.set_option("vo", "gpu")?;
-                init.set_option("gpu-context", "d3d11")?;
+                init.set_option("gpu-context", gpu_context)?;
                 init.set_option("wid", wid)?;
             }
         }

@@ -45,6 +45,11 @@ android {
             )
         }
     }
+    sourceSets {
+        getByName("main") {
+            jniLibs.srcDirs("../../../mpv-android")
+        }
+    }
     kotlinOptions {
         jvmTarget = "1.8"
     }

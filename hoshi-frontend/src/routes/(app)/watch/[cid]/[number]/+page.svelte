@@ -12,8 +12,7 @@
     import MobileControls from "@/components/player/MobileControls.svelte";
 	import { i18n } from "@/stores/i18n.svelte";
     import SettingsMenu from "@/components/player/settings/SettingsMenu.svelte";
-
-    let layoutState = $state({ isMobile: false });
+    import {layoutState} from "@/stores/layout.svelte.ts";
 
     const pageState = new WatchState();
 
@@ -180,9 +179,6 @@
     });
 
     onMount(() => {
-        // Evaluate initial mobile state
-        layoutState.isMobile = window.innerWidth <= 768;
-
         window.addEventListener("mousemove", handleActivity);
         window.addEventListener("mousedown", handleActivity);
         window.addEventListener("keydown", handleKeydown);

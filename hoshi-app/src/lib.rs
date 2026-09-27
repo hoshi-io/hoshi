@@ -104,6 +104,7 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .plugin(headless_plugin_init())
             .plugin(orientation_plugin_init())
             .plugin(immersive_plugin_init())
+            .plugin(player_surface::android_plugin::init())
             .plugin(intent_plugin_init());
     }
 
@@ -131,6 +132,11 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
                 app.manage(state);
                 app.manage(TauriSession::default());
+
+                #[cfg(target_os = "android")]
+                {
+                    player_surface::android::flush_pending_surface();
+                }
 
                 Ok::<(), CoreError>(())
             })?;

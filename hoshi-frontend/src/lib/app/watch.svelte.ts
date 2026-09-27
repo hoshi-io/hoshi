@@ -18,6 +18,7 @@ import { goto } from "$app/navigation";
 
 import type { Extension } from "@/api/extensions/types";
 import type { PlayerConfig, SubtitleConfig } from "@/api/config/types.js";
+import { type as getOsType } from "@tauri-apps/plugin-os";
 
 export interface EpisodeChapter {
     start: number;
@@ -139,7 +140,13 @@ export class WatchState {
 
     constructor() {
         invoke("lock_orientation", { orientation: "landscape" }).catch(() => {});
-        invoke("initialize_player").catch(() => {});
+
+        // Android has no initialize_player command — the mpv core boots
+        // itself off the first native surfaceCreated callback (see
+        // player_surface::android on the Rust side), not off a frontend call.
+        if (getOsType() !== "android") {
+            invoke("initialize_player").catch(() => {});
+        }
 
         // Episode/content loading — reacts only to route params.
         $effect(() => {
@@ -581,6 +588,7 @@ export class WatchState {
                 totalEpisodes: this.totalEpisodes,
             };
 
+            await invoke("wait_for_player_ready").catch(() => {});
             await invoke("load_stream", {
                 url: data.source.url,
                 headers: this.toHeaderList(rawHeaders),

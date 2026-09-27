@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use hoshi_core::error::CoreError;
-use hoshi_core::playback::{Chapter, EpisodeChapter, ExternalSubtitle, LoadMode, LoadSpec, NowPlaying, Track};
+use hoshi_core::playback::{Chapter, EpisodeChapter, ExternalSubtitle, LoadMode, LoadSpec, NowPlaying, RenderTarget, Track};
 use hoshi_core::AppState;
 use serde::Deserialize;
 use tauri::State;
@@ -15,7 +15,7 @@ pub async fn initialize_player(
     state: State<'_, Arc<AppState>>,
     ready_notify: State<'_, PlayerReadyNotify>,
 ) -> Result<(), CoreError> {
-    state.playback.initialize(None).await?;
+    state.playback.initialize(RenderTarget::RenderApi).await?;
     ready_notify.0.notify_one();
     Ok(())
 }
@@ -26,14 +26,15 @@ pub async fn initialize_player(
     state: State<'_, Arc<AppState>>,
     embed_wid: State<'_, crate::player_surface::EmbedWid>,
 ) -> Result<(), CoreError> {
-    state.playback.initialize(Some(embed_wid.0)).await?;
-    Ok(())
+    state.playback
+        .initialize(RenderTarget::NativeWindow { wid: embed_wid.0, gpu_context: "d3d11" })
+        .await
 }
 
-#[cfg(not(any(target_os = "linux", target_os = "windows")))]
+#[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 #[tauri::command]
 pub async fn initialize_player(state: State<'_, Arc<AppState>>) -> Result<(), CoreError> {
-    state.playback.initialize(None).await?;
+    state.playback.initialize(RenderTarget::RenderApi).await?;
     Ok(())
 }
 
@@ -45,6 +46,24 @@ pub async fn shutdown_player(state: State<'_, Arc<AppState>>) -> Result<(), Core
 #[tauri::command]
 pub async fn stop_playback(state: State<'_, Arc<AppState>>) -> Result<(), CoreError> {
     state.playback.stop().await
+}
+
+#[cfg(target_os = "android")]
+#[tauri::command]
+pub async fn wait_for_player_ready(
+    state: State<'_, Arc<AppState>>,
+    ready_notify: State<'_, crate::player_surface::PlayerReadyNotify>,
+) -> Result<(), CoreError> {
+    if state.playback.mpv_handle().await.is_err() {
+        ready_notify.0.notified().await;
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "android"))]
+#[tauri::command]
+pub async fn wait_for_player_ready(_state: State<'_, Arc<AppState>>) -> Result<(), CoreError> {
+    Ok(())
 }
 
 /// A single `Key: Value` HTTP header, as an object rather than a
