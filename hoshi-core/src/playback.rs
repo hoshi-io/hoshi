@@ -271,7 +271,6 @@ impl PlaybackHandle {
             mpv.set_property("vid", "auto")?;
 
             mpv.command("loadfile", &[&url, mode_str, "-1", &options_str])?;
-
             for sub in &subtitles {
                 let title = sub.title.as_deref().unwrap_or("");
                 let lang = sub.lang.as_deref().unwrap_or("");
@@ -491,7 +490,7 @@ impl PlaybackHandle {
             .map_err(|e| core_err!(Internal, "error.playback.command_failed", e))?
             .map_err(|e| core_err!(Internal, "error.playback.command_failed", e))
     }
-    
+
     #[cfg(target_os = "android")]
     #[instrument(skip(self))]
     pub async fn attach_surface(&self, wid: i64) -> CoreResult<()> {
@@ -504,7 +503,7 @@ impl PlaybackHandle {
         })
             .await
     }
-    
+
     #[cfg(target_os = "android")]
     #[instrument(skip(self))]
     pub async fn detach_surface(&self) -> CoreResult<()> {

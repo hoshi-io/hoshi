@@ -24,7 +24,7 @@
     let { pageState, isMobile = false }: { pageState: WatchState, isMobile?: boolean } = $props();
 
     type SectionId = "source" | "server" | "audio" | "subtitles" | "quality" | "video" | "subtitleStyle";
-    type OptionId = "hwdec" | "scaleAlgorithm" | "font" | "fontSize" | "alignment";
+    type OptionId = "hwdec" | "scaleAlgorithm" | "font" | "fontSize" | "alignment" | "anime4kTier" | "anime4kMode";
 
     let activeSection = $state<SectionId | null>(null);
     let activeOption = $state<OptionId | null>(null);
@@ -125,6 +125,17 @@
     });
 
     // --- Plain "choose one" options for player/subtitle settings ---
+    const anime4kTierOptions = [
+        { id: "off", label: "Off" },
+        { id: "fast", label: "Fast" },
+        { id: "hq", label: "HQ" },
+    ];
+    const anime4kModeOptions = [
+        { id: "a", label: "A" },
+        { id: "b", label: "B" },
+        { id: "c", label: "C" },
+    ];
+
     const hwdecOptions = [
         { id: "auto-safe", label: i18n.t("watch.settings.video_section.hwdec_auto_safe") },
         { id: "auto", label: i18n.t("watch.settings.video_section.hwdec_auto") },
@@ -165,6 +176,8 @@
 
     const currentHwdec = $derived(labelFor(hwdecOptions, appConfig.data?.player.hwdec, "Auto (safe)"));
     const currentScale = $derived(labelFor(scaleOptions, appConfig.data?.player.scaleAlgorithm, "Balanced"));
+    const currentAnime4kMode = $derived(labelFor(anime4kModeOptions, appConfig.data?.player.anime4kMode, "Off"));
+    const currentAnime4kTier = $derived(labelFor(anime4kTierOptions, appConfig.data?.player.anime4kTier, "Fast"));
     const currentFont = $derived(labelFor(fontOptions, appConfig.data?.subtitles.font, appConfig.data?.subtitles.font ?? "Sans-serif"));
     const currentFontSize = $derived(labelFor(fontSizeOptions, String(appConfig.data?.subtitles.fontSize ?? ""), "Medium"));
     const currentAlignment = $derived(labelFor(alignmentOptions, appConfig.data?.subtitles.justify, "Auto"));
@@ -272,6 +285,38 @@
             />
         </div>
 
+    {:else if activeOption === "anime4kMode" && appConfig.data}
+        <div in:fly={{ x: 8, duration: 150 }} class="flex flex-col py-0.5">
+            <button
+                    onclick={goBack}
+                    class="flex items-center gap-2.5 w-full px-3 py-2 mb-1 rounded-sm border-b border-border text-foreground hover:bg-accent transition text-left"
+            >
+                <ChevronLeft class="w-4 h-4 text-muted-foreground" />
+                <span class="text-sm font-semibold">Anime4K Mode</span>
+            </button>
+            <SettingsOptionList
+                    options={anime4kModeOptions}
+                    activeId={appConfig.data.player.anime4kMode}
+                    onSelect={(id) => selectSubOption(() => appConfig.update({ player: { anime4kMode: id } }))}
+            />
+        </div>
+
+    {:else if activeOption === "anime4kTier" && appConfig.data}
+        <div in:fly={{ x: 8, duration: 150 }} class="flex flex-col py-0.5">
+            <button
+                    onclick={goBack}
+                    class="flex items-center gap-2.5 w-full px-3 py-2 mb-1 rounded-sm border-b border-border text-foreground hover:bg-accent transition text-left"
+            >
+                <ChevronLeft class="w-4 h-4 text-muted-foreground" />
+                <span class="text-sm font-semibold">Anime4K Tier</span>
+            </button>
+            <SettingsOptionList
+                    options={anime4kTierOptions}
+                    activeId={appConfig.data.player.anime4kTier}
+                    onSelect={(id) => selectSubOption(() => appConfig.update({ player: { anime4kTier: id } }))}
+            />
+        </div>
+
     {:else if activeSection === null}
         <!-- Main Settings Menu -->
         <div in:fly={{ x: -8, duration: 150 }} class="flex flex-col py-0.5">
@@ -373,6 +418,11 @@
                                 onCheckedChange={(v) => appConfig.update({ player: { deband: v } })}
                         />
                     </div>
+
+                    <SettingsRow icon={Cpu} label="Anime4K" value={currentAnime4kTier} onclick={() => activeOption = "anime4kTier"} />
+                    {#if appConfig.data.player.anime4kTier !== "off"}
+                        <SettingsRow icon={Gauge} label="Anime4K Mode" value={currentAnime4kMode} onclick={() => activeOption = "anime4kMode"} />
+                    {/if}
 
                 {:else if activeSection === "subtitleStyle" && appConfig.data}
                     <div class="flex flex-col {isMobile ? '' : 'max-h-72 overflow-y-auto'}">

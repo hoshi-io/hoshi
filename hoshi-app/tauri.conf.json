@@ -31,7 +31,8 @@
       "icons/256x256.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "resources": ["resources/anime4k/*.glsl"]
   },
   "plugins": {
     "deep-link": {

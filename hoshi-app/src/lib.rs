@@ -13,7 +13,7 @@ pub mod orientation;
 pub mod intent;
 pub mod immersive;
 pub mod player_surface;
-
+pub mod anime4k;
 pub mod proxy_protocol;
 
 #[cfg(mobile)]

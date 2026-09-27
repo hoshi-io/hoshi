@@ -736,7 +736,15 @@
       "sub_sdh_filter": "Filter SDH Tags",
       "sub_sdh_filter_desc": "Remove hearing-impaired tags from text",
       "sub_sdh_filter_harder": "Aggressive SDH Filter",
-      "sub_sdh_filter_harder_desc": "Also strip parenthetical sound descriptions and speaker name tags"
+      "sub_sdh_filter_harder_desc": "Also strip parenthetical sound descriptions and speaker name tags",
+      "anime4k": "Anime4K",
+      "anime4k_desc": "Real-time upscaling and artifact reduction using GPU shaders. May impact performance on lower-end hardware.",
+      "anime4k_learn_more": "Learn more",
+      "anime4k_off": "Off",
+      "anime4k_fast": "Fast",
+      "anime4k_hq": "HQ",
+      "anime4k_mode": "Anime4K Mode",
+      "anime4k_mode_desc": "A, B, and C target different source degradations."
     },
 
     "readers_section": {

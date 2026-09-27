@@ -5,7 +5,7 @@ use hoshi_core::playback::{Chapter, EpisodeChapter, ExternalSubtitle, LoadMode, 
 use hoshi_core::AppState;
 use serde::Deserialize;
 use tauri::State;
-
+use crate::anime4k;
 #[cfg(target_os = "linux")]
 use crate::player_surface::PlayerReadyNotify;
 
@@ -175,10 +175,28 @@ pub async fn set_lang_preferences(
 
 #[tauri::command]
 pub async fn set_player_options(
+    app: tauri::AppHandle,
     state: State<'_, Arc<AppState>>,
     options: Vec<(String, String)>,
 ) -> Result<(), CoreError> {
-    state.playback.set_options(options).await
+    let mut mode: Option<String> = None;
+    let mut tier: Option<String> = None;
+    let mut resolved: Vec<(String, String)> = Vec::with_capacity(options.len());
+
+    for (k, v) in options {
+        match k.as_str() {
+            "anime4kMode" => mode = Some(v),
+            "anime4kTier" => tier = Some(v),
+            _ => resolved.push((k, v)),
+        }
+    }
+
+    if let (Some(mode), Some(tier)) = (mode, tier) {
+        let shaders = anime4k::resolve_shader_chain(&app, &mode, &tier)?;
+        resolved.push(("glsl-shaders".to_string(), shaders));
+    }
+
+    state.playback.set_options(resolved).await
 }
 
 #[tauri::command]

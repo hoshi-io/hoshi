@@ -61,6 +61,8 @@ export interface PlayerConfig {
     scaleAlgorithm: string,
     interpolation: boolean,
     deband: boolean,
+    anime4kMode: string,
+    anime4kTier: string,
 }
 
 export interface SubtitleConfig {

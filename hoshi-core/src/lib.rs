@@ -16,7 +16,6 @@ pub mod progress;
 pub mod discord;
 pub mod logs;
 pub mod playback;
-
 use crate::error::CoreResult;
 use headless::HeadlessHandle;
 pub use state::AppState;

@@ -9,6 +9,7 @@
     import { platform } from "@tauri-apps/plugin-os";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import * as Kbd from "$lib/components/ui/kbd";
+    import {openUrl} from "@tauri-apps/plugin-opener";
 
     let {
         playerConfig = $bindable(),
@@ -21,7 +22,6 @@
     } = $props();
 
     const os = platform();
-    const isAndroid = os === 'android';
 
     const seekSteps = [
         { value: "5",  label: i18n.t('settings.player_section.seconds', { num: 5 }) },
@@ -79,6 +79,28 @@
         { label: i18n.t('watch.player.previous_episode'), keys: ["P"] },
         { label: i18n.t('watch.player.close_settings'), keys: ["Esc"] },
     ];
+
+    const anime4kTierOptions = [
+        { value: "off", label: i18n.t('settings.player_section.anime4k_off') },
+        { value: "fast", label: i18n.t('settings.player_section.anime4k_fast') },
+        { value: "hq", label: i18n.t('settings.player_section.anime4k_hq') },
+    ];
+
+    const anime4kModeOptions = [
+        { value: "a", label: "A" },
+        { value: "b", label: "B" },
+        { value: "c", label: "C" },
+    ];
+
+    function handleAnime4kTierChange(val: string) {
+        playerConfig.anime4kTier = val;
+        onSave();
+    }
+
+    function handleAnime4kModeChange(val: string) {
+        playerConfig.anime4kMode = val;
+        onSave();
+    }
 
     function handleSeekStepChange(val: string) {
         playerConfig.seekStep = parseInt(val);
@@ -220,6 +242,33 @@
                 </div>
                 <Switch id="deband" bind:checked={playerConfig.deband} onCheckedChange={onSave} class="shrink-0 scale-125" />
             </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
+                <div class="space-y-1 pr-4 flex-1">
+                    <Label class="text-base font-bold">{i18n.t('settings.player_section.anime4k')}</Label>
+                    <p class="text-sm text-muted-foreground">
+                        {i18n.t('settings.player_section.anime4k_desc')}
+                        <button
+                                type="button"
+                                class="underline hover:text-foreground transition-colors"
+                                onclick={() => openUrl('https://github.com/bloc97/Anime4K')}
+                        >
+                            {i18n.t('settings.player_section.anime4k_learn_more')}
+                        </button>
+                    </p>
+                </div>
+                <ResponsiveSelect value={playerConfig.anime4kTier} items={anime4kTierOptions} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleAnime4kTierChange} />
+            </div>
+
+            {#if playerConfig.anime4kTier !== "off"}
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
+                    <div class="space-y-1 pr-4 flex-1">
+                        <Label class="text-base font-bold">{i18n.t('settings.player_section.anime4k_mode')}</Label>
+                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.anime4k_mode_desc')}</p>
+                    </div>
+                    <ResponsiveSelect value={playerConfig.anime4kMode} items={anime4kModeOptions} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleAnime4kModeChange} />
+                </div>
+            {/if}
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 border-t border-border/40 mt-2">
                 {#each keyboardShortcuts as shortcut}

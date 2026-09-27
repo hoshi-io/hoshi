@@ -142,6 +142,8 @@ pub struct PlayerConfig {
     pub scale_algorithm: String,
     pub interpolation: bool,
     pub deband: bool,
+    pub anime4k_mode: String,
+    pub anime4k_tier: String,
 }
 
 impl Default for PlayerConfig {
@@ -158,6 +160,8 @@ impl Default for PlayerConfig {
             scale_algorithm: "bilinear".to_string(),
             interpolation: false,
             deband: true,
+            anime4k_mode: "off".to_string(),
+            anime4k_tier: "fast".to_string(),
         }
     }
 }

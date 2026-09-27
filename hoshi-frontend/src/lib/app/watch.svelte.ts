@@ -380,7 +380,10 @@ export class WatchState {
     }
 
     private async applyVideoOptions(player: PlayerConfig) {
-        const key = JSON.stringify([player.hwdec, player.scaleAlgorithm, player.interpolation, player.deband]);
+        const key = JSON.stringify([
+            player.hwdec, player.scaleAlgorithm, player.interpolation, player.deband,
+            player.anime4kMode, player.anime4kTier,
+        ]);
         if (key === this.appliedVideoKey) return;
         this.appliedVideoKey = key;
 
@@ -392,6 +395,8 @@ export class WatchState {
                     ["cscale", player.scaleAlgorithm],
                     ["interpolation", player.interpolation ? "yes" : "no"],
                     ["deband", player.deband ? "yes" : "no"],
+                    ["anime4kMode", player.anime4kMode],
+                    ["anime4kTier", player.anime4kTier],
                 ],
             });
         } catch (e) {
