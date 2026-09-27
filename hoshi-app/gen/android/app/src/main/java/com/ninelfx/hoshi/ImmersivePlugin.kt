@@ -5,19 +5,30 @@ import android.util.Log
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import app.tauri.annotation.Command
+import app.tauri.annotation.InvokeArg
 import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
 import app.tauri.plugin.Invoke
 import android.view.WindowManager
+import android.media.AudioManager
 import android.graphics.Color
 import androidx.annotation.RequiresApi
 import androidx.core.view.WindowCompat
 
 private const val TAG = "ImmersivePlugin"
 
+@InvokeArg
+class LevelArgs {
+  var level: Float = 0.5f
+}
+
 @TauriPlugin
 class ImmersivePlugin(private val activity: android.app.Activity) : Plugin(activity) {
+
+  private val audioManager: AudioManager by lazy {
+    activity.getSystemService(android.content.Context.AUDIO_SERVICE) as AudioManager
+  }
 
   private var originalLayoutParams: WindowManager.LayoutParams? = null
   private var originalSystemUiVisibility: Int? = null
@@ -59,6 +70,10 @@ class ImmersivePlugin(private val activity: android.app.Activity) : Plugin(activ
 
         isImmersive = true
 
+        // Must happen before hide()/attrs changes below: as long as the
+        // window still "fits" system windows, it keeps reserving layout
+        // space for the status/nav bars and the hide() call below can
+        // silently fail to stick (bars stay put instead of disappearing).
         WindowCompat.setDecorFitsSystemWindows(activity.window, false)
 
         val attrs = activity.window.attributes
@@ -135,6 +150,72 @@ class ImmersivePlugin(private val activity: android.app.Activity) : Plugin(activ
       } catch (e: Exception) {
         invoke.reject("Error exiting immersive mode: ${e.message}")
       }
+    }
+  }
+  
+  @Command
+  fun setBrightness(invoke: Invoke) {
+    val args = invoke.parseArgs(LevelArgs::class.java)
+    activity.runOnUiThread {
+      try {
+        val attrs = activity.window.attributes
+        attrs.screenBrightness = args.level.coerceIn(0f, 1f)
+        activity.window.attributes = attrs
+        invoke.resolve(JSObject())
+      } catch (e: Exception) {
+        invoke.reject("Error setting brightness: ${e.message}")
+      }
+    }
+  }
+
+  @Command
+  fun getBrightness(invoke: Invoke) {
+    activity.runOnUiThread {
+      try {
+        val current = activity.window.attributes.screenBrightness
+        val level = if (current < 0f) {
+          try {
+            android.provider.Settings.System.getInt(
+              activity.contentResolver,
+              android.provider.Settings.System.SCREEN_BRIGHTNESS
+            ) / 255f
+          } catch (e: Exception) {
+            0.5f
+          }
+        } else current
+
+        val ret = JSObject()
+        ret.put("level", level.coerceIn(0f, 1f))
+        invoke.resolve(ret)
+      } catch (e: Exception) {
+        invoke.reject("Error getting brightness: ${e.message}")
+      }
+    }
+  }
+  
+  @Command
+  fun setVolume(invoke: Invoke) {
+    val args = invoke.parseArgs(LevelArgs::class.java)
+    try {
+      val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+      val index = (args.level.coerceIn(0f, 1f) * max).toInt()
+      audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, index, 0)
+      invoke.resolve(JSObject())
+    } catch (e: Exception) {
+      invoke.reject("Error setting volume: ${e.message}")
+    }
+  }
+
+  @Command
+  fun getVolume(invoke: Invoke) {
+    try {
+      val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+      val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+      val ret = JSObject()
+      ret.put("level", if (max > 0) current.toFloat() / max else 0f)
+      invoke.resolve(ret)
+    } catch (e: Exception) {
+      invoke.reject("Error getting volume: ${e.message}")
     }
   }
 }

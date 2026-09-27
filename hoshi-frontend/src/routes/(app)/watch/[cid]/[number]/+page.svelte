@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte";
+    import { invoke } from "@tauri-apps/api/core";
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import * as Drawer from "$lib/components/ui/drawer";
     import { WatchState } from "@/app/watch.svelte.js";
@@ -8,11 +9,12 @@
     import PlayerHeader from "@/components/player/PlayerHeader.svelte";
     import LoadingError from "@/components/player/LoadingError.svelte";
     import SeekOverlay from "@/components/player/SeekOverlay.svelte";
+    import LevelIndicator from "@/components/player/LevelIndicator.svelte";
     import DesktopControls from "@/components/player/DesktopControls.svelte";
     import MobileControls from "@/components/player/MobileControls.svelte";
     import { i18n } from "@/stores/i18n.svelte";
     import SettingsMenu from "@/components/player/settings/SettingsMenu.svelte";
-    import {layoutState} from "@/stores/layout.svelte.ts";
+    import {layoutState} from "@/stores/layout.svelte.js";
 
     const pageState = new WatchState();
 
@@ -108,6 +110,62 @@
     let seekSide = $state<'left' | 'right'>('right');
     let seekOverlayTimer: ReturnType<typeof setTimeout> | null = null;
 
+    // Visual Brightness/Volume State (mobile swipe gestures)
+    let brightness = $state(50);
+    let volume = $state(50);
+    let showBrightnessOverlay = $state(false);
+    let showVolumeOverlay = $state(false);
+    let brightnessOverlayTimer: ReturnType<typeof setTimeout> | null = null;
+    let volumeOverlayTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // Pixels of vertical swipe needed for a 1% change. Lower = more sensitive.
+    const SWIPE_SENSITIVITY = 4;
+
+    function flashBrightnessOverlay() {
+        showBrightnessOverlay = true;
+        if (brightnessOverlayTimer) clearTimeout(brightnessOverlayTimer);
+        brightnessOverlayTimer = setTimeout(() => {
+            showBrightnessOverlay = false;
+        }, 800);
+    }
+
+    function flashVolumeOverlay() {
+        showVolumeOverlay = true;
+        if (volumeOverlayTimer) clearTimeout(volumeOverlayTimer);
+        volumeOverlayTimer = setTimeout(() => {
+            showVolumeOverlay = false;
+        }, 800);
+    }
+
+    async function adjustBrightness(diffPx: number) {
+        const delta = diffPx / SWIPE_SENSITIVITY;
+        if (!Number.isFinite(delta) || delta === 0) return;
+        brightness = Math.min(100, Math.max(0, (Number.isFinite(brightness) ? brightness : 50) + delta));
+        flashBrightnessOverlay();
+        try {
+            await invoke("set_immersive_brightness", { level: brightness / 100 });
+        } catch (e) {
+            console.error("Failed to set brightness", e);
+        }
+    }
+
+    async function adjustVolume(diffPx: number) {
+        const delta = diffPx / SWIPE_SENSITIVITY;
+        if (!Number.isFinite(delta) || delta === 0) return;
+        volume = Math.min(100, Math.max(0, (Number.isFinite(volume) ? volume : 50) + delta));
+        flashVolumeOverlay();
+        try {
+            await invoke("set_immersive_volume", { level: volume / 100 });
+        } catch (e) {
+            console.error("Failed to set volume", e);
+        }
+    }
+
+    function toggleControlsTap() {
+        showControls = !showControls;
+        if (showControls) handleActivity();
+    }
+
     function handleMobileTap(side: 'left' | 'right') {
         const now = Date.now();
         const DOUBLE_TAP_DELAY = 300;
@@ -156,12 +214,11 @@
         const currentY = e.touches[0].clientY;
         const diff = touchStartY - currentY;
 
-        // TODO: Handle slider logic
-        // if diff > 0 (swipe up), if diff < 0 (swipe down)
+        // diff > 0 means swipe up (increase), diff < 0 means swipe down (decrease)
         if (side === 'left') {
-            // TODO: adjustBrightness(diff)
+            adjustBrightness(diff);
         } else {
-            // TODO: adjustVolume(diff)
+            adjustVolume(diff);
         }
 
         // Reset start position for continuous dragging feel
@@ -181,6 +238,15 @@
     });
 
     onMount(() => {
+        // Seed the indicators with the device's actual current values.
+        // Both commands resolve a plain 0-1 float, not an object.
+        invoke<number>("get_immersive_brightness")
+            .then((level) => { brightness = Math.round(level * 100); })
+            .catch((e) => console.error("Failed to get brightness", e));
+        invoke<number>("get_immersive_volume")
+            .then((level) => { volume = Math.round(level * 100); })
+            .catch((e) => console.error("Failed to get volume", e));
+
         window.addEventListener("keydown", handleKeydown);
 
         // Desktop only: continuous mouse/wheel/touch activity wakes the
@@ -204,6 +270,8 @@
             window.removeEventListener("touchstart", handleActivity);
             window.removeEventListener("wheel", handleActivity);
             clearHideTimer();
+            if (brightnessOverlayTimer) clearTimeout(brightnessOverlayTimer);
+            if (volumeOverlayTimer) clearTimeout(volumeOverlayTimer);
         };
     });
 
@@ -282,10 +350,12 @@
         <!-- Mobile Layout Overlay -->
         <div class="relative w-full h-full flex flex-col justify-between pointer-events-none">
 
-            <!-- Gesture & Click Invisible Zones -->
+            <!-- Gesture & Click Invisible Zones. Left/right 30% strips handle
+                 double-tap-to-seek and vertical swipe-to-adjust; the middle
+                 40% is a plain tap-to-toggle-controls zone with no gestures. -->
             <div class="absolute inset-0 z-10 flex pointer-events-auto">
                 <div
-                        class="flex-1 h-full"
+                        class="w-[30%] h-full"
                         ontouchstart={handleTouchStart}
                         ontouchmove={(e) => handleTouchMove(e, 'left')}
                         onclick={() => handleMobileTap('left')}
@@ -293,7 +363,13 @@
                         tabindex="0"
                 ></div>
                 <div
-                        class="flex-1 h-full"
+                        class="w-[40%] h-full"
+                        onclick={toggleControlsTap}
+                        role="button"
+                        tabindex="0"
+                ></div>
+                <div
+                        class="w-[30%] h-full"
                         ontouchstart={handleTouchStart}
                         ontouchmove={(e) => handleTouchMove(e, 'right')}
                         onclick={() => handleMobileTap('right')}
@@ -314,6 +390,9 @@
             </div>
 
             <SeekOverlay show={showSeekOverlay} side={seekSide} amount={seekAmount} />
+
+            <LevelIndicator show={showBrightnessOverlay} value={brightness} type="brightness" side="left" />
+            <LevelIndicator show={showVolumeOverlay} value={volume} type="volume" side="right" />
 
             <LoadingError
                     isLoading={pageState.isLoadingMeta || pageState.isLoadingPlay}

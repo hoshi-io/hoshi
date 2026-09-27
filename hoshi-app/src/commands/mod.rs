@@ -48,5 +48,13 @@ pub fn generate_handlers() -> impl Fn(tauri::ipc::Invoke) -> bool {
         crate::immersive::immersive_plugin::enter_fullscreen,
         #[cfg(mobile)]
         crate::immersive::immersive_plugin::exit_fullscreen,
+        #[cfg(mobile)]
+        crate::immersive::immersive_plugin::get_immersive_brightness,
+        #[cfg(mobile)]
+        crate::immersive::immersive_plugin::set_immersive_brightness,
+        #[cfg(mobile)]
+        crate::immersive::immersive_plugin::get_immersive_volume,
+        #[cfg(mobile)]
+        crate::immersive::immersive_plugin::set_immersive_volume,
     ]
 }
