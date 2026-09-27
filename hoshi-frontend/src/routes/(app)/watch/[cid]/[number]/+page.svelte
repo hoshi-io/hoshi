@@ -10,7 +10,7 @@
     import SeekOverlay from "@/components/player/SeekOverlay.svelte";
     import DesktopControls from "@/components/player/DesktopControls.svelte";
     import MobileControls from "@/components/player/MobileControls.svelte";
-	import { i18n } from "@/stores/i18n.svelte";
+    import { i18n } from "@/stores/i18n.svelte";
     import SettingsMenu from "@/components/player/settings/SettingsMenu.svelte";
     import {layoutState} from "@/stores/layout.svelte.ts";
 
@@ -23,7 +23,8 @@
     let isFullscreen = $state(false);
     let showSettings = $state(false);
 
-    const HIDE_DELAY_MS = 500;
+    const HIDE_DELAY_DESKTOP_MS = 500;
+    const HIDE_DELAY_MOBILE_MS = 3000;
     let showControls = $state(true);
     let hideTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -37,9 +38,10 @@
     function scheduleHide() {
         clearHideTimer();
         if (pageState.isPaused || showSettings) return;
+        const delay = layoutState.isMobile ? HIDE_DELAY_MOBILE_MS : HIDE_DELAY_DESKTOP_MS;
         hideTimer = setTimeout(() => {
             showControls = false;
-        }, HIDE_DELAY_MS);
+        }, delay);
     }
 
     function handleActivity() {
@@ -179,17 +181,26 @@
     });
 
     onMount(() => {
-        window.addEventListener("mousemove", handleActivity);
-        window.addEventListener("mousedown", handleActivity);
         window.addEventListener("keydown", handleKeydown);
-        window.addEventListener("touchstart", handleActivity);
-        window.addEventListener("wheel", handleActivity);
-        scheduleHide();
+
+        // Desktop only: continuous mouse/wheel/touch activity wakes the
+        // controls and resets the auto-hide timer, mirroring hover-driven
+        // UIs. On mobile this fights with the deliberate tap-to-toggle
+        // logic in handleMobileTap (a touchstart here would flip
+        // showControls just before the tap's own click handler flips it
+        // again), so mobile relies solely on taps instead.
+        if (!layoutState.isMobile) {
+            window.addEventListener("mousemove", handleActivity);
+            window.addEventListener("mousedown", handleActivity);
+            window.addEventListener("touchstart", handleActivity);
+            window.addEventListener("wheel", handleActivity);
+            scheduleHide();
+        }
 
         return () => {
+            window.removeEventListener("keydown", handleKeydown);
             window.removeEventListener("mousemove", handleActivity);
             window.removeEventListener("mousedown", handleActivity);
-            window.removeEventListener("keydown", handleKeydown);
             window.removeEventListener("touchstart", handleActivity);
             window.removeEventListener("wheel", handleActivity);
             clearHideTimer();
