@@ -25,3 +25,11 @@ pub struct Lingering {
     pub since: Instant,
     pub dir: String,
 }
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TorrentStreamInfo {
+    pub session_id: String,
+    pub url: String,
+    pub total_size: u64,
+}
