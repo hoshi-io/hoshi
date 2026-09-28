@@ -1,7 +1,8 @@
+use std::ffi::c_char;
 use std::io::SeekFrom;
 use std::time::Duration;
 
-use libmpv2::protocol::Protocol;
+use libmpv2::protocol::{Protocol};
 use libmpv2::Mpv;
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
 
@@ -56,18 +57,18 @@ fn open(handle: &mut TorrentHandle, uri: &str) -> TorrentStreamCookie {
     TorrentStreamCookie { stream: Box::new(stream), len, rt }
 }
 
-fn read(cookie: &mut TorrentStreamCookie, buf: &mut [i8]) -> i64 {
-    let buf_u8: &mut [u8] =
-        unsafe { std::slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut u8, buf.len()) };
+fn read(cookie: &mut TorrentStreamCookie, buf: &mut [c_char]) -> i64 {
+    let buf_u8 = unsafe {
+        std::slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut u8, buf.len())
+    };
 
-    let rt = cookie.rt.clone();
-    let result = rt.block_on(async {
+    let result = cookie.rt.block_on(async {
         tokio::time::timeout(READ_TIMEOUT, cookie.stream.read(buf_u8)).await
     });
 
     match result {
         Ok(Ok(n)) => n as i64,
-        _ => -1, // timeout (dead swarm) or read error
+        _ => -1,
     }
 }
 
