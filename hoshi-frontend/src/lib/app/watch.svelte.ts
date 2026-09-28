@@ -109,6 +109,9 @@ export class WatchState {
 
     serverItems     = $derived(this.servers.map(srv => ({ value: srv, label: srv })));
 
+    /// True while a torrent extension is the selected source.
+    isTorrent       = $derived(extensionsStore.torrent.some(e => e.id === this.selectedExtension));
+
     isLoadingPlay   = $state(false);
     error           = $state<CoreError | null>(null);
     isStreamLoaded  = $state(false);
@@ -275,11 +278,38 @@ export class WatchState {
     }
 
     private async refreshTracks() {
+        const token = this.loadToken;
         try {
-            this.tracks = await invoke<PlaybackTrack[]>("get_tracks");
+            const tracks = await invoke<PlaybackTrack[]>("get_tracks");
+            if (token === this.loadToken) this.tracks = tracks;
         } catch (e) {
             console.error("Failed to fetch tracks", e);
-            this.tracks = [];
+            if (token === this.loadToken) this.tracks = [];
+        }
+    }
+
+    /// Chapters embedded in the file (torrent releases, or any source that
+    /// supplied none) only exist inside mpv, so read them back from it.
+    /// Assumes a `get_chapters` command wrapping `PlaybackHandle::chapters()`.
+    private async refreshEmbeddedChapters() {
+        if (this.chapters.length > 0) return;
+        const token = this.loadToken;
+        try {
+            const list = await invoke<{ index: number; title: string | null; time: number }[]>("get_chapters");
+            if (token !== this.loadToken || list.length === 0) return;
+
+            const duration = this.currentDuration > 0
+                ? this.currentDuration
+                : await invoke<number>("get_duration").catch(() => 0);
+            if (token !== this.loadToken) return;
+
+            this.chapters = list.map((c, i) => ({
+                start: c.time,
+                end: list[i + 1]?.time ?? Math.max(duration, c.time),
+                title: c.title ?? "",
+            }));
+        } catch (e) {
+            console.error("Failed to fetch embedded chapters", e);
         }
     }
 
@@ -329,20 +359,29 @@ export class WatchState {
     private tracksFetchedThisLoad = false;
 
     private handlePlayerProgress(currentTime: number) {
+        // While a new stream is still resolving/opening, mpv can keep
+        // reporting ticks from the previous file. Using them would grab the
+        // old file's duration/tracks and save its progress under the new
+        // episode, so ignore everything until load_stream has returned.
+        if (!this.isStreamLoaded) return;
+
         this.currentTime = currentTime;
+
+        // The first tick means mpv has opened the file, so its tracks and
+        // chapters are known. Don't tie this to duration: it can stay
+        // unavailable for a while on streamed files.
+        if (!this.tracksFetchedThisLoad) {
+            this.tracksFetchedThisLoad = true;
+            void this.refreshTracks().then(() => this.refreshEmbeddedChapters());
+        }
 
         // duration is unavailable (mpv error -10, PROPERTY_UNAVAILABLE)
         // until mpv has actually opened and started decoding the file
         if (this.currentDuration <= 0 && !this.durationFetchInFlight) {
             this.durationFetchInFlight = true;
+            const token = this.loadToken;
             invoke<number>("get_duration")
-                .then((d) => {
-                    this.currentDuration = d;
-                    if (d > 0 && !this.tracksFetchedThisLoad) {
-                        this.tracksFetchedThisLoad = true;
-                        this.refreshTracks();
-                    }
-                })
+                .then((d) => { if (token === this.loadToken) this.currentDuration = d; })
                 .catch(() => {})
                 .finally(() => { this.durationFetchInFlight = false; });
         }
@@ -534,6 +573,9 @@ export class WatchState {
         if (!isSora && !isTorrent) {
             try {
                 const s = await extensionsApi.getSettings(ext);
+                // a newer selection (e.g. a torrent extension) took over
+                // while this request was in flight; don't apply stale servers
+                if (this.selectedExtension !== ext) return;
                 this.servers = s.episodeServers ?? [];
                 this.supportsDub = s.supportsDub ?? false;
                 this.selectedServer = this.servers[0] ?? null;

@@ -95,6 +95,8 @@
     const currentServer = $derived(
         pageState.serverItems.find(i => i.value === pageState.selectedServer)?.label || i18n.t("watch.settings.default")
     );
+    // Torrent sources have no servers to pick from.
+    const showServer = $derived(!pageState.isTorrent && pageState.serverItems.length > 0);
     const audioLabels = $derived.by(() => buildTrackLabels(pageState.audioTracks));
     const subtitleLabels = $derived.by(() => buildTrackLabels(pageState.subtitleTracks));
 
@@ -325,7 +327,7 @@
                 <SettingsRow icon={PuzzleIcon} label={i18n.t("watch.settings.source")} value={currentSource} onclick={() => activeSection = "source"} />
             {/if}
 
-            {#if pageState.serverItems.length > 0}
+            {#if showServer}
                 <SettingsRow icon={Server} label={i18n.t("watch.settings.server")} value={currentServer} onclick={() => activeSection = "server"} />
             {/if}
 
@@ -349,7 +351,7 @@
                 <SettingsRow icon={Palette} label={i18n.t("watch.settings.subtitle_style")} onclick={() => activeSection = "subtitleStyle"} />
             {/if}
 
-            {#if (pageState.extensionItems.length > 0 || pageState.serverItems.length > 0 || pageState.supportsDub) && (pageState.videoTracks.length > 1 || pageState.audioTracks.length > 0 || pageState.subtitleTracks.length > 0)}
+            {#if (pageState.extensionItems.length > 0 || showServer || pageState.supportsDub) && (pageState.videoTracks.length > 1 || pageState.audioTracks.length > 0 || pageState.subtitleTracks.length > 0)}
                 <div class="h-px bg-border my-1 mx-2"></div>
             {/if}
 
