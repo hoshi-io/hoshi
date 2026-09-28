@@ -106,6 +106,8 @@ pub enum PlaybackEvent {
     Error(String),
 }
 
+type ProtocolHook = Box<dyn Fn(&Mpv) -> libmpv2::Result<()> + Send + Sync>;
+
 #[derive(Clone)]
 pub struct PlaybackHandle {
     inner: Arc<RwLock<Option<Arc<Mpv>>>>,
@@ -114,6 +116,7 @@ pub struct PlaybackHandle {
     chapters_file: Arc<Mutex<Option<PathBuf>>>,
     now_playing: Arc<Mutex<Option<NowPlaying>>>,
     events: broadcast::Sender<PlaybackEvent>,
+    protocol_hooks: Arc<Mutex<Vec<ProtocolHook>>>,
 }
 
 impl PlaybackHandle {
@@ -125,7 +128,12 @@ impl PlaybackHandle {
             chapters_file: Arc::new(Mutex::new(None)),
             now_playing: Arc::new(Mutex::new(None)),
             events: broadcast::channel(64).0,
+            protocol_hooks: Arc::new(Mutex::new(vec![])),
         }
+    }
+
+    pub fn add_protocol_hook(&self, hook: impl Fn(&Mpv) -> libmpv2::Result<()> + Send + Sync + 'static) {
+        self.protocol_hooks.lock().unwrap().push(Box::new(hook));
     }
 
     pub fn subscribe_events(&self) -> broadcast::Receiver<PlaybackEvent> {
@@ -160,7 +168,14 @@ impl PlaybackHandle {
             return Ok(());
         }
 
-        let mpv = tokio::task::spawn_blocking(move || build_mpv(target))
+        let hooks = self.protocol_hooks.clone();
+        let mpv = tokio::task::spawn_blocking(move || -> libmpv2::Result<Mpv> {
+            let mpv = build_mpv(target)?;
+            for hook in hooks.lock().unwrap().iter() {
+                hook(&mpv)?;
+            }
+            Ok(mpv)
+        })
             .await
             .map_err(|e| core_err!(Internal, "error.playback.init_failed", e))?
             .map_err(|e| core_err!(Internal, "error.playback.init_failed", e))?;

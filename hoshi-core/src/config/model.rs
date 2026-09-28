@@ -23,6 +23,8 @@ pub struct UserConfig {
     pub discord: DiscordConfig,
     #[serde(default)]
     pub list: ListConfig,
+    #[serde(default)]
+    pub torrent: TorrentConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -359,6 +361,50 @@ impl Default for ListConfig {
             sync_on_startup:         true,
             sync_interval_seconds:   3600,
             private_by_default:      false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TorrentConfig {
+    pub auto_select: bool,
+    pub preferred_groups: Vec<String>,
+    pub preferred_resolution: String,
+    pub preferred_codec: Option<String>,
+    pub prefer_dual_audio: bool,
+    pub min_seeders: u32,
+    pub exclude_keywords: Vec<String>,
+    pub require_batch: Option<bool>,
+    pub fallback_to_manual: bool,
+    pub max_disk_usage_bytes: u64,
+    pub finished_file_ttl_seconds: u64,
+    pub max_concurrent_torrents: usize,
+    pub download_rate_limit_kbps: Option<u32>,
+    pub upload_rate_limit_kbps: Option<u32>,
+    pub stop_seeding_on_playback_end: bool,
+    pub min_free_disk_space_bytes: u64,
+}
+
+impl Default for TorrentConfig {
+    fn default() -> Self {
+        Self {
+            auto_select: true,
+            preferred_groups: vec![],
+            preferred_resolution: "1080p".into(),
+            preferred_codec: None,
+            prefer_dual_audio: false,
+            min_seeders: 1,
+            exclude_keywords: vec![],
+            require_batch: None,
+            fallback_to_manual: true,
+            max_disk_usage_bytes: 10 * 1024 * 1024 * 1024,
+            finished_file_ttl_seconds: 6 * 60 * 60,
+            max_concurrent_torrents: 1,
+            download_rate_limit_kbps: None,
+            upload_rate_limit_kbps: None,
+            stop_seeding_on_playback_end: true,
+            min_free_disk_space_bytes: 2 * 1024 * 1024 * 1024, // 2 GiB
         }
     }
 }

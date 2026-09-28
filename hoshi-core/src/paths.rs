@@ -26,6 +26,7 @@ impl AppPaths {
         ensure_dir(&self.base_dir)?;
         ensure_dir(&self.extensions_path)?;
         ensure_dir(&self.logs_path)?;
+        ensure_dir(&self.torrent)?;
         Ok(())
     }
 }

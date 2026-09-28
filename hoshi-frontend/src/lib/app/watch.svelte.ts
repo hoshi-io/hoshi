@@ -10,7 +10,7 @@ import { listApi } from "@/api/list/list";
 import { listStore } from "@/app/list.svelte.js";
 import { appConfig } from "@/stores/config.svelte.js";
 import { i18n } from "@/stores/i18n.svelte.js";
-import { primaryMetadata } from "@/api/content/types";
+import {type Metadata, primaryMetadata} from "@/api/content/types";
 import type { FullContent } from "@/api/content/types";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
@@ -24,6 +24,17 @@ export interface EpisodeChapter {
     start: number;
     end: number;
     title: string;
+}
+
+interface TorrentStreamInfo { sessionId: string; url: string; totalSize: number }
+
+interface ResolvedStream {
+    url: string;
+    headers: Record<string, string>;
+    subtitles: any[];
+    chapters: EpisodeChapter[];
+    torrentSessionId?: string;
+    torrent?: any;
 }
 
 export interface PlaybackTrack {
@@ -137,6 +148,13 @@ export class WatchState {
     private appliedLangPrefs: string | null = null;
     private appliedVideoKey: string | null = null;
     private appliedSubStyleKey: string | null = null;
+
+    torrentSessionId = $state<string | null>(null);
+    selectedTorrent = $state<any | null>(null);
+    private forcedTorrent: any | null = null;
+    private loadToken = 0;
+
+    torrentTitle = $state<string | null>(null);
 
     constructor() {
         invoke("lock_orientation", { orientation: "landscape" }).catch(() => {});
@@ -446,6 +464,9 @@ export class WatchState {
 
     async loadPageData(targetCid: string, targetEp: number) {
         try {
+            // forced choice only applies to the episode/extension it was made for
+// (add this line at the top of loadPageData() and selectExtension())
+            this.forcedTorrent = null;
             this.currentLoadedEp = targetEp;
 
             if (!extensionsStore.initialized) {
@@ -458,7 +479,10 @@ export class WatchState {
                 this.animeData = contentRes;
                 this.updateEpisodeTitle(targetEp);
 
-                const globalExtensions = extensionsStore.anime;
+                const globalExtensions = [
+                    ...extensionsStore.anime,
+                    ...extensionsStore.torrent
+                ];
                 const contentExtensions = contentRes.extensionSources?.map((e: any) => e.extensionName) || [];
                 this.extensions = globalExtensions;
                 this.currentLoadedCid = targetCid;
@@ -495,6 +519,9 @@ export class WatchState {
     }
 
     async selectExtension(ext: string) {
+        // forced choice only applies to the episode/extension it was made for
+// (add this line at the top of loadPageData() and selectExtension())
+        this.forcedTorrent = null;
         this.selectedExtension = ext;
         this.servers = [];
         this.supportsDub = false;
@@ -502,8 +529,9 @@ export class WatchState {
         this.isDub = false;
 
         const isSora = extensionsStore.anime.find(e => e.id === ext)?.source === 'sora';
+        const isTorrent = extensionsStore.torrent.some(e => e.id === this.selectedExtension);
 
-        if (!isSora) {
+        if (!isSora && !isTorrent) {
             try {
                 const s = await extensionsApi.getSettings(ext);
                 this.servers = s.episodeServers ?? [];
@@ -513,6 +541,71 @@ export class WatchState {
         }
 
         await this.loadPlay();
+    }
+
+    private async resolveAnimeStream(): Promise<ResolvedStream> {
+        const isSora = extensionsStore.anime.find(e => e.id === this.selectedExtension)?.source === 'sora';
+
+        if (isSora) {
+            const res = await contentApi.listEpisodeServers(this.selectedExtension!, this.cid, this.epNumber);
+            this.servers = res.servers ?? [];
+            this.supportsDub = false;
+            this.isDub = false;
+            if (!this.selectedServer || !this.servers.includes(this.selectedServer)) {
+                this.selectedServer = this.servers[0] ?? null;
+            }
+        }
+
+        const opts: { server?: string; category?: string } = {};
+        if (this.selectedServer) opts.server = this.selectedServer;
+        if (this.supportsDub && this.isDub) opts.category = "dub";
+
+        const res = await contentApi.play(this.cid, this.selectedExtension!, this.epNumber, opts);
+        if (res.type?.toLowerCase() !== "video") throw { key: "watch.no_stream" } as CoreError;
+
+        const data = res.data as any;
+        return {
+            url: data.source.url,
+            headers: data.headers ?? {},
+            subtitles: (data.source.subtitles ?? []).map((s: any) => {
+                const { lang, variant } = parseSubtitleLabel(s.language ?? "");
+                return { url: s.url, title: s.language, lang, variant, isDefault: !!s.is_default };
+            }),
+            chapters: data.source.chapters ?? [],
+        };
+    }
+
+    private async resolveTorrentStream(token: number): Promise<ResolvedStream | null> {
+        let torrent = this.forcedTorrent;
+
+        if (!torrent) {
+            const query = buildTorrentQuery(this.animeData, this.epNumber);
+            if (!query) throw { key: "watch.no_metadata_for_query" } as CoreError;
+
+            const picked = await invoke<{ torrent: any | null }>("auto_select_torrent", {
+                id: this.selectedExtension, query, filters: {}, page: 1,
+            });
+            if (!picked.torrent) throw { key: "watch.no_torrent_match" } as CoreError;
+            torrent = picked.torrent;
+        }
+
+        const info = await invoke<TorrentStreamInfo>("start_torrent_stream", {
+            id: this.selectedExtension,
+            contentId: torrent.id,
+            magnet: torrent.magnet ?? null,
+        });
+
+        if (token !== this.loadToken) {
+            void this.stopTorrentSession(info.sessionId);
+            return null;
+        }
+
+        return { url: info.url, headers: {}, subtitles: [], chapters: [],
+            torrentSessionId: info.sessionId, torrent };
+    }
+
+    private async stopTorrentSession(sessionId: string) {
+        await invoke("stop_torrent_stream", { sessionId }).catch(() => {});
     }
 
     /// Core flow: get the resume position, ask the extension for a source,
@@ -536,6 +629,10 @@ export class WatchState {
         this.lastSyncTime = 0;
         this.hasUpdatedList = false;
         this.skippedChapterStarts = new Set();
+        const token = ++this.loadToken;
+        const previousSession = this.torrentSessionId;
+        this.torrentTitle = null;
+        this.selectedTorrent = null;
 
         try {
             let initialTime = 0;
@@ -550,38 +647,20 @@ export class WatchState {
             }
             this.initialTime = initialTime;
 
-            const isSora = extensionsStore.anime.find(e => e.id === this.selectedExtension)?.source === 'sora';
+            const isTorrent = extensionsStore.torrent.some(e => e.id === this.selectedExtension);
+            const stream = isTorrent
+                ? await this.resolveTorrentStream(token)
+                : await this.resolveAnimeStream();
 
-            if (isSora) {
-                const res = await contentApi.listEpisodeServers(this.selectedExtension, this.cid, this.epNumber);
-                this.servers = res.servers ?? [];
-                this.supportsDub = false;
-                this.isDub = false;
+            // superseded by a newer loadPlay while we were resolving
+            if (!stream || token !== this.loadToken) return;
 
-                if (!this.selectedServer || !this.servers.includes(this.selectedServer)) {
-                    this.selectedServer = this.servers[0] ?? null;
-                }
-            }
+            this.torrentSessionId = stream.torrentSessionId ?? null;
+            this.torrentTitle = stream.torrentTitle ?? null;
+            this.selectedTorrent = stream.torrent ?? null;
 
-            const opts: { server?: string; category?: string } = {};
-            if (this.selectedServer) opts.server = this.selectedServer;
-            if (this.supportsDub && this.isDub) opts.category = "dub";
-
-            const res = await contentApi.play(this.cid, this.selectedExtension, this.epNumber, opts);
-
-            if (res.type?.toLowerCase() !== "video") {
-                throw { key: "watch.no_stream" } as CoreError;
-            }
-
-            const data = res.data as any;
-            const rawHeaders = data.headers ?? {};
-
-            this.subtitles = (data.source.subtitles ?? []).map((s: any) => {
-                const { lang, variant } = parseSubtitleLabel(s.language ?? "");
-                return { url: s.url, title: s.language, lang, variant, isDefault: !!s.is_default };
-            });
-
-            this.chapters = data.source.chapters ?? [];
+            this.subtitles = stream.subtitles;
+            this.chapters = stream.chapters;
 
             const meta = primaryMetadata(this.animeData, appConfig.data?.content?.preferredMetadataProvider);
             const nowPlaying: NowPlaying = {
@@ -596,28 +675,41 @@ export class WatchState {
 
             await invoke("wait_for_player_ready").catch(() => {});
             await invoke("load_stream", {
-                url: data.source.url,
-                headers: this.toHeaderList(rawHeaders),
+                url: stream.url,
+                headers: this.toHeaderList(stream.headers),
                 subtitles: this.subtitles,
                 chapters: this.chapters,
                 startPosition: initialTime > 0 ? initialTime : undefined,
                 nowPlaying,
             });
 
+            // mpv now owns the new stream and has closed the old one
+            if (previousSession && previousSession !== this.torrentSessionId) {
+                void this.stopTorrentSession(previousSession);
+            }
+
             this.isStreamLoaded = true;
             await this.refreshTracks();
 
             const preferredId = this.pickPreferredSubtitleTrack();
-            if (preferredId !== null) {
-                await this.setSubtitleTrack(preferredId);
-            }
-
+            if (preferredId !== null) await this.setSubtitleTrack(preferredId);
         } catch (e: any) {
             console.log(e);
             this.error = e.key ? e : { key: "errors.unknown_error" };
         } finally {
-            this.isLoadingPlay = false;
+            // don't clobber the spinner of a newer load
+            if (token === this.loadToken) this.isLoadingPlay = false;
         }
+    }
+
+    async chooseTorrent(torrent: any) {
+        this.forcedTorrent = torrent;
+        await this.loadPlay();
+    }
+
+// copy the exact buildTorrentQuery call from resolveTorrentStream
+    torrentSearchQuery(): string {
+        return buildTorrentQuery(this.animeData, this.epNumber, false);
     }
 
     private skippedChapterStarts = new Set<number>();
@@ -664,14 +756,20 @@ export class WatchState {
     destroy() {
         if (this.destroyed) return;
         this.destroyed = true;
+        this.loadToken++;
 
         for (const unlisten of this.unlistenFns) unlisten();
         this.unlistenFns = [];
 
+        const sessionId = this.torrentSessionId;
+        this.torrentSessionId = null;
+
         invoke("unlock_orientation").catch(() => {});
         invoke("exit_fullscreen").catch(() => {});
         invoke("clear_activity").catch(() => {});
-        invoke("stop_playback").catch(() => {});
+        invoke("stop_playback")
+            .catch(() => {})
+            .finally(() => { if (sessionId) void this.stopTorrentSession(sessionId); });
     }
 
     private pickPreferredSubtitleTrack(): number | null {
@@ -726,4 +824,17 @@ function parseSubtitleLabel(raw: string): { lang: string | null; variant: Subtit
     else if (modifier.includes("sdh") || modifier.includes("hearing")) variant = "sdh";
 
     return { lang: LANGUAGE_NAME_TO_CODE[namePart.trim().toLowerCase()] ?? null, variant };
+}
+
+function getAnilistMetadata(data: FullContent | null): Metadata | null {
+    if (!data) return null;
+    return data.metadata.find(m => m.sourceName?.toLowerCase() === "anilist") ?? null;
+}
+
+function buildTorrentQuery(data: FullContent | null, epNumber: number, isBatch: boolean): string {
+    const anilist = getAnilistMetadata(data);
+    const title = anilist?.titleI18n?.romaji || anilist?.title || "";
+    if (!title) return "";
+    isBatch = false;
+    return isBatch ? `${title} batch` : `${title} ${epNumber}`;
 }

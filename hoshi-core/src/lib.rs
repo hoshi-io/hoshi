@@ -16,6 +16,8 @@ pub mod progress;
 pub mod discord;
 pub mod logs;
 pub mod playback;
+pub mod torrent;
+
 use crate::error::CoreResult;
 use headless::HeadlessHandle;
 pub use state::AppState;
@@ -28,6 +30,7 @@ use tracker::provider::build_registry;
 use tracing::{info, instrument};
 use crate::content::services::home::HomeService;
 use crate::playback::PlaybackHandle;
+use crate::torrent::TorrentHandle;
 use crate::tracker::sync::StartupSyncService;
 
 #[instrument(skip(log_store, paths, headless))]
@@ -65,6 +68,7 @@ pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_stor
         pool: db_manager.pool().clone(),
         extension_manager: Arc::new(RwLock::new(extension_manager)),
         tracker_registry: Arc::new(build_registry(http_client.clone())),
+        torrent: TorrentHandle::new(paths.torrent.clone()),
         paths: Arc::new(paths),
         playback: PlaybackHandle::new(),
         log_store,
@@ -73,6 +77,12 @@ pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_stor
         #[cfg(feature = "discord-rpc")]
         discord_rpc,
     });
+
+    state.playback.add_protocol_hook({
+        let torrent = state.torrent.clone();
+        move |mpv| torrent::mpv_protocol::register(mpv, torrent.clone())
+    });
+    state.torrent.spawn_reaper();
 
     HomeService::warmup(state.clone());
     StartupSyncService::run(state.clone());

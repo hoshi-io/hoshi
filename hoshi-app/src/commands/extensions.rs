@@ -8,6 +8,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::State;
 use hoshi_core::extensions::types::{Extension, ExtensionFeatures, LNReaderMarketplaceEntry, SoraMarketplaceEntry, TorrentSearchResult};
+use hoshi_core::torrent::TorrentService;
+use hoshi_core::torrent::types::TorrentLiveStats;
+use crate::{require_auth, TauriSession};
 
 #[derive(Serialize)]
 pub struct ExtensionsResponse<T> {
@@ -143,4 +146,73 @@ pub async fn get_magnet(
     let manager = state.inner().extension_manager.read().await;
     let magnet = manager.get_magnet(&id, &content_id).await?;
     Ok(json!({ "magnet": magnet }))
+}
+
+#[tauri::command]
+pub async fn auto_select_torrent(
+    state: State<'_, Arc<AppState>>,
+    session: State<'_, TauriSession>,
+    id: String,
+    query: String,
+    filters: Value,
+    page: u32,
+) -> Result<Value, CoreError> {
+    let user_id = require_auth(&session).await?;
+    let manager = state.inner().extension_manager.read().await;
+    let picked = TorrentService::auto_select_torrent(
+        state.inner(), &manager, user_id, &id, &query, filters, page,
+    ).await?;
+    Ok(json!({ "torrent": picked }))
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TorrentStreamInfo {
+    pub session_id: String,
+    pub url: String,
+    pub total_size: u64,
+}
+
+#[tauri::command]
+pub async fn start_torrent_stream(
+    state: State<'_, Arc<AppState>>,
+    session: State<'_, TauriSession>,
+    id: String,
+    content_id: String,
+    magnet: Option<String>,
+) -> Result<TorrentStreamInfo, CoreError> {
+    let user_id = require_auth(&session).await?;
+    TorrentService::sync_config(state.inner(), user_id).await?;
+    let magnet = match magnet.filter(|m| m.starts_with("magnet:")) {
+        Some(m) => m,
+        None => {
+            let manager = state.inner().extension_manager.read().await;
+            manager.get_magnet(&id, &content_id).await?
+        }
+    };
+
+    let (session_id, total_size) = state.inner().torrent.add_magnet(&magnet).await?;
+
+    Ok(TorrentStreamInfo {
+        url: format!("torrent://{session_id}"),
+        session_id,
+        total_size,
+    })
+}
+
+#[tauri::command]
+pub async fn stop_torrent_stream(
+    state: State<'_, Arc<AppState>>,
+    session_id: String,
+) -> Result<Value, CoreError> {
+    state.inner().torrent.remove_session(&session_id).await?;
+    Ok(json!({ "ok": true, "sessionId": session_id }))
+}
+
+#[tauri::command]
+pub async fn get_torrent_stats(
+    state: State<'_, Arc<AppState>>,
+    session_id: String,
+) -> Result<Option<TorrentLiveStats>, CoreError> {
+    Ok(state.inner().torrent.stats(&session_id))
 }

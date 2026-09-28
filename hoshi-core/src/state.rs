@@ -8,6 +8,7 @@ use crate::logs::LogStore;
 use crate::paths::AppPaths;
 use crate::playback::PlaybackHandle;
 use crate::tracker::provider::TrackerRegistry;
+use crate::torrent::TorrentHandle;
 
 #[cfg(feature = "discord-rpc")]
 use crate::discord::DiscordRpcService;
@@ -19,6 +20,7 @@ pub struct AppState {
     pub tracker_registry:  Arc<TrackerRegistry>,
     pub paths:             Arc<AppPaths>,
     pub playback:          PlaybackHandle,
+    pub torrent:           TorrentHandle,
     pub log_store:         LogStore,
     pub http_client:       Client,
 

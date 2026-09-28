@@ -12,7 +12,7 @@ use script_builder::build_sandbox_script;
 use native_apis::register_native_apis;
 
 use crate::error::{CoreError, CoreResult};
-use crate::extensions::ExtensionStateStore;
+use crate::extensions::{ExtensionStateStore, TORRENT};
 use crate::extensions::{ANIME, BASE, MANGA, NOVEL};
 use crate::extensions::sandbox::native_apis::ConsoleBuffer;
 use crate::extensions::types::{CompatLayer, ExtensionType};
@@ -49,7 +49,7 @@ pub(crate) async fn execute_in_quickjs(
     http_client: reqwest::Client,
     console_buffer: Option<ConsoleBuffer>,
 ) -> CoreResult<Value> {
-    let base_classes = format!("{}\n{}\n{}\n{}", BASE, ANIME, MANGA, NOVEL);
+    let base_classes = format!("{}\n{}\n{}\n{}\n{}", BASE, ANIME, MANGA, NOVEL, TORRENT);
 
     let args_json = serde_json::to_string(&args).map_err(|e| {
         error!(error = ?e, "Failed to serialize sandbox arguments");

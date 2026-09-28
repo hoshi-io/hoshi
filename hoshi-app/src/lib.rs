@@ -196,6 +196,9 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 if let Err(e) = state.playback.shutdown().await {
                     error!(error = ?e, "failed to shut down playback core on exit");
                 }
+                if let Err(e) = state.torrent.shutdown().await {
+                    error!(error = ?e, "failed to shut down torrent engine on exit");
+                }
             });
         }
     });

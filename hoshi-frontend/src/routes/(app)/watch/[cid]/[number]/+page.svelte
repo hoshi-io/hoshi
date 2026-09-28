@@ -15,6 +15,8 @@
     import { i18n } from "@/stores/i18n.svelte";
     import SettingsMenu from "@/components/player/settings/SettingsMenu.svelte";
     import {layoutState} from "@/stores/layout.svelte.js";
+    import TorrentBanner from "@/components/player/TorrentBanner.svelte";
+    import TorrentPickerDialog from "@/components/player/TorrentPickerDialog.svelte";
 
     const pageState = new WatchState();
 
@@ -24,6 +26,7 @@
 
     let isFullscreen = $state(false);
     let showSettings = $state(false);
+    let showTorrentPicker = $state(false);
 
     const HIDE_DELAY_DESKTOP_MS = 500;
     const HIDE_DELAY_MOBILE_MS = 3000;
@@ -39,7 +42,7 @@
 
     function scheduleHide() {
         clearHideTimer();
-        if (pageState.isPaused || showSettings) return;
+        if (pageState.isPaused || showSettings || showTorrentPicker) return;
         const delay = layoutState.isMobile ? HIDE_DELAY_MOBILE_MS : HIDE_DELAY_DESKTOP_MS;
         hideTimer = setTimeout(() => {
             showControls = false;
@@ -52,6 +55,7 @@
     }
 
     function handleKeydown(e: KeyboardEvent) {
+        if (showTorrentPicker) return;
         const target = e.target as HTMLElement;
         if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
         if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -315,6 +319,14 @@
             </button>
         </div>
     {/if}
+    {#if pageState.selectedTorrent && pageState.torrentSessionId}
+        <TorrentBanner
+                torrent={pageState.selectedTorrent}
+                sessionId={pageState.torrentSessionId}
+                visible={showControls}
+                onChange={() => showTorrentPicker = true}
+        />
+    {/if}
 
     {#if !layoutState.isMobile}
         <!-- Desktop Player UI Overlay -->
@@ -413,3 +425,4 @@
     {/if}
 
 </div>
+<TorrentPickerDialog bind:open={showTorrentPicker} {pageState} />

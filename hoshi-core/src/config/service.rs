@@ -14,7 +14,6 @@ impl ConfigService {
         ConfigRepository::get_config(&state.pool, user_id).await
     }
 
-    #[instrument(skip(state, patch))]
     pub async fn patch_config(state: &AppState, user_id: i32, patch: Value) -> CoreResult<UserConfig> {
         if !patch.is_object() {
             warn!("Patch is not a JSON object");
@@ -22,6 +21,7 @@ impl ConfigService {
         }
 
         let new_config = ConfigRepository::patch_config(&state.pool, user_id, &patch).await?;
+        state.torrent.update_config(new_config.torrent.clone()).await;
         info!("User configuration updated");
         Ok(new_config)
     }
