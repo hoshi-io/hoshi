@@ -113,7 +113,9 @@ pub struct PlaybackHandle {
     inner: Arc<RwLock<Option<Arc<Mpv>>>>,
     session: Arc<AtomicU64>,
     shutdown_notify: Arc<Notify>,
-    chapters_file: Arc<Mutex<Option<PathBuf>>>,
+    /// Every chapters file still referenced by a queued or playing entry.
+    chapters_files: Arc<Mutex<Vec<PathBuf>>>,
+    load_counter: Arc<AtomicU64>,
     now_playing: Arc<Mutex<Option<NowPlaying>>>,
     events: broadcast::Sender<PlaybackEvent>,
     protocol_hooks: Arc<Mutex<Vec<ProtocolHook>>>,
@@ -125,7 +127,8 @@ impl PlaybackHandle {
             inner: Arc::new(RwLock::new(None)),
             session: Arc::new(AtomicU64::new(0)),
             shutdown_notify: Arc::new(Notify::new()),
-            chapters_file: Arc::new(Mutex::new(None)),
+            chapters_files: Arc::new(Mutex::new(Vec::new())),
+            load_counter: Arc::new(AtomicU64::new(0)),
             now_playing: Arc::new(Mutex::new(None)),
             events: broadcast::channel(64).0,
             protocol_hooks: Arc::new(Mutex::new(vec![])),
@@ -194,7 +197,7 @@ impl PlaybackHandle {
     pub async fn stop(&self) -> CoreResult<()> {
         let mpv = self.require_mpv().await?;
 
-        self.cleanup_chapters_file();
+        self.cleanup_chapters_files();
         *self.now_playing.lock().unwrap() = None;
 
         self.run(move || -> libmpv2::Result<()> {
@@ -214,11 +217,16 @@ impl PlaybackHandle {
 
         self.shutdown_notify.notify_waiters();
 
-        tokio::task::spawn_blocking(move || drop(mpv))
+        tokio::task::spawn_blocking(move || {
+            if let Err(e) = mpv.command("quit", &[]) {
+                warn!(?e, "failed to send quit to mpv during shutdown");
+            }
+            drop(mpv);
+        })
             .await
             .map_err(|e| core_err!(Internal, "error.playback.shutdown_failed", e))?;
 
-        self.cleanup_chapters_file();
+        self.cleanup_chapters_files();
 
         info!("playback core shut down");
         Ok(())
@@ -257,7 +265,11 @@ impl PlaybackHandle {
             self.run(move || mpv.set_property("user-agent", ua)).await?;
         }
 
-        self.cleanup_chapters_file();
+        // Replace clears the playlist, so older chapters files are dead. Append
+        // modes leave earlier entries queued, which may still need theirs.
+        if matches!(mode, LoadMode::Replace) {
+            self.cleanup_chapters_files();
+        }
 
         *self.now_playing.lock().unwrap() = spec.now_playing.clone();
 
@@ -269,31 +281,45 @@ impl PlaybackHandle {
             }
         }
 
+        let mut chapters_path: Option<PathBuf> = None;
         if !spec.chapters.is_empty() {
-            let path = std::env::temp_dir().join(format!("hoshi-chapters-{}.ffmeta", self.session()));
+            let n = self.load_counter.fetch_add(1, Ordering::SeqCst);
+            let path = std::env::temp_dir()
+                .join(format!("hoshi-chapters-{}-{}.ffmeta", self.session(), n));
             write_chapters_file(&spec.chapters, &path)
                 .map_err(|e| core_err!(Internal, "error.playback.chapters_file_failed", e))?;
             options.push(format!("chapters-file={}", mpv_list_escape(&path.to_string_lossy())));
-            *self.chapters_file.lock().unwrap() = Some(path);
+            self.chapters_files.lock().unwrap().push(path.clone());
+            chapters_path = Some(path);
         }
+
 
         let options_str = options.join(",");
         let mode_str = mode.as_str();
         let url = spec.url;
         let subtitles = spec.subtitles;
 
-        self.run(move || -> libmpv2::Result<()> {
-            mpv.set_property("vid", "auto")?;
+        let result = self
+            .run(move || -> libmpv2::Result<()> {
+                mpv.set_property("vid", "auto")?;
 
-            mpv.command("loadfile", &[&url, mode_str, "-1", &options_str])?;
-            for sub in &subtitles {
-                let title = sub.title.as_deref().unwrap_or("");
-                let lang = sub.lang.as_deref().unwrap_or("");
-                let _ = mpv.command("sub-add", &[&sub.url, "auto", title, lang]);
+                mpv.command("loadfile", &[&url, mode_str, "-1", &options_str])?;
+                for sub in &subtitles {
+                    let title = sub.title.as_deref().unwrap_or("");
+                    let lang = sub.lang.as_deref().unwrap_or("");
+                    let _ = mpv.command("sub-add", &[&sub.url, "auto", title, lang]);
+                }
+                Ok(())
+            })
+            .await;
+
+        if result.is_err() {
+            if let Some(path) = chapters_path {
+                self.chapters_files.lock().unwrap().retain(|p| p != &path);
+                let _ = std::fs::remove_file(path);
             }
-            Ok(())
-        })
-            .await
+        }
+        result
     }
 
     /// Back-compat alias for a bare URL load with no headers/subs/chapters.
@@ -486,8 +512,8 @@ impl PlaybackHandle {
             .ok_or_else(|| core_err!(Internal, "error.playback.not_initialized"))
     }
 
-    fn cleanup_chapters_file(&self) {
-        if let Some(old) = self.chapters_file.lock().unwrap().take() {
+    fn cleanup_chapters_files(&self) {
+        for old in self.chapters_files.lock().unwrap().drain(..) {
             let _ = std::fs::remove_file(old);
         }
     }

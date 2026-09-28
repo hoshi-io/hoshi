@@ -7,10 +7,7 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::State;
-use hoshi_core::extensions::types::{Extension, ExtensionFeatures, LNReaderMarketplaceEntry, SoraMarketplaceEntry, TorrentSearchResult};
-use hoshi_core::torrent::TorrentService;
-use hoshi_core::torrent::types::TorrentLiveStats;
-use crate::{require_auth, TauriSession};
+use hoshi_core::extensions::types::{Extension, ExtensionFeatures, LNReaderMarketplaceEntry, SoraMarketplaceEntry};
 
 #[derive(Serialize)]
 pub struct ExtensionsResponse<T> {
