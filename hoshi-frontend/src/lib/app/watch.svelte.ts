@@ -3,6 +3,7 @@ import { untrack } from "svelte";
 
 import { contentApi } from "@/api/content/content";
 import { extensionsApi } from "@/api/extensions/extensions";
+import { torrentApi } from "@/api/torrent/torrent";
 import { extensions as extensionsStore } from "@/stores/extensions.svelte.js";
 import { type CoreError } from "@/api/client";
 import { progressApi } from "@/api/progress/progress";
@@ -17,6 +18,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { goto } from "$app/navigation";
 
 import type { Extension } from "@/api/extensions/types";
+import type { TorrentSearchResult } from "@/api/torrent/types";
 import type { PlayerConfig, SubtitleConfig } from "@/api/config/types.js";
 import { type as getOsType } from "@tauri-apps/plugin-os";
 
@@ -26,15 +28,24 @@ export interface EpisodeChapter {
     title: string;
 }
 
-interface TorrentStreamInfo { sessionId: string; url: string; totalSize: number }
+/** Shape of `contentApi.play()`'s `data` payload when the result is a video. */
+interface PlayVideoData {
+    source: {
+        url: string;
+        subtitles?: { url: string; language?: string; is_default?: boolean }[];
+        chapters?: EpisodeChapter[];
+    };
+    headers?: Record<string, string>;
+}
 
+/** What either resolver (extension or torrent) hands to `loadPlay()`. */
 interface ResolvedStream {
     url: string;
     headers: Record<string, string>;
-    subtitles: any[];
+    subtitles: SubtitleSource[];
     chapters: EpisodeChapter[];
     torrentSessionId?: string;
-    torrent?: any;
+    torrent?: TorrentSearchResult;
 }
 
 export interface PlaybackTrack {
@@ -138,26 +149,35 @@ export class WatchState {
 
     isMappingError = $derived(!!this.error?.key?.includes("match"));
 
-    private currentLoadedCid    = $state<string | null>(null);
-    private currentLoadedEp     = $state<number | null>(null);
+    // ---- torrent playback ------------------------------------------------
+    torrentSessionId = $state<string | null>(null);
+    selectedTorrent  = $state<TorrentSearchResult | null>(null);
+    torrentTitle     = $derived(this.selectedTorrent?.title ?? null);
+
+    // ---- internal state (not read by the UI) ------------------------------
+    private currentLoadedCid = $state<string | null>(null);
+    private currentLoadedEp  = $state<number | null>(null);
     private destroyed = false;
 
-    // ---- progress/list sync driven by player://* events ----------------
-    private lastSyncTime  = 0;
+    /// Bumped by every `loadPlay()` so async work from a superseded load can tell.
+    private loadToken = 0;
+    /// A torrent the user picked by hand; only valid for the current episode/extension.
+    private forcedTorrent: TorrentSearchResult | null = null;
+
+    // reset on every load
+    private durationFetchInFlight = false;
+    private tracksFetchedThisLoad = false;
+    private skippedChapterStarts = new Set<number>();
+
+    // progress/list sync driven by player://* events
+    private lastSyncTime   = 0;
     private hasUpdatedList = false;
     private unlistenFns: UnlistenFn[] = [];
 
-    // ---- config -> mpv property sync, each deduped independently --------
+    // config -> mpv property sync, each deduped independently
     private appliedLangPrefs: string | null = null;
     private appliedVideoKey: string | null = null;
     private appliedSubStyleKey: string | null = null;
-
-    torrentSessionId = $state<string | null>(null);
-    selectedTorrent = $state<any | null>(null);
-    private forcedTorrent: any | null = null;
-    private loadToken = 0;
-
-    torrentTitle = $state<string | null>(null);
 
     constructor() {
         invoke("lock_orientation", { orientation: "landscape" }).catch(() => {});
@@ -354,10 +374,6 @@ export class WatchState {
         await this.loadPlay();
     }
 
-    private durationFetchInFlight = false;
-
-    private tracksFetchedThisLoad = false;
-
     private handlePlayerProgress(currentTime: number) {
         // While a new stream is still resolving/opening, mpv can keep
         // reporting ticks from the previous file. Using them would grab the
@@ -503,8 +519,6 @@ export class WatchState {
 
     async loadPageData(targetCid: string, targetEp: number) {
         try {
-            // forced choice only applies to the episode/extension it was made for
-// (add this line at the top of loadPageData() and selectExtension())
             this.forcedTorrent = null;
             this.currentLoadedEp = targetEp;
 
@@ -535,7 +549,6 @@ export class WatchState {
 
                 this.isLoadingMeta = false;
             } else {
-                this.currentLoadedEp = targetEp;
                 this.updateEpisodeTitle(targetEp);
                 await this.loadPlay();
             }
@@ -558,8 +571,6 @@ export class WatchState {
     }
 
     async selectExtension(ext: string) {
-        // forced choice only applies to the episode/extension it was made for
-// (add this line at the top of loadPageData() and selectExtension())
         this.forcedTorrent = null;
         this.selectedExtension = ext;
         this.servers = [];
@@ -568,9 +579,8 @@ export class WatchState {
         this.isDub = false;
 
         const isSora = extensionsStore.anime.find(e => e.id === ext)?.source === 'sora';
-        const isTorrent = extensionsStore.torrent.some(e => e.id === this.selectedExtension);
 
-        if (!isSora && !isTorrent) {
+        if (!isSora && !this.isTorrent) {
             try {
                 const s = await extensionsApi.getSettings(ext);
                 // a newer selection (e.g. a torrent extension) took over
@@ -605,11 +615,11 @@ export class WatchState {
         const res = await contentApi.play(this.cid, this.selectedExtension!, this.epNumber, opts);
         if (res.type?.toLowerCase() !== "video") throw { key: "watch.no_stream" } as CoreError;
 
-        const data = res.data as any;
+        const data = res.data as unknown as PlayVideoData;
         return {
             url: data.source.url,
             headers: data.headers ?? {},
-            subtitles: (data.source.subtitles ?? []).map((s: any) => {
+            subtitles: (data.source.subtitles ?? []).map((s): SubtitleSource => {
                 const { lang, variant } = parseSubtitleLabel(s.language ?? "");
                 return { url: s.url, title: s.language, lang, variant, isDefault: !!s.is_default };
             }),
@@ -617,45 +627,51 @@ export class WatchState {
         };
     }
 
+    private async pickTorrent(): Promise<TorrentSearchResult> {
+        const query = this.torrentSearchQuery();
+        if (!query) throw { key: "watch.no_metadata_for_query" } as CoreError;
+
+        const picked = await torrentApi.autoSelect(this.selectedExtension!, query);
+        if (!picked) throw { key: "watch.no_torrent_match" } as CoreError;
+        return picked;
+    }
+
     private async resolveTorrentStream(token: number): Promise<ResolvedStream | null> {
-        let torrent = this.forcedTorrent;
-
-        if (!torrent) {
-            const query = buildTorrentQuery(this.animeData, this.epNumber);
-            if (!query) throw { key: "watch.no_metadata_for_query" } as CoreError;
-
-            const picked = await invoke<{ torrent: any | null }>("auto_select_torrent", {
-                id: this.selectedExtension, query, filters: {}, page: 1,
-            });
-            if (!picked.torrent) throw { key: "watch.no_torrent_match" } as CoreError;
-            torrent = picked.torrent;
-        }
-
-        const info = await invoke<TorrentStreamInfo>("start_torrent_stream", {
-            id: this.selectedExtension,
-            contentId: torrent.id,
-            magnet: torrent.magnet ?? null,
-        });
+        const torrent = this.forcedTorrent ?? await this.pickTorrent();
+        const info = await torrentApi.startStream(this.selectedExtension!, torrent.id, torrent.magnet);
 
         if (token !== this.loadToken) {
             void this.stopTorrentSession(info.sessionId);
             return null;
         }
 
-        return { url: info.url, headers: {}, subtitles: [], chapters: [],
-            torrentSessionId: info.sessionId, torrent };
+        return {
+            url: info.url,
+            headers: {},
+            subtitles: [],
+            chapters: [],
+            torrentSessionId: info.sessionId,
+            torrent,
+        };
     }
 
     private async stopTorrentSession(sessionId: string) {
-        await invoke("stop_torrent_stream", { sessionId }).catch(() => {});
+        await torrentApi.stopStream(sessionId).catch(() => {});
     }
 
-    /// Core flow: get the resume position, ask the extension for a source,
-    /// then hand url + headers + subtitles + chapters + start position to
-    /// mpv in one `load_stream` call.
-    async loadPlay() {
-        if (!this.selectedExtension) return;
+    async chooseTorrent(torrent: TorrentSearchResult) {
+        this.forcedTorrent = torrent;
+        await this.loadPlay();
+    }
 
+    /// The query used for auto-selection; also what the manual picker pre-fills.
+    torrentSearchQuery(): string {
+        return buildTorrentQuery(this.animeData, this.epNumber);
+    }
+
+    // ---- loading a stream ---------------------------------------------------
+
+    private resetPlaybackState() {
         this.isLoadingPlay = true;
         this.isStreamLoaded = false;
         this.error = null;
@@ -671,26 +687,48 @@ export class WatchState {
         this.lastSyncTime = 0;
         this.hasUpdatedList = false;
         this.skippedChapterStarts = new Set();
+        this.selectedTorrent = null;
+    }
+
+    private async fetchResumeTime(): Promise<number> {
+        if (!appConfig.data?.player.resumeFromLastPos) return 0;
+        try {
+            const res = await progressApi.getContentProgress(this.cid);
+            const prog = res.animeProgress.find((p: any) => p.episode === this.epNumber);
+            return prog?.timestampSeconds ?? 0;
+        } catch {
+            return 0;
+        }
+    }
+
+    private buildNowPlaying(): NowPlaying {
+        const meta = primaryMetadata(this.animeData, appConfig.data?.content?.preferredMetadataProvider);
+        return {
+            cid: this.cid,
+            episode: this.epNumber,
+            title: this.animeTitle,
+            episodeTitle: this.episodeTitle,
+            coverImage: meta?.coverImage ?? null,
+            nsfw: this.animeData?.content?.nsfw ?? false,
+            totalEpisodes: this.totalEpisodes,
+        };
+    }
+
+    /// Core flow: get the resume position, ask the extension for a source,
+    /// then hand url + headers + subtitles + chapters + start position to
+    /// mpv in one `load_stream` call.
+    async loadPlay() {
+        if (!this.selectedExtension) return;
+
+        this.resetPlaybackState();
         const token = ++this.loadToken;
         const previousSession = this.torrentSessionId;
-        this.torrentTitle = null;
-        this.selectedTorrent = null;
 
         try {
-            let initialTime = 0;
-            if (appConfig.data?.player.resumeFromLastPos) {
-                try {
-                    const res = await progressApi.getContentProgress(this.cid);
-                    const prog = res.animeProgress.find((p: any) => p.episode === this.epNumber);
-                    initialTime = prog?.timestampSeconds ?? 0;
-                } catch {
-                    initialTime = 0;
-                }
-            }
+            const initialTime = await this.fetchResumeTime();
             this.initialTime = initialTime;
 
-            const isTorrent = extensionsStore.torrent.some(e => e.id === this.selectedExtension);
-            const stream = isTorrent
+            const stream = this.isTorrent
                 ? await this.resolveTorrentStream(token)
                 : await this.resolveAnimeStream();
 
@@ -698,22 +736,9 @@ export class WatchState {
             if (!stream || token !== this.loadToken) return;
 
             this.torrentSessionId = stream.torrentSessionId ?? null;
-            this.torrentTitle = stream.torrentTitle ?? null;
             this.selectedTorrent = stream.torrent ?? null;
-
             this.subtitles = stream.subtitles;
             this.chapters = stream.chapters;
-
-            const meta = primaryMetadata(this.animeData, appConfig.data?.content?.preferredMetadataProvider);
-            const nowPlaying: NowPlaying = {
-                cid: this.cid,
-                episode: this.epNumber,
-                title: this.animeTitle,
-                episodeTitle: this.episodeTitle,
-                coverImage: meta?.coverImage ?? null,
-                nsfw: this.animeData?.content?.nsfw ?? false,
-                totalEpisodes: this.totalEpisodes,
-            };
 
             await invoke("wait_for_player_ready").catch(() => {});
             await invoke("load_stream", {
@@ -722,7 +747,7 @@ export class WatchState {
                 subtitles: this.subtitles,
                 chapters: this.chapters,
                 startPosition: initialTime > 0 ? initialTime : undefined,
-                nowPlaying,
+                nowPlaying: this.buildNowPlaying(),
             });
 
             // mpv now owns the new stream and has closed the old one
@@ -736,7 +761,7 @@ export class WatchState {
             const preferredId = this.pickPreferredSubtitleTrack();
             if (preferredId !== null) await this.setSubtitleTrack(preferredId);
         } catch (e: any) {
-            console.log(e);
+            console.error("loadPlay failed", e);
             this.error = e.key ? e : { key: "errors.unknown_error" };
         } finally {
             // don't clobber the spinner of a newer load
@@ -744,17 +769,7 @@ export class WatchState {
         }
     }
 
-    async chooseTorrent(torrent: any) {
-        this.forcedTorrent = torrent;
-        await this.loadPlay();
-    }
-
-// copy the exact buildTorrentQuery call from resolveTorrentStream
-    torrentSearchQuery(): string {
-        return buildTorrentQuery(this.animeData, this.epNumber, false);
-    }
-
-    private skippedChapterStarts = new Set<number>();
+    // ---- intro/outro skipping ----------------------------------------------
 
     currentSkippable = $derived.by(() => {
         const time = this.currentTime;
@@ -783,7 +798,6 @@ export class WatchState {
         return null;
     });
 
-    // 3. Shared action: handles the actual skipping
     executeSkip(chapter: EpisodeChapter) {
         this.skippedChapterStarts.add(chapter.start);
         this.seek(chapter.end, false);
@@ -873,10 +887,9 @@ function getAnilistMetadata(data: FullContent | null): Metadata | null {
     return data.metadata.find(m => m.sourceName?.toLowerCase() === "anilist") ?? null;
 }
 
-function buildTorrentQuery(data: FullContent | null, epNumber: number, isBatch: boolean): string {
+function buildTorrentQuery(data: FullContent | null, epNumber: number, isBatch = false): string {
     const anilist = getAnilistMetadata(data);
     const title = anilist?.titleI18n?.romaji || anilist?.title || "";
     if (!title) return "";
-    isBatch = false;
     return isBatch ? `${title} batch` : `${title} ${epNumber}`;
 }
