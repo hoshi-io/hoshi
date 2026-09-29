@@ -124,7 +124,7 @@
         <Search class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
         <Input
                 placeholder={i18n.t('list.search_placeholder')}
-                class="pl-9 pr-3 h-9 text-sm rounded-sm border-none bg-muted/30 focus-visible:ring-1 focus-visible:ring-primary/50 w-full shadow-inner"
+                class="pl-9 pr-3 h-10 text-sm rounded-sm border bg-muted/10 focus-visible:ring-1 focus-visible:ring-primary/50 w-full"
                 bind:value={listStore.searchQuery}
         />
     </div>
@@ -244,26 +244,8 @@
 </svelte:head>
 
 <main class="bg-background px-4 md:px-8 lg:pl-32 lg:pr-12 lg:pt-20 w-full max-w-[2000px] mx-auto space-y-10 pt-1">
-    <header class="hidden lg:flex lg:flex-row lg:items-start justify-between gap-6 border-b border-border/40 pb-8 w-full">
-        <div class="flex items-center gap-5 w-full">
-            <Avatar.Root class="h-12 w-12 md:h-16 md:w-16 border border-border/50 shadow-sm shrink-0">
-                {#if auth.user?.avatar}
-                    <Avatar.Image src={auth.user.avatar} alt={auth.user.username} class="object-cover" />
-                {/if}
-                <Avatar.Fallback class="bg-primary/10 text-primary font-black uppercase">
-                    {auth.user?.username?.charAt(0) || 'U'}
-                </Avatar.Fallback>
-            </Avatar.Root>
-            <div class="flex flex-col w-full">
-                <h1 class="text-2xl md:text-3xl font-black tracking-tight leading-none">
-                    {i18n.t('list.header_title', { name: auth.user?.username || i18n.t('list.default_user')})}
-                </h1>
-            </div>
-        </div>
-    </header>
-
-    <div class="flex items-start gap-8 w-full pt-4">
-        <aside class="hidden lg:flex flex-col gap-5 w-68 shrink-0 sticky top-24 max-h-[calc(100vh-7rem)] pb-4 overflow-y-auto hide-scrollbar">
+    <div class="flex items-start gap-10 w-full">
+        <aside class="hidden lg:flex flex-col gap-5 w-[280px] shrink-0 sticky top-18 max-h-[calc(100vh-7rem)] pb-4 overflow-y-auto hide-scrollbar">
             <div class="space-y-2.5 p-0.5">{@render searchBar()}</div>
             <div class="space-y-3 flex-1 flex flex-col justify-start">
                 <div class="space-y-2.5">

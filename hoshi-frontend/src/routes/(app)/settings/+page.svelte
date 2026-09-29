@@ -29,6 +29,7 @@
     import { page } from "$app/state";
     import {getVersion} from "@tauri-apps/api/app";
     import Torrent from "@/components/settings/Torrent.svelte";
+    import PageHeader from "@/components/PageHeader.svelte";
 
     let showSwitchProfile = $state(false);
     let configSaving = $state(false);
@@ -147,28 +148,26 @@
 
 <main class="bg-background pb-6 md:pb-12 {isMobileDetail ? 'pt-5 md:pt-12' : 'pt-4 md:pt-20'} px-4 md:px-8 lg:pl-32 lg:pr-12 w-full max-w-[2000px] mx-auto {isMobileDetail ? 'space-y-0 md:space-y-8' : 'space-y-4 md:space-y-8'}">
 
-    <header
-            in:fly={{ y: -10, duration: 400, easing: cubicOut }}
-            class="{isMobileDetail ? 'hidden md:flex' : 'flex pt-5'} flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border/40 pb-4 md:pb-8 w-full"
-    >
-        <div class="flex items-center gap-5">
-            <Avatar.Root class="h-12 w-12 md:h-16 md:w-16 border border-border/50 shadow-sm transition-transform duration-300 hover:scale-102">
-                {#if auth.user?.avatar}
-                    <Avatar.Image src={auth.user.avatar} alt={auth.user.username} class="object-cover" />
-                {/if}
-                <Avatar.Fallback class="bg-primary/10 text-primary font-black uppercase">
-                    {auth.user?.username?.charAt(0) || 'U'}
+    <PageHeader title={i18n.t('settings.title')} />
+
+    {#if !isMobileDetail}
+        <button
+                class="md:hidden flex w-full items-center gap-4 rounded-2xl bg-muted/20 p-4 text-left"
+                onclick={() => goto('?tab=account')}
+        >
+            <Avatar.Root class="size-14">
+                {#if auth.user?.avatar}<Avatar.Image src={auth.user.avatar} alt={auth.user.username} class="object-cover" />{/if}
+                <Avatar.Fallback class="bg-primary/10 text-primary font-semibold">
+                    {auth.user?.username?.charAt(0)?.toUpperCase() || 'U'}
                 </Avatar.Fallback>
             </Avatar.Root>
-
-            <div class="space-y-0.5">
-                <h1 class="text-2xl md:text-3xl font-black tracking-tight">{auth.user?.username || 'Account'}</h1>
-                <p class="text-xs md:text-sm text-muted-foreground font-medium opacity-70 uppercase tracking-wider">
-                    {i18n.t('settings.preferences')}
-                </p>
+            <div class="min-w-0 flex-1">
+                <p class="truncate font-semibold">{auth.user?.username}</p>
+                <p class="text-sm text-muted-foreground">{i18n.t('settings.account')}</p>
             </div>
-        </div>
-    </header>
+            <ChevronRight class="size-5 text-muted-foreground/50" />
+        </button>
+    {/if}
 
     <section class="w-full">
         {#if !auth.user || !appConfig.data}
@@ -188,18 +187,20 @@
                         class="flex flex-col md:flex-row gap-8 lg:gap-16 w-full items-start"
                 >
                     <Tabs.List class="{isMobileDetail ? 'hidden md:flex' : 'flex'} flex-col justify-start bg-transparent h-auto p-0 gap-1 w-full md:w-64 shrink-0 border-none md:sticky md:top-24 md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:hide-scrollbar">
-                        <div class="px-4 pt-2 pb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 text-left w-full">
-                            {i18n.t('settings.section_profile')}
-                        </div>
-                        <Tabs.Trigger value="account" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
-                            <div class="flex items-center gap-4 md:gap-3">
-                                <User class="h-5 w-5 md:h-4 md:w-4 transition-transform duration-300 group-hover:scale-105" />
-                                {i18n.t('settings.account')}
+                        {#if isDesktop}
+                            <div class="px-4 pt-2 pb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 text-left w-full">
+                                {i18n.t('settings.section_profile')}
                             </div>
-                            <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
-                        </Tabs.Trigger>
+                            <Tabs.Trigger value="account" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
+                                <div class="flex items-center gap-4 md:gap-3">
+                                    <User class="h-5 w-5 md:h-4 md:w-4 transition-transform duration-300 group-hover:scale-105" />
+                                    {i18n.t('settings.account')}
+                                </div>
+                                <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
+                            </Tabs.Trigger>
 
-                        <div class="px-4 pt-6 pb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 text-left w-full">
+                        {/if}
+                        <div class="px-4 {isDesktop ? 'pt-6' : 'pt-1'} pb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 text-left w-full">
                             {i18n.t('settings.section_application')}
                         </div>
                         <Tabs.Trigger value="general" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">

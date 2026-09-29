@@ -12,6 +12,7 @@
     import { layoutState } from "@/stores/layout.svelte.js";
     import CardWrapper from "@/components/card/CardWrapper.svelte";
     import {Button} from "$lib/components/ui/button";
+    import PageHeader from "@/components/PageHeader.svelte";
 
     $effect(() => {
         layoutState.title    = i18n.t("schedule.title");
@@ -55,46 +56,10 @@
 {/snippet}
 
 <main class="bg-background px-4 md:px-8 lg:pl-32 lg:pr-12 lg:pt-20 pb-16 w-full max-w-[2000px] mx-auto space-y-10 pt-5">
-    <header class="hidden md:flex md:flex-row md:items-center justify-between gap-6 border-b border-border/40 pb-8 w-full">
-        <div class="flex items-center gap-5">
-            <Avatar.Root class="h-12 w-12 md:h-16 md:w-16 border border-border/50 shadow-sm">
-                {#if auth.user?.avatar}
-                    <Avatar.Image src={auth.user.avatar} alt={auth.user.username} class="object-cover" />
-                {/if}
-                <Avatar.Fallback class="bg-primary/10 text-primary font-black uppercase">
-                    {auth.user?.username?.charAt(0) || "U"}
-                </Avatar.Fallback>
-            </Avatar.Root>
-            <div class="space-y-0.5">
-                <h1 class="text-2xl md:text-3xl font-black tracking-tight">
-                    {i18n.t("schedule.upcoming_episodes")}
-                </h1>
-                <p class="text-xs md:text-sm text-muted-foreground font-medium opacity-70 uppercase tracking-wider">
-                    {i18n.t("schedule.release_calendar", { name: auth.user?.username || i18n.t("schedule.my") })}
-                </p>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-            <button
-                    class="flex items-center gap-2 h-11 px-4 rounded-sm border text-xs font-bold transition-colors {scheduleStore.myListOnly
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'border-border/40 bg-muted/10 hover:bg-muted/30 text-foreground/70'}"
-                    onclick={() => scheduleStore.toggleMyList()}
-            >
-                <ListFilter class="h-3.5 w-3.5" />
-                {i18n.t("schedule.my_list_filter")}
-            </button>
-
-            <button
-                    class="flex items-center justify-center h-11 w-11 rounded-sm border border-border/40 bg-muted/10 hover:bg-muted/30 transition-colors backdrop-blur-sm shadow-sm"
-                    onclick={() => scheduleStore.load(true)}
-                    disabled={scheduleStore.isLoading}
-            >
-                <RefreshCw class="h-4 w-4 {scheduleStore.isLoading ? 'animate-spin opacity-50' : ''}" />
-            </button>
-        </div>
-    </header>
+    <PageHeader
+            title={i18n.t("schedule.upcoming_episodes")}
+            actions={headerActions}
+    />
 
     <section class="relative w-full">
         {#if scheduleStore.isLoading}
