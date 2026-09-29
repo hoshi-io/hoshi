@@ -33,3 +33,55 @@ pub struct TorrentStreamInfo {
     pub url: String,
     pub total_size: u64,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum CacheEntryState {
+    /// Being streamed right now. Cannot be deleted.
+    Active,
+    Seeding,
+    Cached,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TorrentCacheFile {
+    pub path: String,
+    pub size: u64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TorrentCacheEntry {
+    pub key: String,
+    pub name: String,
+    pub size_bytes: u64,
+    pub last_used_ms: u64,
+    pub state: CacheEntryState,
+    pub files: Vec<TorrentCacheFile>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TorrentStorageStats {
+    pub used_bytes: u64,
+    pub free_bytes: u64,
+    pub total_disk_bytes: u64,
+    pub entry_count: usize,
+    pub active_count: usize,
+    pub seeding_count: usize,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TorrentCacheDeleteResult {
+    pub freed_bytes: u64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TorrentCacheClearResult {
+    pub removed: usize,
+    pub skipped: usize,
+    pub freed_bytes: u64,
+}

@@ -1,31 +1,16 @@
-/**
- * Frontend mirrors of the Rust torrent types
- * (`hoshi_core::torrent::types` and `hoshi_core::extensions::types`).
- * Field names are camelCase because the Rust structs use `rename_all = "camelCase"`.
- */
-
-/**
- * A search result returned by a torrent extension.
- *
- * Only the fields the frontend reads today are listed. Copy the remaining
- * fields from Rust's `TorrentSearchResult` when a component needs them.
- */
 export interface TorrentSearchResult {
     id: string;
     title: string;
-    /** Direct magnet link, when the extension provides one. Otherwise resolve it with `getMagnet`. */
     magnet?: string | null;
     seeders?: number | null;
 }
 
-/** Returned by `start_torrent_stream`. `url` is the `torrent://<sessionId>` URL handed to mpv. */
 export interface TorrentStreamInfo {
     sessionId: string;
     url: string;
     totalSize: number;
 }
 
-/** librqbit's torrent state; `unknown` is the backend's fallback. */
 export type TorrentState = "initializing" | "live" | "paused" | "error" | "unknown";
 
 export interface TorrentLiveStats {
@@ -44,5 +29,44 @@ export interface StopTorrentStreamResponse {
     sessionId: string;
 }
 
-/** Extension-specific search filters, forwarded to the extension untouched. */
 export type TorrentFilters = Record<string, unknown>;
+
+export type TorrentCacheState = "active" | "seeding" | "cached";
+
+export interface TorrentCacheFile {
+    path: string;
+    size: number;
+}
+
+export interface TorrentCacheEntry {
+    key: string;
+    name: string;
+    sizeBytes: number;
+    lastUsedMs: number;
+    state: TorrentCacheState;
+    files: TorrentCacheFile[];
+}
+
+export interface TorrentStorageStats {
+    /** Bytes used by all cached torrents. */
+    usedBytes: number;
+    /** Free space on the volume holding the cache. */
+    freeBytes: number;
+    totalDiskBytes: number;
+    entryCount: number;
+    /** Entries currently being streamed. */
+    activeCount: number;
+    /** Entries kept running after playback (stopSeedingOnPlaybackEnd = false). */
+    seedingCount: number;
+}
+
+export interface DeleteTorrentCacheEntryResponse {
+    freedBytes: number;
+}
+
+export interface ClearTorrentCacheResponse {
+    removed: number;
+    /** Entries left alone (in use, or deletion failed). */
+    skipped: number;
+    freedBytes: number;
+}

@@ -3,7 +3,7 @@ use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use dashmap::DashMap;
 use librqbit::api::TorrentIdOrHash;
@@ -14,8 +14,10 @@ use tracing::{info, warn};
 use crate::config::model::TorrentConfig;
 use crate::core_err;
 use crate::error::{CoreError, CoreResult};
-use crate::torrent::types::{Lingering, StreamSession, TorrentLiveStats};
-
+use crate::torrent::types::{
+    CacheEntryState, Lingering, StreamSession, TorrentCacheClearResult, TorrentCacheEntry,
+    TorrentCacheFile, TorrentLiveStats, TorrentStorageStats,
+};
 const METADATA_TIMEOUT: Duration = Duration::from_secs(45);
 const INIT_TIMEOUT: Duration = Duration::from_secs(60);
 const REAP_INTERVAL: Duration = Duration::from_secs(60);
@@ -300,9 +302,8 @@ impl TorrentHandle {
         }
 
         // Evict cached data on disk.
-        let mut protected: HashSet<String> =
-            self.0.streams.iter().map(|s| s.dir.clone()).collect();
-        protected.extend(self.0.lingering.iter().map(|l| l.value().dir.clone()));
+        let mut protected = self.active_dirs();
+        protected.extend(self.lingering_dirs());
         protected.extend(extra_protected.map(str::to_owned));
 
         let root = self.0.data_dir.clone();
@@ -318,6 +319,167 @@ impl TorrentHandle {
             session.stop().await;
         }
         Ok(())
+    }
+
+    pub fn cache_dir(&self) -> &Path {
+        &self.0.data_dir
+    }
+
+    fn active_dirs(&self) -> HashSet<String> {
+        self.0.streams.iter().map(|s| s.dir.clone()).collect()
+    }
+
+    fn lingering_dirs(&self) -> HashSet<String> {
+        self.0.lingering.iter().map(|l| l.value().dir.clone()).collect()
+    }
+
+    fn state_of(key: &str, active: &HashSet<String>, seeding: &HashSet<String>) -> CacheEntryState {
+        if active.contains(key) {
+            CacheEntryState::Active
+        } else if seeding.contains(key) {
+            CacheEntryState::Seeding
+        } else {
+            CacheEntryState::Cached
+        }
+    }
+
+    async fn scan(&self, with_files: bool) -> CoreResult<Vec<ScannedEntry>> {
+        let root = self.0.data_dir.clone();
+        tokio::task::spawn_blocking(move || scan_cache(&root, with_files))
+            .await
+            .map_err(|e| core_err!(Internal, "error.torrent.cache_scan_failed", e))
+    }
+
+    pub async fn storage_stats(&self) -> CoreResult<TorrentStorageStats> {
+        let _ = tokio::fs::create_dir_all(&self.0.data_dir).await;
+
+        let scanned = self.scan(false).await?;
+        let active = self.active_dirs();
+        let seeding = self.lingering_dirs();
+
+        let free_bytes = fs2::available_space(&self.0.data_dir)
+            .map_err(|e| core_err!(Internal, "error.torrent.disk_check_failed", e))?;
+        let total_disk_bytes = fs2::total_space(&self.0.data_dir)
+            .map_err(|e| core_err!(Internal, "error.torrent.disk_check_failed", e))?;
+
+        Ok(TorrentStorageStats {
+            used_bytes: scanned.iter().map(|e| e.size).sum(),
+            free_bytes,
+            total_disk_bytes,
+            entry_count: scanned.len(),
+            active_count: scanned.iter().filter(|e| active.contains(&e.key)).count(),
+            seeding_count: scanned
+                .iter()
+                .filter(|e| !active.contains(&e.key) && seeding.contains(&e.key))
+                .count(),
+        })
+    }
+
+    pub async fn list_cache(&self) -> CoreResult<Vec<TorrentCacheEntry>> {
+        let scanned = self.scan(true).await?;
+        let active = self.active_dirs();
+        let seeding = self.lingering_dirs();
+
+        Ok(scanned
+            .into_iter()
+            .map(|e| TorrentCacheEntry {
+                state: Self::state_of(&e.key, &active, &seeding),
+                name: display_name(&e.key, &e.files),
+                size_bytes: e.size,
+                last_used_ms: e
+                    .last_used
+                    .duration_since(UNIX_EPOCH)
+                    .map(|d| d.as_millis() as u64)
+                    .unwrap_or(0),
+                key: e.key,
+                files: e.files,
+            })
+            .collect())
+    }
+
+    /// Returns the number of bytes freed.
+    pub async fn delete_cache_entry(&self, key: &str) -> CoreResult<u64> {
+        // `key` becomes a path component, so it must be a bare info-hash.
+        let key = key.to_ascii_lowercase();
+        if !is_cache_dir_name(&key) {
+            return Err(core_err!(BadRequest, "error.torrent.invalid_cache_key"));
+        }
+
+        // Same gate as add_magnet/the reaper: no delete racing a re-add.
+        let _gate = self.0.gate.lock().await;
+
+        if self.active_dirs().contains(&key) {
+            return Err(core_err!(BadRequest, "error.torrent.cache_entry_in_use"));
+        }
+
+        let path = self.0.data_dir.join(&key);
+        if !path.is_dir() {
+            return Err(core_err!(BadRequest, "error.torrent.cache_entry_not_found"));
+        }
+
+        // Measure first: releasing a seeding torrent may already remove files.
+        let size = {
+            let p = path.clone();
+            tokio::task::spawn_blocking(move || dir_stats(&p).0)
+                .await
+                .map_err(|e| core_err!(Internal, "error.torrent.cache_scan_failed", e))?
+        };
+
+        let seeding_ids: Vec<usize> = self.0.lingering.iter()
+            .filter(|l| l.value().dir == key)
+            .map(|l| *l.key())
+            .collect();
+        for id in seeding_ids {
+            self.release_torrent(id, true).await;
+        }
+
+        tokio::task::spawn_blocking(move || remove_cache_dir(&path))
+            .await
+            .map_err(|e| core_err!(Internal, "error.torrent.cache_delete_failed", e))?
+            .map_err(|e| core_err!(Internal, "error.torrent.cache_delete_failed", e))?;
+
+        info!(dir = %key, bytes = size, "deleted torrent cache entry");
+        Ok(size)
+    }
+
+    /// Deletes every entry that isn't being streamed. Seeding torrents are stopped first.
+    pub async fn clear_cache(&self) -> CoreResult<TorrentCacheClearResult> {
+        let _gate = self.0.gate.lock().await;
+
+        let active = self.active_dirs();
+        let scanned = self.scan(false).await?; // sizes before anything is released
+
+        let seeding: Vec<(usize, String)> = self.0.lingering.iter()
+            .map(|l| (*l.key(), l.value().dir.clone()))
+            .collect();
+        for (id, dir) in seeding {
+            if !active.contains(&dir) {
+                self.release_torrent(id, true).await;
+            }
+        }
+
+        tokio::task::spawn_blocking(move || {
+            let mut result = TorrentCacheClearResult { removed: 0, skipped: 0, freed_bytes: 0 };
+            for e in scanned {
+                if active.contains(&e.key) {
+                    result.skipped += 1;
+                    continue;
+                }
+                match remove_cache_dir(&e.path) {
+                    Ok(()) => {
+                        result.removed += 1;
+                        result.freed_bytes += e.size;
+                    }
+                    Err(err) => {
+                        warn!(dir = %e.key, error = ?err, "failed to clear torrent cache entry");
+                        result.skipped += 1;
+                    }
+                }
+            }
+            result
+        })
+            .await
+            .map_err(|e| core_err!(Internal, "error.torrent.cache_delete_failed", e))
     }
 }
 
@@ -413,4 +575,88 @@ fn dir_stats(path: &Path) -> (u64, SystemTime) {
         newest = newest.max(m);
     }
     (size, newest)
+}
+
+struct ScannedEntry {
+    key: String,
+    path: PathBuf,
+    size: u64,
+    last_used: SystemTime,
+    files: Vec<TorrentCacheFile>,
+}
+
+/// Blocking. Same directory rules as `evict_cache`: only info-hash-named folders.
+fn scan_cache(root: &Path, with_files: bool) -> Vec<ScannedEntry> {
+    let Ok(read_dir) = std::fs::read_dir(root) else { return Vec::new() };
+    read_dir
+        .flatten()
+        .filter_map(|e| {
+            let key = e.file_name().to_string_lossy().into_owned();
+            let path = e.path();
+            if !is_cache_dir_name(&key) || !path.is_dir() {
+                return None;
+            }
+            let (size, last_used) = dir_stats(&path);
+            let files = if with_files { dir_files(&path) } else { Vec::new() };
+            Some(ScannedEntry { key, path, size, last_used, files })
+        })
+        .collect()
+}
+
+/// Regular files under `root`, relative and `/`-separated. Skips the last-played marker.
+fn dir_files(root: &Path) -> Vec<TorrentCacheFile> {
+    let mut out = Vec::new();
+    let mut stack = vec![root.to_path_buf()];
+
+    while let Some(dir) = stack.pop() {
+        let Ok(rd) = std::fs::read_dir(&dir) else { continue };
+        for entry in rd.flatten() {
+            let Ok(meta) = entry.metadata() else { continue };
+            let path = entry.path();
+            if meta.is_dir() {
+                stack.push(path);
+                continue;
+            }
+            if !meta.is_file() {
+                continue; // symlinks etc.
+            }
+            let Ok(rel) = path.strip_prefix(root) else { continue };
+            if rel == Path::new(LAST_PLAYED_MARKER) {
+                continue;
+            }
+            out.push(TorrentCacheFile {
+                path: rel.to_string_lossy().replace('\\', "/"),
+                size: meta.len(),
+            });
+        }
+    }
+
+    out.sort_by(|a, b| a.path.cmp(&b.path));
+    out
+}
+
+/// Batch torrents: their shared top folder. Otherwise: the largest file's name.
+fn display_name(key: &str, files: &[TorrentCacheFile]) -> String {
+    let top = |f: &TorrentCacheFile| f.path.split_once('/').map(|(d, _)| d.to_owned());
+
+    if files.len() > 1 {
+        if let Some(root) = files.first().and_then(top) {
+            if files.iter().all(|f| top(f).as_deref() == Some(root.as_str())) {
+                return root;
+            }
+        }
+    }
+
+    files
+        .iter()
+        .max_by_key(|f| f.size)
+        .map(|f| f.path.rsplit('/').next().unwrap_or(&f.path).to_owned())
+        .unwrap_or_else(|| key.to_owned())
+}
+
+fn remove_cache_dir(path: &Path) -> std::io::Result<()> {
+    match std::fs::remove_dir_all(path) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        other => other,
+    }
 }

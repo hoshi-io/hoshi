@@ -5,7 +5,10 @@ use hoshi_core::AppState;
 use hoshi_core::error::CoreError;
 use hoshi_core::extensions::types::TorrentSearchResult;
 use hoshi_core::torrent::TorrentService;
-use hoshi_core::torrent::types::{TorrentLiveStats, TorrentStreamInfo};
+use hoshi_core::torrent::types::{
+    TorrentCacheClearResult, TorrentCacheDeleteResult, TorrentCacheEntry,
+    TorrentLiveStats, TorrentStorageStats, TorrentStreamInfo,
+};
 use crate::{require_auth, TauriSession};
 
 #[tauri::command]
@@ -91,4 +94,42 @@ pub async fn get_torrent_stats(
     session_id: String,
 ) -> Result<Option<TorrentLiveStats>, CoreError> {
     Ok(state.inner().torrent.stats(&session_id))
+}
+
+#[tauri::command]
+pub async fn get_torrent_storage_stats(
+    state: State<'_, Arc<AppState>>,
+) -> Result<TorrentStorageStats, CoreError> {
+    state.inner().torrent.storage_stats().await
+}
+
+#[tauri::command]
+pub async fn list_torrent_cache(
+    state: State<'_, Arc<AppState>>,
+) -> Result<Vec<TorrentCacheEntry>, CoreError> {
+    state.inner().torrent.list_cache().await
+}
+
+#[tauri::command]
+pub async fn delete_torrent_cache_entry(
+    state: State<'_, Arc<AppState>>,
+    key: String,
+) -> Result<TorrentCacheDeleteResult, CoreError> {
+    let freed_bytes = state.inner().torrent.delete_cache_entry(&key).await?;
+    Ok(TorrentCacheDeleteResult { freed_bytes })
+}
+
+#[tauri::command]
+pub async fn clear_torrent_cache(
+    state: State<'_, Arc<AppState>>,
+) -> Result<TorrentCacheClearResult, CoreError> {
+    state.inner().torrent.clear_cache().await
+}
+
+#[tauri::command]
+pub async fn get_torrent_cache_dir(
+    state: State<'_, Arc<AppState>>,
+) -> Result<Value, CoreError> {
+    let path = state.inner().torrent.cache_dir().to_string_lossy().into_owned();
+    Ok(json!({ "path": path }))
 }

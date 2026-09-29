@@ -30,7 +30,7 @@ pub fn generate_handlers() -> impl Fn(tauri::ipc::Invoke) -> bool {
         intergations::list_trackers, intergations::add_integration, intergations::remove_integration, intergations::set_sync_enabled,
         playback::initialize_player, playback::shutdown_player, playback::load_stream, playback::toggle_pause, playback::set_paused, playback::set_volume, playback::get_volume, playback::set_muted, playback::seek, playback::get_position, playback::get_duration, playback::set_speed, playback::get_chapters, playback::set_chapter, playback::get_tracks, playback::set_audio_track, playback::set_video_track, playback::set_subtitle_track, playback::stop_playback, playback::set_lang_preferences, playback::set_player_options, playback::wait_for_player_ready,
         dev::list_dev_extensions, dev::create_dev_extension, dev::read_extension_source, dev::write_extension_source, dev::read_manifest_raw, dev::write_manifest_raw, dev::run_extension_function, dev::delete_dev_extension,
-        torrent::search_torrents, torrent::get_magnet, torrent::auto_select_torrent, torrent::start_torrent_stream, torrent::stop_torrent_stream, torrent::get_torrent_stats,
+        torrent::search_torrents, torrent::get_magnet, torrent::auto_select_torrent, torrent::start_torrent_stream, torrent::stop_torrent_stream, torrent::get_torrent_stats, torrent::get_torrent_storage_stats, torrent::list_torrent_cache, torrent::delete_torrent_cache_entry, torrent::clear_torrent_cache, torrent::get_torrent_cache_dir,
         
         #[cfg(feature = "discord-rpc")]
         discord::set_activity,

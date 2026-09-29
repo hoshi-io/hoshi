@@ -6,7 +6,7 @@
     import { goto } from '$app/navigation';
     import {
         User, Link2, Settings, MonitorPlay, Puzzle, BookOpen, LayoutTemplate, Database,
-        MessageSquare, ChevronRight, Terminal
+        MessageSquare, ChevronRight, Terminal, Globe
     } from "lucide-svelte";
     import { Spinner } from "$lib/components/ui/spinner";
     import * as Avatar from "$lib/components/ui/avatar";
@@ -28,6 +28,7 @@
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import {getVersion} from "@tauri-apps/api/app";
+    import Torrent from "@/components/settings/Torrent.svelte";
 
     let showSwitchProfile = $state(false);
     let configSaving = $state(false);
@@ -259,6 +260,14 @@
                             <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
                         </Tabs.Trigger>
 
+                        <Tabs.Trigger value="torrent" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
+                            <div class="flex items-center gap-4 md:gap-3">
+                                <Globe class="h-5 w-5 md:h-4 md:w-4 transition-transform duration-300 group-hover:rotate-45" />
+                                {i18n.t('settings.torrent')}
+                            </div>
+                            <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
+                        </Tabs.Trigger>
+
                         {#if isDesktop}
                             <Tabs.Trigger value="discord" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
                                 <div class="flex items-center gap-4 md:gap-3">
@@ -364,6 +373,14 @@
                                 {#if activeTab === 'tracking'}
                                     <div in:fly={{ y: 8, duration: 250, easing: cubicOut }}>
                                         <Tracker bind:config={appConfig.data.list} onSave={handleSaveConfig}/>
+                                    </div>
+                                {/if}
+                            </Tabs.Content>
+
+                            <Tabs.Content value="torrent" class="focus-visible:outline-none mt-0 w-full">
+                                {#if activeTab === 'torrent'}
+                                    <div in:fly={{ y: 8, duration: 250, easing: cubicOut }}>
+                                        <Torrent bind:torrentConfig={appConfig.data.torrent} onSave={handleSaveConfig}/>
                                     </div>
                                 {/if}
                             </Tabs.Content>

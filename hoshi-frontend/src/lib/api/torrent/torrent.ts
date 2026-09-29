@@ -1,9 +1,13 @@
 import { call } from "@/api/client";
 import type {
+    ClearTorrentCacheResponse,
+    DeleteTorrentCacheEntryResponse,
     StopTorrentStreamResponse,
+    TorrentCacheEntry,
     TorrentFilters,
     TorrentLiveStats,
     TorrentSearchResult,
+    TorrentStorageStats,
     TorrentStreamInfo,
 } from "./types";
 
@@ -45,5 +49,42 @@ export const torrentApi = {
         return call<TorrentLiveStats | null>({
             tauri: { cmd: "get_torrent_stats", args: { sessionId } },
         });
+    },
+
+    // ------------------------------------------------------------ cache / storage
+
+    /** Disk usage of the torrent cache plus free space on its volume. */
+    getStorageStats(): Promise<TorrentStorageStats> {
+        return call<TorrentStorageStats>({
+            tauri: { cmd: "get_torrent_storage_stats", args: {} },
+        });
+    },
+
+    /** Every cached torrent with its files, state (active / seeding / cached) and last-used time. */
+    listCache(): Promise<TorrentCacheEntry[]> {
+        return call<TorrentCacheEntry[]>({
+            tauri: { cmd: "list_torrent_cache", args: {} },
+        });
+    },
+
+    /** Deletes one cached torrent by `TorrentCacheEntry.key`. Fails if it is currently being streamed. */
+    deleteCacheEntry(key: string): Promise<DeleteTorrentCacheEntryResponse> {
+        return call<DeleteTorrentCacheEntryResponse>({
+            tauri: { cmd: "delete_torrent_cache_entry", args: { key } },
+        });
+    },
+
+    /** Deletes everything that isn't currently being streamed. */
+    clearCache(): Promise<ClearTorrentCacheResponse> {
+        return call<ClearTorrentCacheResponse>({
+            tauri: { cmd: "clear_torrent_cache", args: {} },
+        });
+    },
+
+    /** Absolute path of the cache folder (for "open in file manager"). */
+    getCacheDir(): Promise<string> {
+        return call<{ path: string }>({
+            tauri: { cmd: "get_torrent_cache_dir", args: {} },
+        }).then(res => res.path);
     },
 };

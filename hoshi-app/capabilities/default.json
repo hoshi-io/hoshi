@@ -16,6 +16,7 @@
     "core:window:allow-close",
     "core:window:allow-set-fullscreen",
     "opener:default",
+    "opener:allow-open-path",
     "core:webview:allow-create-webview-window"
   ]
 }

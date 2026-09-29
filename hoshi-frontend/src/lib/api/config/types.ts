@@ -116,6 +116,27 @@ export interface ListConfig {
     privateByDefault: boolean;
 }
 
+// ---- add to "@/api/config/types" ------------------------------------------
+
+export interface TorrentConfig {
+    autoSelect: boolean;
+    preferredGroups: string[];
+    preferredResolution: string;
+    preferredCodec: string | null;
+    preferDualAudio: boolean;
+    minSeeders: number;
+    excludeKeywords: string[];
+    requireBatch: boolean | null;
+    fallbackToManual: boolean;
+    maxDiskUsageBytes: number;
+    finishedFileTtlSeconds: number;
+    maxConcurrentTorrents: number;
+    downloadRateLimitKbps: number | null;
+    uploadRateLimitKbps: number | null;
+    stopSeedingOnPlaybackEnd: boolean;
+    minFreeDiskSpaceBytes: number;
+}
+
 export interface AppConfig {
     general: GeneralConfig;
     ui: UiConfig;
@@ -127,4 +148,5 @@ export interface AppConfig {
     novel: NovelConfig;
     discord: DiscordConfig;
     list: ListConfig;
+    torrent: TorrentConfig;
 }
