@@ -133,7 +133,7 @@ jobs:
           fi
           
           find target/release/bundle -name "*.msi" -exec mv {} final-desktop/hoshi-desktop-windows-${VERSION}.msi \;
-          find target/release/bundle -name "*-setup.exe" -exec mv {} final-desktop/hoshi-desktop-windows-${VERSION}-setup.exe \
+          find target/release/bundle -name "*-setup.exe" -exec mv {} final-desktop/hoshi-desktop-windows-${VERSION}-setup.exe \;
 
       - name: Upload desktop artifact
         uses: actions/upload-artifact@v4
@@ -159,7 +159,7 @@ jobs:
       - name: Install system dependencies (Clang, LLVM)
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang llvm pkg-config libssl-dev
+          sudo apt-get install -y clang llvm pkg-config libssl-dev libclang-dev
 
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
@@ -186,10 +186,10 @@ jobs:
           echo "ANDROID_NDK_HOME=$NDK_PATH" >> $GITHUB_ENV
           echo "NDK_SYSROOT=$SYSROOT" >> $GITHUB_ENV
 
-          echo "BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android=--sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/aarch64-linux-android" >> $GITHUB_ENV
-          echo "BINDGEN_EXTRA_CLANG_ARGS_armv7_linux_androideabi=--sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/arm-linux-androideabi" >> $GITHUB_ENV
-          echo "BINDGEN_EXTRA_CLANG_ARGS_i686_linux_android=--sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/i686-linux-android" >> $GITHUB_ENV
-          echo "BINDGEN_EXTRA_CLANG_ARGS_x86_64_linux_android=--sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/x86_64-linux-android" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android=--target=aarch64-linux-android --sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/aarch64-linux-android" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS_armv7_linux_androideabi=--target=armv7-linux-androideabi --sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/arm-linux-androideabi" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS_i686_linux_android=--target=i686-linux-android --sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/i686-linux-android" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS_x86_64_linux_android=--target=x86_64-linux-android --sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/x86_64-linux-android" >> $GITHUB_ENV
 
       - name: Setup libmpv for Android
         run: |
@@ -251,7 +251,7 @@ jobs:
       - name: Install system dependencies (Clang, LLVM)
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang llvm pkg-config libssl-dev
+          sudo apt-get install -y clang llvm pkg-config libssl-dev libclang-dev
 
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
@@ -278,10 +278,10 @@ jobs:
           echo "ANDROID_NDK_HOME=$NDK_PATH" >> $GITHUB_ENV
           echo "NDK_SYSROOT=$SYSROOT" >> $GITHUB_ENV
 
-          echo "BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android=--sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/aarch64-linux-android" >> $GITHUB_ENV
-          echo "BINDGEN_EXTRA_CLANG_ARGS_armv7_linux_androideabi=--sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/arm-linux-androideabi" >> $GITHUB_ENV
-          echo "BINDGEN_EXTRA_CLANG_ARGS_i686_linux_android=--sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/i686-linux-android" >> $GITHUB_ENV
-          echo "BINDGEN_EXTRA_CLANG_ARGS_x86_64_linux_android=--sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/x86_64-linux-android" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android=--target=aarch64-linux-android --sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/aarch64-linux-android" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS_armv7_linux_androideabi=--target=armv7-linux-androideabi --sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/arm-linux-androideabi" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS_i686_linux_android=--target=i686-linux-android --sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/i686-linux-android" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS_x86_64_linux_android=--target=x86_64-linux-android --sysroot=$SYSROOT -I$SYSROOT/usr/include -I$SYSROOT/usr/include/x86_64-linux-android" >> $GITHUB_ENV
 
       - name: Setup libmpv for Android
         run: |

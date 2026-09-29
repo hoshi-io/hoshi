@@ -52,3 +52,6 @@ dashmap = "6.2.1"
 rquickjs = { version = "0.14.0", features = ["loader", "classes", "properties", "futures", "bindgen"] }
 [target.'cfg(not(target_os = "android"))'.dependencies]
 rquickjs = { version = "0.14.0", default-features = false, features = ["loader", "classes", "properties", "futures"] }
+
+[target.'cfg(target_pointer_width = "32")'.dependencies]
+libmpv2-sys = { version = "4.0.1", features = ["use-bindgen"] }

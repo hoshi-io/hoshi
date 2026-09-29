@@ -2382,6 +2382,7 @@ dependencies = [
  "hmac",
  "libc",
  "libmpv2",
+ "libmpv2-sys",
  "librqbit",
  "md-5",
  "regex",
@@ -3014,6 +3015,9 @@ name = "libmpv2-sys"
 version = "4.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "edb32cabe7176b7d270b0dca6ff418b75187ae8d3854423e3d06fbff376841e4"
+dependencies = [
+ "bindgen",
+]
 
 [[package]]
 name = "libredox"
