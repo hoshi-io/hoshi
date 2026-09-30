@@ -279,12 +279,31 @@
         };
     });
 
+    let isFullscreen2 = false;
+    let wasMaximizedBeforeFullscreen = false;
+
     async function toggleFullscreen() {
         try {
             const win = getCurrentWindow();
-            const next = !isFullscreen;
-            await win.setFullscreen(next);
-            isFullscreen = next;
+
+            if (!isFullscreen2) {
+                wasMaximizedBeforeFullscreen = await win.isMaximized();
+
+                if (wasMaximizedBeforeFullscreen) { // some weird bug on windows if we dont do this.
+                    await win.unmaximize();
+                }
+
+                await win.setFullscreen(true);
+                isFullscreen2 = true;
+            } else {
+                await win.setFullscreen(false);
+
+                if (wasMaximizedBeforeFullscreen) {
+                    await win.maximize();
+                }
+
+                isFullscreen2 = false;
+            }
         } catch (e) {
             console.error("Failed to toggle fullscreen", e);
         }
