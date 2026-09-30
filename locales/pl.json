@@ -6,7 +6,6 @@
     "settings": "Ustawienia",
     "schedule": "Harmonogram",
     "marketplace": "Marketplace",
-
     "menu": "Menu",
     "account": "Konto",
     "logout": "Wyloguj się",
@@ -71,7 +70,6 @@
       "saving": "Zapisywanie..."
     }
   },
-
   "home": {
     "title": "Start",
     "anime": "Anime",
@@ -89,14 +87,18 @@
     "action": "Top Akcja",
     "romance": "Top Romans",
     "fantasy": "Fantasy",
-
     "continue": {
       "continue_watching": "Kontynuuj oglądanie",
       "continue_reading": "Kontynuuj czytanie",
       "episodes": "Odcinek {{num}}",
       "chapters": "Rozdział {{num}}"
     },
-
+    "recently_aired": {
+      "title": "Ostatnio wyemitowane",
+      "just_aired": "Właśnie wyemitowane",
+      "hours_ago": "{{count}} godz. temu",
+      "days_ago": "{{count}} dni temu"
+    },
     "hero": {
       "rating": "Ocena",
       "no_synopsis": "Brak opisu",
@@ -109,10 +111,10 @@
       "trailer": "Zwiastun"
     }
   },
-
   "card": {
     "TV": "TV",
     "ONA": "ONA",
+    "OVA": "OVA",
     "MOVIE": "Film",
     "SPECIAL": "Specjalne",
     "airing": "Emitowane",
@@ -122,12 +124,16 @@
     "cover": "Okładka",
     "banner": "Baner",
     "episodes": "{{count}} odcinków",
-    "watch": "Oglądaj",
-    "OVA": "OVA"
+    "watch": "Oglądaj"
   },
-
   "list": {
     "title": "Lista",
+    "all_trackers": "Wszystkie trackery",
+    "missing_anilist": "Brak na AniList",
+    "missing_mal": "Brak na MyAnimeList",
+    "missing_kitsu": "Brak na Kitsu",
+    "missing_simkl": "Brak na Simkl",
+    "show_conflicts": "Pokaż konflikty synchronizacji",
     "header_title": "Lista użytkownika {{name}}",
     "add_to_list": "Dodaj do listy",
     "all": "Wszystkie",
@@ -136,6 +142,7 @@
     "planning": "Planowane",
     "paused": "Wstrzymane",
     "dropped": "Porzucone",
+    "repeating": "Powtarzanie",
     "single_entry": "{{count}} pozycja",
     "multiple_entries": "{{count}} pozycji",
     "search_placeholder": "Szukaj na swojej liście...",
@@ -146,14 +153,12 @@
     "empty_title": "Twoja lista jest pusta",
     "empty_desc": "Zacznij dodawać treści do swojej listy, aby zobaczyć je tutaj.",
     "default_user": "Użytkownik",
-    "repeating": "Powtarzanie",
     "sort_progress_desc": "Malejąco",
     "sort_progress_asc": "Rosnąco",
     "sort_by": "Sortuj według",
     "content_type": "Typ",
     "clear_all": "Wyczyść wszystko",
     "status": "Status",
-
     "modal": {
       "episodes": "Odcinki",
       "chapters": "Rozdziały",
@@ -180,7 +185,6 @@
       "update": "Aktualizuj",
       "default_title": "Nieznany tytuł",
       "of_total": "(z {{count}})",
-      "saving": "Zapisywanie",
       "merge": "Scal",
       "conflict": "Konflikt",
       "history": "Historia",
@@ -213,7 +217,6 @@
     "select_chapter": "Wybierz rozdział",
     "chapters_available": "Dostępne rozdziały: {{count}}",
     "chapter_number": "Rozdział {{count}}",
-
     "chapter_with_title": "Rozdział {{num}} - {{title}}",
     "chapter_number_fallback": "Rozdział {{num}}",
     "no_data": "Brak danych dla tego rozdziału.",
@@ -232,7 +235,13 @@
     "page_alt": "Obraz strony",
     "page_left_alt": "Lewa strona",
     "page_right_alt": "Prawa strona",
-
+    "next_page": "Następna strona",
+    "prev_page": "Poprzednia strona",
+    "scroll_up": "Przewiń w górę",
+    "scroll_down": "Przewiń w dół",
+    "page_scroll": "Przewijanie stron",
+    "increase_font": "Zwiększ czcionkę",
+    "decrease_font": "Zmniejsz czcionkę",
     "theme": "Motyw",
     "font_family": "Rodzina czcionek",
     "alignment": "Wyrównanie",
@@ -241,18 +250,11 @@
     "paragraph_spacing": "Odstępy między akapitami",
     "content_width": "Szerokość treści",
     "align_left": "Do lewej",
-    "align_justify": "Wyjustuj",
-    "next_page": "Następna strona",
-    "prev_page": "Poprzednia strona",
-    "scroll_up": "Przewiń w górę",
-    "scroll_down": "Przewiń w dół",
-    "page_scroll": "Przewijanie stron",
-    "increase_font": "Zwiększ czcionkę",
-    "decrease_font": "Zmniejsz czcionkę"
+    "align_justify": "Wyjustuj"
   },
   "schedule": {
-    "my_list_filter": "Moja lista",
     "title": "Harmonogram",
+    "my_list_filter": "Moja lista",
     "upcoming_episodes": "Nadchodzące odcinki",
     "release_calendar": "Kalendarz wydań użytkownika {{name}}",
     "my": "Moje",
@@ -286,7 +288,7 @@
     "completed": "Zakończone",
     "ongoing": "W trakcie",
     "planned": "Zaplanowane",
-
+    "cancelled": "Anulowane",
     "hiatus": "Przerwa",
     "genre": "Gatunek",
     "any_genre": "Dowolny",
@@ -315,7 +317,6 @@
     "tv_short": "Krótki TV",
     "special": "Specjalne",
     "ona": "ONA",
-    "cancelled": "Anulowane",
     "nsfw_only": "Tylko NSFW",
     "select": "Wybierz",
     "submit": "Wyślij",
@@ -329,14 +330,92 @@
   },
   "watch": {
     "episode_with_title": "Odcinek {{num}} - {{title}}",
-    "episode_number": "Odcinek {{num}}"
+    "episode_number": "Odcinek {{num}}",
+    "title_fallback": "Odtwarzacz",
+    "loading": "Ładowanie...",
+    "loading_metadata": "Ładowanie metadanych...",
+    "playback_error": "Błąd odtwarzania",
+    "back_to_details": "Wróć do szczegółów",
+    "torrent_change": "zmień",
+    "torrent_seeders": "seederów",
+    "torrent_peers": "peerów",
+    "torrent_pick_title": "Wybierz torrent",
+    "torrent_search": "Szukaj",
+    "torrent_search_placeholder": "Naruto...",
+    "torrent_no_results": "Brak wyników",
+    "player": {
+      "play": "Odtwórz",
+      "pause": "Wstrzymaj",
+      "mute": "Wycisz",
+      "unmute": "Włącz dźwięk",
+      "volume": "Głośność",
+      "seek": "Przewijanie",
+      "seek_forward": "Przewiń do przodu o {{seconds}} s",
+      "fullscreen_enter": "Włącz pełny ekran",
+      "fullscreen_exit": "Wyłącz pełny ekran",
+      "next_episode": "Następny odcinek",
+      "previous_episode": "Poprzedni odcinek",
+      "settings": "Ustawienia",
+      "close_settings": "Zamknij ustawienia"
+    },
+    "settings": {
+      "source": "Źródło",
+      "server": "Serwer",
+      "dub_audio": "Dubbing",
+      "video": "Wideo",
+      "subtitle_style": "Styl napisów",
+      "quality": "Jakość",
+      "audio_track": "Ścieżka audio",
+      "subtitles": "Napisy",
+      "default": "Domyślne",
+      "off": "Wyłączone",
+      "auto": "Automatycznie",
+      "track_fallback": "Ścieżka {{num}}",
+      "video_section": {
+        "hardware_decoding": "Dekodowanie sprzętowe",
+        "hwdec_auto_safe": "Automatyczne (bezpieczne)",
+        "hwdec_auto": "Automatyczne",
+        "hwdec_software": "Tylko programowe",
+        "upscale_quality": "Jakość skalowania",
+        "scale_fast": "Szybka",
+        "scale_balanced": "Zrównoważona",
+        "scale_sharp": "Ostra",
+        "smooth_motion": "Płynny ruch",
+        "reduce_banding": "Redukcja pasmowania"
+      },
+      "subtitle_style_section": {
+        "font": "Czcionka",
+        "font_size": "Rozmiar czcionki",
+        "size_small": "Mały",
+        "size_medium": "Średni",
+        "size_large": "Duży",
+        "size_extra_large": "Bardzo duży",
+        "size_scale": "Skala rozmiaru ({{scale}}x)",
+        "text_color": "Kolor tekstu",
+        "outline_color": "Kolor obramowania",
+        "outline_size": "Rozmiar obramowania ({{size}})",
+        "background_box": "Tło napisów",
+        "background_color": "Kolor tła",
+        "position": "Pozycja ({{percent}}%)",
+        "alignment": "Wyrównanie",
+        "align_auto": "Automatyczne",
+        "align_left": "Do lewej",
+        "align_center": "Do środka",
+        "align_right": "Do prawej",
+        "delay": "Opóźnienie ({{seconds}} s)",
+        "shadow_color": "Kolor cienia",
+        "shadow_offset": "Przesunięcie cienia ({{offset}})",
+        "force_style": "Wymuś mój styl na stylizowanych napisach",
+        "hide_sdh": "Ukryj opisy dźwięków",
+        "sdh_aggressive": "Bardziej agresywne"
+      }
+    }
   },
   "content": {
-    "resume": "Wznów",
     "details": "Szczegóły",
+    "episode_in": "Odcinek {{num}} za {{time}}",
+    "resume": "Wznów",
     "loading": "Ładowanie",
-    "close": "Zamknij",
-    "connected_trackers": "Połączone trackery",
     "score": "{{score}}%",
     "eps_short": "Odc",
     "ch_short": "Rozdz",
@@ -403,7 +482,9 @@
     "provider": "Dostawca",
     "select": "Wybierz",
     "id_slug": "id",
+    "close": "Zamknij",
     "extension_manager": {
+      "not_linked": "Niepołączone",
       "no_results_found_ext": "Nie znaleziono wyników",
       "missing_id_error": "Błąd: Brak ID",
       "update_ext_success": "Pomyślnie zaktualizowano",
@@ -415,17 +496,23 @@
       "cancel": "Anuluj",
       "search_title_placeholder": "szukaj...",
       "select": "Wybierz",
-      "no_extensions_configured": "Brak skonfigurowanych rozszerzeń dla tego typu tytułu",
-      "not_linked": "Niepołączone",
       "link": "Połącz",
-      "edit": "Edytuj"
-    }
+      "edit": "Edytuj",
+      "no_extensions_configured": "Brak skonfigurowanych rozszerzeń dla tego typu tytułu"
+    },
+    "connected_trackers": "Połączone trackery",
+    "merge_entries": "Scal wpisy",
+    "merge_entries_desc": "Połącz ten wpis ze zduplikowanym wpisem, aby scalić trackery, źródła i metadane.",
+    "keeping_this_entry": "Zachowywany wpis",
+    "search_duplicate_placeholder": "Wyszukaj duplikat w swojej bibliotece...",
+    "no_results": "Nie znaleziono pasujących wpisów",
+    "merge_warning": "{{title}} zostanie scalony z tym wpisem i trwale usunięty. Tej operacji nie można cofnąć.",
+    "merge_success": "Wpisy zostały pomyślnie scalone",
+    "confirm_merge": "Potwierdź scalanie"
   },
-
   "discord": {
     "browsing": "W aplikacji"
   },
-
   "settings": {
     "title": "Ustawienia",
     "preferences": "Preferencje",
@@ -440,6 +527,7 @@
     "novel": "Powieść",
     "tracking": "Śledzenie",
     "extensions": "Rozszerzenia",
+    "torrent": "Torrent",
     "changes_updated": "Pomyślnie zaktualizowano zmiany!",
     "cancel": "Anuluj",
     "readers": "Czytniki",
@@ -448,7 +536,6 @@
     "section_application": "APLIKACJA",
     "section_experience": "DOŚWIADCZENIE",
     "section_integrations": "INTEGRACJE",
-
     "discord_section": {
       "discord_desc": "Skonfiguruj integrację z Discord Rich Presence.",
       "enabled": "Włącz Rich Presence",
@@ -458,7 +545,6 @@
       "hide_nsfw": "Ukryj treści NSFW",
       "hide_nsfw_desc": "Ukryj tytuły i szczegóły podczas przeglądania treści dla dorosłych."
     },
-
     "account_section": {
       "password_required": "Wymagane hasło",
       "account_deleted": "Konto usunięte",
@@ -488,7 +574,6 @@
       "delete_warning": "Tej akcji nie można cofnąć. Spowoduje to trwałe usunięcie wszystkich Twoich danych.",
       "confirm_delete": "Potwierdź usunięcie"
     },
-
     "trackers_section": {
       "token_required": "Do połączenia wymagany jest token dostępu.",
       "connected_successfully": "{{name}} pomyślnie połączone!",
@@ -533,7 +618,6 @@
       "conflict_mal": "Priorytet dla MyAnimeList",
       "conflict_kitsu": "Priorytet dla Kitsu"
     },
-
     "general_section": {
       "general_desc": "Zarządzaj globalnymi preferencjami aplikacji.",
       "theme": "Motyw",
@@ -546,30 +630,11 @@
       "show_nsfw_desc": "Zezwalaj na wyświetlanie treści jawnych w wynikach wyszukiwania i rekomendacjach.",
       "blur_nsfw": "Rozmywaj treści dla dorosłych",
       "blur_nsfw_desc": "Domyślnie rozmywaj obrazy zawierające treści dla dorosłych.",
-      "backups": "Kopie zapasowe",
-      "backups_desc": "Eksportuj lub importuj swoje listy, postępy i ustawienia.",
-      "confirm_restore": "Czy na pewno chcesz przywrócić tę kopię zapasową? Nadpisze ona Twoją obecną bibliotekę i ustawienia.",
-      "backup_restored": "Kopia zapasowa przywrócona pomyślnie.",
-      "confirm_delete_backup": "Czy na pewno chcesz usunąć tę kopię zapasową? Tej operacji nie można cofnąć.",
-      "backup_downloading": "Pobieranie kopii zapasowej...",
-      "manual_backup": "Ręczna kopia zapasowa",
-      "manual_backup_desc": "Utwórz ręczną kopię zapasową swojej biblioteki i ustawień.",
-      "create_backup": "Utwórz kopię zapasową",
-      "backup_history": "Historia kopii zapasowych",
-      "no_backups": "Nie znaleziono kopii zapasowych.",
-      "no_backups_desc": "Nie utworzyłeś jeszcze żadnych kopii zapasowych. Utwórz ręczną kopię, aby zabezpieczyć swoje dane.",
-      "auto_backup": "Auto kopia zapasowa",
-      "entries_count": "Pozycje",
-      "download_backup": "Pobierz kopię zapasową",
-      "restore_backup": "Przywróć kopię zapasową",
-      "delete_backup": "Usuń kopię zapasową",
-      "raw_backup": "Kopia surowa",
       "search_language": "Wyszukaj język...",
       "no_language_found": "Nie znaleziono języka.",
       "select_language": "Wybierz język...",
       "cancel": "Anuluj"
     },
-
     "ui_section": {
       "interface_desc": "Dostosuj wygląd i zachowanie interfejsu.",
       "title_language": "Język tytułów",
@@ -577,24 +642,23 @@
       "title_language_romaji": "Romaji (np. Shingeki no Kyojin)",
       "title_language_english": "Angielski (np. Attack on Titan)",
       "title_language_native": "Rodzimy (np. 進撃の巨人)",
+      "title_language_chinese": "Chiński (np. 进击的巨人)",
       "default_home": "Domyślna sekcja główna",
       "default_home_desc": "Karta, która otworzy się automatycznie po uruchomieniu aplikacji.",
       "default_home_anime": "Anime",
       "default_home_manga": "Manga",
       "default_home_novel": "Powieści",
       "disable_card_trailers": "Wyłącz zwiastuny na kartach",
-      "disable_card_trailers_desc": "Zapobiega automatycznemu odtwarzaniu zwiastunów po najechaniu na kartę.",
-      "title_language_chinese": "Chiński (np. 进击的巨人)"
+      "disable_card_trailers_desc": "Zapobiega automatycznemu odtwarzaniu zwiastunów po najechaniu na kartę."
     },
-
     "content_section": {
       "content_desc": "Zarządzaj dostawcami metadanych i zachowaniami śledzenia.",
       "metadata_provider": "Preferowany dostawca metadanych",
       "metadata_provider_desc": "Wybierz główne źródło tytułów, opisów i okładek.",
       "auto_update_progress": "Automatyczna aktualizacja postępów",
-      "auto_update_progress_desc": "Automatycznie aktualizuj postępy na liście, gdy zbliżasz się do końca odcinka lub rozdziału."
+      "score_format": "Format ocen",
+      "score_format_desc": "Wybierz sposób wyświetlania ocen w hoshi."
     },
-
     "extension_section": {
       "extensions_desc": "Zarządzaj zainstalowanymi rozszerzeniami i ich ustawieniami.",
       "repo_url": "URL repozytorium",
@@ -609,11 +673,62 @@
       "unsupported_type": "Nieobsługiwany typ",
       "extension_config": "Ustawienia {{name}}"
     },
-
     "player_section": {
-
+      "player_desc": "Skonfiguruj sposób odtwarzania",
+      "seconds": "{{num}} sekund",
+      "preferred_sub_lang": "Preferowany język napisów",
+      "preferred_sub_lang_desc": "Lista kodów języków oddzielonych przecinkami (np. en, es)",
+      "preferred_dub_lang": "Preferowany język audio",
+      "preferred_dub_lang_desc": "Lista kodów języków oddzielonych przecinkami (np. ja, en)",
+      "seek_step": "Krok przewijania",
+      "seek_step_desc": "Ilość czasu pomijanego do przodu lub do tyłu",
+      "autoplay": "Automatyczne odtwarzanie następnego odcinka",
+      "autoplay_desc": "Automatycznie odtwórz następny odcinek po zakończeniu bieżącego",
+      "resume_playback": "Wznawianie odtwarzania",
+      "resume_playback_desc": "Zapamiętuj i wznawiaj odtwarzanie od ostatniej pozycji",
+      "auto_skip_intro": "Automatyczne pomijanie intro",
+      "auto_skip_intro_desc": "Automatycznie pomijaj początki odcinków",
+      "auto_skip_outro": "Automatyczne pomijanie outro",
+      "auto_skip_outro_desc": "Automatycznie pomijaj zakończenia odcinków",
+      "hwdec": "Dekodowanie sprzętowe",
+      "hwdec_desc": "Metoda dekodowania wideo (np. auto, no, vaapi)",
+      "scale_algorithm": "Algorytm skalowania",
+      "scale_algorithm_desc": "Algorytm używany do zwiększania/zmniejszania rozdzielczości wideo",
+      "interpolation": "Interpolacja wideo",
+      "interpolation_desc": "Włącz interpolację ruchu (płynniejszy obraz)",
+      "deband": "Redukcja pasmowania",
+      "deband_desc": "Zmniejsz pasmowanie kolorów podczas odtwarzania wideo",
+      "sub_font": "Rodzina czcionki",
+      "sub_font_desc": "Nazwa czcionki systemowej używanej do napisów",
+      "sub_font_size": "Rozmiar czcionki",
+      "sub_font_size_desc": "Rozmiar tekstu napisów",
+      "sub_color": "Kolor tekstu",
+      "sub_color_desc": "Kod koloru Hex (#RRGGBB lub #RRGGBBAA)",
+      "sub_border_color": "Kolor obramowania",
+      "sub_border_size": "Rozmiar obramowania",
+      "sub_bg_color": "Kolor tła",
+      "sub_position": "Pozycja pionowa",
+      "sub_position_desc": "Pozycja napisów (0–100)",
+      "sub_delay": "Opóźnienie napisów (ms)",
+      "sub_force_style": "Wymuś niestandardowy styl",
+      "sub_force_style_desc": "Zastąp oryginalne style napisów ASS",
+      "sub_scale": "Skala napisów",
+      "sub_shadow_color": "Kolor cienia",
+      "sub_shadow_offset": "Przesunięcie cienia",
+      "sub_justify": "Wyrównanie tekstu",
+      "sub_sdh_filter": "Filtruj tagi SDH",
+      "sub_sdh_filter_desc": "Usuń z tekstu tagi dla osób niedosłyszących",
+      "sub_sdh_filter_harder": "Agresywny filtr SDH",
+      "sub_sdh_filter_harder_desc": "Usuń również nawiasowe opisy dźwięków i tagi z nazwami mówców",
+      "anime4k": "Anime4K",
+      "anime4k_desc": "Skalowanie w czasie rzeczywistym i redukcja artefaktów za pomocą shaderów GPU. Może obniżyć wydajność na słabszym sprzęcie.",
+      "anime4k_learn_more": "Dowiedz się więcej",
+      "anime4k_off": "Wyłączone",
+      "anime4k_fast": "Szybkie",
+      "anime4k_hq": "Wysoka jakość",
+      "anime4k_mode": "Tryb Anime4K",
+      "anime4k_mode_desc": "Tryby A, B i C są przeznaczone dla różnych rodzajów degradacji źródła."
     },
-
     "readers_section": {
       "reader_preview": "Podgląd",
       "novel_reader_preview": "Podgląd",
@@ -646,59 +761,73 @@
       "btn_refresh": "Odśwież",
       "btn_copy": "Kopiuj",
       "btn_clear_ui": "Wyczyść"
+    },
+    "torrent_section": {
+      "torrent_desc": "Wybierz sposób wyboru torrentów, ilość używanego pasma oraz czas przechowywania pobranych plików.",
+      "tab_selection": "Wybór",
+      "tab_network": "Sieć",
+      "tab_storage": "Pamięć",
+      "auto_select": "Automatyczny wybór torrenta",
+      "auto_select_desc": "Automatycznie wybieraj najlepszy torrent dla odcinka na podstawie poniższych preferencji.",
+      "preferred_groups": "Preferowane grupy wydań",
+      "preferred_groups_desc": "Oddzielone przecinkami, w kolejności priorytetu. Torrenty z tych grup są umieszczane na początku rankingu.",
+      "preferred_resolution": "Preferowana rozdzielczość",
+      "preferred_resolution_desc": "Rozdzielczość, której należy szukać w pierwszej kolejności.",
+      "preferred_codec": "Preferowany kodek",
+      "preferred_codec_desc": "Preferuj wydania zakodowane przy użyciu tego kodeka wideo.",
+      "codec_any": "Brak preferencji",
+      "prefer_dual_audio": "Preferuj podwójne audio",
+      "prefer_dual_audio_desc": "Wyżej oceniaj wydania zawierające zarówno oryginalną, jak i dubbingowaną ścieżkę audio.",
+      "require_batch": "Wydania zbiorcze",
+      "require_batch_desc": "Ogranicz automatyczny wybór do kompletnych wydań sezonów lub pojedynczych odcinków.",
+      "batch_any": "Dowolne",
+      "batch_required": "Tylko wydania zbiorcze",
+      "batch_excluded": "Tylko pojedyncze odcinki",
+      "min_seeders": "Minimalna liczba seederów",
+      "min_seeders_desc": "Ignoruj torrenty z mniejszą liczbą seederów. Użyj 0, aby zaakceptować dowolną liczbę.",
+      "exclude_keywords": "Wykluczone słowa kluczowe",
+      "exclude_keywords_desc": "Oddzielone przecinkami. Torrenty, których tytuł zawiera którekolwiek z nich, zostaną pominięte.",
+      "fallback_to_manual": "Przejdź do ręcznego wyboru",
+      "fallback_to_manual_desc": "Otwórz wybór torrentów, gdy automatyczny wybór nie znajdzie pasującego wyniku.",
+      "download_limit": "Limit prędkości pobierania",
+      "download_limit_desc": "Maksymalna prędkość pobierania. Pozostaw puste, aby nie ustawiać limitu.",
+      "upload_limit": "Limit prędkości wysyłania",
+      "upload_limit_desc": "Maksymalna prędkość wysyłania podczas seedowania. Pozostaw puste, aby nie ustawiać limitu.",
+      "unlimited": "Bez limitu",
+      "max_concurrent": "Maksymalna liczba jednoczesnych torrentów",
+      "max_concurrent_desc": "Liczba torrentów, które mogą być aktywne jednocześnie. Zawsze dozwolone są co najmniej 2, aby przełączanie odcinków działało prawidłowo.",
+      "stop_seeding": "Zatrzymaj seedowanie po zakończeniu odtwarzania",
+      "stop_seeding_desc": "Wyłącz tę opcję, aby nadal udostępniać torrent po zakończeniu oglądania, aż do wygaśnięcia zapisanych plików.",
+      "max_disk_usage": "Maksymalny rozmiar pamięci podręcznej",
+      "max_disk_usage_desc": "Gdy pamięć podręczna przekroczy tę wartość, zostaną usunięte torrenty oglądane najdawniej.",
+      "min_free_disk": "Minimalna ilość wolnego miejsca",
+      "min_free_disk_desc": "Odmów rozpoczęcia transmisji, jeśli na dysku pozostałoby mniej wolnego miejsca niż określono. Użyj 0, aby wyłączyć.",
+      "finished_ttl": "Przechowuj ukończone pliki przez",
+      "finished_ttl_desc": "Jak długo pliki pozostają na dysku po odtworzeniu, aby ponowne oglądanie rozpoczynało się natychmiast.",
+      "ttl_none": "Nie przechowuj",
+      "ttl_minutes": "{{num}} minut",
+      "ttl_hours": "{{num}} godzin",
+      "ttl_days": "{{num}} dni",
+      "storage_used": "Wykorzystanie pamięci podręcznej",
+      "storage_of": "Wykorzystano {{used}} z {{limit}}",
+      "disk_free": "{{size}} wolnego miejsca na dysku",
+      "storage_load_failed": "Nie udało się odczytać pamięci podręcznej torrentów.",
+      "storage_action_failed": "Coś poszło nie tak podczas usuwania. Spróbuj ponownie.",
+      "refresh": "Odśwież",
+      "open_folder": "Otwórz folder",
+      "clear_cache": "Wyczyść pamięć podręczną",
+      "clear_cache_confirm": "Kliknij ponownie, aby potwierdzić",
+      "clear_cache_desc": "Usuwa wszystkie zapisane w pamięci podręcznej torrenty, które nie są obecnie odtwarzane.",
+      "cache_entries": "Torrenty w pamięci podręcznej ({{num}})",
+      "cache_empty": "Pamięć podręczna jest jeszcze pusta.",
+      "files_count": "{{num}} plików",
+      "last_used": "ostatnio użyto {{date}}",
+      "delete_entry": "Usuń",
+      "state_active": "Odtwarzanie",
+      "state_seeding": "Seedowanie",
+      "state_cached": "W pamięci podręcznej"
     }
   },
-
-  "player": {
-    "cc_off": "Wyłącz napisy",
-    "cc_on": "Włącz napisy",
-    "enter_fullscreen": "Pełny ekran",
-    "exit_fullscreen": "Wyjdź z pełnego ekranu",
-    "seek_backward": "Przewiń do tyłu",
-    "seek_forward": "Przewiń do przodu",
-    "audio": "Dźwięk",
-    "auto": "Automatycznie",
-    "default": "Domyślne",
-    "disabled": "Wyłączone",
-    "fullscreen": "Pełny ekran",
-    "mute": "Wycisz",
-    "normal": "Normalny",
-    "off": "Wył.",
-    "opacity": "Krycie",
-    "pause": "Wstrzymaj",
-    "play": "Odtwarzaj",
-    "quality": "Jakość",
-    "reset": "Resetuj",
-    "seek": "Przewijanie",
-    "settings": "Ustawienia",
-    "unmute": "Wyłącz wyciszenie",
-    "volume": "Głośność",
-    "none": "Brak",
-    "outline": "Obramowanie",
-    "drop_shadow": "Cień",
-    "raised": "Wypukłe",
-    "depressed": "Wklęsłe",
-    "left": "Do lewej",
-    "center": "Wyśrodkowane",
-    "right": "Do prawej",
-    "bold": "Pogrubienie",
-    "font": "Czcionka",
-    "align": "Wyrównanie",
-    "weight": "Grubość",
-    "style": "Styl",
-    "subtitles": "Napisy",
-    "appareance": "Wygląd",
-    "size": "Rozmiar",
-    "text_color": "Kolor tekstu",
-    "outline_color": "Kolor obramowania",
-    "width": "Szerokość",
-    "background": "Tło",
-    "transparency": "Przezroczystość",
-    "padding": "Margines wewnętrzny",
-    "vertical_position": "Pozycja pionowa",
-    "line_height": "Wysokość linii"
-  },
-
   "tags": {
     "Action": "Akcja",
     "Adventure": "Przygoda",
@@ -1222,6 +1351,13 @@
       "execution_failed": "Wykonanie rozszerzenia nie powiodło się.",
       "bad_json_response": "Nieprawidłowa odpowiedź JSON ze środowiska sandbox.",
       "thread_panicked": "Wątek środowiska sandbox uległ awarii."
+    },
+    "torrent": {
+      "invalid_cache_key": "Nieprawidłowy wpis pamięci podręcznej.",
+      "cache_entry_in_use": "Ten torrent jest obecnie odtwarzany i nie można go usunąć.",
+      "cache_entry_not_found": "Ten wpis pamięci podręcznej już nie istnieje.",
+      "cache_delete_failed": "Nie udało się usunąć zapisanych plików.",
+      "cache_scan_failed": "Nie udało się odczytać pamięci podręcznej torrentów."
     }
   }
 }

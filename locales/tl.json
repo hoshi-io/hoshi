@@ -6,7 +6,6 @@
     "settings": "Mga Setting",
     "schedule": "Iskedyul",
     "marketplace": "Marketplace",
-
     "menu": "Menu",
     "account": "Account",
     "logout": "Logout",
@@ -63,7 +62,6 @@
       "title": "Mga Extension",
       "description": "Upang manood ng nilalaman, kailangan mong i-access ito sa pamamagitan ng mga extension na direktang nagdadala nito sa iyo. Maaari mo itong gawin mamaya."
     },
-
     "navigation": {
       "back": "Bumalik",
       "skip": "Laktawan",
@@ -72,7 +70,6 @@
       "saving": "Nag-i-save..."
     }
   },
-
   "home": {
     "title": "Home",
     "anime": "Anime",
@@ -90,14 +87,18 @@
     "action": "Nangungunang Aksyon",
     "romance": "Nangungunang Romansa",
     "fantasy": "Pantasya",
-
     "continue": {
       "continue_watching": "Ituloy ang panonood",
       "continue_reading": "Ituloy ang pagbabasa",
       "episodes": "Episode {{num}}",
       "chapters": "Kabanata {{num}}"
     },
-
+    "recently_aired": {
+      "title": "Kamakailang Naipalabas",
+      "just_aired": "Kakapalabas lang",
+      "hours_ago": "{{count}}h ang nakalipas",
+      "days_ago": "{{count}}d ang nakalipas"
+    },
     "hero": {
       "rating": "Rating",
       "no_synopsis": "Walang synopsis",
@@ -110,10 +111,10 @@
       "trailer": "Trailer"
     }
   },
-
   "card": {
     "TV": "TV",
     "ONA": "ONA",
+    "OVA": "OVA",
     "MOVIE": "Pelikula",
     "SPECIAL": "Espesyal",
     "airing": "Ipinapalabas",
@@ -123,12 +124,16 @@
     "cover": "Cover",
     "banner": "Banner",
     "episodes": "{{count}} episode",
-    "watch": "Manood",
-    "OVA": "OVA"
+    "watch": "Manood"
   },
-
   "list": {
     "title": "Listahan",
+    "all_trackers": "Lahat ng tracker",
+    "missing_anilist": "Wala sa Anilist",
+    "missing_mal": "Wala sa MyAnimeList",
+    "missing_kitsu": "Wala sa Kitsu",
+    "missing_simkl": "Wala sa Simkl",
+    "show_conflicts": "Ipakita ang Mga Conflict sa Sync",
     "header_title": "Listahan ni {{name}}",
     "add_to_list": "Idagdag sa listahan",
     "all": "Lahat",
@@ -137,6 +142,7 @@
     "planning": "Plano pa lang",
     "paused": "Naka-pause",
     "dropped": "Iniwan",
+    "repeating": "Paulit-ulit",
     "single_entry": "{{count}} na entry",
     "multiple_entries": "{{count}} na mga entry",
     "search_placeholder": "Maghanap sa listahan mo...",
@@ -147,14 +153,12 @@
     "empty_title": "Walang laman ang iyong listahan",
     "empty_desc": "Magsimulang magdagdag ng nilalaman sa iyong listahan para makita ito rito.",
     "default_user": "User",
-    "repeating": "Paulit-ulit",
     "sort_progress_desc": "Pababa",
     "sort_progress_asc": "Pataas",
     "sort_by": "Ayusin ayon sa",
     "content_type": "Uri",
     "clear_all": "Burahin lahat",
     "status": "Katayuan",
-
     "modal": {
       "episodes": "Mga Episode",
       "chapters": "Mga Kabanata",
@@ -181,7 +185,6 @@
       "update": "I-update",
       "default_title": "Hindi Alam na Pamagat",
       "of_total": "(mula sa {{count}})",
-      "saving": "Nag-i-save",
       "merge": "Pagsamahin",
       "conflict": "Hidwaan",
       "history": "Kasaysayan",
@@ -214,7 +217,6 @@
     "select_chapter": "Pumili ng Kabanata",
     "chapters_available": "{{count}} na kabanata ang available",
     "chapter_number": "Kabanata {{count}}",
-
     "chapter_with_title": "Kabanata {{num}} - {{title}}",
     "chapter_number_fallback": "Kabanata {{num}}",
     "no_data": "Walang available na data para sa kabanatang ito.",
@@ -233,7 +235,13 @@
     "page_alt": "Imahe ng pahina",
     "page_left_alt": "Kaliwang Pahina",
     "page_right_alt": "Kanang Pahina",
-
+    "next_page": "Susunod na pahina",
+    "prev_page": "Nakaraang pahina",
+    "scroll_up": "Mag-scroll pataas",
+    "scroll_down": "Mag-scroll pababa",
+    "page_scroll": "Pag-scroll ng Pahina",
+    "increase_font": "Lakihan ang font",
+    "decrease_font": "Liitan ang font",
     "theme": "Tema",
     "font_family": "Font Family",
     "alignment": "Alignment",
@@ -242,18 +250,11 @@
     "paragraph_spacing": "Spacing ng Parapo",
     "content_width": "Lapad ng Nilalaman",
     "align_left": "Kaliwa",
-    "align_justify": "Justify",
-    "next_page": "Susunod na pahina",
-    "prev_page": "Nakaraang pahina",
-    "scroll_up": "Mag-scroll pataas",
-    "scroll_down": "Mag-scroll pababa",
-    "page_scroll": "Pag-scroll ng Pahina",
-    "increase_font": "Lakihan ang font",
-    "decrease_font": "Liitan ang font"
+    "align_justify": "Justify"
   },
   "schedule": {
-    "my_list_filter": "Aking Listahan",
     "title": "Iskedyul",
+    "my_list_filter": "Aking Listahan",
     "upcoming_episodes": "Mga susunod na episode",
     "release_calendar": "Release Calendar ni {{name}}",
     "my": "Aking",
@@ -287,6 +288,7 @@
     "completed": "Tapos na",
     "ongoing": "Kasalukuyan",
     "planned": "Plano pa lang",
+    "cancelled": "Kinansela",
     "hiatus": "Pahinga",
     "genre": "Genre",
     "any_genre": "Anuman",
@@ -315,7 +317,6 @@
     "tv_short": "Maikling TV",
     "special": "Espesyal",
     "ona": "ONA",
-    "cancelled": "Kinansela",
     "nsfw_only": "NSFW LANG",
     "select": "Pumili",
     "submit": "I-submit",
@@ -330,14 +331,91 @@
   "watch": {
     "episode_with_title": "Episode {{num}} - {{title}}",
     "episode_number": "Episode {{num}}",
-
+    "title_fallback": "Player",
+    "loading": "Naglo-load...",
+    "loading_metadata": "Naglo-load ng metadata...",
+    "playback_error": "Error sa Pag-playback",
+    "back_to_details": "Bumalik sa detalye",
+    "torrent_change": "baguhin",
+    "torrent_seeders": "mga seeder",
+    "torrent_peers": "mga peer",
+    "torrent_pick_title": "Pumili ng torrent",
+    "torrent_search": "Maghanap",
+    "torrent_search_placeholder": "Naruto...",
+    "torrent_no_results": "Walang resulta",
+    "player": {
+      "play": "I-play",
+      "pause": "I-pause",
+      "mute": "I-mute",
+      "unmute": "I-unmute",
+      "volume": "Volume",
+      "seek": "Mag-seek",
+      "seek_forward": "Laktawan pasulong ng {{seconds}}s",
+      "fullscreen_enter": "Pumasok sa fullscreen",
+      "fullscreen_exit": "Lumabas sa fullscreen",
+      "next_episode": "Susunod na episode",
+      "previous_episode": "Nakaraang episode",
+      "settings": "Mga setting",
+      "close_settings": "Isara ang mga setting"
+    },
+    "settings": {
+      "source": "Source",
+      "server": "Server",
+      "dub_audio": "Dubbed na audio",
+      "video": "Video",
+      "subtitle_style": "Estilo ng subtitle",
+      "quality": "Kalidad",
+      "audio_track": "Audio track",
+      "subtitles": "Mga subtitle",
+      "default": "Default",
+      "off": "Naka-off",
+      "auto": "Awtomatiko",
+      "track_fallback": "Track {{num}}",
+      "video_section": {
+        "hardware_decoding": "Hardware decoding",
+        "hwdec_auto_safe": "Auto (ligtas)",
+        "hwdec_auto": "Auto",
+        "hwdec_software": "Software lang",
+        "upscale_quality": "Kalidad ng upscaling",
+        "scale_fast": "Mabilis",
+        "scale_balanced": "Balanseng",
+        "scale_sharp": "Matalas",
+        "smooth_motion": "Makinis na galaw",
+        "reduce_banding": "Bawasan ang color banding"
+      },
+      "subtitle_style_section": {
+        "font": "Font",
+        "font_size": "Laki ng font",
+        "size_small": "Maliit",
+        "size_medium": "Katamtaman",
+        "size_large": "Malaki",
+        "size_extra_large": "Napakalaki",
+        "size_scale": "Scale ng laki ({{scale}}x)",
+        "text_color": "Kulay ng teksto",
+        "outline_color": "Kulay ng outline",
+        "outline_size": "Laki ng outline ({{size}})",
+        "background_box": "Background box",
+        "background_color": "Kulay ng background",
+        "position": "Posisyon ({{percent}}%)",
+        "alignment": "Alignment",
+        "align_auto": "Auto",
+        "align_left": "Kaliwa",
+        "align_center": "Gitna",
+        "align_right": "Kanan",
+        "delay": "Delay ({{seconds}}s)",
+        "shadow_color": "Kulay ng anino",
+        "shadow_offset": "Offset ng anino ({{offset}})",
+        "force_style": "Ipilit ang aking estilo sa mga naka-style na subtitle",
+        "hide_sdh": "Itago ang mga paglalarawan ng tunog",
+        "sdh_aggressive": "Mas agresibo"
+      }
+    }
   },
   "content": {
-    "resume": "Ituloy",
     "details": "Mga Detalye",
+    "episode_in": "Episode {{num}} sa loob ng {{time}}",
+    "resume": "Ituloy",
     "loading": "Naglo-load",
-    "close": "Isara",
-    "connected_trackers": "Mga nakakonektang tracker",
     "score": "{{score}}%",
     "eps_short": "Ep",
     "ch_short": "Kab",
@@ -404,7 +482,9 @@
     "provider": "Provider",
     "select": "Pumili",
     "id_slug": "id",
+    "close": "Isara",
     "extension_manager": {
+      "not_linked": "Hindi naka-link",
       "no_results_found_ext": "Walang nahanap na resulta",
       "missing_id_error": "Error: Nawawalang id",
       "update_ext_success": "Matagumpay na na-update",
@@ -416,17 +496,23 @@
       "cancel": "I-cancel",
       "search_title_placeholder": "maghanap...",
       "select": "Pumili",
-      "no_extensions_configured": "Walang mga extension para sa kasalukuyang uri ng pamagat",
-      "not_linked": "Hindi naka-link",
       "link": "I-link",
-      "edit": "I-edit"
-    }
+      "edit": "I-edit",
+      "no_extensions_configured": "Walang mga extension para sa kasalukuyang uri ng pamagat"
+    },
+    "connected_trackers": "Mga nakakonektang tracker",
+    "merge_entries": "Pagsamahin ang mga Entry",
+    "merge_entries_desc": "Pagsamahin ito sa duplicate na entry para pagsamahin ang kanilang trackers, sources, at metadata.",
+    "keeping_this_entry": "Ititira ang entry na ito",
+    "search_duplicate_placeholder": "Hanapin sa iyong library ang duplicate...",
+    "no_results": "Walang nakitang katugmang entry",
+    "merge_warning": "Ang {{title}} ay isasama sa entry na ito at permanenteng tatanggalin. Hindi na ito maaaring ibalik.",
+    "merge_success": "Matagumpay na napagsama ang mga entry",
+    "confirm_merge": "Kumpirmahin ang Pagsasama"
   },
-
   "discord": {
     "browsing": "Nasa App"
   },
-
   "settings": {
     "title": "Mga Setting",
     "preferences": "Mga Kagustuhan",
@@ -441,6 +527,7 @@
     "novel": "Nobela",
     "tracking": "Tracking",
     "extensions": "Mga Extension",
+    "torrent": "Torrent",
     "changes_updated": "Matagumpay na na-update ang mga pagbabago!",
     "cancel": "I-cancel",
     "readers": "Mga Reader",
@@ -449,7 +536,6 @@
     "section_application": "APPLICATION",
     "section_experience": "KARANASAN",
     "section_integrations": "INTEGRATIONS",
-
     "discord_section": {
       "discord_desc": "I-configure kung paano nagsasama ang app sa Discord Rich Presence.",
       "enabled": "I-enable ang Rich Presence",
@@ -459,7 +545,6 @@
       "hide_nsfw": "Itago ang NSFW na Nilalaman",
       "hide_nsfw_desc": "Itago ang mga pamagat at detalye kapag tumitingin ng pang-matandang nilalaman para protektahan ang iyong privacy."
     },
-
     "account_section": {
       "password_required": "Kailangan ng Password",
       "account_deleted": "Nabura na ang account",
@@ -489,7 +574,6 @@
       "delete_warning": "Ang aksyong ito ay hindi na maaaring bawiin. Permanenteng mabubura ang lahat ng iyong data.",
       "confirm_delete": "Kumpirmahin ang Pagbura"
     },
-
     "trackers_section": {
       "token_required": "Kailangan ng access token para makakonekta.",
       "connected_successfully": "Matagumpay na nakakonekta ang {{name}}!",
@@ -534,7 +618,6 @@
       "conflict_mal": "Unahin ang MyAnimeList",
       "conflict_kitsu": "Unahin ang Kitsu"
     },
-
     "general_section": {
       "general_desc": "Pamahalaan ang iyong mga pangkalahatang kagustuhan sa app.",
       "theme": "Tema",
@@ -547,30 +630,11 @@
       "show_nsfw_desc": "Payagan ang tahasang nilalaman na ipakita sa mga paghahanap at rekomendasyon.",
       "blur_nsfw": "I-blur ang Pang-matandang Nilalaman",
       "blur_nsfw_desc": "I-blur ang mga imahe ng pang-matandang nilalaman bilang default.",
-      "backups": "Mga Backup",
-      "backups_desc": "I-export o i-import ang iyong mga listahan, progress, at mga setting.",
-      "confirm_restore": "Sigurado ka bang gusto mong i-restore ang backup na ito? Mapapatungan nito ang iyong kasalukuyang library at mga setting.",
-      "backup_restored": "Matagumpay na nai-restore ang backup.",
-      "confirm_delete_backup": "Sigurado ka bang gusto mong burahin ang backup na ito? Ang aksyong ito ay hindi na mababawi.",
-      "backup_downloading": "Dina-download ang backup...",
-      "manual_backup": "Manual Backup",
-      "manual_backup_desc": "Gumawa ng manual na backup ng iyong library at mga setting.",
-      "create_backup": "Gumawa ng Backup",
-      "backup_history": "History ng Backup",
-      "no_backups": "Walang nahanap na mga backup.",
-      "no_backups_desc": "Hindi ka pa gumagawa ng anumang mga backup. Gumawa ng manual na backup para masiguro ang iyong data.",
-      "auto_backup": "Auto Backup",
-      "entries_count": "Mga Entry",
-      "download_backup": "I-download ang Backup",
-      "restore_backup": "I-restore ang backup",
-      "delete_backup": "Burahin ang Backup",
-      "raw_backup": "Raw copy",
       "search_language": "Maghanap ng wika...",
       "no_language_found": "Walang nahanap na wika.",
       "select_language": "Pumili ng wika...",
       "cancel": "Kanselahin"
     },
-
     "ui_section": {
       "interface_desc": "I-customize ang hitsura at gawi ng interface.",
       "title_language": "Wika ng Pamagat",
@@ -578,24 +642,23 @@
       "title_language_romaji": "Romaji (hal. Shingeki no Kyojin)",
       "title_language_english": "Ingles (hal. Attack on Titan)",
       "title_language_native": "Katutubo (hal. 進撃の巨人)",
+      "title_language_chinese": "Intsik (hal. 进击的巨人)",
       "default_home": "Default na Home Section",
       "default_home_desc": "Ang tab na awtomatikong bubukas kapag inilunsad ang application.",
       "default_home_anime": "Anime",
       "default_home_manga": "Manga",
       "default_home_novel": "Mga Nobela",
       "disable_card_trailers": "I-disable ang mga card trailer",
-      "disable_card_trailers_desc": "Pinipigilan ang mga trailer na awtomatikong tumugtog kapag itinuturo ang card.",
-      "title_language_chinese": "Intsik (hal. 进击的巨人)"
+      "disable_card_trailers_desc": "Pinipigilan ang mga trailer na awtomatikong tumugtog kapag itinuturo ang card."
     },
-
     "content_section": {
       "content_desc": "Pamahalaan ang iyong mga metadata provider at mga gawi sa pag-track.",
       "metadata_provider": "Mas Gustong Metadata Provider",
       "metadata_provider_desc": "Pumili ng pangunahing source na gagamitin para sa mga pamagat, deskripsyon, at mga cover image.",
       "auto_update_progress": "Auto-Update ng Progress",
-      "auto_update_progress_desc": "Awtomatikong i-update ang progress ng iyong listahan kapag malapit ka na sa dulo ng isang episode o kabanata."
+      "score_format": "Format ng score",
+      "score_format_desc": "Piliin kung paano ipinapakita ang mga score sa hoshi."
     },
-
     "extension_section": {
       "extensions_desc": "Pamahalaan ang iyong mga naka-install na extension at ang kanilang mga setting.",
       "repo_url": "URL ng Repository",
@@ -610,20 +673,15 @@
       "unsupported_type": "Hindi Suportadong Uri",
       "extension_config": "Mga Setting ng {{name}}"
     },
-
     "player_section": {
       "player_desc": "I-configure ang mga setting ng playback, mga wika, at automation.",
+      "seconds": "{{num}} na segundo",
       "preferred_sub_lang": "Mas Gustong Wika ng Subtitle",
       "preferred_sub_lang_desc": "Maglagay ng listahan ng mga language code na pinaghihiwalay ng koma (hal., en, es, fr, tl).",
       "preferred_dub_lang": "Mas Gustong Wika ng Audio",
       "preferred_dub_lang_desc": "Maglagay ng listahan ng mga language code na pinaghihiwalay ng koma (hal., ja, en, tl).",
-      "default_ep_layout": "Default na Episode Layout",
-      "default_ep_layout_desc": "Pumili kung paano ipapakita ang mga episode bilang default.",
-      "grid": "Grid",
-      "list": "Listahan",
       "seek_step": "Oras ng Skip Forward/Backward",
       "seek_step_desc": "I-set ang bilang ng segundo para lumaktaw kapag nag-si-seek.",
-      "seconds": "{{num}} na segundo",
       "autoplay": "Auto-play ng Susunod na Episode",
       "autoplay_desc": "Awtomatikong simulan ang susunod na episode kapag natapos ang kasalukuyan.",
       "resume_playback": "Ituloy ang Playback",
@@ -632,16 +690,45 @@
       "auto_skip_intro_desc": "Awtomatikong laktawan ang mga opening theme kung ma-de-detect.",
       "auto_skip_outro": "Auto-Skip ng mga Outro",
       "auto_skip_outro_desc": "Awtomatikong laktawan ang mga ending theme kung ma-de-detect.",
-      "use_mpv": "Gamitin ang MPV",
-      "use_mpv_desc": "Gamitin ang mpv sa halip na ang built-in player. Dapat ay nasa PATH ang mpv.",
-      "let_hoshi": "Hayaan ang Hoshi na mamahala ng config ng mpv",
-      "let_hoshi_desc": "Ang Hoshi ang magsusulat at mamamahala sa config directory ng mpv: mga script, font, at OSC.",
-      "osc": "Balat ng MPV (OSC)",
-      "osc_desc": "Pumili ng istilo ng OSC. Awtomatiko itong idodownload at ilalapat.",
-      "scripts": "Mga Script",
-      "scripts_desc": "Paganahin ang mga script upang palawakin ang mga tampok ng mpv. Awtomatiko silang idodownload."
+      "hwdec": "Hardware Decoding",
+      "hwdec_desc": "Paraan ng pag-decode ng video (hal., auto, no, vaapi)",
+      "scale_algorithm": "Scaling Algorithm",
+      "scale_algorithm_desc": "Algorithm na ginagamit para sa pag-upscale/downscale ng video",
+      "interpolation": "Video Interpolation",
+      "interpolation_desc": "I-enable ang motion interpolation (mas makinis na video)",
+      "deband": "Debanding",
+      "deband_desc": "Bawasan ang color banding sa pag-playback ng video",
+      "sub_font": "Font Family",
+      "sub_font_desc": "Pangalan ng system font para sa mga subtitle",
+      "sub_font_size": "Laki ng Font",
+      "sub_font_size_desc": "Laki ng teksto ng subtitle",
+      "sub_color": "Kulay ng Teksto",
+      "sub_color_desc": "Hex color code (#RRGGBB o #RRGGBBAA)",
+      "sub_border_color": "Kulay ng Border",
+      "sub_border_size": "Laki ng Border",
+      "sub_bg_color": "Kulay ng Background",
+      "sub_position": "Patayong Posisyon",
+      "sub_position_desc": "Posisyon ng subtitle (0-100)",
+      "sub_delay": "Delay ng Subtitle (ms)",
+      "sub_force_style": "Ipilit ang Custom na Estilo",
+      "sub_force_style_desc": "I-override ang orihinal na ASS subtitle styles",
+      "sub_scale": "Scale ng Subtitle",
+      "sub_shadow_color": "Kulay ng Anino",
+      "sub_shadow_offset": "Offset ng Anino",
+      "sub_justify": "Text Justification",
+      "sub_sdh_filter": "I-filter ang SDH Tags",
+      "sub_sdh_filter_desc": "Alisin ang mga tag para sa may kapansanan sa pandinig mula sa teksto",
+      "sub_sdh_filter_harder": "Agresibong SDH Filter",
+      "sub_sdh_filter_harder_desc": "Alisin din ang mga parenthetical na paglalarawan ng tunog at mga tag ng pangalan ng nagsasalita",
+      "anime4k": "Anime4K",
+      "anime4k_desc": "Real-time na upscaling at pagbabawas ng artifacts gamit ang GPU shaders. Maaaring makaapekto sa performance sa mas mababang klase ng hardware.",
+      "anime4k_learn_more": "Alamin pa",
+      "anime4k_off": "Naka-off",
+      "anime4k_fast": "Mabilis",
+      "anime4k_hq": "HQ",
+      "anime4k_mode": "Anime4K Mode",
+      "anime4k_mode_desc": "Ang A, B, at C ay para sa iba't ibang uri ng pagkasira ng source."
     },
-
     "readers_section": {
       "reader_preview": "Preview",
       "novel_reader_preview": "Preview",
@@ -674,57 +761,72 @@
       "btn_refresh": "I-refresh",
       "btn_copy": "Kopyahin",
       "btn_clear_ui": "I-clear"
+    },
+    "torrent_section": {
+      "torrent_desc": "Piliin kung paano pumipili ng torrent, gaano karaming bandwidth ang ginagamit nito, at gaano katagal itinatago ang mga na-download na file.",
+      "tab_selection": "Pagpili",
+      "tab_network": "Network",
+      "tab_storage": "Storage",
+      "auto_select": "Awtomatikong pumili ng torrent",
+      "auto_select_desc": "Awtomatikong piliin ang pinakamahusay na torrent para sa isang episode gamit ang mga preference sa ibaba.",
+      "preferred_groups": "Mga gustong release group",
+      "preferred_groups_desc": "Pinaghihiwalay ng kuwit, ayon sa prayoridad. Ang mga torrent mula sa mga grupong ito ay unang niraranggo.",
+      "preferred_resolution": "Gustong resolution",
+      "preferred_resolution_desc": "Ang resolution na unang hahanapin.",
+      "preferred_codec": "Gustong codec",
+      "preferred_codec_desc": "Mas piliin ang mga release na naka-encode gamit ang video codec na ito.",
+      "codec_any": "Walang preference",
+      "prefer_dual_audio": "Mas gusto ang dual audio",
+      "prefer_dual_audio_desc": "Mas mataas na ranggo ang mga release na may parehong orihinal at dubbed na audio track.",
+      "require_batch": "Mga batch release",
+      "require_batch_desc": "Limitahan ang auto-selection sa buong season na batch o sa mga indibidwal na episode.",
+      "batch_any": "Alinman",
+      "batch_required": "Mga batch lang",
+      "batch_excluded": "Mga indibidwal na episode lang",
+      "min_seeders": "Minimum na seeders",
+      "min_seeders_desc": "Huwag isama ang mga torrent na mas kaunti ang seeders kaysa rito. Gamitin ang 0 para tanggapin ang lahat.",
+      "exclude_keywords": "Mga ibinukod na keyword",
+      "exclude_keywords_desc": "Pinaghihiwalay ng kuwit. Lalaktawan ang mga torrent na may alinman sa mga ito sa title.",
+      "fallback_to_manual": "Lumipat sa manual selection",
+      "fallback_to_manual_desc": "Buksan ang torrent picker kapag walang nahanap na tumutugma sa auto-select.",
+      "download_limit": "Limitasyon sa bilis ng download",
+      "download_limit_desc": "Pinakamataas na bilis ng download. Iwanang walang laman para walang limitasyon.",
+      "upload_limit": "Limitasyon sa bilis ng upload",
+      "upload_limit_desc": "Pinakamataas na bilis ng upload habang nagse-seed. Iwanang walang laman para walang limitasyon.",
+      "unlimited": "Walang limitasyon",
+      "max_concurrent": "Pinakamataas na sabay-sabay na torrent",
+      "max_concurrent_desc": "Bilang ng torrent na maaaring maging aktibo nang sabay-sabay. Palaging pinapayagan ang hindi bababa sa 2 para gumana ang pagpapalit ng episode.",
+      "stop_seeding": "Itigil ang pag-seed kapag natapos ang playback",
+      "stop_seeding_desc": "I-off para patuloy na maibahagi ang torrent pagkatapos mong tumigil sa panonood, hanggang sa mag-expire ang mga naka-cache na file.",
+      "max_disk_usage": "Pinakamataas na laki ng cache",
+      "max_disk_usage_desc": "Kapag lumampas dito ang cache, tatanggalin ang mga torrent na pinakamatagal nang hindi napapanood.",
+      "min_free_disk": "Minimum na libreng disk space",
+      "min_free_disk_desc": "Tumangging magsimula ng stream kung mas mababa rito ang matitirang libreng space sa disk. Gamitin ang 0 para i-disable.",
+      "finished_ttl": "Itago ang mga natapos na file nang",
+      "finished_ttl_desc": "Gaano katagal mananatili sa disk ang mga file pagkatapos ng playback, para agad na mapanood muli.",
+      "ttl_none": "Huwag itago",
+      "ttl_minutes": "{{num}} minuto",
+      "ttl_hours": "{{num}} oras",
+      "ttl_days": "{{num}} araw",
+      "storage_used": "Paggamit ng cache",
+      "storage_of": "{{used}} sa {{limit}} ang ginagamit",
+      "disk_free": "{{size}} libre sa disk",
+      "storage_load_failed": "Hindi mabasa ang torrent cache.",
+      "storage_action_failed": "May nangyaring problema habang nagde-delete. Subukan muli.",
+      "refresh": "I-refresh",
+      "open_folder": "Buksan ang folder",
+      "clear_cache": "I-clear ang cache",
+      "clear_cache_confirm": "I-click muli para kumpirmahin",
+      "clear_cache_desc": "Tinatanggal ang lahat ng naka-cache na torrent na hindi kasalukuyang pinapatugtog.",
+      "cache_entries": "Mga naka-cache na torrent ({{num}})",
+      "cache_empty": "Wala pang naka-cache.",
+      "files_count": "{{num}} file",
+      "last_used": "huling ginamit {{date}}",
+      "delete_entry": "Tanggalin",
+      "state_active": "Pinapatugtog",
+      "state_seeding": "Nagse-seed",
+      "state_cached": "Naka-cache"
     }
-  },
-
-  "player": {
-    "cc_off": "I-disable ang mga Subtitle",
-    "cc_on": "I-enable ang mga subtitle",
-    "enter_fullscreen": "I-fullscreen",
-    "exit_fullscreen": "I-exit ang Fullscreen",
-    "seek_backward": "I-seek Pabalik",
-    "seek_forward": "I-seek Pasulong",
-    "audio": "Audio",
-    "auto": "Auto",
-    "default": "Default",
-    "disabled": "Disabled",
-    "fullscreen": "Fullscreen",
-    "mute": "I-mute",
-    "normal": "Normal",
-    "off": "Off",
-    "opacity": "Opacity",
-    "pause": "I-pause",
-    "play": "I-play",
-    "quality": "Kalidad",
-    "reset": "I-reset",
-    "seek": "Seek",
-    "settings": "Mga Setting",
-    "unmute": "I-unmute",
-    "volume": "Volume",
-    "none": "Wala",
-    "outline": "Outline",
-    "drop_shadow": "Drop Shadow",
-    "raised": "Nakaangat",
-    "depressed": "Nakabaon",
-    "left": "Kaliwa",
-    "center": "Gitna",
-    "right": "Kanan",
-    "bold": "bold",
-    "font": "Font",
-    "align": "I-align",
-    "weight": "Weight",
-    "style": "Estilo",
-    "subtitles": "Mga Subtitle",
-    "appareance": "Itsura",
-    "size": "Laki",
-    "text_color": "Kulay ng text",
-    "outline_color": "Outline",
-    "width": "Lapad",
-    "background": "Background",
-    "transparency": "Transparency",
-    "padding": "Padding",
-    "vertical_position": "Vertical na posisyon",
-    "line_height": "Line height"
   },
   "tags": {
     "Action": "Aksyon",
@@ -1249,6 +1351,13 @@
       "execution_failed": "Nabigo ang pagpapatakbo ng extension.",
       "bad_json_response": "Imbalidong JSON response mula sa sandbox.",
       "thread_panicked": "Nag-crash ang sandbox thread."
+    },
+    "torrent": {
+      "invalid_cache_key": "Di-wastong cache entry.",
+      "cache_entry_in_use": "Kasalukuyang pinapatugtog ang torrent na ito at hindi ito maaaring tanggalin.",
+      "cache_entry_not_found": "Hindi na umiiral ang cache entry na ito.",
+      "cache_delete_failed": "Hindi matanggal ang mga naka-cache na file.",
+      "cache_scan_failed": "Hindi mabasa ang torrent cache."
     }
   }
 }

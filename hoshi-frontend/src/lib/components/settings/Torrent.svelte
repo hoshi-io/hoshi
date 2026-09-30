@@ -305,7 +305,7 @@
                         <Input
                                 value={torrentConfig.preferredGroups.join(", ")}
                                 onchange={(e) => handleListChange("preferredGroups", e.currentTarget)}
-                                placeholder="SubsPlease, Erai-raws"
+                                placeholder="Group1, Group2"
                                 class="rounded-sm h-11"
                         />
                     </div>

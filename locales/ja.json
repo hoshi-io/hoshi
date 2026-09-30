@@ -4,8 +4,8 @@
     "search": "検索",
     "list": "リスト",
     "settings": "設定",
-    "marketplace": "マーケットプレイス",
     "schedule": "スケジュール",
+    "marketplace": "マーケットプレイス",
     "menu": "メニュー",
     "account": "アカウント",
     "logout": "ログアウト",
@@ -70,7 +70,6 @@
       "saving": "保存中..."
     }
   },
-
   "home": {
     "title": "ホーム",
     "anime": "アニメ",
@@ -88,14 +87,18 @@
     "action": "人気アクション",
     "romance": "人気ロマンス",
     "fantasy": "ファンタジー",
-
     "continue": {
       "continue_watching": "視聴を続ける",
       "continue_reading": "読書を続ける",
       "episodes": "第{{num}}話",
       "chapters": "第{{num}}章"
     },
-
+    "recently_aired": {
+      "title": "最近放送された作品",
+      "just_aired": "放送されたばかり",
+      "hours_ago": "{{count}}時間前",
+      "days_ago": "{{count}}日前"
+    },
     "hero": {
       "rating": "評価",
       "no_synopsis": "あらすじがありません",
@@ -108,10 +111,10 @@
       "trailer": "トレーラー"
     }
   },
-
   "card": {
     "TV": "TV",
     "ONA": "ONA",
+    "OVA": "OVA",
     "MOVIE": "映画",
     "SPECIAL": "スペシャル",
     "airing": "放送中",
@@ -121,12 +124,16 @@
     "cover": "カバー",
     "banner": "バナー",
     "episodes": "{{count}}話",
-    "watch": "視聴",
-    "OVA": "OVA"
+    "watch": "視聴"
   },
-
   "list": {
     "title": "リスト",
+    "all_trackers": "すべてのトラッカー",
+    "missing_anilist": "AniListにありません",
+    "missing_mal": "MyAnimeListにありません",
+    "missing_kitsu": "Kitsuにありません",
+    "missing_simkl": "Simklにありません",
+    "show_conflicts": "同期の競合を表示",
     "header_title": "{{name}}のリスト",
     "add_to_list": "リストに追加",
     "all": "すべて",
@@ -135,6 +142,7 @@
     "planning": "予定",
     "paused": "一時停止",
     "dropped": "中止",
+    "repeating": "繰り返し",
     "single_entry": "{{count}}件",
     "multiple_entries": "{{count}}件",
     "search_placeholder": "リスト内を検索...",
@@ -145,14 +153,12 @@
     "empty_title": "リストは空です",
     "empty_desc": "コンテンツを追加するとここに表示されます。",
     "default_user": "ユーザー",
-    "repeating": "繰り返し",
     "sort_progress_desc": "降順",
     "sort_progress_asc": "昇順",
     "sort_by": "並び替え",
     "content_type": "タイプ",
     "clear_all": "すべてクリア",
     "status": "ステータス",
-
     "modal": {
       "episodes": "エピソード",
       "chapters": "チャプター",
@@ -179,14 +185,12 @@
       "update": "更新",
       "default_title": "不明なタイトル",
       "of_total": "(全{{count}})",
-      "saving": "保存中",
       "merge": "統合",
       "conflict": "競合",
       "history": "履歴",
       "no_history": "履歴なし"
     }
   },
-
   "marketplace": {
     "title": "マーケットプレイス",
     "missing_manifest": "インストールできません: 拡張機能のマニフェストURLがありません。",
@@ -206,7 +210,6 @@
     "empty": "リポジトリが空です",
     "empty_desc": "このリポジトリは正常に読み込まれましたが、拡張機能が含まれていません。"
   },
-
   "reader": {
     "loading": "読み込み中",
     "retry": "再試行",
@@ -214,7 +217,6 @@
     "select_chapter": "チャプターを選択",
     "chapters_available": "{{count}}章があります",
     "chapter_number": "第{{count}}章",
-
     "chapter_with_title": "第{{num}}章 - {{title}}",
     "chapter_number_fallback": "第{{num}}章",
     "no_data": "このチャプターのデータはありません。",
@@ -233,7 +235,13 @@
     "page_alt": "ページ画像",
     "page_left_alt": "左ページ",
     "page_right_alt": "右ページ",
-
+    "next_page": "次のページ",
+    "prev_page": "前のページ",
+    "scroll_up": "上にスクロール",
+    "scroll_down": "下にスクロール",
+    "page_scroll": "ページスクロール",
+    "increase_font": "フォントを大きく",
+    "decrease_font": "フォントを小さく",
     "theme": "テーマ",
     "font_family": "フォント",
     "alignment": "配置",
@@ -242,18 +250,11 @@
     "paragraph_spacing": "段落間隔",
     "content_width": "コンテンツ幅",
     "align_left": "左揃え",
-    "align_justify": "両端揃え",
-    "next_page": "次のページ",
-    "prev_page": "前のページ",
-    "scroll_up": "上にスクロール",
-    "scroll_down": "下にスクロール",
-    "page_scroll": "ページスクロール",
-    "increase_font": "フォントを大きく",
-    "decrease_font": "フォントを小さく"
+    "align_justify": "両端揃え"
   },
-
   "schedule": {
     "title": "スケジュール",
+    "my_list_filter": "マイリスト",
     "upcoming_episodes": "今後のエピソード",
     "release_calendar": "{{name}}の配信カレンダー",
     "my": "マイ",
@@ -266,10 +267,8 @@
     "empty_desc": "選択した期間に予定されているエピソードはありません。",
     "airing_today": "本日放送",
     "watching": "視聴中",
-    "planning": "予定",
-    "my_list_filter": "マイリスト"
+    "planning": "予定"
   },
-
   "search": {
     "title": "検索",
     "placeholder": "検索...",
@@ -289,6 +288,7 @@
     "completed": "完了",
     "ongoing": "進行中",
     "planned": "予定",
+    "cancelled": "中止",
     "hiatus": "休止中",
     "genre": "ジャンル",
     "any_genre": "すべて",
@@ -317,7 +317,6 @@
     "tv_short": "短編TV",
     "special": "スペシャル",
     "ona": "ONA",
-    "cancelled": "中止",
     "nsfw_only": "NSFWのみ",
     "select": "選択",
     "submit": "送信",
@@ -329,17 +328,94 @@
     "source": "ソース / 拡張機能",
     "clear": "クリア"
   },
-
   "watch": {
     "episode_with_title": "第{{num}}話 - {{title}}",
-    "episode_number": "第{{num}}話"
+    "episode_number": "第{{num}}話",
+    "title_fallback": "プレイヤー",
+    "loading": "読み込み中...",
+    "loading_metadata": "メタデータを読み込み中...",
+    "playback_error": "再生エラー",
+    "back_to_details": "詳細に戻る",
+    "torrent_change": "変更",
+    "torrent_seeders": "シーダー",
+    "torrent_peers": "ピア",
+    "torrent_pick_title": "トレントを選択",
+    "torrent_search": "検索",
+    "torrent_search_placeholder": "Naruto...",
+    "torrent_no_results": "結果なし",
+    "player": {
+      "play": "再生",
+      "pause": "一時停止",
+      "mute": "ミュート",
+      "unmute": "ミュート解除",
+      "volume": "音量",
+      "seek": "シーク",
+      "seek_forward": "{{seconds}}秒進む",
+      "fullscreen_enter": "全画面表示",
+      "fullscreen_exit": "全画面表示を終了",
+      "next_episode": "次のエピソード",
+      "previous_episode": "前のエピソード",
+      "settings": "設定",
+      "close_settings": "設定を閉じる"
+    },
+    "settings": {
+      "source": "ソース",
+      "server": "サーバー",
+      "dub_audio": "吹き替え音声",
+      "video": "映像",
+      "subtitle_style": "字幕スタイル",
+      "quality": "画質",
+      "audio_track": "音声トラック",
+      "subtitles": "字幕",
+      "default": "デフォルト",
+      "off": "オフ",
+      "auto": "自動",
+      "track_fallback": "トラック{{num}}",
+      "video_section": {
+        "hardware_decoding": "ハードウェアデコード",
+        "hwdec_auto_safe": "自動（安全）",
+        "hwdec_auto": "自動",
+        "hwdec_software": "ソフトウェアのみ",
+        "upscale_quality": "アップスケール品質",
+        "scale_fast": "高速",
+        "scale_balanced": "バランス",
+        "scale_sharp": "シャープ",
+        "smooth_motion": "モーションスムージング",
+        "reduce_banding": "バンディングを軽減"
+      },
+      "subtitle_style_section": {
+        "font": "フォント",
+        "font_size": "フォントサイズ",
+        "size_small": "小",
+        "size_medium": "中",
+        "size_large": "大",
+        "size_extra_large": "特大",
+        "size_scale": "サイズ倍率（{{scale}}倍）",
+        "text_color": "文字色",
+        "outline_color": "縁取り色",
+        "outline_size": "縁取りサイズ（{{size}}）",
+        "background_box": "背景ボックス",
+        "background_color": "背景色",
+        "position": "位置（{{percent}}%）",
+        "alignment": "配置",
+        "align_auto": "自動",
+        "align_left": "左揃え",
+        "align_center": "中央揃え",
+        "align_right": "右揃え",
+        "delay": "遅延（{{seconds}}秒）",
+        "shadow_color": "影の色",
+        "shadow_offset": "影のオフセット（{{offset}}）",
+        "force_style": "スタイル付き字幕にも自分のスタイルを適用",
+        "hide_sdh": "音声説明を非表示",
+        "sdh_aggressive": "より強力に適用"
+      }
+    }
   },
   "content": {
-    "resume": "再開",
     "details": "詳細",
+    "episode_in": "{{time}}後に第{{num}}話",
+    "resume": "再開",
     "loading": "読み込み中",
-    "close": "閉じる",
-    "connected_trackers": "接続済みトラッカー",
     "score": "{{score}}%",
     "eps_short": "話",
     "ch_short": "章",
@@ -406,7 +482,9 @@
     "provider": "プロバイダー",
     "select": "選択",
     "id_slug": "ID",
+    "close": "閉じる",
     "extension_manager": {
+      "not_linked": "未リンク",
       "no_results_found_ext": "結果が見つかりません",
       "missing_id_error": "IDが見つかりません",
       "update_ext_success": "正常に更新されました",
@@ -418,11 +496,19 @@
       "cancel": "キャンセル",
       "search_title_placeholder": "検索...",
       "select": "選択",
-      "no_extensions_configured": "現在のタイトルタイプに対応する拡張機能はありません",
-      "not_linked": "未リンク",
       "link": "リンク",
-      "edit": "編集"
-    }
+      "edit": "編集",
+      "no_extensions_configured": "現在のタイトルタイプに対応する拡張機能はありません"
+    },
+    "connected_trackers": "接続済みトラッカー",
+    "merge_entries": "エントリを統合",
+    "merge_entries_desc": "重複したエントリと統合し、トラッカー、ソース、メタデータをまとめます。",
+    "keeping_this_entry": "このエントリを残す",
+    "search_duplicate_placeholder": "ライブラリから重複するエントリを検索...",
+    "no_results": "一致するエントリが見つかりません",
+    "merge_warning": "{{title}}をこのエントリに統合し、完全に削除します。この操作は元に戻せません。",
+    "merge_success": "エントリを正常に統合しました",
+    "confirm_merge": "統合を確認"
   },
   "discord": {
     "browsing": "アプリ内"
@@ -441,6 +527,7 @@
     "novel": "小説",
     "tracking": "トラッキング",
     "extensions": "拡張機能",
+    "torrent": "トレント",
     "changes_updated": "変更を更新しました！",
     "cancel": "キャンセル",
     "readers": "リーダー",
@@ -449,7 +536,6 @@
     "section_application": "アプリケーション",
     "section_experience": "エクスペリエンス",
     "section_integrations": "連携",
-
     "discord_section": {
       "discord_desc": "Discord Rich Presenceとの連携を設定します。",
       "enabled": "Rich Presenceを有効にする",
@@ -459,7 +545,6 @@
       "hide_nsfw": "NSFWコンテンツを隠す",
       "hide_nsfw_desc": "プライバシー保護のため、成人向けコンテンツの表示中にタイトルや詳細を隠します。"
     },
-
     "account_section": {
       "password_required": "パスワードが必要です",
       "account_deleted": "アカウントを削除しました",
@@ -469,7 +554,6 @@
       "remove": "削除",
       "username": "ユーザー名",
       "username_desc": "表示名です",
-      "confirm_password": "パスワード確認",
       "save": "保存",
       "saved": "保存しました",
       "security": "セキュリティ",
@@ -478,6 +562,7 @@
       "current_password_desc": "変更するには現在のパスワードを入力してください。",
       "new_password": "新しいパスワード",
       "new_password_desc": "十分な長さのパスワードを設定してください。",
+      "confirm_password": "パスワード確認",
       "confirm_new_password": "新しいパスワード確認",
       "update_password": "パスワード更新",
       "danger_zone": "危険ゾーン",
@@ -489,7 +574,6 @@
       "delete_warning": "この操作は取り消せません。すべてのデータが削除されます。",
       "confirm_delete": "削除を確認"
     },
-
     "trackers_section": {
       "token_required": "接続するにはアクセストークンが必要です。",
       "connected_successfully": "{{name}} に接続しました！",
@@ -534,7 +618,6 @@
       "conflict_mal": "MyAnimeListを優先",
       "conflict_kitsu": "Kitsuを優先"
     },
-
     "general_section": {
       "general_desc": "アプリ全体の設定を管理します。",
       "theme": "テーマ",
@@ -547,30 +630,11 @@
       "show_nsfw_desc": "検索やおすすめで成人向けコンテンツを表示します。",
       "blur_nsfw": "成人向けコンテンツをぼかす",
       "blur_nsfw_desc": "成人向け画像をデフォルトでぼかします。",
-      "backups": "バックアップ",
-      "backups_desc": "リスト・進行状況・設定をエクスポートまたはインポートします。",
-      "confirm_restore": "このバックアップを復元しますか？現在のライブラリと設定が上書きされます。",
-      "backup_restored": "バックアップを復元しました。",
-      "confirm_delete_backup": "このバックアップを削除しますか？この操作は元に戻せません。",
-      "backup_downloading": "バックアップをダウンロード中...",
-      "manual_backup": "手動バックアップ",
-      "manual_backup_desc": "ライブラリと設定の手動バックアップを作成します。",
-      "create_backup": "バックアップ作成",
-      "backup_history": "バックアップ履歴",
-      "no_backups": "バックアップがありません。",
-      "no_backups_desc": "まだバックアップを作成していません。データを保護するため作成してください。",
-      "auto_backup": "自動バックアップ",
-      "entries_count": "エントリー数",
-      "download_backup": "バックアップをダウンロード",
-      "restore_backup": "バックアップ復元",
-      "delete_backup": "バックアップ削除",
-      "raw_backup": "生バックアップ",
       "search_language": "言語を検索...",
       "no_language_found": "言語が見つかりません。",
       "select_language": "言語を選択...",
       "cancel": "キャンセル"
     },
-
     "ui_section": {
       "interface_desc": "インターフェースの外観と動作をカスタマイズします。",
       "title_language": "タイトルの表示言語",
@@ -578,24 +642,23 @@
       "title_language_romaji": "ローマ字 (例: Shingeki no Kyojin)",
       "title_language_english": "英語 (例: Attack on Titan)",
       "title_language_native": "ネイティブ (例: 進撃の巨人)",
+      "title_language_chinese": "中国語 (例: 进击的巨人)",
       "default_home": "デフォルトのホームセクション",
       "default_home_desc": "アプリ起動時に自動的に表示されるセクションを設定します。",
       "default_home_anime": "アニメ",
       "default_home_manga": "マンガ",
       "default_home_novel": "小説",
       "disable_card_trailers": "カードの予告編を無効にする",
-      "disable_card_trailers_desc": "カードにホバーした際に予告編が自動再生されるのを防ぎます。",
-      "title_language_chinese": "中国語 (例: 进击的巨人)"
+      "disable_card_trailers_desc": "カードにホバーした際に予告編が自動再生されるのを防ぎます。"
     },
-
     "content_section": {
       "content_desc": "メタデータ提供元とトラッキング動作を管理します。",
       "metadata_provider": "優先メタデータプロバイダー",
       "metadata_provider_desc": "タイトル・説明・カバー画像の主な取得元を選択します。",
       "auto_update_progress": "進行状況を自動更新",
-      "auto_update_progress_desc": "エピソードやチャプターの終わり近くで進行状況を自動更新します。"
+      "score_format": "スコア形式",
+      "score_format_desc": "hoshiでのスコアの表示形式を選択します。"
     },
-
     "extension_section": {
       "extensions_desc": "インストール済み拡張機能と設定を管理します。",
       "repo_url": "リポジトリURL",
@@ -610,11 +673,62 @@
       "unsupported_type": "未対応タイプ",
       "extension_config": "{{name}} 設定"
     },
-
     "player_section": {
-
+      "player_desc": "再生環境を設定します",
+      "seconds": "{{num}}秒",
+      "preferred_sub_lang": "優先字幕言語",
+      "preferred_sub_lang_desc": "言語コードをカンマ区切りで入力（例: en, es）",
+      "preferred_dub_lang": "優先音声言語",
+      "preferred_dub_lang_desc": "言語コードをカンマ区切りで入力（例: ja, en）",
+      "seek_step": "シーク幅",
+      "seek_step_desc": "前後にスキップする時間",
+      "autoplay": "次のエピソードを自動再生",
+      "autoplay_desc": "現在のエピソード終了時に次のエピソードを自動的に再生します",
+      "resume_playback": "再生位置を復元",
+      "resume_playback_desc": "最後に視聴した位置を記憶し、そこから再生を再開します",
+      "auto_skip_intro": "オープニングを自動スキップ",
+      "auto_skip_intro_desc": "エピソードのオープニングを自動的にスキップします",
+      "auto_skip_outro": "エンディングを自動スキップ",
+      "auto_skip_outro_desc": "エピソードのエンディングを自動的にスキップします",
+      "hwdec": "ハードウェアデコード",
+      "hwdec_desc": "映像のデコード方式（例: auto, no, vaapi）",
+      "scale_algorithm": "スケーリングアルゴリズム",
+      "scale_algorithm_desc": "映像のアップスケール／ダウンスケールに使用するアルゴリズム",
+      "interpolation": "映像補間",
+      "interpolation_desc": "モーション補間を有効にします（滑らかな映像）",
+      "deband": "デバンディング",
+      "deband_desc": "映像再生時の色のバンディングを軽減します",
+      "sub_font": "フォントファミリー",
+      "sub_font_desc": "字幕に使用するシステムフォント名",
+      "sub_font_size": "フォントサイズ",
+      "sub_font_size_desc": "字幕テキストのサイズ",
+      "sub_color": "文字色",
+      "sub_color_desc": "16進数のカラーコード（#RRGGBB または #RRGGBBAA）",
+      "sub_border_color": "縁取り色",
+      "sub_border_size": "縁取りサイズ",
+      "sub_bg_color": "背景色",
+      "sub_position": "垂直位置",
+      "sub_position_desc": "字幕の位置（0～100）",
+      "sub_delay": "字幕遅延（ms）",
+      "sub_force_style": "カスタムスタイルを強制",
+      "sub_force_style_desc": "元のASS字幕スタイルを上書きします",
+      "sub_scale": "字幕倍率",
+      "sub_shadow_color": "影の色",
+      "sub_shadow_offset": "影のオフセット",
+      "sub_justify": "テキストの配置",
+      "sub_sdh_filter": "SDHタグをフィルター",
+      "sub_sdh_filter_desc": "テキストから聴覚障害者向けタグを削除します",
+      "sub_sdh_filter_harder": "強力なSDHフィルター",
+      "sub_sdh_filter_harder_desc": "括弧内の音声説明や話者名タグも削除します",
+      "anime4k": "Anime4K",
+      "anime4k_desc": "GPUシェーダーを使用してリアルタイムでアップスケールとアーティファクト低減を行います。低性能なハードウェアではパフォーマンスに影響する場合があります。",
+      "anime4k_learn_more": "詳細を見る",
+      "anime4k_off": "オフ",
+      "anime4k_fast": "高速",
+      "anime4k_hq": "高品質",
+      "anime4k_mode": "Anime4Kモード",
+      "anime4k_mode_desc": "A、B、Cはそれぞれ異なるソースの劣化に対応します。"
     },
-
     "readers_section": {
       "reader_preview": "プレビュー",
       "novel_reader_preview": "プレビュー",
@@ -647,56 +761,72 @@
       "btn_refresh": "更新",
       "btn_copy": "コピー",
       "btn_clear_ui": "クリア"
+    },
+    "torrent_section": {
+      "torrent_desc": "トレントの選択方法、使用する帯域幅、ダウンロードしたファイルの保持期間を設定します。",
+      "tab_selection": "選択",
+      "tab_network": "ネットワーク",
+      "tab_storage": "ストレージ",
+      "auto_select": "トレントを自動選択",
+      "auto_select_desc": "以下の設定を使用して、エピソードに最適なトレントを自動的に選択します。",
+      "preferred_groups": "優先リリースグループ",
+      "preferred_groups_desc": "優先順位順にカンマ区切りで入力します。これらのグループのトレントが優先されます。",
+      "preferred_resolution": "優先解像度",
+      "preferred_resolution_desc": "最初に探す解像度です。",
+      "preferred_codec": "優先コーデック",
+      "preferred_codec_desc": "この映像コーデックでエンコードされたリリースを優先します。",
+      "codec_any": "指定なし",
+      "prefer_dual_audio": "デュアル音声を優先",
+      "prefer_dual_audio_desc": "オリジナル音声と吹き替え音声の両方を含むリリースを優先します。",
+      "require_batch": "一括リリース",
+      "require_batch_desc": "シーズン全話の一括リリースのみ、または単話のみを自動選択の対象にします。",
+      "batch_any": "どちらでも",
+      "batch_required": "一括のみ",
+      "batch_excluded": "単話のみ",
+      "min_seeders": "最小シーダー数",
+      "min_seeders_desc": "ここで指定した数よりシーダーが少ないトレントを無視します。0で制限なし。",
+      "exclude_keywords": "除外キーワード",
+      "exclude_keywords_desc": "カンマ区切りで入力します。タイトルにこれらのいずれかを含むトレントはスキップされます。",
+      "fallback_to_manual": "手動選択にフォールバック",
+      "fallback_to_manual_desc": "自動選択で一致するものが見つからなかった場合、トレント選択画面を開きます。",
+      "download_limit": "ダウンロード速度制限",
+      "download_limit_desc": "最大ダウンロード速度。無制限にする場合は空欄にします。",
+      "upload_limit": "アップロード速度制限",
+      "upload_limit_desc": "シード中の最大アップロード速度。無制限にする場合は空欄にします。",
+      "unlimited": "無制限",
+      "max_concurrent": "同時実行トレントの最大数",
+      "max_concurrent_desc": "同時にアクティブにできるトレント数。エピソード切り替えが正常に動作するよう、常に最低2つまで許可されます。",
+      "stop_seeding": "再生終了時にシードを停止",
+      "stop_seeding_desc": "オフにすると、視聴を停止した後もキャッシュファイルの有効期限が切れるまでトレントの共有を続けます。",
+      "max_disk_usage": "最大キャッシュサイズ",
+      "max_disk_usage_desc": "キャッシュがこのサイズを超えると、最後に視聴してから最も時間が経過したトレントが削除されます。",
+      "min_free_disk": "最小空きディスク容量",
+      "min_free_disk_desc": "空き容量がこの値を下回る場合、ストリームの開始を拒否します。0で無効化します。",
+      "finished_ttl": "完了したファイルの保持期間",
+      "finished_ttl_desc": "再視聴を即座に開始できるよう、再生後にファイルをディスク上に保持する期間です。",
+      "ttl_none": "保持しない",
+      "ttl_minutes": "{{num}}分",
+      "ttl_hours": "{{num}}時間",
+      "ttl_days": "{{num}}日",
+      "storage_used": "キャッシュ使用量",
+      "storage_of": "{{limit}}中{{used}}使用",
+      "disk_free": "ディスク空き容量 {{size}}",
+      "storage_load_failed": "トレントキャッシュを読み込めませんでした。",
+      "storage_action_failed": "削除中に問題が発生しました。もう一度お試しください。",
+      "refresh": "更新",
+      "open_folder": "フォルダーを開く",
+      "clear_cache": "キャッシュを消去",
+      "clear_cache_confirm": "もう一度クリックして確認",
+      "clear_cache_desc": "現在再生中ではない、キャッシュ済みのすべてのトレントを削除します。",
+      "cache_entries": "キャッシュ済みトレント（{{num}}）",
+      "cache_empty": "まだキャッシュされていません。",
+      "files_count": "{{num}}ファイル",
+      "last_used": "最終使用 {{date}}",
+      "delete_entry": "削除",
+      "state_active": "再生中",
+      "state_seeding": "シード中",
+      "state_cached": "キャッシュ済み"
     }
-  },
-  "player": {
-    "cc_off": "字幕を無効にする",
-    "cc_on": "字幕を有効にする",
-    "enter_fullscreen": "全画面表示にする",
-    "exit_fullscreen": "全画面表示を終了",
-    "seek_backward": "早戻し",
-    "seek_forward": "早送り",
-    "audio": "音声",
-    "auto": "自動",
-    "default": "デフォルト",
-    "disabled": "無効",
-    "fullscreen": "全画面",
-    "mute": "ミュート",
-    "normal": "標準",
-    "off": "オフ",
-    "opacity": "不透明度",
-    "pause": "一時停止",
-    "play": "再生",
-    "quality": "画質",
-    "reset": "リセット",
-    "seek": "シーク",
-    "settings": "設定",
-    "unmute": "ミュート解除",
-    "volume": "音量",
-    "none": "なし",
-    "outline": "縁取り",
-    "drop_shadow": "ドロップシャドウ",
-    "raised": "浮き出し",
-    "depressed": "埋め込み",
-    "left": "左揃え",
-    "center": "中央揃え",
-    "right": "右揃え",
-    "bold": "太字",
-    "font": "フォント",
-    "align": "配置",
-    "weight": "太さ",
-    "style": "スタイル",
-    "subtitles": "字幕",
-    "appareance": "外観",
-    "size": "サイズ",
-    "text_color": "文字色",
-    "outline_color": "縁取りの色",
-    "width": "幅",
-    "background": "背景",
-    "transparency": "透明度",
-    "padding": "余白",
-    "vertical_position": "垂直方向の位置",
-    "line_height": "行の高さ"
   },
   "tags": {
     "Action": "アクション",
@@ -1221,6 +1351,13 @@
       "execution_failed": "拡張機能の実行に失敗しました。",
       "bad_json_response": "サンドボックスからの無効なJSONレスポンスです。",
       "thread_panicked": "サンドボックススレッドがパニックを起こしました。"
+    },
+    "torrent": {
+      "invalid_cache_key": "無効なキャッシュエントリです。",
+      "cache_entry_in_use": "このトレントは再生中のため削除できません。",
+      "cache_entry_not_found": "このキャッシュエントリは存在しません。",
+      "cache_delete_failed": "キャッシュファイルを削除できませんでした。",
+      "cache_scan_failed": "トレントキャッシュを読み込めませんでした。"
     }
   }
 }
