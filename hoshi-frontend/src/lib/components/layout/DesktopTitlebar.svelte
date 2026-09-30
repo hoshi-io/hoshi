@@ -31,18 +31,19 @@
 {#if showTitlebar}
     <div class="absolute top-0 left-0 h-8 grid grid-cols-3 items-center bg-transparent select-none z-[60] w-full">
 
+        <!-- Left section -->
         <div data-tauri-drag-region class="h-full flex items-center gap-2.5 pl-5 overflow-hidden">
             {#if title}
                 {#if iconSrc}
                     <img src={iconSrc} alt="" class="h-3.5 w-3.5 rounded-[3px] opacity-90" draggable="false" />
                 {/if}
-                <span class="text-[11px] font-medium text-muted-foreground/70 tracking-wide">{title}</span>
+                <span data-tauri-drag-region class="text-[11px] font-medium text-muted-foreground/70 tracking-wide">{title}</span>
             {/if}
         </div>
 
         <div data-tauri-drag-region class="h-full w-full relative flex justify-center items-center"></div>
 
-        <div class="flex h-full shrink-0 justify-end">
+        <div data-tauri-drag-region class="flex h-full shrink-0 justify-end">
             <button onclick={minimize} class="h-full w-[42px] hover:bg-muted/20 text-muted-foreground/60 hover:text-foreground transition-colors inline-flex items-center justify-center" tabindex="-1">
                 <Minus class="size-[12px] stroke-[2]" />
             </button>
