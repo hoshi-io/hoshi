@@ -29,7 +29,8 @@
 -  **Smart Tracking:** Sync your library with AniList, MAL, Simkl or Kitsu. You can keep everything local if you prefer. Duplicate entries are automatically detected and merged into a single item.
 -  **BYOC Extensions:** Bring your own content by adding marketplace URLs. Browse and install extensions directly from the app.
 -  **Compatibility Layers (experimental):** Run LNReader and Sora extensions natively inside Hoshi, no extra installation required.
--  **Advanced Readers & Player:** Includes a custom video player with optional MPV support, along with custom, highly configurable readers for manga and light novels.
+-  **Advanced Readers & Player:** Includes a libmpv based player with Anime4k integrations, along with custom, highly configurable readers for manga and light novels.
+-  **Built-in torrent client:** Stream torrents directly in hoshi with librqbit, with zero configuration required.
 -  **Release Schedule:** Stay up to date with a built-in calendar that shows upcoming anime releases and airing episodes at a glance.
 -  **Customization:** Personalize the experience with themes and adjustable accent colors to match your style.
 -  **15+ Languages:** Fully localized interface with support for 15+ languages (AI translations).
@@ -47,7 +48,7 @@
 Hoshi is built with a modern, performance-focused stack:
 
 - **Frontend:** SvelteKit (static) with Tailwind CSS and shadcn-svelte for a fast, responsive UI.
-- **Backend/Core:** Rust + Tauri for a lightweight, native desktop experience.
+- **Backend/Core:** Rust + Tauri for a lightweight, native experience.
 - **Database:** SQLite via sqlx for simple and reliable local storage.
 - **Extensions Sandbox:** QuickJS, providing a secure and isolated runtime for extensions.
 
@@ -59,6 +60,10 @@ Check out the [Releases](https://github.com/hoshi-io/hoshi/releases) page to dow
 <a href="https://play.google.com/store/apps/details?id=com.ninelfx.hoshi">
   <img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="60" />
 </a>
+
+### Linux
+
+In order to use the app player you need libmpv installed in your system.
 
 ### Arch-based distributions
 
