@@ -148,8 +148,7 @@ fn spawn_render_context_supervisor(
 
             let render_state3 = render_state.clone();
             let _ = window.run_on_main_thread(move || unsafe {
-                // Must be current for RenderContext::drop
-                // (mpv_render_context_free) to tear down its GL objects.
+                let _ = &gl_context; // Forces closure to move `gl_context` (SendPtr) instead of disjointly capturing `gl_context.0` (*mut AnyObject)
                 let _: () = msg_send![gl_context.0, makeCurrentContext];
                 *render_state3.lock().unwrap() = None;
             });
