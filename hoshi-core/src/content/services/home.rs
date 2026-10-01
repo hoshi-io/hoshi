@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use chrono::Utc;
-use tokio::sync::Semaphore;
+use tokio::sync::{Mutex, Semaphore};
 use tracing::{error, info, warn};
 use crate::content::models::FullContent;
 use crate::content::repositories::cache::CacheRepository;
@@ -15,6 +15,8 @@ const HOME_CACHE_KEY: &str = "home_view_v1";
 const HOME_CACHE_TTL: i64  = 6 * 3600;
 const IMPORT_CONCURRENCY: usize = 8;
 
+static REFRESH_LOCK: Mutex<()> = Mutex::const_new(());
+
 pub struct HomeService;
 
 impl HomeService {
@@ -22,12 +24,20 @@ impl HomeService {
         tokio::spawn(async move {
             tokio::time::sleep(std::time::Duration::from_secs(3)).await;
 
-            match CacheRepository::get(&state.pool, HOME_CACHE_KEY).await {
-                Ok(Some(_)) => {
-                    info!("Home cache already warm, skipping warmup");
-                    return;
-                }
-                _ => {}
+            if let Ok(Some(_)) = CacheRepository::get(&state.pool, HOME_CACHE_KEY).await {
+                info!("Home cache already warm, skipping warmup");
+                return;
+            }
+
+            let Ok(_guard) = REFRESH_LOCK.try_lock() else {
+                info!("Home import already running, skipping warmup");
+                return;
+            };
+
+            // Re-check: the cache may have been filled between the check and the lock
+            if let Ok(Some(_)) = CacheRepository::get(&state.pool, HOME_CACHE_KEY).await {
+                info!("Home cache already warm, skipping warmup");
+                return;
             }
 
             info!("Starting home cache warmup...");
@@ -37,6 +47,26 @@ impl HomeService {
         });
     }
 
+    /// Background refresh for a stale cache. Skips if an import is running,
+    /// and skips if the cache was already refreshed by the time we get the lock.
+    async fn refresh_if_stale(state: Arc<AppState>) -> CoreResult<()> {
+        let Ok(_guard) = REFRESH_LOCK.try_lock() else {
+            info!("Home import already running, skipping background refresh");
+            return Ok(());
+        };
+
+        if let Some(value) = CacheRepository::get(&state.pool, HOME_CACHE_KEY).await? {
+            if let Ok(view) = serde_json::from_value::<HomeView>(value) {
+                if Utc::now().timestamp() - view.cached_at <= HOME_CACHE_TTL {
+                    return Ok(());
+                }
+            }
+        }
+
+        Self::refresh_home_cache(state).await
+    }
+
+    /// Unguarded: never call directly, only while holding REFRESH_LOCK.
     async fn refresh_home_cache(state: Arc<AppState>) -> CoreResult<()> {
         let provider = state.tracker_registry.get("anilist")
             .ok_or_else(|| CoreError::Internal("error.tracker.anilist_not_registered".into()))?;
@@ -158,7 +188,7 @@ impl HomeService {
             if Utc::now().timestamp() - view.cached_at > HOME_CACHE_TTL {
                 let state_clone = state.clone();
                 tokio::spawn(async move {
-                    if let Err(e) = Self::refresh_home_cache(state_clone).await {
+                    if let Err(e) = Self::refresh_if_stale(state_clone).await {
                         error!(error = ?e, "Background home refresh failed");
                     }
                 });
@@ -168,7 +198,12 @@ impl HomeService {
             return Ok(view);
         }
 
-        Self::refresh_home_cache(state.clone()).await?;
+        {
+            let _guard = REFRESH_LOCK.lock().await;
+            if CacheRepository::get(&state.pool, HOME_CACHE_KEY).await?.is_none() {
+                Self::refresh_home_cache(state.clone()).await?;
+            }
+        }
 
         let value = CacheRepository::get(&state.pool, HOME_CACHE_KEY)
             .await?
