@@ -162,8 +162,8 @@ impl Default for PlayerConfig {
             scale_algorithm: "bilinear".to_string(),
             interpolation: false,
             deband: true,
-            anime4k_mode: "off".to_string(),
-            anime4k_tier: "fast".to_string(),
+            anime4k_mode: "A".to_string(),
+            anime4k_tier: "off".to_string(),
         }
     }
 }
@@ -389,7 +389,7 @@ pub struct TorrentConfig {
 impl Default for TorrentConfig {
     fn default() -> Self {
         Self {
-            auto_select: true,
+            auto_select: false,
             preferred_groups: vec![],
             preferred_resolution: "1080p".into(),
             preferred_codec: None,
