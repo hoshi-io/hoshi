@@ -722,7 +722,10 @@ export class WatchState {
 
         this.resetPlaybackState();
         const token = ++this.loadToken;
-        const previousSession = this.torrentSessionId;
+
+        // Stop the old file now, not when the new one is ready.
+        await this.haltCurrentPlayback();
+        if (token !== this.loadToken) return;
 
         try {
             const initialTime = await this.fetchResumeTime();
@@ -732,7 +735,6 @@ export class WatchState {
                 ? await this.resolveTorrentStream(token)
                 : await this.resolveAnimeStream();
 
-            // superseded by a newer loadPlay while we were resolving
             if (!stream || token !== this.loadToken) return;
 
             this.torrentSessionId = stream.torrentSessionId ?? null;
@@ -749,12 +751,7 @@ export class WatchState {
                 startPosition: initialTime > 0 ? initialTime : undefined,
                 nowPlaying: this.buildNowPlaying(),
             });
-
-            // mpv now owns the new stream and has closed the old one
-            if (previousSession && previousSession !== this.torrentSessionId) {
-                void this.stopTorrentSession(previousSession);
-            }
-
+            
             this.isStreamLoaded = true;
             await this.refreshTracks();
 
@@ -764,7 +761,6 @@ export class WatchState {
             console.error("loadPlay failed", e);
             this.error = e.key ? e : { key: "errors.unknown_error" };
         } finally {
-            // don't clobber the spinner of a newer load
             if (token === this.loadToken) this.isLoadingPlay = false;
         }
     }
@@ -846,6 +842,16 @@ export class WatchState {
         if (def) return findTrackId(def);
 
         return null;
+    }
+
+    /// Silences mpv and releases the previous torrent session.
+    private async haltCurrentPlayback() {
+        const sessionId = this.torrentSessionId;
+        this.torrentSessionId = null;
+
+        await invoke("stop_playback").catch(() => {});
+
+        if (sessionId) void this.stopTorrentSession(sessionId);
     }
 
 }
