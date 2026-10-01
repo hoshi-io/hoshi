@@ -178,7 +178,7 @@ jobs:
 
       - name: Setup Android NDK & Bindgen Variables
         run: |
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;29.0.13846066"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --install "ndk;29.0.13846066"
 
           NDK_PATH="$ANDROID_HOME/ndk/29.0.13846066"
           SYSROOT="$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
@@ -270,7 +270,7 @@ jobs:
 
       - name: Setup Android NDK & Bindgen Variables
         run: |
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;29.0.13846066"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --install "ndk;29.0.13846066"
 
           NDK_PATH="$ANDROID_HOME/ndk/29.0.13846066"
           SYSROOT="$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
