@@ -11,9 +11,9 @@ use crate::error::{CoreError, CoreResult};
 use crate::state::AppState;
 use crate::tracker::provider::TrackerMedia;
 
-const HOME_CACHE_KEY: &str = "home_view_v1";
+const HOME_CACHE_KEY: &str = "home_view_v2";
 const HOME_CACHE_TTL: i64  = 6 * 3600;
-const IMPORT_CONCURRENCY: usize = 8;
+const IMPORT_CONCURRENCY: usize = 6;
 
 static REFRESH_LOCK: Mutex<()> = Mutex::const_new(());
 
@@ -109,12 +109,16 @@ impl HomeService {
         let mut cache: std::collections::HashMap<String, FullContent> =
             std::collections::HashMap::new();
 
+        let mut failed = 0usize;
         for handle in handles {
             match handle.await {
                 Ok((id, Ok(full))) => { cache.insert(id, full); }
-                Ok((id, Err(e)))   => warn!(error = ?e, %id, "Failed to import home entry"),
-                Err(e)             => warn!(error = ?e, "Import task panicked"),
+                Ok((id, Err(e)))   => { failed += 1; warn!(error = ?e, %id, "Failed to import home entry"); }
+                Err(e)             => { failed += 1; warn!(error = ?e, "Import task panicked"); }
             }
+        }
+        if failed > 0 {
+            warn!(failed, imported = cache.len(), "Some home entries failed to import");
         }
 
         let cache: std::collections::HashMap<String, FullContent> = cache

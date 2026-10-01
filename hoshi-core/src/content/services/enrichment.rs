@@ -124,6 +124,8 @@ impl EnrichmentService {
 
     async fn fetch_cross_ids_json(state: &Arc<AppState>, url: &str) -> CoreResult<serde_json::Value> {
         let resp = state.http_client.get(url).send().await
+            .map_err(|e| core_err!(Network, "error.system.network", e))?
+            .error_for_status()
             .map_err(|e| core_err!(Network, "error.system.network", e))?;
         resp.json().await
             .map_err(|e| core_err!(Parse, "error.system.parse", e))
