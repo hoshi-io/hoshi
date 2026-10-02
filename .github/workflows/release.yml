@@ -39,7 +39,7 @@ jobs:
     needs: build-frontend
     strategy:
       matrix:
-        os: [ubuntu-22.04, windows-latest, macos-latest, macos-13]
+        os: [ ubuntu-22.04, windows-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -108,13 +108,13 @@ jobs:
           -x "$EXECUTABLE" \
           -d "$APP_PATH/Contents/Frameworks" \
           -p "@executable_path/../Frameworks/"
-
+          
           codesign --force --deep -s - "$APP_PATH"
-
+          
           if [ "${{ runner.arch }}" = "ARM64" ]; then echo "MAC_ARCH=arm64" >> $GITHUB_ENV
           else echo "MAC_ARCH=x64" >> $GITHUB_ENV
           fi
-
+          
           mkdir -p target/release/bundle/dmg
           hdiutil create -volname "$APP_NAME" -srcfolder "$APP_PATH" \
             -ov -format UDZO "target/release/bundle/dmg/${APP_NAME}.dmg"
