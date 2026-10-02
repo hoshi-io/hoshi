@@ -101,12 +101,13 @@ jobs:
         run: |
           APP_PATH=$(find target/release/bundle/macos -maxdepth 1 -name "*.app")
           APP_NAME=$(basename "$APP_PATH" .app)
-          EXECUTABLE="$APP_PATH/Contents/MacOS/$APP_NAME"
-
+          
+          EXECUTABLE=$(find "$APP_PATH/Contents/MacOS" -type f | head -n 1)
+          
           dylibbundler -cd -of -b \
-            -x "$EXECUTABLE" \
-            -d "$APP_PATH/Contents/Frameworks" \
-            -p "@executable_path/../Frameworks/"
+          -x "$EXECUTABLE" \
+          -d "$APP_PATH/Contents/Frameworks" \
+          -p "@executable_path/../Frameworks/"
 
           codesign --force --deep -s - "$APP_PATH"
 
