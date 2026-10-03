@@ -4,17 +4,16 @@ use tokio::sync::{Mutex, Semaphore};
 use tracing::{error, info, warn};
 use crate::content::models::FullContent;
 use crate::content::repositories::cache::CacheRepository;
-use crate::content::services::enrichment::EnrichmentService;
+use crate::content::repositories::content::ContentRepository;
+use crate::content::services::import::ImportService;
 use crate::content::types::{HomeView, AnimeSection, MangaSection, NovelSection};
 use crate::content::utils::show_adult;
 use crate::error::{CoreError, CoreResult};
 use crate::state::AppState;
 use crate::tracker::provider::TrackerMedia;
 
-const HOME_CACHE_KEY: &str = "home_view_v2";
+const HOME_CACHE_KEY: &str = "home_view_v1";
 const HOME_CACHE_TTL: i64  = 6 * 3600;
-const IMPORT_CONCURRENCY: usize = 6;
-
 static REFRESH_LOCK: Mutex<()> = Mutex::const_new(());
 
 pub struct HomeService;
@@ -94,7 +93,8 @@ impl HomeService {
 
         info!(unique_items = seen.len(), "Importing home entries");
 
-        let semaphore = Arc::new(Semaphore::new(IMPORT_CONCURRENCY));
+        let concurrency = (state.pool.options().get_max_connections() as usize / 2).clamp(1, 4);
+        let semaphore = Arc::new(Semaphore::new(concurrency));
 
         let handles: Vec<_> = seen.into_iter().map(|(tracker_id, media)| {
             let sem   = semaphore.clone();
@@ -172,14 +172,11 @@ impl HomeService {
     }
 
     async fn import_and_load(state: &Arc<AppState>, media: &TrackerMedia) -> CoreResult<FullContent> {
-        EnrichmentService::create_enriched_content(
-            state,
-            &media.content_type,
-            media,
-            &media.tracker_id,
-            "anilist",
-            None,
-        ).await
+        let cid = ImportService::import_media(&state.pool, "anilist", media).await?;
+
+        ContentRepository::get_full_content(&state.pool, &cid)
+            .await?
+            .ok_or_else(|| CoreError::NotFound("error.content.not_found".into()))
     }
 
     pub async fn get_home_view(state: &Arc<AppState>, user_id: i32) -> CoreResult<HomeView> {

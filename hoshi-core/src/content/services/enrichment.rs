@@ -119,7 +119,7 @@ impl EnrichmentService {
             "mal" | "myanimelist" | "my-anime-list" => format!("my-anime-list/{id}"),
             _ => return Err(CoreError::Internal("error.enrichment.unsupported_tracker".into())),
         };
-        Ok(format!("https://api.mangabaka.dev/v1/source/{path}"))
+        Ok(format!("https://api.mangabaka.org/v1/source/{path}"))
     }
 
     async fn fetch_cross_ids_json(state: &Arc<AppState>, url: &str) -> CoreResult<serde_json::Value> {
