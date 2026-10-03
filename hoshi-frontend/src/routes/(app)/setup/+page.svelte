@@ -202,7 +202,7 @@
                     {#if currentStepId === 'profile'}
                         <div class="flex flex-col items-center gap-5">
                             <div class="relative group">
-                                <div class="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden border-[6px] border-background shadow-2xl bg-secondary flex items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:shadow-primary/20">
+                                <div class="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden bg-secondary flex items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:shadow-primary/20">
                                     {#if avatarPreview}
                                         <img src={avatarPreview} alt="Avatar" class="w-full h-full object-cover" />
                                     {:else}
