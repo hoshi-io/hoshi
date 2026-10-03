@@ -17,6 +17,7 @@
     import {layoutState} from "@/stores/layout.svelte.js";
     import TorrentBanner from "@/components/player/TorrentBanner.svelte";
     import TorrentPickerDialog from "@/components/player/TorrentPickerDialog.svelte";
+    import {type as OsType} from "@tauri-apps/plugin-os";
 
     const pageState = new WatchState();
 
@@ -279,30 +280,25 @@
         };
     });
 
-    let isFullscreen2 = false;
-    let wasMaximizedBeforeFullscreen = false;
+    const IS_WINDOWS = OsType() === 'windows';
+    let wasMaximized = false;
 
     async function toggleFullscreen() {
         try {
             const win = getCurrentWindow();
 
-            if (!isFullscreen2) {
-                wasMaximizedBeforeFullscreen = await win.isMaximized();
-
-                if (wasMaximizedBeforeFullscreen) { // some weird bug on windows if we dont do this.
-                    await win.unmaximize();
+            if (!(await win.isFullscreen())) {
+                if (IS_WINDOWS) {
+                    wasMaximized = await win.isMaximized();
+                    if (wasMaximized) await win.unmaximize();   // tao undecorated+maximized bug
                 }
-
                 await win.setFullscreen(true);
-                isFullscreen2 = true;
             } else {
                 await win.setFullscreen(false);
-
-                if (wasMaximizedBeforeFullscreen) {
+                if (IS_WINDOWS && wasMaximized) {
                     await win.maximize();
+                    wasMaximized = false;
                 }
-
-                isFullscreen2 = false;
             }
         } catch (e) {
             console.error("Failed to toggle fullscreen", e);
