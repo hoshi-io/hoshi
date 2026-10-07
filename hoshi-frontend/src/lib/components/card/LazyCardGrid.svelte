@@ -13,6 +13,8 @@
         isLoading = false,
         onLoadMore,
         cardContent,
+        class: className = "space-y-6 mb-10",
+        gridClass = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-8 gap-x-4 gap-y-6 md:gap-x-5 md:gap-y-8",
     }: {
         items: T[];
         keyFn: (item: T) => string | number;
@@ -20,6 +22,8 @@
         isLoading?: boolean;
         onLoadMore?: () => void;
         cardContent: Snippet<[T]>;
+        class?: string;
+        gridClass?: string;
     } = $props();
 
     let sentinel = $state<HTMLElement | null>(null);
@@ -64,8 +68,8 @@
     }
 </script>
 
-<div class="space-y-6 mb-10">
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-8 gap-x-4 gap-y-6 md:gap-x-5 md:gap-y-8">
+<div class={className}>
+    <div class={gridClass}>
         {#each items as item (keyFn(item))}
             <div
                     animate:flip={{ duration: 350, easing: cubicOut }}

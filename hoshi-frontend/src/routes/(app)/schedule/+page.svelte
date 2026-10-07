@@ -13,6 +13,7 @@
     import CardWrapper from "@/components/card/CardWrapper.svelte";
     import {Button} from "$lib/components/ui/button";
     import PageHeader from "@/components/PageHeader.svelte";
+    import LazyCardGrid from "@/components/card/LazyCardGrid.svelte";
 
     $effect(() => {
         layoutState.title    = i18n.t("schedule.title");
@@ -25,6 +26,23 @@
     function getMs(ts: number) {
         return ts > 1e11 ? ts : ts * 1000;
     }
+
+    const PAGE_SIZE = 30;
+    let limit = $state(PAGE_SIZE);
+
+    const total = $derived(scheduleStore.groups.reduce((n, g) => n + g.items.length, 0));
+    const hasMore = $derived(limit < total);
+
+    const visibleGroups = $derived.by(() => {
+        let left = limit;
+        const out: typeof scheduleStore.groups = [];
+        for (const g of scheduleStore.groups) {
+            if (left <= 0) break;
+            out.push(left >= g.items.length ? g : { ...g, items: g.items.slice(0, left) });
+            left -= g.items.length;
+        }
+        return out;
+    });
 </script>
 
 <svelte:head>
@@ -104,46 +122,49 @@
             </div>
 
         {:else}
-            <div class="space-y-12 md:space-y-16 relative">
-                <div class="hidden lg:block absolute left-[19px] top-4 bottom-0 w-[2px] bg-border/40 z-0 rounded-full"></div>
-
-                {#each scheduleStore.groups as group (group.key)}
-                    <div class="relative z-10" in:fade={{ duration: 400 }}>
-                        <div class="flex items-center gap-4 mb-6 top-9 bg-background/95 backdrop-blur-md py-4 z-20 lg:-ml-[5px]">
-                            <div class="hidden lg:flex h-12 w-12 rounded-full border-4 border-background items-center justify-center shrink-0 shadow-sm z-10 {group.isToday ? 'bg-primary border-primary/20 text-primary-foreground' : 'bg-muted text-muted-foreground'}">
-                                <CalendarIcon class="h-5 w-5" />
-                            </div>
-                            <h2 class="text-2xl font-black tracking-tight {group.isToday ? 'text-primary' : 'text-foreground'}">
-                                {group.header}
-                            </h2>
-                            {#if group.isToday}
-                                <Badge variant="default" class="uppercase tracking-widest text-[10px] font-black">
-                                    {i18n.t("schedule.airing_today")}
-                                </Badge>
-                            {/if}
-                            <div class="h-[1px] flex-1 bg-border/40 ml-4 hidden sm:block"></div>
+            {#each visibleGroups as group, gi (group.key)}
+                <div class="relative z-10" in:fade={{ duration: 400 }}>
+                    <div class="flex items-center gap-4 mb-6 top-9 bg-background/95 backdrop-blur-md py-4 z-20 lg:-ml-[5px]">
+                        <div class="hidden lg:flex h-12 w-12 rounded-full border-4 border-background items-center justify-center shrink-0 shadow-sm z-10 {group.isToday ? 'bg-primary border-primary/20 text-primary-foreground' : 'bg-muted text-muted-foreground'}">
+                            <CalendarIcon class="h-5 w-5" />
                         </div>
+                        <h2 class="text-2xl font-black tracking-tight {group.isToday ? 'text-primary' : 'text-foreground'}">
+                            {group.header}
+                        </h2>
+                        {#if group.isToday}
+                            <Badge variant="default" class="uppercase tracking-widest text-[10px] font-black">
+                                {i18n.t("schedule.airing_today")}
+                            </Badge>
+                        {/if}
+                        <div class="h-[1px] flex-1 bg-border/40 ml-4 hidden sm:block"></div>
+                    </div>
 
-                        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 2xl:grid-cols-8 gap-4 pl-0 lg:pl-16">
-                            {#each group.items as item (`${item.trackerId}-${item.episode}`)}
-                                <CardWrapper {...item.card} disablePreview={true}>
-                                    {#snippet overlay()}
-                                        <div class="flex items-end justify-between px-2 pb-2 w-full"
-                                             style="background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%); padding-top: 2rem;">
+                    <LazyCardGrid
+                            items={group.items}
+                            keyFn={(i) => `${i.trackerId}-${i.episode}`}
+                            hasMore={hasMore && gi === visibleGroups.length - 1}
+                            onLoadMore={() => (limit += PAGE_SIZE)}
+                            class="lg:pl-16"
+                            gridClass="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 2xl:grid-cols-8 gap-4"
+                    >
+                        {#snippet cardContent(item)}
+                            <CardWrapper {...item.card} disablePreview={true}>
+                                {#snippet overlay()}
+                                    <div class="flex items-end justify-between px-2 pb-2 w-full"
+                                         style="background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%); padding-top: 2rem;">
                                             <span class="text-[10px] font-black uppercase tracking-wider text-white">
                                                 {i18n.t("schedule.episode_number", { num: item.episode })}
                                             </span>
-                                            <span class="bg-primary/90 backdrop-blur-sm text-primary-foreground text-[10px] font-bold px-2 py-1 rounded-md">
+                                        <span class="bg-primary/90 backdrop-blur-sm text-primary-foreground text-[10px] font-bold px-2 py-1 rounded-md">
                                                 {new Date(getMs(item.airingAt)).toLocaleTimeString(i18n.locale, { hour: "2-digit", minute: "2-digit", hour12: false })}
                                             </span>
-                                        </div>
-                                    {/snippet}
-                                </CardWrapper>
-                            {/each}
-                        </div>
-                    </div>
-                {/each}
-            </div>
+                                    </div>
+                                {/snippet}
+                            </CardWrapper>
+                        {/snippet}
+                    </LazyCardGrid>
+                </div>
+            {/each}
         {/if}
     </section>
 </main>
