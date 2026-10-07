@@ -5,6 +5,3 @@
 /hoshi-frontend/build/
 /hoshi-app/gen/android/.idea/
 /.cargo/
-/hoshi-server/
-/docs/.vitepress/cache/
-/docs/node_modules/
