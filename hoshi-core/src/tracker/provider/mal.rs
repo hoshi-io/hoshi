@@ -7,11 +7,15 @@ use crate::error::{CoreError, CoreResult};
 use async_trait::async_trait;
 use chrono::Utc;
 use reqwest::Client;
+use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde_json::json;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
+/// Official MAL API: only used for things that need the user's OAuth token
 const MAL_API_BASE_URL: &str = "https://api.myanimelist.net/v2";
+/// Tenrai (Jikan v4-compatible mirror): used for all public, unauthenticated
+const TENRAI_API_BASE_URL: &str = "https://api.tenrai.org/v1";
 const MAL_CLIENT_ID: &str = "f3dbcf33c69b584ced3f4ee8c12d9df5";
 
 pub struct MalProvider {
@@ -35,7 +39,7 @@ impl MalProvider {
     fn normalize_status(s: &str) -> Status {
         match s {
             "finished_airing" | "finished" => Status::Completed,
-            "currently_airing" | "publishing" => Status::Ongoing,
+            "currently_airing" | "currently_publishing" | "publishing" => Status::Ongoing,
             "not_yet_aired" | "not_yet_published" => Status::Planned,
             _ => Status::Ongoing,
         }
@@ -207,6 +211,236 @@ impl MalProvider {
         }
     }
 
+
+    fn snake(s: &str) -> String {
+        s.trim().to_lowercase().replace(['-', ' '], "_")
+    }
+
+    /// Tenrai dates are ISO timestamps ("2006-04-03T00:00:00+00:00"); MAL's
+    /// official API uses plain "YYYY-MM-DD", so trim to match.
+    fn tenrai_date(s: Option<&str>) -> Option<String> {
+        s.and_then(|s| s.get(..10)).map(|s| s.to_string())
+    }
+
+    /// Tenrai: "Finished Airing" -> "finished_airing", "Publishing" -> "currently_publishing".
+    /// Keeps `TrackerMedia.status` in the same snake_case form the official API produced.
+    fn tenrai_status(s: &str) -> String {
+        match Self::snake(s).as_str() {
+            "publishing" => "currently_publishing".to_string(),
+            other => other.to_string(),
+        }
+    }
+
+    /// Tenrai authors come as "Last, First"; flip to "First Last".
+    fn tenrai_person_name(name: &str) -> String {
+        match name.split_once(',') {
+            Some((last, first)) => Self::join_author_name(Some(first.trim()), Some(last.trim())),
+            None => name.trim().to_string(),
+        }
+    }
+
+    fn tenrai_to_tracker_media(m: &TenraiMedia, content_type: ContentType) -> TrackerMedia {
+        let is_manga = matches!(content_type, ContentType::Manga | ContentType::Novel);
+        let prefix = if is_manga { "manga" } else { "anime" };
+
+        let mut alt_titles: Vec<String> = Vec::new();
+        for t in m.title_english.iter()
+            .chain(m.title_japanese.iter())
+            .chain(m.title_synonyms.iter())
+        {
+            if !t.is_empty() && !alt_titles.contains(t) {
+                alt_titles.push(t.clone());
+            }
+        }
+
+        let mut title_i18n = HashMap::new();
+        title_i18n.insert("romaji".to_string(), m.title.clone());
+        if let Some(en) = m.title_english.as_ref().filter(|s| !s.is_empty()) {
+            title_i18n.insert("english".to_string(), en.clone());
+        }
+        if let Some(ja) = m.title_japanese.as_ref().filter(|s| !s.is_empty()) {
+            title_i18n.insert("native".to_string(), ja.clone());
+        }
+
+        let genres: Vec<String> = m.genres.iter()
+            .chain(m.explicit_genres.iter())
+            .map(|g| g.name.clone())
+            .collect();
+
+        let nsfw = Self::is_nsfw(m.rating.as_deref(), None, &genres);
+
+        let relations: Vec<TrackerRelation> = m.relations.iter()
+            .flat_map(|r| {
+                let rel_type = r.relation.trim().to_uppercase().replace(['-', ' '], "_");
+                r.entry.iter().map(move |e| {
+                    let ct = if e.kind == "manga" { ContentType::Manga } else { ContentType::Anime };
+                    TrackerRelation {
+                        relation_type: rel_type.clone(),
+                        media: Self::relation_stub(e.mal_id, e.name.clone(), ct, None),
+                    }
+                })
+            })
+            .collect();
+
+        let staff: Vec<StaffMember> = if is_manga {
+            m.authors.iter()
+                .filter_map(|a| {
+                    let name = Self::tenrai_person_name(&a.name);
+                    if name.is_empty() { return None; }
+                    Some(StaffMember { name, role: "Author".to_string(), image: None })
+                })
+                .collect()
+        } else {
+            vec![]
+        };
+
+        let cover = m.images.as_ref()
+            .and_then(|i| i.jpg.as_ref())
+            .and_then(|j| j.large_image_url.clone().or_else(|| j.image_url.clone()));
+
+        let dates = m.aired.as_ref().or(m.published.as_ref());
+
+        TrackerMedia {
+            tracker_id:       format!("{}:{}", prefix, m.mal_id),
+            tracker_url:      Some(format!("https://myanimelist.net/{}/{}", prefix, m.mal_id)),
+            cross_ids:        HashMap::from([("mal".to_string(), format!("{}:{}", prefix, m.mal_id))]),
+            content_type,
+            title:            m.title.clone(),
+            alt_titles,
+            title_i18n,
+            synopsis:         m.synopsis.clone(),
+            cover_image:      cover,
+            banner_image:     None,
+            episode_count:    m.episodes,
+            chapter_count:    m.chapters,
+            status:           m.status.as_deref().map(Self::tenrai_status),
+            genres,
+            tags:             vec![],
+            nsfw,
+            release_date:     dates.and_then(|d| Self::tenrai_date(d.from.as_deref())),
+            end_date:         dates.and_then(|d| Self::tenrai_date(d.to.as_deref())),
+            rating:           m.score,
+            trailer_url:      m.trailer.as_ref().and_then(|t| t.url.clone()),
+            format:           m.media_type.as_deref().map(Self::snake),
+            studio:           m.studios.first().map(|s| s.name.clone()),
+            // Tenrai has a characters endpoint, but AniList fills this in the UI.
+            characters:       vec![],
+            staff,
+            relations,
+            episode_duration: None,
+        }
+    }
+
+    async fn tenrai_get<T: DeserializeOwned>(
+        &self,
+        path: &str,
+        query: &[(&str, String)],
+    ) -> CoreResult<Option<T>> {
+        let res = self.client
+            .get(format!("{}{}", TENRAI_API_BASE_URL, path))
+            .query(query)
+            .send()
+            .await
+            .map_err(|e| CoreError::Network(e.to_string()))?;
+
+        if res.status() == reqwest::StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+        if !res.status().is_success() {
+            let status = res.status();
+            let body = res.text().await.unwrap_or_default();
+            return Err(CoreError::Network(format!("Tenrai returned {status}: {body}")));
+        }
+
+        let parsed = res.json::<T>().await
+            .map_err(|e| CoreError::Parse(e.to_string()))?;
+        Ok(Some(parsed))
+    }
+
+    async fn tenrai_media_list(
+        &self,
+        path: &str,
+        query: &[(&str, String)],
+        content_type: ContentType,
+    ) -> CoreResult<Vec<TrackerMedia>> {
+        let list: Option<TenraiList> = self.tenrai_get(path, query).await?;
+        let mut seen = HashSet::new();
+        Ok(list
+            .map(|l| l.data)
+            .unwrap_or_default()
+            .iter()
+            .map(|m| Self::tenrai_to_tracker_media(m, content_type.clone()))
+            .filter(|m| seen.insert(m.tracker_id.clone()))
+            .collect())
+    }
+
+    /// Tenrai's `genres` filter takes numeric MAL genre ids. Accepts ids or
+    /// names (comma separated) and resolves names via `/genres/{anime|manga}`.
+    async fn resolve_genre_ids(&self, kind: &str, genre: &str) -> Option<String> {
+        let wanted: Vec<&str> = genre.split(',').map(str::trim).filter(|s| !s.is_empty()).collect();
+        if wanted.is_empty() {
+            return None;
+        }
+
+        let mut ids: Vec<String> = Vec::new();
+        let mut table: Option<Vec<TenraiGenre>> = None;
+        for g in wanted {
+            if g.chars().all(|c| c.is_ascii_digit()) {
+                ids.push(g.to_string());
+                continue;
+            }
+            if table.is_none() {
+                let res: Option<TenraiGenreList> = self
+                    .tenrai_get(&format!("/genres/{}", kind), &[]).await.ok().flatten();
+                table = Some(res.map(|r| r.data).unwrap_or_default());
+            }
+            if let Some(found) = table.as_ref()
+                .and_then(|t| t.iter().find(|x| x.name.eq_ignore_ascii_case(g)))
+            {
+                ids.push(found.mal_id.to_string());
+            }
+        }
+
+        if ids.is_empty() { None } else { Some(ids.join(",")) }
+    }
+
+    fn map_sort(sort: Option<&str>) -> Option<(&'static str, &'static str)> {
+        match Self::snake(sort?).as_str() {
+            "popularity" | "popular" | "trending" => Some(("popularity", "asc")),
+            "score" | "rating" | "average_score" | "top" => Some(("score", "desc")),
+            "title" | "name" => Some(("title", "asc")),
+            "newest" | "latest" | "start_date" | "release_date" => Some(("start_date", "desc")),
+            "members" => Some(("members", "desc")),
+            "favorites" => Some(("favorites", "desc")),
+            "rank" => Some(("rank", "asc")),
+            _ => None,
+        }
+    }
+
+    fn map_format(f: &str) -> String {
+        let s = Self::snake(f);
+        match s.as_str() {
+            "light_novel" => "lightnovel".to_string(),
+            "one_shot" => "oneshot".to_string(),
+            _ => s,
+        }
+    }
+
+    fn map_search_status(s: &str, is_manga: bool) -> Option<&'static str> {
+        match Self::snake(s).as_str() {
+            "finished" | "completed" | "complete" | "finished_airing" => Some("complete"),
+            "releasing" | "airing" | "currently_airing" | "ongoing"
+            | "publishing" | "currently_publishing" => {
+                Some(if is_manga { "publishing" } else { "airing" })
+            }
+            "not_yet_released" | "not_yet_aired" | "not_yet_published"
+            | "upcoming" | "planned" => Some("upcoming"),
+            "hiatus" | "on_hiatus" if is_manga => Some("hiatus"),
+            "cancelled" | "discontinued" if is_manga => Some("discontinued"),
+            _ => None,
+        }
+    }
+
     fn mal_node_to_entry(
         node: MalListNodeWrapper,
         content_type: ContentType,
@@ -317,54 +551,97 @@ impl TrackerProvider for MalProvider {
 
     async fn search(
         &self,
-        _query: Option<&str>,
-        _content_type: ContentType,
-        _limit: usize,
-        _page: usize,
-        _sort: Option<&str>,
-        _genre: Option<&str>,
-        _format: Option<&str>,
-        _nsfw: Option<bool>,
-        _status: Option<&str>,
+        query: Option<&str>,
+        content_type: ContentType,
+        limit: usize,
+        page: usize,
+        sort: Option<&str>,
+        genre: Option<&str>,
+        format: Option<&str>,
+        nsfw: Option<bool>,
+        status: Option<&str>,
     ) -> CoreResult<Vec<TrackerMedia>> {
-        // MAL search is disabled: it relied on Jikan (which is going away) and
-        // the frontend no longer exposes search for this provider. AniList is
-        // the search/discovery source of truth; MAL is list-import/manage only.
-        Ok(vec![])
+        let is_manga = matches!(content_type, ContentType::Manga | ContentType::Novel);
+        let kind = if is_manga { "manga" } else { "anime" };
+
+        let mut q: Vec<(&str, String)> = vec![
+            ("limit", limit.clamp(1, 25).to_string()),
+            ("page",  page.max(1).to_string()),
+        ];
+
+        let has_query = match query.map(str::trim).filter(|s| !s.is_empty()) {
+            Some(s) => { q.push(("q", s.to_string())); true }
+            None    => false,
+        };
+
+        match Self::map_sort(sort) {
+            Some((order_by, dir)) => {
+                q.push(("order_by", order_by.to_string()));
+                q.push(("sort", dir.to_string()));
+            }
+            // No explicit sort: keep Tenrai's relevance order for text queries,
+            // otherwise fall back to "most popular" so browsing isn't random.
+            None if !has_query => {
+                q.push(("order_by", "popularity".to_string()));
+                q.push(("sort", "asc".to_string()));
+            }
+            None => {}
+        }
+
+        let mut genre_ids = match genre {
+            Some(g) => self.resolve_genre_ids(kind, g).await,
+            None => None,
+        };
+
+        match format.map(str::trim).filter(|s| !s.is_empty()) {
+            Some(f) => q.push(("type", Self::map_format(f))),
+            None if matches!(content_type, ContentType::Novel) => {
+                q.push(("type", "lightnovel".to_string()));
+            }
+            None => {}
+        }
+
+        if let Some(s) = status.and_then(|s| Self::map_search_status(s, is_manga)) {
+            q.push(("status", s.to_string()));
+        }
+
+        if nsfw == Some(true) {
+            // The frontend switch is "NSFW only", so actually restrict to adult
+            // entries instead of just dropping the sfw filter. Anime has a
+            // rating filter; manga doesn't, so use the Hentai genre (id 12).
+            if is_manga {
+                genre_ids = Some(match genre_ids {
+                    Some(ids) => format!("{ids},12"),
+                    None => "12".to_string(),
+                });
+            } else {
+                q.push(("rating", "rx".to_string()));
+            }
+        } else {
+            q.push(("sfw", "true".to_string()));
+        }
+
+        if let Some(ids) = genre_ids {
+            q.push(("genres", ids));
+        }
+
+        self.tenrai_media_list(&format!("/{}", kind), &q, content_type).await
     }
 
     async fn get_by_id(&self, tracker_id: &str) -> CoreResult<Option<TrackerMedia>> {
         let (media_type, id) = Self::parse_media_id(tracker_id);
 
-        let fields = "id,title,main_picture,alternative_titles,start_date,end_date,\
-            synopsis,mean,nsfw,genres,media_type,status,rating,studios,\
-            related_anime,related_manga,\
-            num_episodes,num_chapters,authors{first_name,last_name}";
+        let (kind, content_type) = if media_type == "manga" {
+            ("manga", ContentType::Manga)
+        } else {
+            ("anime", ContentType::Anime)
+        };
 
-        let url = format!("{}/{}/{}?fields={}", MAL_API_BASE_URL, media_type, id, fields);
+        let res: Option<TenraiSingle> = self
+            .tenrai_get(&format!("/{}/{}/full", kind, id), &[])
+            .await?;
 
-        let res = self.client.get(&url).send().await
-            .map_err(|e| CoreError::Network(e.to_string()))?;
-
-        if res.status() == reqwest::StatusCode::NOT_FOUND {
-            return Ok(None);
-        }
-
-        if !res.status().is_success() {
-            let status = res.status();
-            let body = res.text().await.unwrap_or_default();
-            return Err(CoreError::Network(format!(
-                "MAL returned {status}: {body}"
-            )));
-        }
-
-        let media: MalMediaNode = res.json().await
-            .map_err(|e| CoreError::Parse(e.to_string()))?;
-
-        let content_type = if media_type == "manga" { ContentType::Manga } else { ContentType::Anime };
-        let tracker_media = Self::mal_media_to_tracker_media(&media, content_type);
-
-        Ok(Some(tracker_media))
+        Ok(res.map(|r| Self::tenrai_to_tracker_media(&r.data, content_type)))
     }
 
     async fn get_home(&self) -> CoreResult<HashMap<String, Vec<TrackerMedia>>> {
@@ -601,4 +878,103 @@ struct MalListStatus {
 struct MalPicture {
     medium: String,
     large:  Option<String>,
+}
+// ───────────────────────── Tenrai (Jikan v4 shape) ─────────────────────────
+
+#[derive(Debug, Deserialize)]
+struct TenraiSingle {
+    data: TenraiMedia,
+}
+
+#[derive(Debug, Deserialize)]
+struct TenraiList {
+    #[serde(default)]
+    data: Vec<TenraiMedia>,
+}
+
+#[derive(Debug, Deserialize)]
+struct TenraiGenreList {
+    #[serde(default)]
+    data: Vec<TenraiGenre>,
+}
+
+#[derive(Debug, Deserialize)]
+struct TenraiGenre {
+    mal_id: i32,
+    name:   String,
+}
+
+/// Anime and manga share one struct; fields that don't apply are just absent.
+#[derive(Debug, Deserialize)]
+struct TenraiMedia {
+    mal_id:         i32,
+    title:          String,
+    title_english:  Option<String>,
+    title_japanese: Option<String>,
+    #[serde(default)]
+    title_synonyms: Vec<String>,
+    #[serde(rename = "type")]
+    media_type:     Option<String>,
+    images:         Option<TenraiImages>,
+    trailer:        Option<TenraiTrailer>,
+    episodes:       Option<i32>,
+    chapters:       Option<i32>,
+    status:         Option<String>,
+    aired:          Option<TenraiDates>,
+    published:      Option<TenraiDates>,
+    rating:         Option<String>,
+    score:          Option<f32>,
+    synopsis:       Option<String>,
+    #[serde(default)]
+    genres:         Vec<TenraiNamed>,
+    #[serde(default)]
+    explicit_genres: Vec<TenraiNamed>,
+    #[serde(default)]
+    studios:        Vec<TenraiNamed>,
+    #[serde(default)]
+    authors:        Vec<TenraiNamed>,
+    #[serde(default)]
+    relations:      Vec<TenraiRelation>,
+}
+
+#[derive(Debug, Deserialize)]
+struct TenraiNamed {
+    name: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct TenraiImages {
+    jpg: Option<TenraiImageSet>,
+}
+
+#[derive(Debug, Deserialize)]
+struct TenraiImageSet {
+    image_url:       Option<String>,
+    large_image_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct TenraiTrailer {
+    url: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct TenraiDates {
+    from: Option<String>,
+    to:   Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct TenraiRelation {
+    relation: String,
+    #[serde(default)]
+    entry:    Vec<TenraiRelationEntry>,
+}
+
+#[derive(Debug, Deserialize)]
+struct TenraiRelationEntry {
+    mal_id: i32,
+    #[serde(rename = "type", default)]
+    kind:   String,
+    name:   String,
 }
