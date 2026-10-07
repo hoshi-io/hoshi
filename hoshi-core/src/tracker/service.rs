@@ -1,10 +1,8 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tracing::{error, info, instrument, warn};
 
-use crate::content::models::ContentType;
-use crate::content::services::enrichment::EnrichmentService;
+use crate::content::services::import::ImportService;
 use crate::core_err;
 use crate::error::{CoreError, CoreResult};
 use crate::list::merge::MergeService;
@@ -12,18 +10,6 @@ use crate::state::AppState;
 use crate::tracker::provider::{TrackerProvider};
 use crate::tracker::repository::TrackerRepository;
 use crate::tracker::types::{AddIntegrationRequest, ImportEvent, IntegrationsResponse, SuccessResponse, TrackerInfoResponse, TrackerIntegration};
-
-const MANGA_RATE_LIMIT_MS: u64 = 500;
-const ANIME_TSV_URL: &str = "https://animeapi.my.id/aa.tsv";
-
-struct TsvIndex {
-    anilist:     Option<usize>,
-    myanimelist: Option<usize>,
-    kitsu:       Option<usize>,
-    simkl:       Option<usize>,
-}
-
-type AnimeIdIndex = HashMap<(String, String), HashMap<String, String>>;
 
 pub fn normalize_list_status(s: &str) -> String {
     match s.to_uppercase().as_str() {
@@ -244,22 +230,6 @@ async fn import_from_tracker(
         .get_user_list(&integration.access_token, &integration.tracker_user_id, integration.score_format.as_deref())
         .await?;
 
-    let needs_anime = remote_entries.iter().any(|e| e.content_type == ContentType::Anime);
-    let anime_index: Option<AnimeIdIndex> = if needs_anime {
-        match fetch_anime_tsv(state, &integration.tracker_name).await {
-            Ok(idx) => {
-                info!(entries = idx.len(), "Anime TSV loaded into memory");
-                Some(idx)
-            }
-            Err(e) => {
-                warn!(error = ?e, "Failed to fetch anime TSV, will fall back to per-entry API calls");
-                None
-            }
-        }
-    } else {
-        None
-    };
-
     let total = remote_entries.len();
     let mut count: i32 = 0;
 
@@ -306,30 +276,10 @@ async fn import_from_tracker(
             }
         };
 
-        let cross_ids: Option<HashMap<String, String>> = match tracker_media.content_type {
-            ContentType::Anime => {
-                anime_index.as_ref().and_then(|idx| {
-                    idx.get(&(integration.tracker_name.clone(), tracker_id.clone())).cloned()
-                })
-            }
-            ContentType::Manga | ContentType::Novel => None,
-        };
-
-        if matches!(tracker_media.content_type, ContentType::Manga | ContentType::Novel) {
-            tokio::time::sleep(tokio::time::Duration::from_millis(MANGA_RATE_LIMIT_MS)).await;
-        }
-
-        let cid = match EnrichmentService::create_enriched_content(
-            state,
-            &tracker_media.content_type,
-            &tracker_media,
-            tracker_id,
-            &integration.tracker_name,
-            cross_ids.as_ref(),
-        ).await {
-            Ok(full) => full.content.cid,
+        let cid = match ImportService::import_media(pool, &integration.tracker_name, &tracker_media).await {
+            Ok(cid) => cid,
             Err(e) => {
-                error!(error = ?e, id = %tracker_id, "Enrichment failed, skipping entry");
+                error!(error = ?e, id = %tracker_id, "Import failed, skipping entry");
                 continue;
             }
         };
@@ -354,72 +304,4 @@ async fn import_from_tracker(
 
     info!(count = count, tracker = %integration.tracker_name, "Import completed");
     Ok(count)
-}
-
-async fn fetch_anime_tsv(
-    state: &AppState,
-    source_tracker: &str
-) -> CoreResult<AnimeIdIndex> {
-    info!("Downloading anime ID mapping TSV");
-
-    let text = state
-        .http_client
-        .get(ANIME_TSV_URL)
-        .send()
-        .await
-        .map_err(|e| core_err!(Network, "error.import.tsv_download_failed", e))?
-        .text()
-        .await
-        .map_err(|e| core_err!(Parse, "error.import.tsv_parse_failed", e))?;
-
-    let mut lines = text.lines();
-    let header_line = lines.next()
-        .ok_or_else(|| CoreError::Parse("error.import.tsv_empty".into()))?;
-    let headers: Vec<&str> = header_line.split('\t').collect();
-
-    let idx = TsvIndex {
-        anilist:     headers.iter().position(|h| *h == "anilist"),
-        myanimelist: headers.iter().position(|h| *h == "myanimelist"),
-        kitsu:       headers.iter().position(|h| *h == "kitsu"),
-        simkl:       headers.iter().position(|h| *h == "simkl"),
-    };
-
-    let tracked = [
-        ("anilist",     idx.anilist),
-        ("mal",         idx.myanimelist),
-        ("kitsu",       idx.kitsu),
-        ("simkl",       idx.simkl),
-    ];
-
-    let mut index: AnimeIdIndex = HashMap::new();
-
-    for line in lines {
-        if line.is_empty() { continue; }
-        let cols: Vec<&str> = line.split('\t').collect();
-
-        let mut row_ids: HashMap<String, String> = HashMap::new();
-        for (name, maybe_col) in &tracked {
-            if let Some(col) = maybe_col {
-                if let Some(val) = cols.get(*col) {
-                    let v = val.trim();
-                    if !v.is_empty() {
-                        row_ids.insert(name.to_string(), v.to_string());
-                    }
-                }
-            }
-        }
-
-        if row_ids.is_empty() { continue; }
-
-        let row_clone = row_ids.clone();
-        for (name, id) in &row_ids {
-            index.insert((name.clone(), id.clone()), row_clone.clone());
-        }
-    }
-
-    info!(rows = index.len(), source = %source_tracker, "TSV index built");
-    if index.is_empty() {
-        warn!("Anime TSV index is empty after parsing -- headers may have changed upstream, silently falling back to per-item mapping calls for every anime in this import");
-    }
-    Ok(index)
 }
