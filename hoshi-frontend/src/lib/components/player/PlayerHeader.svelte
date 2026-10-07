@@ -1,7 +1,8 @@
 <script lang="ts">
     import { ArrowLeft, Settings } from "lucide-svelte";
     import { goto } from "$app/navigation";
-    import {i18n} from "@/stores/i18n.svelte.js";
+    import { i18n } from "@/stores/i18n.svelte.js";
+    import EpisodesButton from "@/components/player/EpisodesButton.svelte";
 
     let {
         cid,
@@ -9,7 +10,8 @@
         episodeTitle,
         isLoadingMeta,
         isMobile = false,
-        onSettingsClick
+        onSettingsClick,
+        onEpisodesClick
     }: {
         cid: string;
         title: string;
@@ -17,6 +19,7 @@
         isLoadingMeta: boolean;
         isMobile?: boolean;
         onSettingsClick?: () => void;
+        onEpisodesClick?: () => void;
     } = $props();
 </script>
 
@@ -42,12 +45,17 @@
     </div>
 
     {#if isMobile}
-        <button
-                onclick={onSettingsClick}
-                class="p-2 mt-0.5 rounded-full hover:bg-white/10 transition text-white shrink-0"
-                aria-label={i18n.t('watch.player.settings')}
-        >
-            <Settings class="w-5 h-5" />
-        </button>
+        <div class="flex items-center gap-1 shrink-0">
+            {#if onEpisodesClick}
+                <EpisodesButton onclick={onEpisodesClick} class="rounded-full mt-0.5" />
+            {/if}
+            <button
+                    onclick={onSettingsClick}
+                    class="p-2 mt-0.5 rounded-full hover:bg-white/10 transition text-white shrink-0"
+                    aria-label={i18n.t('watch.player.settings')}
+            >
+                <Settings class="w-5 h-5" />
+            </button>
+        </div>
     {/if}
 </div>

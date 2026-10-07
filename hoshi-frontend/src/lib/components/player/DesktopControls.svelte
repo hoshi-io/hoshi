@@ -6,6 +6,7 @@
     import TimeBar from "@/components/player/TimeBar.svelte";
     import VolumeControl from "@/components/player/VolumeControl.svelte";
     import SettingsMenu from "@/components/player/settings/SettingsMenu.svelte";
+    import EpisodesButton from "@/components/player/EpisodesButton.svelte";
     import { appConfig } from "@/stores/config.svelte.js";
 
     let {
@@ -13,6 +14,7 @@
         isFullscreen,
         showSettings,
         onToggleSettings,
+        onToggleEpisodes,
         onToggleFullscreen,
         formatTime
     }: {
@@ -20,6 +22,7 @@
         isFullscreen: boolean;
         showSettings: boolean;
         onToggleSettings: () => void;
+        onToggleEpisodes?: () => void;
         onToggleFullscreen: () => void;
         formatTime: (seconds: number) => string;
     } = $props();
@@ -55,6 +58,9 @@
                     <SkipForward class="w-4 h-4 fill-current" />
                 </button>
             </div>
+            {#if onToggleEpisodes}
+                <EpisodesButton onclick={onToggleEpisodes} />
+            {/if}
             {#if showSettings}
                 <SettingsMenu {pageState} isMobile={false} />
             {/if}

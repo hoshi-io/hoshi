@@ -14,10 +14,12 @@
     import MobileControls from "@/components/player/MobileControls.svelte";
     import { i18n } from "@/stores/i18n.svelte";
     import SettingsMenu from "@/components/player/settings/SettingsMenu.svelte";
-    import {layoutState} from "@/stores/layout.svelte.js";
+    import { layoutState } from "@/stores/layout.svelte.js";
     import TorrentBanner from "@/components/player/TorrentBanner.svelte";
     import TorrentPickerDialog from "@/components/player/TorrentPickerDialog.svelte";
-    import {type as OsType} from "@tauri-apps/plugin-os";
+    import { type as OsType } from "@tauri-apps/plugin-os";
+    import EpisodeList from "@/components/player/EpisodeList.svelte";
+    import { fly } from "svelte/transition";
 
     const pageState = new WatchState();
 
@@ -43,7 +45,7 @@
 
     function scheduleHide() {
         clearHideTimer();
-        if (pageState.isPaused || showSettings || showTorrentPicker) return;
+        if (pageState.isPaused || showSettings || showTorrentPicker || showEpisodes) return;
         const delay = layoutState.isMobile ? HIDE_DELAY_MOBILE_MS : HIDE_DELAY_DESKTOP_MS;
         hideTimer = setTimeout(() => {
             showControls = false;
@@ -99,9 +101,8 @@
             case "p":
                 if (pageState.hasPrev) pageState.goToEpisode(pageState.epNumber - 1);
                 break;
-            case "escape":
-                if (showSettings) showSettings = false;
-                break;
+            case "e": toggleEpisodes(); break;
+            case "escape": if (showEpisodes) showEpisodes = false; else if (showSettings) showSettings = false; break;
         }
     }
 
@@ -115,7 +116,7 @@
     let seekSide = $state<'left' | 'right'>('right');
     let seekOverlayTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // Visual Brightness/Volume State (mobile swipe gestures)
+    // Visual Brightness/Volume State
     let brightness = $state(50);
     let volume = $state(50);
     let showBrightnessOverlay = $state(false);
@@ -123,7 +124,19 @@
     let brightnessOverlayTimer: ReturnType<typeof setTimeout> | null = null;
     let volumeOverlayTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // Pixels of vertical swipe needed for a 1% change. Lower = more sensitive.
+    let showEpisodes = $state(false);
+
+    // Settings and the episode list are mutually exclusive: opening one closes the other.
+    function toggleEpisodes() {
+        showEpisodes = !showEpisodes;
+        if (showEpisodes) showSettings = false;
+    }
+
+    function toggleSettings() {
+        showSettings = !showSettings;
+        if (showSettings) showEpisodes = false;
+    }
+
     const SWIPE_SENSITIVITY = 4;
 
     function flashBrightnessOverlay() {
@@ -167,6 +180,10 @@
     }
 
     function toggleControlsTap() {
+        if (showEpisodes) {
+            showEpisodes = false;
+            return;
+        }
         showControls = !showControls;
         if (showControls) handleActivity();
     }
@@ -175,12 +192,10 @@
         const now = Date.now();
         const DOUBLE_TAP_DELAY = 300;
 
-        // Trigger if it's a fast double tap OR if the seek overlay is already active (chaining taps)
         if (now - lastTapTime < DOUBLE_TAP_DELAY || showSeekOverlay) {
             const step = appConfig.data?.player.seekStep ?? 10;
             const delta = side === 'left' ? -step : step;
 
-            // Reset amount if they suddenly switch sides mid-seek
             if (showSeekOverlay && seekSide !== side) {
                 seekAmount = 0;
             }
@@ -192,11 +207,9 @@
 
             showSeekOverlay = true;
 
-            // Reset the hide timer
             if (seekOverlayTimer) clearTimeout(seekOverlayTimer);
             seekOverlayTimer = setTimeout(() => {
                 showSeekOverlay = false;
-                // Wait for the fade out transition before clearing the number
                 setTimeout(() => {
                     if (!showSeekOverlay) seekAmount = 0;
                 }, 300);
@@ -204,9 +217,12 @@
 
             lastTapTime = now;
         } else {
-            // Single tap
-            showControls = !showControls;
-            if (showControls) handleActivity();
+            if (showEpisodes) {
+                showEpisodes = false;
+            } else {
+                showControls = !showControls;
+                if (showControls) handleActivity();
+            }
             lastTapTime = now;
         }
     }
@@ -219,20 +235,18 @@
         const currentY = e.touches[0].clientY;
         const diff = touchStartY - currentY;
 
-        // diff > 0 means swipe up (increase), diff < 0 means swipe down (decrease)
         if (side === 'left') {
             adjustBrightness(diff);
         } else {
             adjustVolume(diff);
         }
 
-        // Reset start position for continuous dragging feel
         touchStartY = currentY;
     }
 
     $effect(() => {
         const paused = pageState.isPaused;
-        const settingsOpen = showSettings;
+        const settingsOpen = showSettings || showEpisodes;
 
         if (paused || settingsOpen) {
             showControls = true;
@@ -243,8 +257,6 @@
     });
 
     onMount(() => {
-        // Seed the indicators with the device's actual current values.
-        // Both commands resolve a plain 0-1 float, not an object.
         invoke<number>("get_immersive_brightness")
             .then((level) => { brightness = Math.round(level * 100); })
             .catch((e) => console.error("Failed to get brightness", e));
@@ -254,12 +266,6 @@
 
         window.addEventListener("keydown", handleKeydown);
 
-        // Desktop only: continuous mouse/wheel/touch activity wakes the
-        // controls and resets the auto-hide timer, mirroring hover-driven
-        // UIs. On mobile this fights with the deliberate tap-to-toggle
-        // logic in handleMobileTap (a touchstart here would flip
-        // showControls just before the tap's own click handler flips it
-        // again), so mobile relies solely on taps instead.
         if (!layoutState.isMobile) {
             window.addEventListener("mousemove", handleActivity);
             window.addEventListener("mousedown", handleActivity);
@@ -290,7 +296,7 @@
             if (!(await win.isFullscreen())) {
                 if (IS_WINDOWS) {
                     wasMaximized = await win.isMaximized();
-                    if (wasMaximized) await win.unmaximize();   // tao undecorated+maximized bug
+                    if (wasMaximized) await win.unmaximize();
                 }
                 await win.setFullscreen(true);
             } else {
@@ -366,20 +372,28 @@
                         {pageState}
                         {isFullscreen}
                         {showSettings}
-                        onToggleSettings={() => showSettings = !showSettings}
+                        onToggleSettings={toggleSettings}
+                        onToggleEpisodes={toggleEpisodes}
                         onToggleFullscreen={toggleFullscreen}
                         {formatTime}
                 />
             </div>
         </div>
 
+        {#if showEpisodes}
+            <aside
+                    transition:fly={{ x: "100%", duration: 300 }}
+                    class="dark fixed right-0 top-0 bottom-28 z-[60] w-80 bg-gradient-to-l from-black/85 via-black/50 to-transparent pointer-events-auto"
+            >
+                <EpisodeList {pageState} onClose={() => (showEpisodes = false)} />
+            </aside>
+        {/if}
+
     {:else}
         <!-- Mobile Layout Overlay -->
         <div class="relative w-full h-full flex flex-col justify-between pointer-events-none">
 
-            <!-- Gesture & Click Invisible Zones. Left/right 30% strips handle
-                 double-tap-to-seek and vertical swipe-to-adjust; the middle
-                 40% is a plain tap-to-toggle-controls zone with no gestures. -->
+            <!-- Gesture & Click Invisible Zones -->
             <div class="absolute inset-0 z-10 flex pointer-events-auto">
                 <div
                         class="w-[30%] h-full"
@@ -412,7 +426,8 @@
                         episodeTitle={pageState.episodeTitle}
                         isLoadingMeta={pageState.isLoadingMeta}
                         isMobile={true}
-                        onSettingsClick={() => showSettings = true}
+                        onSettingsClick={toggleSettings}
+                        onEpisodesClick={toggleEpisodes}
                 />
             </div>
 
@@ -426,7 +441,13 @@
                     error={pageState.error}
             />
 
-            <MobileControls {pageState} {showControls} {formatTime} />
+            <MobileControls
+                    {pageState}
+                    {showControls}
+                    {showEpisodes}
+                    onCloseEpisodes={() => (showEpisodes = false)}
+                    {formatTime}
+            />
         </div>
 
         <!-- Mobile Drawer Settings -->
