@@ -7,6 +7,8 @@ import type {
     TorrentFilters,
     TorrentLiveStats,
     TorrentSearchResult,
+    RankedTorrent,
+    TorrentTargetSummary,
     TorrentStorageStats,
     TorrentStreamInfo,
 } from "./types";
@@ -24,11 +26,29 @@ export const torrentApi = {
         }).then(res => res.magnet);
     },
 
-    /** Best match for `query` according to the user's torrent settings, or `null` if nothing fits. */
-    autoSelect(id: string, query: string, filters: TorrentFilters = {}, page = 1): Promise<TorrentSearchResult | null> {
+    /**
+     * Best match for an episode of `cid` according to the user's torrent settings,
+     * or `null` if nothing fits. The backend derives title, season and absolute
+     * episode number from the content's metadata and relations.
+     */
+    autoSelect(id: string, cid: string, episode: number, filters: TorrentFilters = {}, page = 1): Promise<TorrentSearchResult | null> {
         return call<{ torrent: TorrentSearchResult | null }>({
-            tauri: { cmd: "auto_select_torrent", args: { id, query, filters, page } },
+            tauri: { cmd: "auto_select_torrent", args: { id, cid, episode, filters, page } },
         }).then(res => res.torrent ?? null);
+    },
+
+    /** All plausible torrents for an episode, best first, with match confidence and reason. */
+    searchForEpisode(id: string, cid: string, episode: number, filters: TorrentFilters = {}, page = 1): Promise<RankedTorrent[]> {
+        return call<{ results: RankedTorrent[] }>({
+            tauri: { cmd: "search_torrents_for_episode", args: { id, cid, episode, filters, page } },
+        }).then(res => res.results ?? []);
+    },
+
+    /** Debug: the season / absolute episode / search queries the backend derives. `null` if content is unknown. */
+    debugTarget(cid: string, episode: number): Promise<TorrentTargetSummary | null> {
+        return call<{ target: TorrentTargetSummary | null }>({
+            tauri: { cmd: "debug_torrent_target", args: { cid, episode } },
+        }).then(res => res.target ?? null);
     },
 
     /** Adds the torrent and opens a stream session. Pass `magnet` to skip the extension lookup. */

@@ -40,14 +40,15 @@ pub async fn auto_select_torrent(
     state: State<'_, Arc<AppState>>,
     session: State<'_, TauriSession>,
     id: String,
-    query: String,
+    cid: String,
+    episode: u32,
     filters: Value,
     page: u32,
 ) -> Result<Value, CoreError> {
     let user_id = require_auth(&session).await?;
     let manager = state.inner().extension_manager.read().await;
     let picked = TorrentService::auto_select_torrent(
-        state.inner(), &manager, user_id, &id, &query, filters, page,
+        state.inner(), &manager, user_id, &id, &cid, episode, filters, page,
     ).await?;
     Ok(json!({ "torrent": picked }))
 }

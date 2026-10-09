@@ -152,8 +152,8 @@ impl Default for PlayerConfig {
     fn default() -> Self {
         Self {
             autoplay_next_episode: true,
-            preferred_sub_lang: "jp".into(),
-            preferred_dub_lang: "en".into(),
+            preferred_sub_lang: "en".into(),
+            preferred_dub_lang: "jp".into(),
             auto_skip_intro: false,
             auto_skip_outro: false,
             seek_step: 10,

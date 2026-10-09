@@ -29,7 +29,6 @@
 
     let isFullscreen = $state(false);
     let showSettings = $state(false);
-    let showTorrentPicker = $state(false);
 
     const HIDE_DELAY_DESKTOP_MS = 500;
     const HIDE_DELAY_MOBILE_MS = 3000;
@@ -45,7 +44,7 @@
 
     function scheduleHide() {
         clearHideTimer();
-        if (pageState.isPaused || showSettings || showTorrentPicker || showEpisodes) return;
+        if (pageState.isPaused || showSettings || pageState.showTorrentPicker || showEpisodes) return;
         const delay = layoutState.isMobile ? HIDE_DELAY_MOBILE_MS : HIDE_DELAY_DESKTOP_MS;
         hideTimer = setTimeout(() => {
             showControls = false;
@@ -58,7 +57,7 @@
     }
 
     function handleKeydown(e: KeyboardEvent) {
-        if (showTorrentPicker) return;
+        if (pageState.showTorrentPicker) return;
         const target = e.target as HTMLElement;
         if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
         if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -345,7 +344,7 @@
                 torrent={pageState.selectedTorrent}
                 sessionId={pageState.torrentSessionId}
                 visible={showControls}
-                onChange={() => showTorrentPicker = true}
+                onChange={() => pageState.showTorrentPicker = true}
         />
     {/if}
 
@@ -461,4 +460,4 @@
     {/if}
 
 </div>
-<TorrentPickerDialog bind:open={showTorrentPicker} {pageState} />
+<TorrentPickerDialog bind:open={pageState.showTorrentPicker} {pageState} />

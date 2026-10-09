@@ -82,7 +82,6 @@ impl TorrentHandle {
         })
     }
 
-    /// Called from `ConfigService::patch_config` and `TorrentService::sync_config`.
     pub async fn update_config(&self, config: TorrentConfig) {
         if let Some(session) = self.0.session.get() {
             Self::apply_limits(session, &config);

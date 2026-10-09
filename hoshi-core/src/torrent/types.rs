@@ -1,6 +1,8 @@
 use std::sync::Arc;
 use std::time::Instant;
 use serde::Serialize;
+use crate::extensions::types::TorrentSearchResult;
+use crate::torrent::parser::parser::ParsedRelease;
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -84,4 +86,13 @@ pub struct TorrentCacheClearResult {
     pub removed: usize,
     pub skipped: usize,
     pub freed_bytes: u64,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RankedTorrent {
+    pub result: TorrentSearchResult,
+    pub parsed: ParsedRelease,
+    pub confidence: f32,
+    pub reason: &'static str,
 }

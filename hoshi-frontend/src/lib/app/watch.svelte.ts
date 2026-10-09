@@ -152,7 +152,7 @@ export class WatchState {
     // ---- torrent playback ------------------------------------------------
     torrentSessionId = $state<string | null>(null);
     selectedTorrent  = $state<TorrentSearchResult | null>(null);
-    torrentTitle     = $derived(this.selectedTorrent?.title ?? null);
+    showTorrentPicker = $state(false);
 
     // ---- internal state (not read by the UI) ------------------------------
     private currentLoadedCid = $state<string | null>(null);
@@ -628,10 +628,10 @@ export class WatchState {
     }
 
     private async pickTorrent(): Promise<TorrentSearchResult> {
-        const query = this.torrentSearchQuery();
-        if (!query) throw { key: "watch.no_metadata_for_query" } as CoreError;
+        const cid = this.animeData?.content.cid;
+        if (!cid) throw { key: "watch.no_metadata_for_query" } as CoreError;
 
-        const picked = await torrentApi.autoSelect(this.selectedExtension!, query);
+        const picked = await torrentApi.autoSelect(this.selectedExtension!, cid, this.epNumber);
         if (!picked) throw { key: "watch.no_torrent_match" } as CoreError;
         return picked;
     }
@@ -760,6 +760,10 @@ export class WatchState {
         } catch (e: any) {
             console.error("loadPlay failed", e);
             this.error = e.key ? e : { key: "errors.unknown_error" };
+
+            if (this.isTorrent && (e?.key === "watch.no_torrent_match" || this.isMappingError)) {
+                this.showTorrentPicker = true;
+            }
         } finally {
             if (token === this.loadToken) this.isLoadingPlay = false;
         }

@@ -70,3 +70,35 @@ export interface ClearTorrentCacheResponse {
     skipped: number;
     freedBytes: number;
 }
+
+export interface ParsedRelease {
+    group: string | null;
+    titleRaw: string;
+    title: string;
+    season: number | null;
+    episode: number | null;
+    episodeRange: [number, number] | null;
+    version: number;
+    resolution: string | null;
+    codec: string | null;
+    dualAudio: boolean;
+    isBatch: boolean;
+    isExtra: boolean;
+}
+
+export interface RankedTorrent {
+    result: TorrentSearchResult;
+    parsed: ParsedRelease;
+    /** 0..1. >= 0.6 is eligible for auto-select; 0.4-0.6 is "ambiguous". */
+    confidence: number;
+    reason: string;
+}
+
+export interface TorrentTargetSummary {
+    aliases: string[];
+    season: number;
+    episode: number;
+    absoluteEpisode: number | null;
+    totalEpisodes: number | null;
+    queries: string[];
+}
