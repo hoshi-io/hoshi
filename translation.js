@@ -1,7 +1,7 @@
 /**
- * node sync-locales.js --export     # write ./translations/<locale>.json (key -> English) to translate
- * node sync-locales.js --merge      # merge ./translations/<locale>.json back into the locales
- * node sync-locales.js --merge --overwrite       # also replace keys that already have a translation
+ * --export     # write ./translations/<locale>.json (key -> English) to translate
+ * --merge      # merge ./translations/<locale>.json back into the locales
+ * --merge --overwrite       # also replace keys that already have a translation
  */
 
 const fs = require("fs");
