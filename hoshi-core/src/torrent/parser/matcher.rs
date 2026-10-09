@@ -160,7 +160,47 @@ impl TargetDescriptor {
 
         MatchResult { confidence: base * (0.7 + 0.3 * sim), reason }
     }
-    
+
+    /// Scores a single file inside a torrent that was already chosen for this
+    pub fn evaluate_file(&self, p: &ParsedRelease, dir_season: Option<u32>) -> Option<f32> {
+        if p.is_extra && !self.allow_extras {
+            return None;
+        }
+        let season = p.season.or(dir_season);
+        let ep = self.episode as f64;
+        let abs = self.absolute_episode.map(|a| a as f64);
+
+        if let Some((a, b)) = p.episode_range {
+            // double-episode file ("01-02")
+            let season_ok = season.map_or(true, |s| s == self.season);
+            let hit = (a <= ep && ep <= b) || (season.is_none() && abs.is_some_and(|x| a <= x && x <= b));
+            return (season_ok && hit).then_some(0.5);
+        }
+
+        let pe = p.episode?;
+        match season {
+            Some(s) if s != self.season => None,
+            Some(_) => {
+                if pe == ep {
+                    Some(1.0)
+                } else if abs == Some(pe) {
+                    Some(0.8)
+                } else {
+                    None
+                }
+            }
+            None => {
+                if abs == Some(pe) && self.season > 1 {
+                    Some(0.9)
+                } else if pe == ep || abs == Some(pe) {
+                    Some(0.85)
+                } else {
+                    None
+                }
+            }
+        }
+    }
+
     pub fn search_queries(&self) -> Vec<String> {
         let mut titles: Vec<String> = Vec::new();
         let mut seen = HashSet::new();

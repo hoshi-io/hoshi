@@ -37,24 +37,10 @@ export const torrentApi = {
         }).then(res => res.torrent ?? null);
     },
 
-    /** All plausible torrents for an episode, best first, with match confidence and reason. */
-    searchForEpisode(id: string, cid: string, episode: number, filters: TorrentFilters = {}, page = 1): Promise<RankedTorrent[]> {
-        return call<{ results: RankedTorrent[] }>({
-            tauri: { cmd: "search_torrents_for_episode", args: { id, cid, episode, filters, page } },
-        }).then(res => res.results ?? []);
-    },
-
-    /** Debug: the season / absolute episode / search queries the backend derives. `null` if content is unknown. */
-    debugTarget(cid: string, episode: number): Promise<TorrentTargetSummary | null> {
-        return call<{ target: TorrentTargetSummary | null }>({
-            tauri: { cmd: "debug_torrent_target", args: { cid, episode } },
-        }).then(res => res.target ?? null);
-    },
-
     /** Adds the torrent and opens a stream session. Pass `magnet` to skip the extension lookup. */
-    startStream(id: string, contentId: string, magnet?: string | null): Promise<TorrentStreamInfo> {
+    startStream(id: string, contentId: string, cid: string, episode: number, magnet?: string | null): Promise<TorrentStreamInfo> {
         return call<TorrentStreamInfo>({
-            tauri: { cmd: "start_torrent_stream", args: { id, contentId, magnet: magnet ?? null } },
+            tauri: { cmd: "start_torrent_stream", args: { id, contentId, cid: cid, episode: episode, magnet: magnet ?? null } },
         });
     },
 

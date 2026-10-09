@@ -638,7 +638,7 @@ export class WatchState {
 
     private async resolveTorrentStream(token: number): Promise<ResolvedStream | null> {
         const torrent = this.forcedTorrent ?? await this.pickTorrent();
-        const info = await torrentApi.startStream(this.selectedExtension!, torrent.id, torrent.magnet);
+        const info = await    torrentApi.startStream(this.selectedExtension!, torrent.id, this.cid, this.epNumber, torrent.magnet)
 
         if (token !== this.loadToken) {
             void this.stopTorrentSession(info.sessionId);

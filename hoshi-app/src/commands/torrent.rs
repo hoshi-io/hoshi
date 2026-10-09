@@ -60,9 +60,12 @@ pub async fn start_torrent_stream(
     id: String,
     content_id: String,
     magnet: Option<String>,
+    cid: Option<String>,
+    episode: Option<u32>,
 ) -> Result<TorrentStreamInfo, CoreError> {
     let user_id = require_auth(&session).await?;
     TorrentService::sync_config(state.inner(), user_id).await?;
+
     let magnet = match magnet.filter(|m| m.starts_with("magnet:")) {
         Some(m) => m,
         None => {
@@ -71,7 +74,16 @@ pub async fn start_torrent_stream(
         }
     };
 
-    let (session_id, total_size) = state.inner().torrent.add_magnet(&magnet).await?;
+    let target = match (cid, episode) {
+        (Some(cid), Some(ep)) => TorrentService::build_target(state.inner(), &cid, ep).await?,
+        _ => None,
+    };
+
+    let (session_id, total_size) = state
+        .inner()
+        .torrent
+        .add_magnet(&magnet, target.as_ref())
+        .await?;
 
     Ok(TorrentStreamInfo {
         url: format!("torrent://{session_id}"),

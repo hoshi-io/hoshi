@@ -14,6 +14,8 @@ use tracing::{info, warn};
 use crate::config::model::TorrentConfig;
 use crate::core_err;
 use crate::error::{CoreError, CoreResult};
+use crate::torrent::parser::files::{select_file, TorrentFile};
+use crate::torrent::parser::matcher::TargetDescriptor;
 use crate::torrent::types::{
     CacheEntryState, Lingering, StreamSession, TorrentCacheClearResult, TorrentCacheEntry,
     TorrentCacheFile, TorrentLiveStats, TorrentStorageStats,
@@ -107,9 +109,7 @@ impl TorrentHandle {
         }).await
     }
 
-    // ---------------------------------------------------------------- add
-
-    pub async fn add_magnet(&self, magnet: &str) -> CoreResult<(String, u64)> {
+    pub async fn add_magnet(&self, magnet: &str, target: Option<&TargetDescriptor>) -> CoreResult<(String, u64)> {
         let dir = magnet_key(magnet)
             .ok_or_else(|| core_err!(BadRequest, "error.torrent.invalid_magnet"))?;
 
@@ -161,7 +161,7 @@ impl TorrentHandle {
         // Active again, so no longer a reaper candidate.
         self.0.lingering.remove(&torrent_id);
 
-        let (file_index, file_len) = match Self::wait_ready(&torrent).await {
+        let (file_index, file_len) = match Self::wait_ready(&torrent, target).await {
             Ok(v) => v,
             Err(e) => {
                 // Don't leak a torrent nobody will stream, unless a live
@@ -182,25 +182,29 @@ impl TorrentHandle {
         Ok((session_id, file_len))
     }
 
-    async fn wait_ready(torrent: &Arc<librqbit::ManagedTorrent>) -> CoreResult<(usize, u64)> {
+    async fn wait_ready(torrent: &Arc<librqbit::ManagedTorrent>, target: Option<&TargetDescriptor>)
+                        -> CoreResult<(usize, u64)> {
         tokio::time::timeout(INIT_TIMEOUT, torrent.wait_until_initialized())
             .await
             .map_err(|_| core_err!(BadRequest, "error.torrent.init_timeout"))?
             .map_err(|e| core_err!(Internal, "error.torrent.metadata_resolve_failed", e))?;
 
-        Self::pick_largest_file(torrent)
-            .ok_or_else(|| core_err!(Internal, "error.torrent.no_files_found"))
+        let files: Vec<TorrentFile> = torrent
+            .with_metadata(|m| {
+                m.file_infos.iter().enumerate().map(|(i, f)| TorrentFile {
+                    index: i,
+                    path: f.relative_filename.to_string_lossy().replace('\\', "/"),
+                    len: f.len,
+                }).collect()
+            })
+            .map_err(|e| core_err!(Internal, "error.torrent.metadata_resolve_failed", e))?;
+
+        let idx = select_file(&files, target)
+            .ok_or_else(|| core_err!(BadRequest, "error.torrent.episode_not_in_torrent"))?;
+        info!(file = %files[idx].path, "torrent file selected");
+        Ok((idx, files[idx].len))
     }
 
-    fn pick_largest_file(torrent: &Arc<librqbit::ManagedTorrent>) -> Option<(usize, u64)> {
-        torrent.with_metadata(|m| {
-            m.file_infos.iter().enumerate()
-                .max_by_key(|(_, f)| f.len)
-                .map(|(i, f)| (i, f.len))
-        }).ok().flatten()
-    }
-
-    /// Sync lookup, called from mpv's demuxer thread (not an async context).
     pub fn lookup_session(
         &self,
         session_id: &str,
@@ -209,8 +213,6 @@ impl TorrentHandle {
             (s.torrent.clone(), s.file_index, s.file_len, self.0.rt.clone())
         })
     }
-
-    // ------------------------------------------------------------ teardown
 
     fn in_use(&self, torrent_id: usize) -> bool {
         self.0.streams.iter().any(|s| s.torrent_id == torrent_id)
