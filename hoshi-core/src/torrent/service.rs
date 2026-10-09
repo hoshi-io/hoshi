@@ -4,13 +4,17 @@ use serde_json::Value;
 use tracing::{debug, info, warn};
 use crate::config::model::TorrentConfig;
 use crate::config::service::ConfigService;
-use crate::content::models::{EpisodeData, Metadata, RelationType, Relation};
+use crate::content::models::{EpisodeData, Metadata};
 use crate::content::repositories::content::ContentRepository;
 use crate::error::CoreResult;
 use crate::extensions::types::TorrentSearchResult;
 use crate::extensions::ExtensionManager;
 use crate::state::AppState;
-use crate::torrent::parser::chain::{subtype_counts_as_season, ChainNode, PrequelLink, PrequelSource, season_position};
+use std::sync::Arc;
+use crate::content::relations::{
+    prequel_link, resolve_target, season_position, subtype_counts_as_season,
+    ChainNode, PrequelSource, ResolveBudget, UnresolvedRef, CHAIN_RESOLVE_BUDGET,
+};
 use crate::torrent::parser::matcher::{TargetDescriptor, MIN_LISTED, MIN_AUTO};
 use crate::torrent::parser::parser::{is_continuation_title, ParsedRelease, season_from_title, parse_release_title, normalize_codec};
 use crate::torrent::types::RankedTorrent;
@@ -31,20 +35,6 @@ fn is_continuation(m: &Metadata) -> bool {
     collect_aliases(m).iter().any(|a| is_continuation_title(a))
 }
 
-fn prequel_link(relations: &[Relation]) -> PrequelLink {
-    let mut prequels = relations
-        .iter()
-        .filter(|r| matches!(r.relation_type, RelationType::Prequel));
-    // prefer one we've actually imported
-    let all: Vec<&Relation> = prequels.by_ref().collect();
-    if let Some(cid) = all.iter().find_map(|r| r.target_cid.clone()) {
-        PrequelLink::Cid(cid)
-    } else if !all.is_empty() {
-        PrequelLink::Unresolved
-    } else {
-        PrequelLink::None
-    }
-}
 
 /// first: romaji, english, main title, synonyms, native last.
 fn collect_aliases(m: &Metadata) -> Vec<String> {
@@ -64,12 +54,13 @@ fn collect_aliases(m: &Metadata) -> Vec<String> {
 }
 
 struct DbPrequelSource<'a> {
-    state: &'a AppState,
+    state: &'a Arc<AppState>,
+    budget: ResolveBudget,
 }
 
 impl PrequelSource for DbPrequelSource<'_> {
     async fn node(&self, cid: &str) -> Option<ChainNode> {
-        let fc =     ContentRepository::get_full_content(&self.state.pool, cid).await.ok().flatten()?;
+        let fc = ContentRepository::get_full_content(&self.state.pool, cid).await.ok().flatten()?;
         let m = fc.primary_metadata()?;
         Some(ChainNode {
             prequel: prequel_link(&fc.relations),
@@ -78,12 +69,19 @@ impl PrequelSource for DbPrequelSource<'_> {
             is_continuation: is_continuation(m),
         })
     }
+
+    async fn resolve(&self, r: &UnresolvedRef) -> Option<String> {
+        if !self.budget.try_take() {
+            return None;
+        }
+        resolve_target(self.state, &r.tracker_name, &r.tracker_id).await
+    }
 }
 
 impl TorrentService {
 
     pub async fn build_target(
-        state: &AppState,
+        state: &Arc<AppState>,
         cid: &str,
         episode: u32,
     ) -> CoreResult<Option<TargetDescriptor>> {
@@ -98,10 +96,10 @@ impl TorrentService {
         let mut pos = season_position(
             prequel_link(&fc.relations),
             is_continuation(meta),
-            &DbPrequelSource { state },
+            &DbPrequelSource { state, budget: ResolveBudget::new(CHAIN_RESOLVE_BUDGET) },
         )
             .await;
-        
+
         if let Some(title_season) = aliases.iter().find_map(|a| season_from_title(a)) {
             if title_season != pos.season {
                 warn!(
@@ -179,7 +177,7 @@ impl TorrentService {
             p.is_batch = true;
         }
     }
-    
+
     pub async fn search_ranked(
         manager: &ExtensionManager,
         ext_id: &str,
@@ -192,7 +190,6 @@ impl TorrentService {
         let mut ranked: Vec<RankedTorrent> = Vec::new();
         let mut last_err = None;
         let mut any_ok = false;
-        let mut raw_total = 0usize;
 
         for q in target.search_queries() {
             debug!("torrent search: query={q:?} ext={ext_id} page={page}");
@@ -207,7 +204,6 @@ impl TorrentService {
                             seen.insert(key)
                         })
                         .collect();
-                    raw_total += fresh.len();
                     let before = ranked.len();
                     ranked.extend(Self::rank(fresh.clone(), target));
                     info!(
@@ -330,7 +326,7 @@ impl TorrentService {
     }
 
     pub async fn auto_select_torrent(
-        state: &AppState,
+        state: &Arc<AppState>,
         manager: &ExtensionManager,
         user_id: i32,
         ext_id: &str,

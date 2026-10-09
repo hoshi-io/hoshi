@@ -21,7 +21,7 @@ impl RelationRepository {
             .map(|(id, source_cid, target_cid, target_tracker_name, target_tracker_id,
                       type_raw, target_title, target_cover_image, source_name, created_at)| {
                 let relation_type = serde_json::from_str(&format!("\"{}\"", type_raw))
-                    .unwrap_or(RelationType::Alternative);
+                    .unwrap_or(RelationType::Other);
                 Relation {
                     id: Some(id),
                     source_cid,

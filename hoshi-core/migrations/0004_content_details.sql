@@ -36,3 +36,4 @@ CREATE TABLE IF NOT EXISTS content_relations (
     );
 CREATE INDEX IF NOT EXISTS idx_rel_source ON content_relations(source_cid);
 CREATE INDEX IF NOT EXISTS idx_rel_target ON content_relations(target_cid);
+CREATE INDEX IF NOT EXISTS idx_rel_target_tracker ON content_relations(target_tracker_name, target_tracker_id);

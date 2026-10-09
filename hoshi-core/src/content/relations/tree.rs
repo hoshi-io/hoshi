@@ -2,15 +2,16 @@ use std::collections::{HashSet, VecDeque};
 use std::sync::Arc;
 use tracing::instrument;
 
-use crate::content::models::{Relation, RelationType};
+use crate::content::models::RelationType;
 use crate::content::repositories::content::ContentRepository;
 use crate::content::repositories::relations::RelationRepository;
-use crate::content::services::enrichment::EnrichmentService;
-use crate::content::services::resolver::ContentResolverService;
 use crate::content::types::{RelationEdge, RelationGraph, RelationNode};
 use crate::error::CoreResult;
 use crate::state::AppState;
 
+use super::resolve::{resolve_target, ResolveBudget};
+
+/// Cap on *content* nodes in the graph (leaf placeholders don't count).
 const MAX_TREE_NODES: usize = 150;
 const MAX_TREE_DEPTH: usize = 4;
 const MAX_TREE_EAGER_RESOLVES: usize = 12;
@@ -23,35 +24,39 @@ impl RelationTreeService {
         state: &Arc<AppState>,
         root_cid: &str,
     ) -> CoreResult<RelationGraph> {
-        let mut visited_cids: HashSet<String> = HashSet::new();
+        let budget = ResolveBudget::new(MAX_TREE_EAGER_RESOLVES);
+
+        // `visited` = popped from the queue (dedup); `node_cids` = actually emitted as a node.
+        // The cap is on node_cids, so failed fetches don't eat into it.
+        let mut visited: HashSet<String> = HashSet::new();
+        let mut node_cids: HashSet<String> = HashSet::new();
         let mut visited_leaves: HashSet<(String, String)> = HashSet::new();
+        let mut seen_edges: HashSet<(String, String)> = HashSet::new();
         let mut queue: VecDeque<(String, usize)> = VecDeque::new();
         let mut nodes = Vec::new();
         let mut edges = Vec::new();
-        let mut seen_edges: HashSet<(String, String)> = HashSet::new();
-        let mut eager_resolves = 0usize;
 
         queue.push_back((root_cid.to_string(), 0));
 
         while let Some((cid, depth)) = queue.pop_front() {
-            if visited_cids.contains(&cid) || visited_cids.len() >= MAX_TREE_NODES {
+            if node_cids.len() >= MAX_TREE_NODES {
+                break; // BFS: nothing further can be added
+            }
+            if !visited.insert(cid.clone()) {
                 continue;
             }
-            visited_cids.insert(cid.clone());
 
             let Some(full) = ContentRepository::get_full_content(&state.pool, &cid).await? else {
                 continue;
             };
 
-            let title = full.metadata.first().map(|m| m.title.clone()).unwrap_or_default();
-            let cover = full.metadata.first().and_then(|m| m.cover_image.clone());
-
+            node_cids.insert(cid.clone());
             nodes.push(RelationNode {
                 cid: Some(cid.clone()),
                 tracker_name: None,
                 tracker_id: None,
-                title,
-                cover_image: cover,
+                title: full.metadata.first().map(|m| m.title.clone()).unwrap_or_default(),
+                cover_image: full.metadata.first().and_then(|m| m.cover_image.clone()),
             });
 
             if depth >= MAX_TREE_DEPTH {
@@ -66,21 +71,23 @@ impl RelationTreeService {
                 }
 
                 let mut target_cid = rel.target_cid.clone();
-                if target_cid.is_none() && eager_resolves < MAX_TREE_EAGER_RESOLVES {
-                    eager_resolves += 1;
-                    target_cid = Self::eager_resolve_relation_target(state, &rel).await;
+                if target_cid.is_none() && budget.try_take() {
+                    target_cid =
+                        resolve_target(state, &rel.target_tracker_name, &rel.target_tracker_id).await;
                 }
 
+                // Unordered pair: collapses mirrored edges (A sequel B / B prequel A).
                 let edge_key = match &target_cid {
-                    Some(tcid) if cid < *tcid => (cid.clone(), tcid.clone()),
-                    Some(tcid) => (tcid.clone(), cid.clone()),
-                    None => (cid.clone(), format!("{}:{}", rel.target_tracker_name, rel.target_tracker_id)),
+                    Some(t) if cid < *t => (cid.clone(), t.clone()),
+                    Some(t) => (t.clone(), cid.clone()),
+                    None => (
+                        cid.clone(),
+                        format!("{}:{}", rel.target_tracker_name, rel.target_tracker_id),
+                    ),
                 };
-
-                if seen_edges.contains(&edge_key) {
+                if !seen_edges.insert(edge_key) {
                     continue;
                 }
-                seen_edges.insert(edge_key);
 
                 edges.push(RelationEdge {
                     source_cid: cid.clone(),
@@ -91,11 +98,10 @@ impl RelationTreeService {
                 });
 
                 match &target_cid {
-                    Some(tcid) if !visited_cids.contains(tcid) => {
-                        queue.push_back((tcid.clone(), depth + 1));
-                    }
+                    Some(t) if !visited.contains(t) => queue.push_back((t.clone(), depth + 1)),
                     None => {
-                        let leaf_key = (rel.target_tracker_name.clone(), rel.target_tracker_id.clone());
+                        let leaf_key =
+                            (rel.target_tracker_name.clone(), rel.target_tracker_id.clone());
                         if visited_leaves.insert(leaf_key) {
                             nodes.push(RelationNode {
                                 cid: None,
@@ -110,6 +116,10 @@ impl RelationTreeService {
                 }
             }
         }
+
+        // Edges pushed toward targets that never became nodes (node cap hit,
+        // or get_full_content returned None) would dangle in the UI: drop them.
+        edges.retain(|e| e.target_cid.as_ref().map_or(true, |t| node_cids.contains(t)));
 
         Ok(RelationGraph { nodes, edges })
     }
@@ -129,22 +139,5 @@ impl RelationTreeService {
                 | RelationType::Contains
         )
         // excluded on purpose: Character, SpinOff, Other
-    }
-
-    async fn eager_resolve_relation_target(state: &Arc<AppState>, rel: &Relation) -> Option<String> {
-        let media = ContentResolverService::fetch_tracker_media(
-            state, &rel.target_tracker_name, &rel.target_tracker_id,
-        ).await.ok()?;
-
-        let full = EnrichmentService::create_enriched_content(
-            state, &media.content_type, &media,
-            &rel.target_tracker_id, &rel.target_tracker_name, None,
-        ).await.ok()?;
-
-        let _ = RelationRepository::backfill_target_cid(
-            &state.pool, &rel.target_tracker_name, &rel.target_tracker_id, &full.content.cid,
-        ).await;
-
-        Some(full.content.cid)
     }
 }
