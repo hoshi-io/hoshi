@@ -22,18 +22,15 @@ impl ContentService {
         Ok(full)
     }
 
-    pub async fn get_content_by_cid(
-        state: &Arc<AppState>,
-        cid: &str,
-    ) -> CoreResult<FullContent> {
-        let mut full = ContentRepository::get_full_content(&state.pool, cid).await?
-            .ok_or_else(|| CoreError::NotFound("error.content.not_found".into()))?;
+    pub async fn get_content_by_cid(state: &Arc<AppState>, cid: &str) -> CoreResult<FullContent> {
+        ContentResolverService::backfill_cross_ids_by_cid(state, cid).await;
 
         if let Err(e) = SimklUnitsService::sync_units_if_needed(state, cid).await {
             warn!(cid = %cid, error = ?e, "Failed to sync units synchronously");
-        } else if let Some(refreshed) = ContentRepository::get_full_content(&state.pool, cid).await? {
-            full = refreshed;
         }
+
+        let mut full = ContentRepository::get_full_content(&state.pool, cid).await?
+            .ok_or_else(|| CoreError::NotFound("error.content.not_found".into()))?;
 
         tokio::spawn(ContentResolverService::backfill_via_preferred_mapping(state.clone(), cid.to_string()));
 

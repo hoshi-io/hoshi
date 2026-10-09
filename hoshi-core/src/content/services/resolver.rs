@@ -180,6 +180,10 @@ impl ContentResolverService {
         let maybe_cid = TrackerRepository::find_cid_by_tracker(&state.pool, tracker, tracker_id).await?;
 
         if let Some(cid) = maybe_cid {
+            let full = Self::load_full_content(state, &cid).await?;
+            if let Err(e) = Self::backfill_cross_ids(state, &cid, &full, tracker, tracker_id).await {
+                warn!(cid = %cid, error = ?e, "Cross-ID backfill failed");
+            }
             if let Err(e) = SimklUnitsService::sync_units_if_needed(state, &cid).await {
                 warn!(cid = %cid, error = ?e, "Failed to sync units synchronously");
             }
@@ -196,6 +200,9 @@ impl ContentResolverService {
             state, &media.content_type, &media, tracker_id, tracker, None,
         ).await?;
 
+        if let Err(e) = Self::backfill_cross_ids(state, &full.content.cid, &full, tracker, tracker_id).await {
+            warn!(cid = %full.content.cid, error = ?e, "Cross-ID backfill failed");
+        }
         if let Err(e) = SimklUnitsService::sync_units_if_needed(state, &full.content.cid).await {
             warn!(cid = %full.content.cid, error = ?e, "Failed to sync units synchronously");
         }
@@ -543,18 +550,21 @@ impl ContentResolverService {
                 &state, &cid, &preferred, &preferred, &mapping.tracker_id,
             ).await;
         }
+    }
 
-        if let (Ok(full), Some(mapping)) = (
-            Self::load_full_content(&state, &cid).await,
-            mappings.first(),
-        ) {
-            let _ = Self::backfill_cross_ids(&state, &cid, &full, &mapping.tracker_name, &mapping.tracker_id).await;
+    pub async fn backfill_cross_ids_by_cid(state: &Arc<AppState>, cid: &str) {
+        let Ok(mappings) = TrackerRepository::get_mappings_by_cid(&state.pool, cid).await else { return };
+        let Some(seed) = mappings.first() else { return };
+        let Ok(full) = Self::load_full_content(state, cid).await else { return };
+
+        if let Err(e) = Self::backfill_cross_ids(state, cid, &full, &seed.tracker_name, &seed.tracker_id).await {
+            warn!(cid = %cid, error = ?e, "Cross-ID backfill failed");
         }
     }
+
     async fn backfill_after_tracker_link(state: Arc<AppState>, cid: String, tracker: String, tracker_id: String) {
         let Ok(full) = Self::load_full_content(&state, &cid).await else { return };
         let _ = Self::backfill_preferred_metadata(&state, &cid, &full, &tracker, &tracker_id).await;
-        let _ = Self::backfill_cross_ids(&state, &cid, &full, &tracker, &tracker_id).await;
     }
 
     async fn resolve_preferred_tracker_id(
@@ -651,7 +661,7 @@ impl ContentResolverService {
             .collect();
 
         let expected = match full.content.content_type {
-            ContentType::Anime => &["anilist", "mal", "kitsu"][..],
+            ContentType::Anime => &["anilist", "mal", "kitsu", "simkl"][..],
             ContentType::Manga | ContentType::Novel => &["anilist", "mal"][..],
         };
 
@@ -697,7 +707,7 @@ impl ContentResolverService {
                 updated_at: now,
             };
             match MappingService::add_tracker_mapping(&state.pool, mapping).await {
-                Ok(_) => info!(cid = %cid, tracker = %t_name, id = %t_id, "Lazy cross-ID mapping saved"),
+                Ok(_) => debug!(cid = %cid, tracker = %t_name, id = %t_id, "Lazy cross-ID mapping saved"),
                 Err(e) => warn!(cid = %cid, tracker = %t_name, error = ?e, "Failed to save cross-ID mapping during backfill"),
             }
         }
