@@ -109,7 +109,13 @@ impl TorrentHandle {
         }).await
     }
 
-    pub async fn add_magnet(&self, magnet: &str, target: Option<&TargetDescriptor>) -> CoreResult<(String, u64)> {
+    // ---------------------------------------------------------------- add
+
+    pub async fn add_magnet(
+        &self,
+        magnet: &str,
+        target: Option<&TargetDescriptor>,
+    ) -> CoreResult<(String, u64)> {
         let dir = magnet_key(magnet)
             .ok_or_else(|| core_err!(BadRequest, "error.torrent.invalid_magnet"))?;
 
@@ -145,6 +151,9 @@ impl TorrentHandle {
                 Some(librqbit::AddTorrentOptions {
                     output_folder: Some(self.0.data_dir.join(&dir).to_string_lossy().into_owned()),
                     overwrite: true, // re-adding a cached torrent must reuse its files
+                    // Start paused: otherwise librqbit begins downloading every
+                    // file of a batch before we know which one we want.
+                    paused: true,
                     ..Default::default()
                 }),
             ),
@@ -161,7 +170,10 @@ impl TorrentHandle {
         // Active again, so no longer a reaper candidate.
         self.0.lingering.remove(&torrent_id);
 
-        let (file_index, file_len) = match Self::wait_ready(&torrent, target).await {
+        let (file_index, file_len) = match self
+            .prepare_torrent(session, &torrent, torrent_id, target)
+            .await
+        {
             Ok(v) => v,
             Err(e) => {
                 // Don't leak a torrent nobody will stream, unless a live
@@ -182,8 +194,14 @@ impl TorrentHandle {
         Ok((session_id, file_len))
     }
 
-    async fn wait_ready(torrent: &Arc<librqbit::ManagedTorrent>, target: Option<&TargetDescriptor>)
-                        -> CoreResult<(usize, u64)> {
+    async fn prepare_torrent(
+        &self,
+        session: &Arc<librqbit::Session>,
+        torrent: &Arc<librqbit::ManagedTorrent>,
+        torrent_id: usize,
+        target: Option<&TargetDescriptor>,
+    ) -> CoreResult<(usize, u64)> {
+        // Also returns for a torrent that is merely paused.
         tokio::time::timeout(INIT_TIMEOUT, torrent.wait_until_initialized())
             .await
             .map_err(|_| core_err!(BadRequest, "error.torrent.init_timeout"))?
@@ -191,20 +209,52 @@ impl TorrentHandle {
 
         let files: Vec<TorrentFile> = torrent
             .with_metadata(|m| {
-                m.file_infos.iter().enumerate().map(|(i, f)| TorrentFile {
-                    index: i,
-                    path: f.relative_filename.to_string_lossy().replace('\\', "/"),
-                    len: f.len,
-                }).collect()
+                m.file_infos
+                    .iter()
+                    .enumerate()
+                    .map(|(i, f)| TorrentFile {
+                        index: i,
+                        path: f.relative_filename.to_string_lossy().replace('\\', "/"),
+                        len: f.len,
+                    })
+                    .collect()
             })
             .map_err(|e| core_err!(Internal, "error.torrent.metadata_resolve_failed", e))?;
 
-        let idx = select_file(&files, target)
+        let file_index = select_file(&files, target)
             .ok_or_else(|| core_err!(BadRequest, "error.torrent.episode_not_in_torrent"))?;
-        info!(file = %files[idx].path, "torrent file selected");
-        Ok((idx, files[idx].len))
+        let file_len = files[file_index].len;
+        info!(file = %files[file_index].path, "torrent file selected");
+
+        // Only this file, plus whatever other live sessions on the same
+        // torrent still read (the old episode while switching).
+        let mut selected = self.selected_files(torrent_id);
+        selected.insert(file_index);
+        session
+            .update_only_files(torrent, &selected)
+            .await
+            .map_err(|e| core_err!(Internal, "error.torrent.add_failed", e))?;
+
+        if torrent.is_paused() {
+            session
+                .unpause(torrent)
+                .await
+                .map_err(|e| core_err!(Internal, "error.torrent.add_failed", e))?;
+        }
+        Ok((file_index, file_len))
     }
 
+    /// File indices that live sessions of this torrent are reading.
+    fn selected_files(&self, torrent_id: usize) -> HashSet<usize> {
+        self.0
+            .streams
+            .iter()
+            .filter(|s| s.torrent_id == torrent_id)
+            .map(|s| s.file_index)
+            .collect()
+    }
+
+    /// Sync lookup, called from mpv's demuxer thread (not an async context).
     pub fn lookup_session(
         &self,
         session_id: &str,
@@ -233,8 +283,19 @@ impl TorrentHandle {
             return Ok(());
         };
 
-        // Another live session (same magnet loaded twice) still needs it.
+        // Another live session (episode switch, or the same magnet loaded
+        // twice) still needs it. Stop fetching the file this session read.
         if self.in_use(s.torrent_id) {
+            if let Some(session) = self.0.session.get() {
+                // Wait out an in-flight add_magnet so its new session is counted.
+                let _gate = self.0.gate.lock().await;
+                let selected = self.selected_files(s.torrent_id);
+                if !selected.is_empty() {
+                    if let Err(e) = session.update_only_files(&s.torrent, &selected).await {
+                        warn!(torrent_id = s.torrent_id, error = ?e, "failed to narrow file selection");
+                    }
+                }
+            }
             return Ok(());
         }
 
