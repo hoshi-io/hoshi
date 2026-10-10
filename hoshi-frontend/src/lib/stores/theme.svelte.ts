@@ -55,6 +55,17 @@ class ThemeManager {
     }
 
     async setAccentColor(newColor: string | null) {
+        if (newColor) {
+            const isPureBlack = newColor.toLowerCase() === '#000000';
+            const isPureWhite = newColor.toLowerCase() === '#ffffff';
+
+            if (this.theme === 'oled' && isPureBlack) {
+                newColor = '#3f3f46'; // Fallback to a visible zinc gray or default accent
+            } else if (this.theme === 'light' && isPureWhite) {
+                newColor = '#71717a';
+            }
+        }
+
         this.accentColor = newColor;
         this.applyToDOM();
         await persistValue('app_accent', newColor);
