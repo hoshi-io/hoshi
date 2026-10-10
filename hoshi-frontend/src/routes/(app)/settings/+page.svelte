@@ -1,7 +1,7 @@
 <script lang="ts">
     import { auth } from "@/stores/auth.svelte.js";
     import { toast } from "svelte-sonner";
-    import { fade, fly } from "svelte/transition";
+    import { crossfade, fade, fly } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
     import { goto } from '$app/navigation';
     import {
@@ -41,6 +41,72 @@
     let osInfo = $state("");
     let hardwareInfo = $state("");
     let webviewInfo = $state("");
+
+    const prefersReducedMotion =
+        typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const [send, receive] = crossfade({
+        duration: prefersReducedMotion ? 0 : 280,
+        easing: cubicOut,
+        fallback: fade
+    });
+
+    type NavItem = { id: string; label: string; icon: typeof User; hover: string; desktopOnly?: boolean };
+    type NavGroup = { title: string; desktopOnly?: boolean; items: NavItem[] };
+
+    const navGroups: NavGroup[] = $derived([
+        {
+            title: i18n.t('settings.section_profile'),
+            desktopOnly: true,
+            items: [
+                { id: 'account', label: i18n.t('settings.account'), icon: User, hover: 'group-hover:scale-105' }
+            ]
+        },
+        {
+            title: i18n.t('settings.section_application'),
+            items: [
+                { id: 'general', label: i18n.t('settings.general'), icon: Settings, hover: 'group-hover:rotate-45' },
+                { id: 'ui', label: i18n.t('settings.interface'), icon: LayoutTemplate, hover: 'group-hover:scale-105' },
+                { id: 'logs', label: i18n.t('settings.logs.title'), icon: Terminal, hover: 'group-hover:translate-x-0.5' }
+            ]
+        },
+        {
+            title: i18n.t('settings.section_experience'),
+            items: [
+                { id: 'player', label: i18n.t('settings.player'), icon: MonitorPlay, hover: 'group-hover:scale-105' },
+                { id: 'readers', label: i18n.t('settings.readers'), icon: BookOpen, hover: 'group-hover:scale-105' }
+            ]
+        },
+        {
+            title: i18n.t('settings.section_integrations'),
+            items: [
+                { id: 'extensions', label: i18n.t('settings.extensions'), icon: Puzzle, hover: 'group-hover:rotate-12' },
+                { id: 'tracking', label: i18n.t('settings.tracking'), icon: Link2, hover: 'group-hover:rotate-45' },
+                { id: 'torrent', label: i18n.t('settings.torrent'), icon: Globe, hover: 'group-hover:rotate-45' },
+                { id: 'discord', label: i18n.t('settings.discord'), icon: MessageSquare, hover: 'group-hover:scale-105', desktopOnly: true }
+            ]
+        }
+    ]);
+
+    const visibleGroups = $derived.by(() => {
+        let n = 0;
+        return navGroups
+            .filter((g) => !g.desktopOnly || isDesktop)
+            .map((g) => ({
+                ...g,
+                items: g.items
+                    .filter((i) => !i.desktopOnly || isDesktop)
+                    .map((i) => ({ ...i, n: n++ }))
+            }))
+            .filter((g) => g.items.length > 0);
+    });
+
+    const triggerClass =
+        "group relative w-full flex items-center justify-between rounded-sm px-3 py-3 md:py-3.5 " +
+        "text-base md:text-[15px] font-bold text-foreground/70 transition-colors duration-200 " +
+        "hover:text-foreground data-[state=active]:text-primary " +
+        "data-[state=inactive]:md:hover:bg-muted/40 data-[state=inactive]:active:bg-muted/40 " +
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
 
     onMount(() => {
         const mediaQuery = window.matchMedia('(min-width: 768px)');
@@ -104,6 +170,7 @@
                     content: i18n.t('settings.content'),
                     extensions: i18n.t('settings.extensions'),
                     tracking: i18n.t('settings.tracking'),
+                    torrent: i18n.t('settings.torrent'),
                     discord: i18n.t('settings.discord')
                 };
                 layoutState.title = titles[activeTab] || i18n.t('settings.title');
@@ -152,10 +219,10 @@
 
     {#if !isMobileDetail}
         <button
-                class="md:hidden flex w-full items-center gap-4 rounded-2xl bg-muted/20 p-4 text-left"
+                class="md:hidden flex w-full items-center gap-4 rounded-sm border border-border/30 bg-muted/20 p-4 text-left transition-all duration-200 hover:bg-muted/30 active:scale-[0.99]"
                 onclick={() => goto('?tab=account')}
         >
-            <Avatar.Root class="size-14">
+            <Avatar.Root class="size-14 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
                 {#if auth.user?.avatar}<Avatar.Image src={auth.user.avatar} alt={auth.user.username} class="object-cover" />{/if}
                 <Avatar.Fallback class="bg-primary/10 text-primary font-semibold">
                     {auth.user?.username?.charAt(0)?.toUpperCase() || 'U'}
@@ -176,7 +243,7 @@
                 <p class="text-sm font-bold animate-pulse">{i18n.t('settings.loading')}</p>
             </div>
         {:else}
-            <div in:fly={{ y: 15, duration: 400, delay: 100, easing: cubicOut }} class="w-full">
+            <div in:fade={{ duration: 300 }} class="w-full">
                 <Tabs.Root
                         value={activeTab}
                         onValueChange={(v) => {
@@ -184,101 +251,37 @@
                         if (!isDesktop) goto(`?tab=${v}`);
                         document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                        class="flex flex-col md:flex-row gap-8 lg:gap-16 w-full items-start"
+                        class="flex flex-col md:flex-row gap-8 lg:gap-12 w-full items-start"
                 >
-                    <Tabs.List class="{isMobileDetail ? 'hidden md:flex' : 'flex'} flex-col justify-start bg-transparent h-auto p-0 gap-1 w-full md:w-64 shrink-0 border-none md:sticky md:top-24 md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:hide-scrollbar">
-                        {#if isDesktop}
-                            <div class="px-4 pt-2 pb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 text-left w-full">
-                                {i18n.t('settings.section_profile')}
+                    <Tabs.List class="{isMobileDetail ? 'hidden md:flex' : 'flex'} flex-col justify-start bg-transparent h-auto p-0 gap-1 w-full md:w-72 shrink-0 md:sticky md:top-24 md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:hide-scrollbar">
+                        {#each visibleGroups as group, gi (group.title)}
+                            <div class="px-3 {gi === 0 ? 'pt-1' : 'pt-6'} pb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 text-left w-full">
+                                {group.title}
                             </div>
-                            <Tabs.Trigger value="account" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
-                                <div class="flex items-center gap-4 md:gap-3">
-                                    <User class="h-5 w-5 md:h-4 md:w-4 transition-transform duration-300 group-hover:scale-105" />
-                                    {i18n.t('settings.account')}
+
+                            {#each group.items as item (item.id)}
+                                <div class="nav-item w-full" style="--i: {item.n}">
+                                    <Tabs.Trigger value={item.id} class={triggerClass}>
+                                        {#if activeTab === item.id}
+                                            <span
+                                                    aria-hidden="true"
+                                                    class="absolute inset-0 hidden md:block rounded-sm bg-primary/10"
+                                                    in:receive={{ key: 'settings-nav' }}
+                                                    out:send={{ key: 'settings-nav' }}
+                                            ></span>
+                                        {/if}
+
+                                        <div class="relative flex items-center gap-4">
+                                            <item.icon class="size-5 md:size-[1.15rem] transition-transform duration-300 {item.hover}" />
+                                            {item.label}
+                                        </div>
+                                        <ChevronRight class="relative h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
+                                    </Tabs.Trigger>
                                 </div>
-                                <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
-                            </Tabs.Trigger>
+                            {/each}
+                        {/each}
 
-                        {/if}
-                        <div class="px-4 {isDesktop ? 'pt-6' : 'pt-1'} pb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 text-left w-full">
-                            {i18n.t('settings.section_application')}
-                        </div>
-                        <Tabs.Trigger value="general" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
-                            <div class="flex items-center gap-4 md:gap-3">
-                                <Settings class="h-5 w-5 md:h-4 md:w-4 transition-transform duration-300 group-hover:rotate-45" />
-                                {i18n.t('settings.general')}
-                            </div>
-                            <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
-                        </Tabs.Trigger>
-                        <Tabs.Trigger value="ui" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
-                            <div class="flex items-center gap-4 md:gap-3">
-                                <LayoutTemplate class="h-5 w-5 md:h-4 md:w-4 transition-transform duration-300 group-hover:scale-105" />
-                                {i18n.t('settings.interface')}
-                            </div>
-                            <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
-                        </Tabs.Trigger>
-                        <Tabs.Trigger value="logs" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
-                            <div class="flex items-center gap-4 md:gap-3">
-                                <Terminal class="h-5 w-5 md:h-4 md:w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-                                {i18n.t('settings.logs.title')}
-                            </div>
-                            <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
-                        </Tabs.Trigger>
-
-                        <div class="px-4 pt-6 pb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 text-left w-full">
-                            {i18n.t('settings.section_experience')}
-                        </div>
-                        <Tabs.Trigger value="player" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
-                            <div class="flex items-center gap-4 md:gap-3">
-                                <MonitorPlay class="h-5 w-5 md:h-4 md:w-4 transition-transform duration-300 group-hover:scale-105" />
-                                {i18n.t('settings.player')}
-                            </div>
-                            <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
-                        </Tabs.Trigger>
-                        <Tabs.Trigger value="readers" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
-                            <div class="flex items-center gap-4 md:gap-3">
-                                <BookOpen class="h-5 w-5 md:h-4 md:w-4 transition-transform duration-300 group-hover:scale-105" />
-                                {i18n.t('settings.readers')}
-                            </div>
-                            <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
-                        </Tabs.Trigger>
-
-                        <div class="px-4 pt-6 pb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 text-left w-full">
-                            {i18n.t('settings.section_integrations')}
-                        </div>
-                        <Tabs.Trigger value="extensions" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
-                            <div class="flex items-center gap-4 md:gap-3">
-                                <Puzzle class="h-5 w-5 md:h-4 md:w-4 transition-transform duration-300 group-hover:rotate-12" />
-                                {i18n.t('settings.extensions')}
-                            </div>
-                            <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
-                        </Tabs.Trigger>
-                        <Tabs.Trigger value="tracking" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
-                            <div class="flex items-center gap-4 md:gap-3">
-                                <Link2 class="h-5 w-5 md:h-4 md:w-4 transition-transform duration-300 group-hover:rotate-45" />
-                                {i18n.t('settings.tracking')}
-                            </div>
-                            <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
-                        </Tabs.Trigger>
-
-                        <Tabs.Trigger value="torrent" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
-                            <div class="flex items-center gap-4 md:gap-3">
-                                <Globe class="h-5 w-5 md:h-4 md:w-4 transition-transform duration-300 group-hover:rotate-45" />
-                                {i18n.t('settings.torrent')}
-                            </div>
-                            <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
-                        </Tabs.Trigger>
-
-                        {#if isDesktop}
-                            <Tabs.Trigger value="discord" class="relative px-4 py-2.5 rounded-xl text-base md:text-sm font-bold transition-all duration-200 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=inactive]:hover:bg-muted/40 w-full flex items-center justify-between group">
-                                <div class="flex items-center gap-4 md:gap-3">
-                                    <MessageSquare class="h-5 w-5 md:h-4 md:w-4 transition-transform duration-300 group-hover:scale-105" />
-                                    {i18n.t('settings.discord')}
-                                </div>
-                                <ChevronRight class="h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
-                            </Tabs.Trigger>
-                        {/if}
-                        <div class="mt-8 md:mt-auto pt-4 pb-4 px-4 w-full flex flex-col items-center md:items-start gap-4 text-center md:text-left">
+                        <div class="mt-8 md:mt-auto pt-4 pb-4 px-3 w-full flex flex-col items-center md:items-start gap-4 text-center md:text-left">
                             <div class="flex flex-col gap-1 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-wider w-full">
                                 {#if appVersion}
                                     <span class="text-xs text-primary/80 mb-1">Version {appVersion} ★</span>
@@ -405,6 +408,19 @@
 <SwitchProfile bind:open={showSwitchProfile} />
 
 <style>
+    .nav-item {
+        animation: navIn 380ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+        animation-delay: calc(var(--i) * 28ms);
+    }
+
+    @keyframes navIn {
+        from { opacity: 0; transform: translateX(-8px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .nav-item { animation: none; }
+    }
+
     @media (max-width: 768px) {
         :global(.mobile-content-wrapper h2.text-2xl) {
             display: none !important;
