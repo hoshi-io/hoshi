@@ -273,7 +273,7 @@
     <title>{i18n.t('list.title')}</title>
 </svelte:head>
 
-<main class="bg-background px-4 md:px-8 lg:pl-32 lg:pr-12 lg:pt-20 w-full max-w-[2000px] mx-auto space-y-10 pt-1">
+<main class="bg-background px-4 md:px-8 lg:pl-32 lg:pr-12 lg:pt-20 w-full max-w-[2000px] mx-auto space-y-10 pt-[max(0.25rem,calc(var(--mobile-top-h,6rem)_-_6rem_+_0.75rem))]">
     <div class="flex items-start gap-10 w-full">
         <aside class="hidden lg:flex flex-col gap-5 w-[280px] shrink-0 sticky top-18 max-h-[calc(100vh-7rem)] pb-4 overflow-y-auto hide-scrollbar">
             <div class="space-y-2.5 p-0.5">{@render searchBar()}</div>

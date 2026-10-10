@@ -200,7 +200,7 @@
     {/if}
 {/snippet}
 
-<div class="bg-background px-4 md:px-8 lg:pl-32 lg:pr-12 lg:pt-20 w-full max-w-[2000px] mx-auto space-y-10 pt-5">
+<div class="bg-background px-4 md:px-8 lg:pl-32 lg:pr-12 lg:pt-20 w-full max-w-[2000px] mx-auto space-y-10 pt-[max(1.25rem,calc(var(--mobile-top-h,6rem)_-_6rem_+_0.75rem))]">
     <section class="flex flex-col lg:flex-row gap-8 lg:gap-10 w-full items-start">
 
         <aside class="hidden lg:flex flex-col gap-5 w-[280px] shrink-0 sticky top-18 max-h-[calc(100vh-6rem)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden select-none">

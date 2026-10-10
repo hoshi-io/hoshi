@@ -32,7 +32,6 @@
     import PageHeader from "@/components/PageHeader.svelte";
 
     let showSwitchProfile = $state(false);
-    let configSaving = $state(false);
     let isDesktop = $state(false);
     let activeTab = $state(page.url.searchParams.get('tab') || 'account');
     let isMobileDetail = $derived(page.url.searchParams.has('tab'));
@@ -213,7 +212,7 @@
     <title>{i18n.t('settings.title')}</title>
 </svelte:head>
 
-<main class="bg-background pb-6 md:pb-12 {isMobileDetail ? 'pt-5 md:pt-12' : 'pt-4 md:pt-20'} px-4 md:px-8 lg:pl-32 lg:pr-12 w-full max-w-[2000px] mx-auto {isMobileDetail ? 'space-y-0 md:space-y-8' : 'space-y-4 md:space-y-8'}">
+<main class="bg-background pb-6 md:pb-12 {isMobileDetail ? 'pt-[max(1.25rem,calc(var(--mobile-top-h,6rem)_-_6rem_+_0.75rem))] md:pt-12' : 'pt-[max(1rem,calc(var(--mobile-top-h,6rem)_-_6rem_+_0.75rem))] md:pt-20'} px-4 md:px-8 lg:pl-32 lg:pr-12 w-full max-w-[2000px] mx-auto {isMobileDetail ? 'space-y-0 md:space-y-8' : 'space-y-4 md:space-y-8'}">
 
     <PageHeader title={i18n.t('settings.title')} />
 

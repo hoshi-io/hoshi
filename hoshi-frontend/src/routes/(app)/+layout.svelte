@@ -72,6 +72,8 @@
 
     let mainElement: HTMLElement | null = $state(null);
 
+    let mobileTopHeight = $state(0);
+
     afterNavigate(() => {
         if (mainElement) {
             mainElement.scrollTo(0, 0);
@@ -164,7 +166,10 @@
 <svelte:window bind:innerWidth />
 <svelte:document onclickcapture={handleGlobalLinks} />
 
-<div class="h-dvh w-full {isViewer ? 'bg-transparent' : 'bg-background'} text-foreground flex flex-col overflow-hidden relative">
+<div
+        class="h-dvh w-full {isViewer ? 'bg-transparent' : 'bg-background'} text-foreground flex flex-col overflow-hidden relative"
+        style="--mobile-top-h: {mobileTopHeight || 96}px"
+>
 
     {#if !layoutState.isTV}
         <DesktopTitlebar />
@@ -181,7 +186,7 @@
         <div class="flex-1 flex flex-col relative overflow-hidden {isViewer ? 'bg-transparent' : 'bg-background'}">
 
             {#if showNav && !layoutState.isTV}
-                <div class="w-full z-50 lg:hidden absolute top-0 left-0 transition-transform duration-300 ease-in-out {isNavHidden ? '-translate-y-full' : 'translate-y-0'}">
+                <div bind:clientHeight={mobileTopHeight} class="w-full z-50 lg:hidden absolute top-0 left-0 transition-transform duration-300 ease-in-out {isNavHidden ? '-translate-y-full' : 'translate-y-0'}">
                     <MobileTop bind:showSwitchProfileModal />
                 </div>
             {/if}
