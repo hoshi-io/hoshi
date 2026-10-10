@@ -1,6 +1,5 @@
 <script lang="ts">
     import * as Carousel from '@/components/ui/carousel';
-    import { fly } from 'svelte/transition';
     import CardWrapper from "@/components/card/CardWrapper.svelte";
     import type { NormalizedCard } from "@/utils/normalize";
 
@@ -23,17 +22,17 @@
     });
 </script>
 
-<section bind:this={el} class="space-y-2 md:space-y-4 group/section">
-    <div class="flex items-center justify-between px-1" in:fly={{ y: 20, duration: 400, delay: 100 }}>
+<section bind:this={el} class="space-y-1 md:space-y-0 group/section">
+    <div class="flex items-center justify-between px-1">
         <h2 class="text-lg md:text-2xl font-bold tracking-tight text-foreground">{title}</h2>
     </div>
 
     {#if visible && items.length > 0}
         <Carousel.Root
                 opts={{ align: 'start', dragFree: true, skipSnaps: false, containScroll: 'trimSnaps' }}
-                class="w-full relative group/carousel px-2 md:px-6"
+                class="w-full relative group/carousel px-1 md:px-6 md:-mx-5"
         >
-            <Carousel.Content class="-ml-3 md:-ml-5 py-2 md:py-10">
+            <Carousel.Content class="-ml-3 md:-ml-5 py-2 md:py-6">
                 {#each items as n (n.cid)}
                     <Carousel.Item class="pl-3 md:pl-5 basis-[42%] sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 2xl:basis-[14%]">
                         <CardWrapper {...n} />

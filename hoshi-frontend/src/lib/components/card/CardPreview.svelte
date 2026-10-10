@@ -48,7 +48,6 @@
 
 <div
         class="preview-card"
-        transition:fade={{ duration: 150 }}
         onmouseenter={() => (isHovered = true)}
         onmouseleave={() => {
         isHovered = false;

@@ -50,8 +50,8 @@
 </script>
 
 {#if visibleItems.length > 0}
-    <div class="space-y-4">
-        <h2 class="text-xl md:text-2xl font-black tracking-tight text-foreground px-1">
+    <div class="space-y-2 md:space-y-4">
+        <h2 class="text-lg md:text-2xl font-bold tracking-tight text-foreground px-1">
             {i18n.t("home.recently_aired.title")}
         </h2>
 
@@ -59,7 +59,7 @@
                 opts={{ align: "start", dragFree: true }}
                 class="w-full px-1"
         >
-            <Carousel.Content class="-ml-5 pt-1 pb-4">
+            <Carousel.Content class="-ml-5 pt-2 pb-2 md:pb-6">
                 {#each visibleItems as item (item.trackerId + ':' + item.episode)}
                     {@const imageUrl = processImageUrl(item.card.cover)}
                     {@const displayTitle = getDisplayTitle(item)}

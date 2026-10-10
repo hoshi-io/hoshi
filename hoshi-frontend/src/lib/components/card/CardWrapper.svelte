@@ -4,6 +4,8 @@
     import {getCardContentTypeLabel, getCardScore, getCardScoreIsStars, type NormalizedCard} from "@/utils/normalize";
     import { getCardTitle, getCardShouldBlur, getCardTrailerUrl } from "@/utils/normalize";
     import { layoutState } from "@/stores/layout.svelte";
+    import { scale, fade } from 'svelte/transition';
+    import { cubicOut } from 'svelte/easing';
     import type { Snippet } from "svelte";
 
     let {
@@ -23,14 +25,29 @@
     let isStars    = $derived(getCardScoreIsStars(card));
     let isHovering = $state(false);
 
+    const HOVER_DELAY = 220;
+    let hoverTimer: ReturnType<typeof setTimeout> | undefined;
+
+    function onEnter() {
+        if (disablePreview || isMobile) return;
+        clearTimeout(hoverTimer);
+        hoverTimer = setTimeout(() => (isHovering = true), HOVER_DELAY);
+    }
+
+    function onLeave() {
+        clearTimeout(hoverTimer);
+        isHovering = false;
+    }
+
+    $effect(() => () => clearTimeout(hoverTimer));
 
     let contentTypeLabel = $derived(getCardContentTypeLabel(card));
 </script>
 
-<div class="card-ct group relative" class:no-preview={disablePreview} onmouseenter={() => isHovering = true} onmouseleave={() => isHovering = false}>
+<div class="card-ct group relative" class:no-preview={disablePreview} onmouseenter={onEnter} onmouseleave={onLeave}>
     <a
             href={card.href}
-            class="card-base block w-full outline-none cursor-pointer h-full overflow-hidden {disablePreview || isMobile ? '' : 'transition-opacity duration-300 group-hover:opacity-0'}"
+            class="card-base block w-full outline-none cursor-pointer h-full overflow-hidden"
     >
         <CardContainer
                 {title}
@@ -46,7 +63,11 @@
     </a>
 
     {#if !disablePreview && !isMobile && isHovering}
-        <div class="preview-anchor">
+        <div
+                class="preview-anchor"
+                in:scale={{ start: 0.92, duration: 220, easing: cubicOut }}
+                out:fade={{ duration: 120 }}
+        >
             <CardPreview
                     cid={card.cid}
                     {title}
@@ -85,25 +106,15 @@
 
     .preview-anchor {
         position: absolute;
-        top: 50%;
-        left: 50%;
-
+        top: 0;
+        left: -12.5%;
         width: 125%;
         height: 100%;
-
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 0;
-
-        pointer-events: none;
-
-        transition:
-                opacity 0.2s ease,
-                transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        transform: scale(1.05);
+        transform-origin: center;
     }
 
-    .card-ct:hover .preview-anchor {
-        opacity: 1;
-        pointer-events: auto;
-        transform: translate(-50%, -50%) scale(1.05);
+    .card-ct:not(:hover) .preview-anchor {
+        pointer-events: none;
     }
 </style>

@@ -52,8 +52,8 @@
 </script>
 
 {#if visibleItems.length > 0}
-    <div class="space-y-4">
-        <h2 class="text-xl md:text-2xl font-black tracking-tight text-foreground px-1">
+    <div class="space-y-2 md:space-y-4">
+        <h2 class="text-lg md:text-2xl font-bold tracking-tight text-foreground px-1">
             {mode === 'anime' ? i18n.t("home.continue.continue_watching") : i18n.t("home.continue.continue_reading")}
         </h2>
 
@@ -61,7 +61,7 @@
                 opts={{ align: "start", dragFree: true }}
                 class="w-full px-1"
         >
-            <Carousel.Content class="-ml-5 pt-1 pb-4">
+            <Carousel.Content class="-ml-5 pt-2 pb-2 md:pb-6">
                 {#each visibleItems as item}
                     {@const rawImg = item.unit?.thumbnailUrl || item.coverImage}
                     {@const imageUrl = processImageUrl(rawImg)}
@@ -96,11 +96,11 @@
                                         <div class="absolute top-2 right-2 bg-destructive text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-sm tracking-wider">
                                             18+
                                         </div>
-                                        #{/if}
+                                    {/if}
 
                                     {#if progressPercent > 0}
                                         <div class="absolute bottom-0 left-0 right-0 h-[4px] bg-white/10">
-                                            <div class="h-full bg-primary transition-all shadow-[0_0_8px_rgba(var(--primary),0.6)]" style="width: {progressPercent}%"></div>
+                                            <div class="h-full bg-primary transition-all shadow-[0_0_8px_color-mix(in_srgb,var(--primary)_60%,transparent)]" style="width: {progressPercent}%"></div>
                                         </div>
                                     {/if}
                                 </div>
