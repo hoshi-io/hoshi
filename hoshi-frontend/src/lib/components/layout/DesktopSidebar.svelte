@@ -119,14 +119,6 @@
                 {@const Icon = route.icon}
                 {@const active = isActive(route.path)}
                 <div class="relative w-full">
-                    {#if active}
-                        <span
-                                aria-hidden="true"
-                                class="absolute -left-3 top-3 h-5 w-[3px] rounded-r-full bg-primary"
-                                in:receive={{ key: 'rail-bar' }}
-                                out:send={{ key: 'rail-bar' }}
-                        ></span>
-                    {/if}
 
                     <a
                             href={route.path}

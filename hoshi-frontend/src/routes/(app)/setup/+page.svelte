@@ -11,6 +11,7 @@
     import {Check, ChevronRight, ChevronLeft, UserCircle2, Camera, User} from "lucide-svelte";
     import { Spinner } from "$lib/components/ui/spinner";
     import { fly } from "svelte/transition";
+    import { cubicIn, cubicOut } from "svelte/easing";
     import { toast } from "svelte-sonner";
     import { goto } from "$app/navigation";
     import { layoutState } from "@/stores/layout.svelte.js";
@@ -103,6 +104,16 @@
         }
     }
 
+    const prefersReducedMotion =
+        typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function goToStep(index: number) {
+        if (index < currentIndex) {
+            direction = -1;
+            currentIndex = index;
+        }
+    }
+
     function prevStep() {
         if (currentIndex > 0) {
             direction = -1;
@@ -125,6 +136,7 @@
 
     async function finishSetup() {
         if (!username.trim()) {
+            direction = -1;
             currentIndex = availableSteps.indexOf('profile');
             toast.error(i18n.t('setup.profile.validation_error'));
             return;
@@ -175,10 +187,10 @@
 
 <svelte:head><title>{i18n.t("setup.title")}</title></svelte:head>
 
-<div class="h-[100dvh] bg-background text-foreground flex flex-col overflow-hidden">
-    <StarBackground />
+<div class="relative isolate h-[100dvh] bg-background text-foreground flex flex-col overflow-hidden">
+    <StarBackground step={currentIndex} />
 
-    <div class="w-full max-w-3xl mx-auto flex flex-col flex-1 pt-10 pb-6 px-4 sm:px-8 md:px-10 min-h-0">
+    <div class="relative z-10 w-full max-w-3xl mx-auto flex flex-col flex-1 pt-10 pb-6 px-4 sm:px-8 md:px-10 min-h-0">
 
         <header class="mb-8 shrink-0">
             <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-center mb-6">
@@ -186,17 +198,26 @@
             </h1>
             <div class="flex items-center justify-center gap-2">
                 {#each availableSteps as _, i}
-                    <div class="h-2 rounded-sm transition-all duration-300 {currentIndex >= i ? 'w-10 bg-primary' : 'w-3 bg-muted'}"></div>
+                    <button
+                            type="button"
+                            disabled={i >= currentIndex}
+                            onclick={() => goToStep(i)}
+                            aria-label="{i + 1} / {availableSteps.length}"
+                            aria-current={i === currentIndex ? 'step' : undefined}
+                            class="group flex h-6 items-center outline-none disabled:pointer-events-none"
+                    >
+                        <span class="block h-2 rounded-sm transition-all duration-500 ease-out {currentIndex >= i ? 'w-10 bg-primary' : 'w-3 bg-muted'} {i < currentIndex ? 'group-hover:bg-primary/70 group-focus-visible:ring-2 group-focus-visible:ring-primary/60' : ''}"></span>
+                    </button>
                 {/each}
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto pr-1 pb-6 min-h-0 custom-scrollbar relative">
+        <main class="grid grid-cols-1 flex-1 overflow-y-auto overflow-x-hidden pr-1 pb-6 min-h-0 custom-scrollbar relative">
             {#key currentStepId}
                 <div
-                        in:fly={{ x: direction * 50, duration: 300, delay: 150 }}
-                        out:fly={{ x: -direction * 50, duration: 150 }}
-                        class="w-full h-full"
+                        in:fly={{ x: direction * 48, duration: prefersReducedMotion ? 0 : 380, delay: prefersReducedMotion ? 0 : 90, easing: cubicOut }}
+                        out:fly={{ x: -direction * 48, duration: prefersReducedMotion ? 0 : 170, easing: cubicIn }}
+                        class="col-start-1 row-start-1 w-full"
                 >
 
                     {#if currentStepId === 'profile'}
@@ -228,6 +249,7 @@
                                 <Input
                                         id="username"
                                         bind:value={username}
+                                        onkeydown={(e) => { if (e.key === 'Enter') nextStep(); }}
                                         placeholder={i18n.t('setup.profile.username_placeholder')}
                                         class="h-14 rounded-sm bg-secondary/50 border-border text-lg shadow-inner focus-visible:ring-primary px-4 transition-all"
                                 />
@@ -360,7 +382,7 @@
         </main>
 
         <footer
-                class="shrink-0 pt-5 mt-auto flex items-center justify-between border-t border-border/30 bg-background"
+                class="shrink-0 pt-5 mt-auto flex items-center justify-between border-t border-border/30"
                 style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom))"
         >
             <div>

@@ -1,17 +1,14 @@
 <script lang="ts">
-    import { auth } from "@/stores/auth.svelte.js";
     import { listStore } from "@/app/list.svelte.js";
     import CardWrapper from "@/components/card/CardWrapper.svelte";
     import ListEditor from "@/components/modals/ListEditor.svelte";
-    import * as Empty from "$lib/components/ui/empty";
-    import * as Avatar from "$lib/components/ui/avatar";
     import * as Drawer from "$lib/components/ui/drawer";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import { Skeleton } from "$lib/components/ui/skeleton";
     import { Button } from "$lib/components/ui/button";
     import {
-        Search, List, MoreVertical, AlertCircle, SlidersHorizontal, X
+        Search, List, AlertCircle, SlidersHorizontal, X, RefreshCw, Compass
     } from "lucide-svelte";
 
     import { fade } from "svelte/transition";
@@ -24,8 +21,6 @@
     import {getCardScore, getCardScoreIsStars} from "@/utils/normalize";
     import ResponsiveMenu from "@/components/ResponsiveMenu.svelte";
     import { goto } from "$app/navigation";
-
-    const isMobile = $derived(layoutState.isMobile);
 
     $effect(() => {
         layoutState.title = listStore.isMobileSearchActive ? "" : i18n.t('list.title');
@@ -70,9 +65,15 @@
 
     const visibleItems = $derived(listStore.sorted.slice(0, visibleCount));
 
-    $effect(() => {
-        console.log("Visible count is now:", visibleCount, "out of:", listStore.sorted.length);
-    });
+    // True when the user has no entries at all (vs. a search/filter that simply matched nothing).
+    const hasNoEntries = $derived(listStore.entries.length === 0);
+    const searchTerm = $derived(listStore.searchQuery?.trim() ?? "");
+
+    // Falls back to English if a locale key hasn't been added yet.
+    function tr(key: string, fallback: string) {
+        const value = i18n.t(key);
+        return value && value !== key ? value : fallback;
+    }
 </script>
 
 {#snippet statusSelect()}
@@ -168,12 +169,41 @@
             { value: "novel", label: i18n.t('list.novel') }
         ] as option}
             <button
-                    class="flex w-full items-center justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors {listStore.activeType === option.value ? 'bg-muted/80 text-foreground' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
+                    class="flex w-full items-center justify-start rounded-sm px-3 py-2 text-sm font-medium transition-colors {listStore.activeType === option.value ? 'bg-muted/80 text-foreground' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
                     onclick={() => listStore.activeType = option.value}
             >
                 {option.label}
             </button>
         {/each}
+    </div>
+{/snippet}
+
+{#snippet ghostStack(tone: 'neutral' | 'error' = 'neutral')}
+    <div class="relative h-48 w-60 shrink-0" aria-hidden="true">
+        <div
+                class="ghost absolute bottom-0 left-3 aspect-[2/3] w-28 rounded-sm {tone === 'error' ? 'bg-destructive/5' : 'bg-muted/20'}"
+                style="--i: 0; --r: -9deg"
+        ></div>
+        <div
+                class="ghost absolute bottom-0 right-3 aspect-[2/3] w-28 rounded-sm {tone === 'error' ? 'bg-destructive/5' : 'bg-muted/20'}"
+                style="--i: 1; --r: 9deg"
+        ></div>
+        <div
+                class="ghost absolute bottom-2 left-1/2 z-10 flex aspect-[2/3] w-28 flex-col justify-between rounded-sm p-2.5 {tone === 'error' ? 'bg-destructive/10' : 'bg-muted/40'}"
+                style="--i: 2; --x: -50%"
+        >
+            <div class="flex flex-1 items-center justify-center">
+                {#if tone === 'error'}
+                    <AlertCircle class="size-8 text-destructive/80" />
+                {:else}
+                    <List class="size-8 text-primary/80" />
+                {/if}
+            </div>
+            <div class="space-y-1.5">
+                <div class="h-1.5 w-3/4 rounded-sm {tone === 'error' ? 'bg-destructive/20' : 'bg-foreground/10'}"></div>
+                <div class="h-1.5 w-1/2 rounded-sm {tone === 'error' ? 'bg-destructive/10' : 'bg-foreground/5'}"></div>
+            </div>
+        </div>
     </div>
 {/snippet}
 
@@ -288,27 +318,47 @@
             {#if listStore.isLoading}
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-x-4 gap-y-6 md:gap-x-5 md:gap-y-8 mb-10">
                     {#each Array(14) as _}
-                        <Skeleton class="aspect-[2/3] w-full rounded-xl bg-muted/20" />
+                        <Skeleton class="aspect-[2/3] w-full rounded-sm bg-muted/20" />
                     {/each}
                 </div>
             {:else if listStore.error}
-                <Empty.Root class="border border-dashed border-destructive/40 bg-destructive/5 rounded-2xl py-24 min-h-[40vh] flex flex-col items-center justify-center text-center px-4">
-                    <Empty.Header>
-                        <Empty.Media variant="icon" class="bg-destructive/10 text-destructive mb-4 p-4 rounded-full">
-                            <AlertCircle class="size-8" />
-                        </Empty.Media>
-                        <Empty.Title class="text-xl font-bold text-destructive">{i18n.t(listStore.error.key)}</Empty.Title>
-                        <Button variant="outline" class="mt-6 border-destructive/20 hover:bg-destructive/10 text-destructive" onclick={() => listStore.refresh()}>{i18n.t("content.retry")}</Button>
-                    </Empty.Header>
-                </Empty.Root>
+                <div role="alert" in:fade={{ duration: 250 }} class="flex min-h-[55vh] flex-col items-center justify-center px-4 py-16 text-center">
+                    {@render ghostStack('error')}
+                    <h2 class="mt-8 text-xl font-bold tracking-tight text-destructive">{i18n.t(listStore.error.key)}</h2>
+                    <Button
+                            variant="outline"
+                            class="mt-6 h-10 gap-2 rounded-sm border-destructive/30 font-bold text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onclick={() => listStore.refresh()}
+                    >
+                        <RefreshCw class="size-4" />
+                        {i18n.t("content.retry")}
+                    </Button>
+                </div>
             {:else if listStore.filtered.length === 0}
-                <Empty.Root class="border border-dashed border-border/40 bg-muted/5 rounded-2xl py-24 min-h-[40vh] flex items-center justify-center">
-                    <Empty.Header>
-                        <Empty.Media variant="icon" class="bg-primary/10 text-primary mb-4 p-4 rounded-full"><List class="size-8" /></Empty.Media>
-                        <Empty.Title class="text-xl font-bold">{i18n.t('list.empty_title')}</Empty.Title>
-                        <Empty.Description class="text-muted-foreground font-medium">{i18n.t('list.empty_desc')}</Empty.Description>
-                    </Empty.Header>
-                </Empty.Root>
+                <div role="status" in:fade={{ duration: 250 }} class="flex min-h-[55vh] flex-col items-center justify-center px-4 py-16 text-center">
+                    {@render ghostStack('neutral')}
+
+                    {#if hasNoEntries}
+                        <h2 class="mt-8 text-xl font-bold tracking-tight">{i18n.t('list.empty_title')}</h2>
+                        <p class="mt-2 max-w-sm text-sm font-medium leading-relaxed text-muted-foreground">{i18n.t('list.empty_desc')}</p>
+                        <Button class="mt-6 h-10 gap-2 rounded-sm px-5 font-bold" onclick={() => goto('/')}>
+                            <Compass class="size-4" />
+                            {tr('list.browse', 'Browse content')}
+                        </Button>
+                    {:else}
+                        <h2 class="mt-8 text-xl font-bold tracking-tight">{tr('list.no_matches_title', 'No matches')}</h2>
+                        <p class="mt-2 max-w-sm text-sm font-medium leading-relaxed text-muted-foreground">
+                            {tr('list.no_matches_desc', 'Nothing fits the current search or filters.')}
+                        </p>
+                        {#if searchTerm}
+                            <p class="mt-1 max-w-sm truncate text-sm font-bold text-foreground/80">“{searchTerm}”</p>
+                        {/if}
+                        <Button variant="outline" class="mt-6 h-10 gap-2 rounded-sm px-5 font-bold" onclick={() => listStore.resetFilters()}>
+                            <X class="size-4" />
+                            {i18n.t('list.clear_all')}
+                        </Button>
+                    {/if}
+                </div>
             {:else}
                 <LazyCardGrid
                         items={visibleItems}
@@ -405,3 +455,23 @@
             coverImage={listStore.selectedEntry.coverImage ?? undefined}
     />
 {/if}
+
+<style>
+    .ghost {
+        transform: translateX(var(--x, 0)) rotate(var(--r, 0deg));
+        transform-origin: 50% 100%;
+        animation: ghostIn 520ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+        animation-delay: calc(var(--i) * 80ms);
+    }
+
+    @keyframes ghostIn {
+        from {
+            opacity: 0;
+            transform: translateX(var(--x, 0)) translateY(16px) rotate(0deg) scale(0.94);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .ghost { animation: none; }
+    }
+</style>
