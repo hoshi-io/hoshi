@@ -339,9 +339,9 @@
                             {#each sources as source}
                                 {@const icon = trackerIcon(source.tracker)}
                                 {@const label = trackerLabel(source.tracker)}
-                                <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-sm bg-black/30 border border-white/10">
+                                <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-sm bg-black/30">
                                     {#if icon}
-                                        <img src={icon} alt={label} class="w-5.5 h-5.5 rounded-sm" />
+                                        <img src={icon} alt={label} class="w-5.5 h-5.5" />
                                     {/if}
                                     {#if source.syncedAt}
                                         <span class="text-[10px] text-white">· {formatChangeDate(source.syncedAt)}</span>

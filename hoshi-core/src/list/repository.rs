@@ -336,4 +336,20 @@ impl ListRepository {
             .await?;
         Ok(rows.into_iter().map(EntrySource::from).collect())
     }
+
+    /// Raw last-synced snapshot for one tracker (used by the KeepLatest merge).
+    pub async fn get_entry_source_snapshot(
+        pool: &SqlitePool,
+        entry_id: i64,
+        tracker: &str,
+    ) -> CoreResult<Option<serde_json::Value>> {
+        let raw: Option<String> = sqlx::query_scalar(
+            "SELECT remote_snapshot FROM ListEntrySource WHERE entry_id = ? AND tracker = ?",
+        )
+            .bind(entry_id)
+            .bind(tracker)
+            .fetch_optional(pool)
+            .await?;
+        Ok(raw.and_then(|s| serde_json::from_str(&s).ok()))
+    }
 }

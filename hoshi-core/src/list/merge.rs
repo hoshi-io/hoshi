@@ -89,6 +89,7 @@ impl MergeService {
         tracker_name: &str,
         local: Option<&ListEntry>,
         entry: &UserListEntry,
+        remote_changed: Option<bool>,
     ) -> MergedFields {
         let Some(l) = local else {
             return (
@@ -112,20 +113,28 @@ impl MergeService {
                 l.start_date.clone(), l.end_date.clone(),
                 l.notes.clone(), l.repeat_count,
             ),
-            MergeStrategy::KeepRemote | MergeStrategy::KeepLatest => (
+            MergeStrategy::KeepRemote => (
                 entry.progress, remote_status, entry.score,
                 entry.start_date.clone(), entry.end_date.clone(),
                 entry.notes.clone(), entry.repeat_count,
             ),
-            MergeStrategy::KeepHighest => (
-                entry.progress.max(l.progress),
-                if Self::status_priority(&remote_status) >= Self::status_priority(&l.status) { remote_status } else { l.status.clone() },
-                entry.score.or(l.score),
-                l.start_date.clone().or(entry.start_date.clone()),
-                l.end_date.clone().or(entry.end_date.clone()),
-                entry.notes.clone().or_else(|| l.notes.clone()),
-                entry.repeat_count.max(l.repeat_count),
-            ),
+            // Three-way: the remote wins only if it changed since we last synced it, so a
+            // local edit isn't reverted by a sync of an unchanged remote entry.
+            MergeStrategy::KeepLatest => match remote_changed {
+                Some(true) => (
+                    entry.progress, remote_status, entry.score,
+                    entry.start_date.clone(), entry.end_date.clone(),
+                    entry.notes.clone(), entry.repeat_count,
+                ),
+                Some(false) => (
+                    l.progress, l.status.clone(), l.score,
+                    l.start_date.clone(), l.end_date.clone(),
+                    l.notes.clone(), l.repeat_count,
+                ),
+                // first time this tracker meets an existing local entry
+                None => Self::keep_highest(l, entry, remote_status),
+            },
+            MergeStrategy::KeepHighest => Self::keep_highest(l, entry, remote_status),
             MergeStrategy::AnilistFirst if remote_wins("anilist") => (
                 entry.progress, remote_status, entry.score,
                 entry.start_date.clone(), entry.end_date.clone(),
@@ -154,6 +163,56 @@ impl MergeService {
                 l.notes.clone(), l.repeat_count,
             ),
         }
+    }
+
+    fn keep_highest(l: &ListEntry, entry: &UserListEntry, remote_status: String) -> MergedFields {
+        (
+            entry.progress.max(l.progress),
+            if Self::status_priority(&remote_status) >= Self::status_priority(&l.status) { remote_status } else { l.status.clone() },
+            entry.score.or(l.score),
+            l.start_date.clone().or(entry.start_date.clone()),
+            l.end_date.clone().or(entry.end_date.clone()),
+            entry.notes.clone().or_else(|| l.notes.clone()),
+            entry.repeat_count.max(l.repeat_count),
+        )
+    }
+
+    /// What we store per tracker after each sync.
+    fn remote_snapshot(entry: &UserListEntry) -> serde_json::Value {
+        serde_json::json!({
+            "status": entry.status,
+            "progress": entry.progress,
+            "score": entry.score,
+            "startDate": entry.start_date,
+            "endDate": entry.end_date,
+            "repeatCount": entry.repeat_count,
+            "notes": entry.notes,
+            "isPrivate": entry.is_private,
+        })
+    }
+
+    /// Some(true): remote differs from the snapshot saved at the last sync.
+    /// Some(false): identical. None: no snapshot (or no local entry) to compare with.
+    async fn remote_changed_since_last_sync(
+        pool: &sqlx::SqlitePool,
+        tracker_name: &str,
+        local: Option<&ListEntry>,
+        entry: &UserListEntry,
+    ) -> Option<bool> {
+        let entry_id = local?.id?;
+        let snapshot = match ListRepository::get_entry_source_snapshot(pool, entry_id, tracker_name).await {
+            Ok(Some(s)) => s,
+            Ok(None) => return None,
+            Err(e) => {
+                warn!(error = ?e, "Failed to load entry source snapshot for KeepLatest, falling back");
+                return None;
+            }
+        };
+        let snapshot = snapshot.as_object()?;
+        let current = Self::remote_snapshot(entry);
+
+        // Keys missing from older snapshots (e.g. "notes") are simply not compared.
+        Some(snapshot.iter().any(|(k, v)| current.get(k) != Some(v)))
     }
 
     pub async fn merge_entry(
@@ -198,8 +257,14 @@ impl MergeService {
         let config = ConfigRepository::get_config(&state.pool, user_id).await?;
         let local = ListRepository::get_entry(&state.pool, user_id, &cid).await?;
 
+        let remote_changed = if matches!(config.list.merge_strategy, MergeStrategy::KeepLatest) {
+            Self::remote_changed_since_last_sync(&state.pool, tracker_name, local.as_ref(), entry).await
+        } else {
+            None
+        };
+
         let (final_progress, final_status, final_score, final_start, final_end, final_notes, final_repeat_count) =
-            Self::resolve_merge_strategy(&config.list.merge_strategy, tracker_name, local.as_ref(), entry);
+            Self::resolve_merge_strategy(&config.list.merge_strategy, tracker_name, local.as_ref(), entry, remote_changed);
 
         let needs_update = match &local {
             None => true,
@@ -269,14 +334,7 @@ impl MergeService {
                         }
                     }
 
-                    let snapshot = serde_json::json!({
-                        "status": entry.status,
-                        "progress": entry.progress,
-                        "score": entry.score,
-                        "startDate": entry.start_date,
-                        "endDate": entry.end_date,
-                        "repeatCount": entry.repeat_count,
-                    });
+                    let snapshot = Self::remote_snapshot(entry);
 
                     if let Err(e) = ListRepository::upsert_entry_source(
                         pool, entry_id, user_id, tracker_name, &entry.tracker_media_id, &snapshot,
