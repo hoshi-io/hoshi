@@ -19,6 +19,19 @@
 
     let open = $state(false);
     let isDesktop = $state(true);
+    
+    let flagsReady = $state(false);
+    $effect(() => {
+        if (!open) {
+            flagsReady = false;
+            return;
+        }
+        const id = setTimeout(() => (flagsReady = true), 60);
+        return () => clearTimeout(id);
+    });
+
+    const flagClass = "h-4 w-6 shrink-0";
+    const compactFlagClass = "h-3 w-[1.125rem] shrink-0";
 
     const availableLanguages = i18n.getAvailableLanguages();
     let selectedLang = $derived(availableLanguages.find(l => l.code === i18n.locale));
@@ -46,7 +59,8 @@
     }
 </script>
 
-{#snippet triggerButton(props)}
+<!-- `props` are the trigger attributes handed over by Popover/Drawer (aria-*, data-state, handlers...). -->
+{#snippet triggerButton(props: Record<string, unknown>)}
     <Button
             {...props}
             variant="outline"
@@ -57,10 +71,10 @@
         {#if selectedLang}
             <span class="flex items-center gap-2 font-bold">
                 {#if compact}
-                    <selectedLang.icon class="w-4 h-4 rounded-sm object-cover" />
+                    <selectedLang.icon class={compactFlagClass} />
                     <span class="uppercase text-[10px] tracking-tighter">{selectedLang.code}</span>
                 {:else}
-                    <selectedLang.icon class="w-5 h-5 rounded-sm object-cover" />
+                    <selectedLang.icon class={flagClass} />
                     <span class="text-sm">{selectedLang.name}</span>
                 {/if}
             </span>
@@ -80,15 +94,21 @@
         <Command.Empty>{i18n.t('settings.general_section.no_language_found')}</Command.Empty>
 
         <Command.Group class="max-h-[300px] overflow-y-auto custom-scrollbar">
-            {#each availableLanguages as lang}
+            {#each availableLanguages as lang (lang.code)}
+                {@const isSelected = i18n.locale === lang.code}
                 <Command.Item
                         value={lang.name}
-                        onSelect={handleSelect(lang.code)}
+                        keywords={[lang.code]}
+                        onSelect={handleSelect(lang.code as Language)}
                         class="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-sm mx-1 my-0.5"
                 >
-                    <Check class="h-4 w-4 shrink-0 {i18n.locale === lang.code ? 'opacity-100' : 'opacity-0'}" />
-                    <lang.icon class="w-5 h-5 rounded-sm shadow-sm object-cover" />
-                    <span class="font-semibold text-sm">{lang.name}</span>
+                    <Check class="h-4 w-4 shrink-0 {isSelected ? 'opacity-100 text-primary' : 'opacity-0'}" />
+                    {#if flagsReady}
+                        <lang.icon class={flagClass} />
+                    {:else}
+                        <span class={flagClass} aria-hidden="true"></span>
+                    {/if}
+                    <span class="font-semibold text-sm {isSelected ? 'text-primary' : ''}">{lang.name}</span>
                 </Command.Item>
             {/each}
         </Command.Group>
