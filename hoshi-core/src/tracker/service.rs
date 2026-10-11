@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tracing::{error, info, instrument, warn};
 
-use crate::content::services::import::ImportService;
+use crate::content::services::enrichment::EnrichmentService;
 use crate::core_err;
 use crate::error::{CoreError, CoreResult};
 use crate::list::merge::MergeService;
@@ -276,10 +276,18 @@ async fn import_from_tracker(
             }
         };
 
-        let cid = match ImportService::import_media(pool, &integration.tracker_name, &tracker_media).await {
-            Ok(cid) => cid,
+        // Enrichment resolves cross IDs first (local TSV for anime, throttled API for manga),
+        let cid = match EnrichmentService::create_enriched_content(
+            state,
+            &tracker_media.content_type,
+            &tracker_media,
+            tracker_id,
+            &integration.tracker_name,
+            None,
+        ).await {
+            Ok(full) => full.content.cid,
             Err(e) => {
-                error!(error = ?e, id = %tracker_id, "Import failed, skipping entry");
+                error!(error = ?e, id = %tracker_id, "Enrichment/import failed, skipping entry");
                 continue;
             }
         };

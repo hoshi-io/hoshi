@@ -9,3 +9,4 @@ pub mod enrichment;
 pub mod content_units;
 mod chinese_title;
 mod aniskip;
+pub mod anime_ids;

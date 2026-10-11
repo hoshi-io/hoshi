@@ -4,6 +4,7 @@ use tracing::{debug, error, warn};
 use sqlx::SqlitePool;
 use crate::content::models::{ContentType, FullContent};
 use crate::content::repositories::content::ContentRepository;
+use crate::content::services::anime_ids::AnimeIdIndex;
 use crate::content::services::import::ImportService;
 use crate::content::services::mapping::MappingService;
 use crate::core_err;
@@ -27,17 +28,50 @@ impl EnrichmentService {
         if let Some(full) = Self::find_existing_cid_via_cross_ids(state, media, tracker, id).await? {
             return Ok(full);
         }
+        
+        let (resolved, prefix) = match c_type {
+            ContentType::Anime => (
+                Self::resolve_anime_cross_ids(state, tracker, id, provided_cross_ids).await,
+                "anime",
+            ),
+            ContentType::Manga | ContentType::Novel => (
+                Self::resolve_manga_cross_ids(state, tracker, id, provided_cross_ids).await,
+                "manga",
+            ),
+        };
 
-        match c_type {
-            ContentType::Anime => {
-                Self::create_enriched_anime(state, media, tracker, id, provided_cross_ids).await
+        // Enrichment failure must not fail the import; backfill-on-open can retry later.
+        let cross_ids = match resolved {
+            Ok(ids) => Self::normalize_mal_prefix(ids, prefix),
+            Err(e) => {
+                warn!(error = ?e, tracker = %tracker, id = %id, "Cross-ID resolution failed, importing without mappings");
+                HashMap::new()
             }
-            ContentType::Manga | ContentType::Novel => {
-                Self::create_enriched_manga_or_novel(state, media, tracker, id, provided_cross_ids).await
+        };
+        let now = chrono::Utc::now().timestamp();
+
+        for (cross_tracker, cross_id) in &cross_ids {
+            if let Ok(Some(cid)) = TrackerRepository::find_cid_by_tracker(&state.pool, cross_tracker, cross_id).await {
+                debug!(cid = %cid, via = %cross_tracker, "Resolved cross-ID matches existing CID, linking instead of importing");
+                Self::persist_mappings(&state.pool, &cid, &cross_ids, now).await;
+                return Self::link_tracker_and_load(state, &cid, tracker, id).await?
+                    .ok_or_else(|| CoreError::NotFound("error.content.not_found".into()));
             }
         }
+
+        let cid = ImportService::import_media(&state.pool, tracker, media).await?;
+
+        if cross_ids.is_empty() {
+            warn!(cid = %cid, tracker = %tracker, id = %id, "No cross IDs found, skipping mapping persistence");
+        } else {
+            debug!(cid = %cid, count = cross_ids.len(), mappings = ?cross_ids, "Persisting mappings");
+            Self::persist_mappings(&state.pool, &cid, &cross_ids, now).await;
+        }
+
+        ContentRepository::get_full_content(&state.pool, &cid).await?
+            .ok_or_else(|| CoreError::NotFound("error.content.not_found".into()))
     }
-    
+
     async fn link_tracker_and_load(
         state: &Arc<AppState>,
         cid: &str,
@@ -140,6 +174,16 @@ impl EnrichmentService {
         if let Some(ids) = provided {
             return Ok(ids.clone());
         }
+
+        match AnimeIdIndex::get(state).await {
+            Ok(index) => {
+                if let Some(ids) = index.lookup(tracker, id) {
+                    return Ok(ids);
+                }
+            }
+            Err(e) => warn!(error = ?e, "Anime ID index unavailable, falling back to API"),
+        }
+
         let url = Self::anime_cross_id_endpoint(tracker, id)?;
         let data = Self::fetch_cross_ids_json(state, &url).await?;
         Ok(Self::extract_anime_cross_ids(&data))
@@ -155,66 +199,45 @@ impl EnrichmentService {
             return Ok(ids.clone());
         }
         let url = Self::manga_cross_id_endpoint(tracker, id)?;
-        let data = Self::fetch_cross_ids_json(state, &url).await?;
+        let data = Self::fetch_manga_cross_ids_json(state, &url).await?;
         Ok(Self::extract_manga_cross_ids(&data))
+    }
+    
+    async fn manga_throttle() {
+        static NEXT: tokio::sync::Mutex<Option<tokio::time::Instant>> =
+            tokio::sync::Mutex::const_new(None);
+        let mut next = NEXT.lock().await;
+        if let Some(t) = *next {
+            tokio::time::sleep_until(t).await;
+        }
+        *next = Some(tokio::time::Instant::now() + std::time::Duration::from_millis(500));
+    }
+
+    async fn fetch_manga_cross_ids_json(state: &Arc<AppState>, url: &str) -> CoreResult<serde_json::Value> {
+        for attempt in 0..3u64 {
+            Self::manga_throttle().await;
+            let resp = state.http_client.get(url).send().await
+                .map_err(|e| core_err!(Network, "error.system.network", e))?;
+
+            if resp.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
+                warn!(attempt = attempt, "MangaBaka rate limited, backing off");
+                tokio::time::sleep(std::time::Duration::from_secs(10 * (attempt + 1))).await;
+                continue;
+            }
+
+            return resp
+                .error_for_status()
+                .map_err(|e| core_err!(Network, "error.system.network", e))?
+                .json().await
+                .map_err(|e| core_err!(Parse, "error.system.parse", e));
+        }
+        Err(CoreError::Internal("error.enrichment.rate_limited".into()))
     }
 
     pub fn normalize_mal_prefix(cross_ids: HashMap<String, String>, prefix: &str) -> HashMap<String, String> {
         cross_ids.into_iter()
             .map(|(k, v)| if k == "mal" { (k, format!("{prefix}:{v}")) } else { (k, v) })
             .collect()
-    }
-
-    async fn create_enriched_anime(
-        state: &Arc<AppState>,
-        media: &TrackerMedia,
-        tracker: &str,
-        id: &str,
-        provided_cross_ids: Option<&HashMap<String, String>>,
-    ) -> CoreResult<FullContent> {
-        let cid = ImportService::import_media(&state.pool, tracker, media).await?;
-        let now = chrono::Utc::now().timestamp();
-
-        debug!(cid = %cid, tracker = %tracker, id = %id, "Anime imported, resolving cross IDs");
-
-        let cross_ids = Self::resolve_anime_cross_ids(state, tracker, id, provided_cross_ids).await?;
-
-        if cross_ids.is_empty() {
-            warn!(cid = %cid, tracker = %tracker, id = %id, "No cross IDs found for anime, skipping mapping persistence");
-        } else {
-            let normalized = Self::normalize_mal_prefix(cross_ids, "anime");
-            debug!(cid = %cid, count = normalized.len(), mappings = ?normalized, "Persisting anime mappings");
-            Self::persist_mappings(&state.pool, &cid, &normalized, now).await;
-        }
-
-        ContentRepository::get_full_content(&state.pool, &cid).await?
-            .ok_or_else(|| CoreError::NotFound("error.content.not_found".into()))
-    }
-
-    async fn create_enriched_manga_or_novel(
-        state: &Arc<AppState>,
-        media: &TrackerMedia,
-        tracker: &str,
-        id: &str,
-        provided_cross_ids: Option<&HashMap<String, String>>,
-    ) -> CoreResult<FullContent> {
-        let cid = ImportService::import_media(&state.pool, tracker, media).await?;
-        let now = chrono::Utc::now().timestamp();
-
-        debug!(cid = %cid, tracker = %tracker, id = %id, "Manga/novel imported, resolving cross IDs");
-
-        let cross_ids = Self::resolve_manga_cross_ids(state, tracker, id, provided_cross_ids).await?;
-
-        if cross_ids.is_empty() {
-            warn!(cid = %cid, tracker = %tracker, id = %id, "No cross IDs found for manga/novel, skipping mapping persistence");
-        } else {
-            let normalized = Self::normalize_mal_prefix(cross_ids, "manga");
-            debug!(cid = %cid, count = normalized.len(), mappings = ?normalized, "Persisting manga/novel mappings");
-            Self::persist_mappings(&state.pool, &cid, &normalized, now).await;
-        }
-
-        ContentRepository::get_full_content(&state.pool, &cid).await?
-            .ok_or_else(|| CoreError::NotFound("error.content.not_found".into()))
     }
 
     pub fn extract_anime_cross_ids(data: &serde_json::Value) -> HashMap<String, String> {
