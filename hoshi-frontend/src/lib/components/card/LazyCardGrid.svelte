@@ -54,9 +54,42 @@
         }
     });
 
-    function premiumPop(node: HTMLElement, { duration = 400 }) {
+    // ---- Entrance ----------------------------------------------------------------------------
+
+    const prefersReducedMotion =
+        typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const STAGGER_MS = 30;   // gap between consecutive cards
+    const STAGGER_CAP = 14;  // ...but never more than ~420ms in total, so long lists don't crawl
+
+    // Keys that were already on screen after the last render (plain variable on purpose: not reactive).
+    let seen = new Set<string | number>();
+
+    // Position of each *new* card within its batch: 0, 1, 2... Cards that were already there aren't listed.
+    // So the first page staggers from 0, and a "load more" batch staggers from 0 as well
+    // (instead of starting at card 31 and waiting a full second).
+    const entrance = $derived.by(() => {
+        const order = new Map<string | number, number>();
+        let n = 0;
+        for (const item of items) {
+            const key = keyFn(item);
+            if (!seen.has(key)) order.set(key, n++);
+        }
+        return order;
+    });
+
+    // Runs after the DOM is updated, so the next batch is measured against what is now on screen.
+    $effect(() => {
+        seen = new Set(items.map(keyFn));
+    });
+
+    function premiumPop(
+        node: HTMLElement,
+        { delay = 0, duration = 400 }: { delay?: number; duration?: number } = {}
+    ) {
         return {
-            duration,
+            delay: prefersReducedMotion ? 0 : delay,
+            duration: prefersReducedMotion ? 0 : duration,
             css: (t: number) => {
                 const eased = cubicOut(t);
                 return `
@@ -73,7 +106,7 @@
         {#each items as item (keyFn(item))}
             <div
                     animate:flip={{ duration: 350, easing: cubicOut }}
-                    in:premiumPop={{ duration: 450 }}
+                    in:premiumPop|global={{ delay: Math.min(entrance.get(keyFn(item)) ?? 0, STAGGER_CAP) * STAGGER_MS, duration: 200 }}
                     out:fly={{ y: -10, duration: 150 }}
                     class="group will-change-transform"
             >
