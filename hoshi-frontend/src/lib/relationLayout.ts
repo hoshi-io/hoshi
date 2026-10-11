@@ -3,6 +3,8 @@ import type { RelationEdge, RelationGraph, RelationNode } from "@/api/content/ty
 export interface PositionedNode extends RelationNode {
     x: number;
     y: number;
+    trackerName?: string;
+    trackerId?: string;
 }
 
 export interface LayoutResult {

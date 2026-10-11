@@ -19,7 +19,7 @@
         cid: string;
         title: string;
         contentType: string;
-        coverImage?: string;
+        coverImage?: string | null;
         size?: "default" | "sm" | "lg" | "icon" | null;
         variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | null;
         class?: string;

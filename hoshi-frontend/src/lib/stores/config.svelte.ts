@@ -1,4 +1,4 @@
-import { configApi } from "@/api/config/config";
+import { configApi, type ConfigSection } from "@/api/config/config";
 import type { AppConfig } from "@/api/config/types";
 import { goto } from "$app/navigation";
 import type { CoreError } from "@/api/client";
@@ -28,11 +28,12 @@ class ConfigStore {
         }
     }
 
-    async update(patch: Partial<AppConfig>) {
+    async update(patch: ConfigSection) {
         this.loading = true;
         try {
             const updated = await configApi.patchConfig(patch);
-            Object.assign(this.data!, updated);
+            if (this.data) Object.assign(this.data, updated);
+            else this.data = updated;
         } catch (err) {
             throw err as CoreError;
         } finally {

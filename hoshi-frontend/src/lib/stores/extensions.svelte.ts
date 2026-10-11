@@ -1,5 +1,4 @@
 import { extensionsApi } from "@/api/extensions/extensions";
-import { contentApi } from "@/api/content/content";
 import { invoke } from "@tauri-apps/api/core";
 import type { Extension } from "@/api/extensions/types";
 import type { CoreError } from "@/api/client";

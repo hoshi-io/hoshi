@@ -25,8 +25,8 @@
     }: {
         open?: boolean;
         cid: string;
-        metadata: Metadata;
-        isNsfw: boolean;
+        metadata?: Metadata;
+        isNsfw?: boolean;
         extensions: ExtensionSource[];
         contentType: "anime" | "manga" | "novel";
         headers?: any;

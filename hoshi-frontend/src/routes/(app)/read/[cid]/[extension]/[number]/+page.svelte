@@ -111,7 +111,7 @@
                                 max={readerState.groupedImages.length - 1}
                                 step={1}
                                 dir={readerState.direction}
-                                onValueChange={(v) => {
+                                onValueChange={(v: number[]) => {
                                     readerState.skipAnimation = false;
                                     readerState.updatePageWithDir(v[0]);
                                 }}

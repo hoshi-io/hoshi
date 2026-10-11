@@ -47,7 +47,7 @@
     const [send, receive] = crossfade({
         duration: prefersReducedMotion ? 0 : 280,
         easing: cubicOut,
-        fallback: fade
+        fallback: (node) => fade(node, { duration: 300 })
     });
 
     type NavItem = { id: string; label: string; icon: typeof User; hover: string; desktopOnly?: boolean };
@@ -196,14 +196,11 @@
 
     async function handleSaveConfig() {
         if (!appConfig.data) return;
-        configSaving = true;
         try {
             await appConfig.update(appConfig.data);
         } catch (err) {
             console.error(err);
             toast.error("Failed to update preferences");
-        } finally {
-            configSaving = false;
         }
     }
 </script>

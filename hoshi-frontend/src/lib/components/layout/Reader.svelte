@@ -49,7 +49,7 @@
     );
     let baseRoute = $derived(contentType === "novel" ? "/read-novel" : "/read");
 
-    function getCleanTitle(chap: any, num: number): string | null {
+    function getCleanTitle(chap: any, num: number | string): string | null {
         const title = chap?.title?.trim();
         if (!title) return null;
         const numText = i18n.t('reader.chapter_number', { count: num }).trim();
@@ -136,7 +136,7 @@
         </div>
         <div class="flex-1 overflow-y-auto custom-scrollbar p-1 flex flex-col gap-0.5">
             {#each sortedChapters as chap}
-                {@const num = chap.number ?? chap.unitNumber}
+                {@const num = chap.number ?? chap.unitNumber ?? 1}
                 {@const isCurrent = num === readerState.chapterNumber}
                 {@const cleanTitle = getCleanTitle(chap, num)}
                 <a

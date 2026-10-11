@@ -22,6 +22,9 @@
     import ResponsiveMenu from "@/components/ResponsiveMenu.svelte";
     import { goto } from "$app/navigation";
 
+    type StatusFilter = typeof listStore.activeStatus;
+    type TypeFilter = typeof listStore.activeType;
+
     $effect(() => {
         layoutState.title = listStore.isMobileSearchActive ? "" : i18n.t('list.title');
         layoutState.showBack = false;
@@ -29,13 +32,20 @@
         layoutState.headerAction = mobileTopbar;
     });
 
-    const statusOptions = $derived([
+    const statusOptions = $derived<{ value: StatusFilter; label: string }[]>([
         { value: "ALL",       label: i18n.t('list.all') },
         { value: "CURRENT",   label: i18n.t('list.current') },
         { value: "COMPLETED", label: i18n.t('list.completed') },
         { value: "PLANNING",  label: i18n.t('list.planning') },
         { value: "PAUSED",    label: i18n.t('list.paused') },
         { value: "DROPPED",   label: i18n.t('list.dropped') },
+    ]);
+
+    const typeOptions = $derived<{ value: TypeFilter; label: string }[]>([
+        { value: "ALL", label: i18n.t('list.all') },
+        { value: "anime", label: i18n.t('list.anime') },
+        { value: "manga", label: i18n.t('list.manga') },
+        { value: "novel", label: i18n.t('list.novel') }
     ]);
 
     const trackerOptions = [
@@ -46,7 +56,7 @@
         { value: "simkl", label: i18n.t('list.missing_simkl') }
     ];
 
-    const statusCounts = $derived({
+    const statusCounts = $derived<Record<StatusFilter, number>>({
         ALL:       listStore.entries.length,
         CURRENT:   listStore.stats?.watching   ?? 0,
         COMPLETED: listStore.stats?.completed  ?? 0,
@@ -150,24 +160,14 @@
 {#snippet typeSelect()}
     <ResponsiveSelect
             bind:value={listStore.activeType}
-            items={[
-                { value: "ALL", label: i18n.t('list.all') },
-                { value: "anime", label: i18n.t('list.anime') },
-                { value: "manga", label: i18n.t('list.manga') },
-                { value: "novel", label: i18n.t('list.novel') }
-            ]}
+            items={typeOptions}
             class="h-11 rounded-sm font-bold bg-card border border-border/40 shadow-sm"
     />
 {/snippet}
 
 {#snippet desktopTypeList()}
     <div class="flex flex-col gap-1 w-full">
-        {#each [
-            { value: "ALL", label: i18n.t('list.all') },
-            { value: "anime", label: i18n.t('list.anime') },
-            { value: "manga", label: i18n.t('list.manga') },
-            { value: "novel", label: i18n.t('list.novel') }
-        ] as option}
+        {#each typeOptions as option}
             <button
                     class="flex w-full items-center justify-start rounded-sm px-3 py-2 text-sm font-medium transition-colors {listStore.activeType === option.value ? 'bg-muted/80 text-foreground' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
                     onclick={() => listStore.activeType = option.value}
@@ -181,15 +181,15 @@
 {#snippet ghostStack(tone: 'neutral' | 'error' = 'neutral')}
     <div class="relative h-48 w-60 shrink-0" aria-hidden="true">
         <div
-                class="ghost absolute bottom-0 left-3 aspect-[2/3] w-28 rounded-sm {tone === 'error' ? 'bg-destructive/5' : 'bg-muted/20'}"
+                class="ghost absolute bottom-0 left-3 aspect-2/3 w-28 rounded-sm {tone === 'error' ? 'bg-destructive/5' : 'bg-muted/20'}"
                 style="--i: 0; --r: -9deg"
         ></div>
         <div
-                class="ghost absolute bottom-0 right-3 aspect-[2/3] w-28 rounded-sm {tone === 'error' ? 'bg-destructive/5' : 'bg-muted/20'}"
+                class="ghost absolute bottom-0 right-3 aspect-2/3 w-28 rounded-sm {tone === 'error' ? 'bg-destructive/5' : 'bg-muted/20'}"
                 style="--i: 1; --r: 9deg"
         ></div>
         <div
-                class="ghost absolute bottom-2 left-1/2 z-10 flex aspect-[2/3] w-28 flex-col justify-between rounded-sm p-2.5 {tone === 'error' ? 'bg-destructive/10' : 'bg-muted/40'}"
+                class="ghost absolute bottom-2 left-1/2 z-10 flex aspect-2/3 w-28 flex-col justify-between rounded-sm p-2.5 {tone === 'error' ? 'bg-destructive/10' : 'bg-muted/40'}"
                 style="--i: 2; --x: -50%"
         >
             <div class="flex flex-1 items-center justify-center">

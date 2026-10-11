@@ -87,7 +87,7 @@
         handleSearch();
     };
 
-    const selectSource = (mode: "tracker" | "extension", extId: string = "", tracker: "anilist" | "mal" | "kitsu" = "anilist", isMobile = false) => {
+    const selectSource = (mode: "tracker" | "extension", extId: string = "", tracker: "anilist" | "mal" | "kitsu" | "simkl" = "anilist", isMobile = false) => {
         searchState.searchMode = mode;
         if (mode === "extension") searchState.selectedExtension = extId;
         else searchState.tracker = tracker;

@@ -5,15 +5,17 @@ import type {
     MangaConfig,
     NovelConfig,
     ContentConfig,
-    UiConfig, ExtensionsConfig, PlayerConfig
+    UiConfig, ExtensionsConfig, PlayerConfig, SubtitleConfig, TorrentConfig
 } from "@/api/config/types";
 
-type ConfigSection = {
+export type ConfigSection = {
     general?: Partial<GeneralConfig>;
     ui?: Partial<UiConfig>;
     content?: Partial<ContentConfig>;
     extensions?: Partial<ExtensionsConfig>;
     player?: Partial<PlayerConfig>;
+    subtitles?: Partial<SubtitleConfig>;
+    torrent?: Partial<TorrentConfig>;
     manga?: Partial<MangaConfig>;
     novel?: Partial<NovelConfig>;
 };

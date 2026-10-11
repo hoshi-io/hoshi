@@ -142,28 +142,6 @@
                                     {/if}
                                     <span class="truncate">{displayNames.get(ext.id) ?? ext.name}</span>
                                 </button>
-
-                                {#if ext.source === 'tachiyomi' && ext.settings}
-                                    {@const langDef = ext.setting_definitions?.find(s => s.id === 'language' || s.key === 'language')}
-                                    {#if langDef}
-                                        <div class="w-[85px] shrink-0 ml-2 h-6 flex items-center" onclick={(e) => e.stopPropagation()}>
-                                            <ResponsiveSelect
-                                                    value={ext.settings.language as string}
-                                                    items={langDef.options || []}
-                                                    placeholder="Lang"
-                                                    data-size="sm"
-                                                    class="!h-6 text-xs px-2 py-0 bg-transparent border-0 border-transparent shadow-none focus:ring-0 focus:ring-offset-0 hover:bg-muted/50 transition-colors"
-                                                    onValueChange={(newVal) => {
-                                        ext.settings.language = newVal;
-                                        extensionsApi.updateSettings(ext.id, {
-                                            ...ext.settings,
-                                            language: newVal
-                                        });
-                                    }}
-                                            />
-                                        </div>
-                                    {/if}
-                                {/if}
                             </div>
                         {/each}
                     </div>

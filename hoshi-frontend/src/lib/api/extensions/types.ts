@@ -28,6 +28,7 @@ export interface SoraMarketplaceEntry {
     manifestUrl: string;
     addedAt?: string;
     installCount?: number;
+    version?: string;
     type: string; // "anime" | "movies/shows" | ... inconsistent, don't trust it strictly
     author: { name: string; icon?: string; url?: string };
 }

@@ -111,7 +111,7 @@
                                     </p>
                                     <div class="flex items-baseline gap-2 overflow-hidden">
                                         <span class="font-black text-base md:text-sm whitespace-nowrap group-hover:text-primary transition-colors">
-    {item.unit?.title ? item.episode : i18n.t('watch.episode_number', { num: item.episode })}
+    {item.unit?.title ? item.episode : i18n.t('watch.episode_number', { num: item.episode ?? "?" })}
 </span>
                                         {#if item.unit?.title}
                                             <span class="text-muted-foreground/40 text-xs">.</span>
@@ -165,7 +165,7 @@
 
                                     <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none flex items-end p-2">
                                         <p class="text-[10px] text-white/90 font-black tracking-wide uppercase line-clamp-1">
-                                            {i18n.t('home.continue.chapters', { num: item.chapter })}
+                                            {i18n.t('home.continue.chapters', { num: item.chapter ?? "?" })}
                                         </p>
                                     </div>
                                 </div>

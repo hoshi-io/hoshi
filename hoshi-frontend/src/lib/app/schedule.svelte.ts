@@ -24,6 +24,7 @@ export type RecentlyAiredItem = {
     airingAt: number;
     trackerId: string;
     hasUnit: boolean;
+    unitTitle?: string;
 };
 
 function getMs(ts: number) {

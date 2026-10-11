@@ -30,7 +30,7 @@
     const [send, receive] = crossfade({
         duration: prefersReducedMotion ? 0 : 300,
         easing: cubicOut,
-        fallback: fade
+        fallback: (node) => fade(node, { duration: 300 })
     });
 
     const reveal: Action<HTMLElement, { delay?: number } | undefined> = (node, params) => {

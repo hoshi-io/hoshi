@@ -23,7 +23,7 @@
         open: boolean;
         cid: string;
         displayTitle?: string;
-        coverImage?: string;
+        coverImage?: string | null;
         contentType: string;
     } = $props();
 

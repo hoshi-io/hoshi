@@ -75,7 +75,7 @@
         const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
         const cardEl = el?.closest('[data-cid]') as HTMLElement | null;
         if (cardEl?.dataset.cid) {
-            openNode(cardEl.dataset.cid);
+            openNode({cid: cardEl.dataset.cid});
         }
     }
 
@@ -151,7 +151,7 @@
                         in:scaleTransition={{ duration: 400, delay: 300 + (i * 20), start: 0.8, easing: cubicOut }}
                         role="button"
                         tabindex="0"
-                        onkeydown={(e) => e.key === 'Enter' && openNode(node.cid)}
+                        onkeydown={(e) => e.key === 'Enter' && openNode({cid: node.cid})}
                         onmouseenter={() => (hoveredCid = node.cid)}
                         onmouseleave={() => (hoveredCid = null)}
                         class="absolute overflow-hidden rounded-xl border shadow-sm transition-[box-shadow,opacity] duration-200 cursor-pointer hover:shadow-xl hover:z-10

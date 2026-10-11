@@ -26,7 +26,7 @@
     });
 
     let savingProfile = $state(false);
-    let previewAvatarUrl = $state<string>("");
+    let previewAvatarUrl = $state<string | null>("");
 
     $effect(() => {
         previewAvatarUrl = user.avatar || "";

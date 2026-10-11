@@ -284,7 +284,7 @@
         return extensions.installed.find(ext => ext.id === getExpectedId(item))?.version ?? null;
     }
 
-    function isNewerVersion(repoVer: string, installedVer: string): boolean {
+    function isNewerVersion(repoVer: string | undefined, installedVer: string): boolean {
         if (!repoVer || !installedVer) return false;
         const repo = repoVer.split('.').map(v => parseInt(v, 10) || 0);
         const inst = installedVer.split('.').map(v => parseInt(v, 10) || 0);

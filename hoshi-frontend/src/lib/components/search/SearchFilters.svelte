@@ -1,9 +1,7 @@
 <script lang="ts">
     import { Label } from "$lib/components/ui/label";
-    import { Input } from "$lib/components/ui/input";
     import { Button } from "$lib/components/ui/button";
     import { Switch } from "$lib/components/ui/switch";
-    import * as Select from "$lib/components/ui/select";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { searchState } from "@/app/search.svelte.js";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
@@ -204,7 +202,7 @@
                         bind:value={status}
                         items={[
             { value: "", label: i18n.t('search.any_status') },
-            ...activeFilters.status.map(st => ({ value: st.value, label: i18n.t(st.label) }))
+            ...activeFilters.status.map((st: { value: any; label: string; }) => ({ value: st.value, label: i18n.t(st.label) }))
         ]}
                         onValueChange={handleFilterChange}
                         placeholder={i18n.t('search.any_status')}
@@ -218,7 +216,7 @@
                         bind:value={genre}
                         items={[
             { value: "", label: i18n.t('search.any_genre') },
-            ...activeFilters.genres.map(gen => ({ value: gen.value, label: i18n.t(gen.label) }))
+            ...activeFilters.genres.map((gen: { value: any; label: string; }) => ({ value: gen.value, label: i18n.t(gen.label) }))
         ]}
                         onValueChange={handleFilterChange}
                         placeholder={i18n.t('search.any_genre')}
@@ -232,7 +230,7 @@
                         bind:value={format}
                         items={[
             { value: "", label: i18n.t('search.any_format') },
-            ...filteredFormats.map(form => ({ value: form.value, label: i18n.t(form.label) }))
+            ...filteredFormats.map((form: { value: any; label: string; }) => ({ value: form.value, label: i18n.t(form.label) }))
         ]}
                         onValueChange={handleFormatChange}
                         placeholder={i18n.t('search.any_format')}

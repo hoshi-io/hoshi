@@ -69,7 +69,7 @@
             } else {
                 await contentApi.addTrackerMapping(cid, {
                     cid, trackerName: formName, trackerId: formId,
-                    syncEnabled: false, createdAt: Date.now(), updatedAt: Date.now()
+                    createdAt: Date.now(), updatedAt: Date.now()
                 });
                 toast.success(i18n.t('content.mapping_added'));
             }

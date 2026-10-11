@@ -19,7 +19,7 @@
     const [send, receive] = crossfade({
         duration: prefersReducedMotion ? 0 : 260,
         easing: cubicOut,
-        fallback: fade
+        fallback: (node) => fade(node, { duration: 300 })
     });
 
     function isActive(path: string) {

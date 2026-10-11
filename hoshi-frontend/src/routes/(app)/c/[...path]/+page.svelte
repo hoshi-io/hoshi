@@ -132,7 +132,7 @@
         {@const isAdultContent = detail.fullContent.content.nsfw || meta?.genres?.some(g => ['hentai', 'adult'].includes(g.toLowerCase()))}
         {@const isAnime = detail.fullContent.content.contentType === 'anime'}
         {@const hasCastOrStaff = (meta?.characters?.length ?? 0) > 0 || (meta?.staff?.length ?? 0) > 0}
-        {@const hasRelations = detail.relations.length > 0 || detail.relationsLoading}
+        {@const hasRelations = detail.relations.length > 0}
 
         <ContentHero
                 fullContent={detail.fullContent}
@@ -142,7 +142,6 @@
                 bind:showTrackerModal
                 bind:showExtensionModal
                 bind:showMergeModal
-                watchUrl={isAnime ? watchUrl : null}
                 onWatchNow={() => detail.watchNow()}
                 headers={detail.headers}
         />
@@ -177,7 +176,7 @@
 
             {#if hasRelations}
                 <div class="pt-2 border-t border-border/20">
-                    <Relations relations={detail.relations} loading={detail.relationsLoading} />
+                    <Relations relations={detail.relations} />
                 </div>
             {/if}
 

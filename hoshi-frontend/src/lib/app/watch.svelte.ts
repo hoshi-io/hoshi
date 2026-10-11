@@ -798,7 +798,8 @@ export class WatchState {
         return null;
     });
 
-    executeSkip(chapter: EpisodeChapter) {
+    executeSkip(chapter: EpisodeChapter | null) {
+        if (chapter == null) return;
         this.skippedChapterStarts.add(chapter.start);
         this.seek(chapter.end, false);
     }

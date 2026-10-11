@@ -271,6 +271,8 @@ export interface RelationNode {
 export interface RelationEdge {
     sourceCid: string;
     targetCid: string;
+    targetTrackerName: string;
+    targetTrackerId: string;
     relationType: RelationType;
 }
 

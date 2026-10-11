@@ -35,7 +35,7 @@
     let titleLanguage = $state<'romaji' | 'english' | 'native'>('romaji');
     let defaultHomeSection = $state<'anime' | 'manga' | 'novel'>('anime');
 
-    let extConfig = $state({ repoUrl: appConfig.data?.extensions?.repoUrls || [] });
+    let extConfig = $state({ repoUrls: appConfig.data?.extensions?.repoUrls || [] });
 
     const themes = [
         { id: 'light', label: 'Light', classes: 'bg-zinc-50 text-zinc-950 border-zinc-200' },
