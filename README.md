@@ -30,6 +30,7 @@
 -  **BYOC Extensions:** Bring your own content by adding marketplace URLs. Browse and install extensions directly from the app.
 -  **Compatibility Layers (experimental):** Run LNReader and Sora extensions natively inside Hoshi, no extra installation required.
 -  **Advanced Readers & Player:** Includes a libmpv based player with Anime4k integrations, along with custom, highly configurable readers for manga and light novels.
+-  **Subtitle customization:** Subtitles fully customized powered by libmpv and libass.
 -  **Built-in torrent client:** Stream torrents directly in hoshi with librqbit, with zero configuration required.
 -  **Release Schedule:** Stay up to date with a built-in calendar that shows upcoming anime releases and airing episodes at a glance.
 -  **Customization:** Personalize the experience with themes and adjustable accent colors to match your style.
@@ -40,7 +41,7 @@
 <p align="center">
   <img src="assets/desktop.png" alt="Hoshi Desktop" height="340" />
   &nbsp;&nbsp;
-  <img src="assets/mobile.jpeg" alt="Hoshi Mobile" height="340" />
+  <img src="assets/mobile.png" alt="Hoshi Mobile" height="340" />
 </p>
 
 ## Under the Hood
