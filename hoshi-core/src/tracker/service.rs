@@ -11,19 +11,6 @@ use crate::tracker::provider::{TrackerProvider};
 use crate::tracker::repository::TrackerRepository;
 use crate::tracker::types::{AddIntegrationRequest, ImportEvent, IntegrationsResponse, SuccessResponse, TrackerInfoResponse, TrackerIntegration};
 
-pub fn normalize_list_status(s: &str) -> String {
-    match s.to_uppercase().as_str() {
-        "CURRENT" | "WATCHING" | "AIRING"                => "CURRENT",
-        "COMPLETED" | "FINISHED" | "WATCHED"             => "COMPLETED",
-        "PLANNING" | "PLAN_TO_WATCH" | "PTW"
-        | "PLAN TO WATCH" | "WANT TO WATCH"              => "PLANNING",
-        "PAUSED" | "ON_HOLD" | "HOLD"                    => "PAUSED",
-        "DROPPED" | "ABANDONED"                          => "DROPPED",
-        "REPEATING" | "REWATCHING" | "REREADING"         => "REPEATING",
-        _                                                 => "PLANNING",
-    }.to_string()
-}
-
 pub struct TrackerService;
 
 impl TrackerService {

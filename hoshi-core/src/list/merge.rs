@@ -63,18 +63,27 @@ impl MergeService {
         }
     }
 
+    /// Single source of truth for status normalization (anime, manga and novels).
     pub fn normalize_tracker_status(status: &str) -> String {
-        match status.to_lowercase().as_str() {
-            "watching"       | "current"       => "CURRENT".to_string(),
-            "plan_to_watch"  | "planning"      => "PLANNING".to_string(),
-            "completed"                        => "COMPLETED".to_string(),
-            "on_hold"        | "paused"        => "PAUSED".to_string(),
-            "dropped"                          => "DROPPED".to_string(),
-            "repeating"      | "rewatching"    => "REPEATING".to_string(),
-            _                                  => "PLANNING".to_string(), // Safe fallback
-        }
+        let key = status.trim().to_lowercase().replace([' ', '-'], "_");
+        match key.as_str() {
+            "current" | "watching" | "reading" | "airing" | "in_progress"
+            => "CURRENT",
+            "planning" | "plan_to_watch" | "plan_to_read" | "ptw" | "ptr"
+            | "want_to_watch" | "want_to_read"      => "PLANNING",
+            "completed" | "finished" | "watched" | "read"
+            => "COMPLETED",
+            "paused" | "on_hold" | "hold"           => "PAUSED",
+            "dropped" | "abandoned"                 => "DROPPED",
+            "repeating" | "rewatching" | "rereading"
+            => "REPEATING",
+            other => {
+                warn!(status = %other, "Unknown tracker status, falling back to PLANNING");
+                "PLANNING"
+            }
+        }.to_string()
     }
-    
+
     fn resolve_merge_strategy(
         strategy: &MergeStrategy,
         tracker_name: &str,
@@ -217,7 +226,12 @@ impl MergeService {
                 end_date:     final_end.clone(),
                 repeat_count: Some(final_repeat_count),
                 notes:        final_notes.clone(),
-                is_private:   Some(config.list.private_by_default || entry.is_private),
+                // Never override a privacy choice the user already made locally;
+                // defaults/remote only apply to brand-new entries.
+                is_private:   Some(match &local {
+                    Some(l) => l.is_private,
+                    None => config.list.private_by_default || entry.is_private,
+                }),
             };
 
             ListRepository::upsert_entry(
