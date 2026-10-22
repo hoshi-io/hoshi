@@ -124,7 +124,8 @@
 
     const isWatched = (n: number) => progress.get(n)?.completed ?? false;
 
-    let scroller: HTMLElement | undefined = $state();$effect(() => {
+    let scroller: HTMLElement | undefined = $state();
+    $effect(() => {
         void pageState.epNumber;
         void activeRange;
         void items.length;
@@ -134,7 +135,8 @@
     });
 
     // Mobile: Embla carousel.
-    let api = $state<{ scrollTo: (index: number, jump?: boolean) => void } | undefined>();$effect(() => {
+    let api = $state<{ scrollTo: (index: number, jump?: boolean) => void } | undefined>();
+    $effect(() => {
         const a = api;
         const idx = currentIndex;
         if (a && idx >= 0 && idx < visible.length) a.scrollTo(idx);
@@ -269,10 +271,10 @@
     </button>
 {/snippet}
 
-<div class="flex min-h-0 flex-col {isMobile ? 'gap-2 px-3 pb-2 pt-2' : 'h-full'}">
+<div class="flex min-h-0 flex-col {isMobile ? 'h-full gap-2 px-3 pb-2 pt-2' : 'h-full'}">
 
     {#if isMobile}
-        <div class="flex items-center gap-2">
+        <div class="flex shrink-0 items-center gap-2">
             {@render tabs()}
             {#if onClose}
                 <button
@@ -293,25 +295,28 @@
         <p class="px-2 py-6 text-center text-sm text-muted-foreground">…</p>
 
     {:else if isMobile}
-        {#key activeRange}
-            <Carousel.Root
-                    opts={{ align: "start", dragFree: true, startIndex: Math.max(0, currentIndex) }}
-                    setApi={(a) => (api = a)}
-                    class="w-full touch-pan-y select-none"
-            >
-                <Carousel.Content class="-ml-2">
-                    {#each visible as item (item.number)}
-                        <Carousel.Item class="pl-2 {mode === 'rich' ? 'basis-[160px]' : 'basis-12'}">
-                            {#if mode === "rich"}
-                                {@render card(item)}
-                            {:else}
-                                {@render chip(item)}
-                            {/if}
-                        </Carousel.Item>
-                    {/each}
-                </Carousel.Content>
-            </Carousel.Root>
-        {/key}
+        <!-- Horizontal carousel, vertically centered in the space between header and bottom bar -->
+        <div class="flex min-h-0 flex-1 items-center">
+            {#key activeRange}
+                <Carousel.Root
+                        opts={{ align: "start", dragFree: true, startIndex: Math.max(0, currentIndex) }}
+                        setApi={(a) => (api = a)}
+                        class="w-full touch-pan-y select-none"
+                >
+                    <Carousel.Content class="-ml-3">
+                        {#each visible as item (item.number)}
+                            <Carousel.Item class="pl-3 {mode === 'rich' ? 'basis-[75%] sm:basis-[45%]' : 'basis-20'}">
+                                {#if mode === "rich"}
+                                    {@render card(item)}
+                                {:else}
+                                    {@render chip(item)}
+                                {/if}
+                            </Carousel.Item>
+                        {/each}
+                    </Carousel.Content>
+                </Carousel.Root>
+            {/key}
+        </div>
 
     {:else}
         <div
