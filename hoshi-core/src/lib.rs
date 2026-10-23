@@ -88,8 +88,10 @@ pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_stor
         let torrent = state.torrent.clone();
         move |mpv| torrent::mpv_protocol::register(mpv, torrent.clone())
     });
-    let torrent = state.torrent.clone();
-    state.thumbnails.add_protocol_hook(move |mpv| torrent::mpv_protocol::register_thumb(mpv, torrent.clone()));
+    state.thumbnails.add_protocol_hook({
+        let torrent = state.torrent.clone();
+        move |mpv| torrent::mpv_protocol::register_thumb(mpv, torrent.clone())
+    });
     state.torrent.spawn_reaper();
 
     HomeService::warmup(state.clone());

@@ -98,6 +98,7 @@ impl ThumbnailService {
     pub async fn open(&self, spec: LoadSpec, cfg: &PlayerConfig) -> bool {
         let kind = SourceKind::detect(&spec.url);
         let Some(cfg) = ThumbSettings::from_config(cfg, kind) else {
+            warn!(?kind, "thumb: disabled by config for this source kind");
             self.close().await;
             return false;
         };
@@ -188,17 +189,25 @@ impl Worker {
         self.kind = kind;
         self.duration = 0.0;
 
+        while self.mpv.wait_event(0.0).is_some() {}
+
         let r = (|| -> libmpv2::Result<()> {
             let m = &self.mpv;
-            m.set_property("hwdec", if cfg.hwdec { "auto-safe" } else { "no" })?;
-            m.set_property("hr-seek", if cfg.precise { "yes" } else { "no" })?;
-            m.set_property("vf", format!("scale={}:-2", cfg.width))?;
+
+            // Thumbnails need CPU-readable frames. On Android, mediacodec decodes into a
+            // surface that vo=null can't read back, so screenshot-to-file fails.
+            let hwdec = if cfg!(target_os = "android") || !cfg.hwdec { "no" } else { "auto-safe" };
+            if let Err(e) = m.set_property("hwdec", hwdec) { warn!(?e, "thumb: hwdec failed"); }
+            if let Err(e) = m.set_property("hr-seek", if cfg.precise { "yes" } else { "no" }) {
+                warn!(?e, "thumb: hr-seek failed");
+            }
+            if let Err(e) = m.command("vf", &["set", &format!("scale={}:-2", cfg.width)]) {
+                warn!(?e, "thumb: vf set failed");
+            }
             m.set_property("screenshot-jpeg-quality", cfg.quality as i64)?;
-            m.set_property("hls-bitrate", "min")?;           // lowest HLS variant
-            // headers/UA: reuse the same logic as PlaybackHandle::load (factor it into a helper)
+            m.set_property("hls-bitrate", "min")?;
             apply_headers(m, &spec.headers)?;
 
-            // torrent: swap scheme so the non-blocking, availability-gated protocol is used
             let url = if kind == SourceKind::Torrent {
                 spec.url.replacen("torrent://", "torrentthumb://", 1)
             } else { spec.url.clone() };
@@ -261,7 +270,11 @@ impl Worker {
         while Instant::now() < deadline {
             match self.mpv.wait_event(0.1) {
                 Some(Ok(e)) if pred(&e) => return true,
-                Some(Ok(Event::EndFile(_))) => return false, // failed to open / EOF
+                Some(Ok(Event::EndFile(reason))) => {
+                    warn!(reason, "thumb: EndFile while waiting");
+                    return false;
+                }
+                Some(Err(e)) => warn!(?e, "thumb: mpv event error"),
                 _ => {}
             }
         }
