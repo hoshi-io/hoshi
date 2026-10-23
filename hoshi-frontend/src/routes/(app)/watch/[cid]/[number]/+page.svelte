@@ -243,6 +243,16 @@
         touchStartY = currentY;
     }
 
+    let lastMouseX = -1;
+    let lastMouseY = -1;
+
+    function handleMouseMove(e: MouseEvent) {
+        if (e.clientX === lastMouseX && e.clientY === lastMouseY) return; // synthetic event
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        handleActivity();
+    }
+
     $effect(() => {
         const paused = pageState.isPaused;
         const scrubbing = pageState.isScrubbing;
@@ -271,6 +281,7 @@
             window.addEventListener("mousedown", handleActivity);
             window.addEventListener("touchstart", handleActivity);
             window.addEventListener("wheel", handleActivity);
+            window.addEventListener("mousemove", handleMouseMove);
             scheduleHide();
         }
 
@@ -280,6 +291,7 @@
             window.removeEventListener("mousedown", handleActivity);
             window.removeEventListener("touchstart", handleActivity);
             window.removeEventListener("wheel", handleActivity);
+            window.removeEventListener("mousemove", handleMouseMove);
             clearHideTimer();
             if (brightnessOverlayTimer) clearTimeout(brightnessOverlayTimer);
             if (volumeOverlayTimer) clearTimeout(volumeOverlayTimer);
