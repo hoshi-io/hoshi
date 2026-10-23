@@ -124,7 +124,7 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             }
 
             async_runtime::block_on(async {
-                let state = hoshi_core::build_app_state(paths, headless, log_store).await
+                let state = hoshi_core::build(paths, headless, log_store).await
                     .map_err(|e| {
                         error!(error = ?e, "FATAL: Failed to build AppState during startup");
                         e
@@ -148,7 +148,6 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             }
 
             // Discord RPC is driven entirely off the same core event stream
-            // from here on
             #[cfg(feature = "discord-rpc")]
             {
                 let state = app.state::<std::sync::Arc<hoshi_core::AppState>>().inner().clone();

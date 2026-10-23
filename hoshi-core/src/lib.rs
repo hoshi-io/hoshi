@@ -36,7 +36,7 @@ use crate::torrent::TorrentHandle;
 use crate::tracker::sync::StartupSyncService;
 
 #[instrument(skip(log_store, paths, headless))]
-pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_store: logs::LogStore, ) -> CoreResult<Arc<AppState>> {
+pub async fn build(paths: AppPaths, headless: HeadlessHandle, log_store: logs::LogStore, ) -> CoreResult<Arc<AppState>> {
     info!("Starting Hoshi Core initialization...");
     let _ = std::fs::remove_dir_all(&paths.thumbnails);
     paths.ensure_dirs().map_err(|e| core_err!(Internal, "error.system.setup_failed", e))?;
