@@ -60,7 +60,7 @@
 
     <!-- BOTTOM BAR -->
     <div class="flex flex-col transition-transform duration-300 ease-out {showControls ? 'translate-y-0' : 'translate-y-full'} {ptr}">
-        <div class="px-4 pb-3 pt-6 flex flex-col {showEpisodes ? 'bg-black/70 backdrop-blur-md' : ''}">
+        <div class="px-8 pt-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] flex flex-col {showEpisodes ? 'bg-black/70 backdrop-blur-md' : ''}">
             <div class="flex items-center text-xs font-medium tabular-nums tracking-wide mb-2 ml-1 text-white">
                 <span class="text-white">{formatTime(pageState.currentTime)}</span>
                 <span class="mx-1.5 text-white/40 font-normal">/</span>

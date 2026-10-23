@@ -63,6 +63,15 @@ export interface PlayerConfig {
     deband: boolean,
     anime4kMode: string,
     anime4kTier: string,
+    thumbnailsEnabled: boolean;
+    thumbnailIntervalSeconds: number;
+    thumbnailWidth: number;
+    thumbnailQuality: number;
+    thumbnailCacheSize: number;
+    thumbnailHls: boolean;
+    thumbnailTorrent: boolean;
+    thumbnailHwdec: boolean;
+    thumbnailPreciseSeek: boolean;
 }
 
 export interface SubtitleConfig {
@@ -115,8 +124,6 @@ export interface ListConfig {
     syncIntervalSeconds: number;
     privateByDefault: boolean;
 }
-
-// ---- add to "@/api/config/types" ------------------------------------------
 
 export interface TorrentConfig {
     autoSelect: boolean;

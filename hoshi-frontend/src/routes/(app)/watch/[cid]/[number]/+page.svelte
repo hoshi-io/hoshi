@@ -44,7 +44,7 @@
 
     function scheduleHide() {
         clearHideTimer();
-        if (pageState.isPaused || showSettings || pageState.showTorrentPicker || showEpisodes) return;
+        if (pageState.isPaused || pageState.isScrubbing || showSettings || pageState.showTorrentPicker || showEpisodes) return;
         const delay = layoutState.isMobile ? HIDE_DELAY_MOBILE_MS : HIDE_DELAY_DESKTOP_MS;
         hideTimer = setTimeout(() => {
             showControls = false;
@@ -245,9 +245,10 @@
 
     $effect(() => {
         const paused = pageState.isPaused;
+        const scrubbing = pageState.isScrubbing;
         const settingsOpen = showSettings || showEpisodes;
 
-        if (paused || settingsOpen) {
+        if (paused || scrubbing || settingsOpen) {
             showControls = true;
             clearHideTimer();
         } else {

@@ -17,6 +17,7 @@ pub mod discord;
 pub mod logs;
 pub mod playback;
 pub mod torrent;
+pub mod thumbnail;
 
 use crate::error::CoreResult;
 use headless::HeadlessHandle;
@@ -30,12 +31,14 @@ use tracker::provider::build_registry;
 use tracing::{info, instrument};
 use crate::content::services::home::HomeService;
 use crate::playback::PlaybackHandle;
+use crate::thumbnail::ThumbnailService;
 use crate::torrent::TorrentHandle;
 use crate::tracker::sync::StartupSyncService;
 
 #[instrument(skip(log_store, paths, headless))]
 pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_store: logs::LogStore, ) -> CoreResult<Arc<AppState>> {
     info!("Starting Hoshi Core initialization...");
+    let _ = std::fs::remove_dir_all(&paths.thumbnails);
     paths.ensure_dirs().map_err(|e| core_err!(Internal, "error.system.setup_failed", e))?;
 
     info!("Initializing unified database...");
@@ -64,6 +67,8 @@ pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_stor
         Arc::new(crate::discord::DiscordRpcService::new("1486110945452228719"))
     };
 
+    let thumbnails = ThumbnailService::new(paths.thumbnails.clone());
+
     let state = Arc::new(AppState {
         pool: db_manager.pool().clone(),
         extension_manager: Arc::new(RwLock::new(extension_manager)),
@@ -71,6 +76,7 @@ pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_stor
         torrent: TorrentHandle::new(paths.torrent.clone()),
         paths: Arc::new(paths),
         playback: PlaybackHandle::new(),
+        thumbnails,
         log_store,
         http_client,
 
@@ -82,6 +88,8 @@ pub async fn build_app_state(paths: AppPaths, headless: HeadlessHandle, log_stor
         let torrent = state.torrent.clone();
         move |mpv| torrent::mpv_protocol::register(mpv, torrent.clone())
     });
+    let torrent = state.torrent.clone();
+    state.thumbnails.add_protocol_hook(move |mpv| torrent::mpv_protocol::register_thumb(mpv, torrent.clone()));
     state.torrent.spawn_reaper();
 
     HomeService::warmup(state.clone());

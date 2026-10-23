@@ -4,7 +4,9 @@ use hoshi_core::error::CoreError;
 use hoshi_core::playback::{Chapter, EpisodeChapter, ExternalSubtitle, LoadMode, LoadSpec, NowPlaying, RenderTarget, Track};
 use hoshi_core::AppState;
 use serde::Deserialize;
+use tauri::ipc::Response;
 use tauri::State;
+use hoshi_core::config::service::ConfigService;
 use crate::anime4k;
 #[cfg(target_os = "linux")]
 use crate::player_surface::PlayerReadyNotify;
@@ -51,12 +53,24 @@ pub async fn initialize_player(state: State<'_, Arc<AppState>>) -> Result<(), Co
 
 #[tauri::command]
 pub async fn shutdown_player(state: State<'_, Arc<AppState>>) -> Result<(), CoreError> {
+    state.thumbnails.shutdown();
     state.playback.shutdown().await
 }
 
 #[tauri::command]
 pub async fn stop_playback(state: State<'_, Arc<AppState>>) -> Result<(), CoreError> {
+    state.thumbnails.close().await;
     state.playback.stop().await
+}
+
+#[tauri::command]
+pub async fn get_thumbnail(state: State<'_, Arc<AppState>>, time: f64) -> Result<Response, CoreError> {
+    let r = state.thumbnails.get(time).await;
+    if let Err(e) = &r { tracing::warn!(?e, time, "thumb: get failed"); }
+    Ok(match state.thumbnails.get(time).await {
+        Ok(t) => Response::new(t.jpeg),
+        Err(_) => Response::new(Vec::<u8>::new()),
+    })
 }
 
 #[cfg(target_os = "android")]
@@ -161,7 +175,25 @@ pub async fn load_stream(
         }),
     };
 
-    state.playback.load(spec, mode).await
+    let is_replace = matches!(mode, LoadMode::Replace);
+    let thumb_spec = spec.clone();
+
+    state.playback.load(spec, mode).await?;
+
+    if is_replace {
+        let st = state.inner().clone();
+        tauri::async_runtime::spawn(async move {
+            match ConfigService::get_config(&st, user_id).await {
+                Ok(cfg) => {
+                    tracing::warn!(enabled = cfg.player.thumbnails_enabled, url = %thumb_spec.url, "thumb: open requested");
+                    let ok = st.thumbnails.open(thumb_spec, &cfg.player).await;
+                    tracing::warn!(ok, "thumb: open result");
+                }
+                Err(e) => tracing::warn!(?e, "thumb: could not read config"),
+            }
+        });
+    }
+    Ok(())
 }
 
 #[tauri::command]

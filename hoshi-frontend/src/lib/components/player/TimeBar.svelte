@@ -1,6 +1,9 @@
 <script lang="ts">
     import type { WatchState } from "@/app/watch.svelte.js";
     import {i18n} from "@/stores/i18n.svelte.js";
+    import {appConfig} from "@/stores/config.svelte.js";
+    import {onDestroy, untrack} from "svelte";
+    import {invoke} from "@tauri-apps/api/core";
 
     let { pageState, buffered = 0 }: { pageState: WatchState; buffered?: number } = $props();
 
@@ -8,6 +11,18 @@
     let dragging = $state(false);
     let dragFrac = $state<number | null>(null);
     let hoverFrac = $state<number | null>(null);
+
+    let trackWidth = $state(0);
+
+    const player = $derived(appConfig.data?.player);
+    const thumbInterval = $derived(Math.max(1, player?.thumbnailIntervalSeconds ?? 10));
+    const thumbWidth = $derived(player?.thumbnailWidth ?? 240);
+    const thumbsOn = $derived(
+        !!player?.thumbnailsEnabled && pageState.isStreamLoaded && pageState.currentDuration > 0
+    );
+
+    $effect(() => { pageState.isScrubbing = dragging; });
+    onDestroy(() => { pageState.isScrubbing = false; });
 
     function handleSeek(time: number) {
         pageState.seek(time, false);
@@ -52,34 +67,42 @@
         return duration > 0 ? Math.min(pageState.currentTime / duration, 1) : 0;
     });
 
-    function fracFromEvent(e: MouseEvent | TouchEvent): number {
+    function fracFromX(clientX: number): number {
         if (!trackEl) return 0;
         const rect = trackEl.getBoundingClientRect();
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
         return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     }
 
-    function onMouseDown(e: MouseEvent) {
+    function onPointerDown(e: PointerEvent) {
+        if (e.pointerType === "mouse" && e.button !== 0) return;
+        trackEl?.setPointerCapture(e.pointerId); // keep receiving moves outside the bar
         dragging = true;
-        dragFrac = fracFromEvent(e);
+        hoverFrac = dragFrac = fracFromX(e.clientX);
     }
 
-    function onMouseMove(e: MouseEvent) {
-        hoverFrac = fracFromEvent(e);
-        if (dragging) dragFrac = hoverFrac;
+    function onPointerMove(e: PointerEvent) {
+        const frac = fracFromX(e.clientX);
+        if (e.pointerType === "mouse" || dragging) hoverFrac = frac;
+        if (dragging) dragFrac = frac;
     }
 
-    function onMouseUp(e: MouseEvent) {
-        if (dragging) {
-            const frac = fracFromEvent(e);
-            if (pageState.currentDuration > 0) handleSeek(frac * pageState.currentDuration);
-            dragging = false;
-            dragFrac = null;
-        }
+    function onPointerUp(e: PointerEvent) {
+        if (!dragging) return;
+        if (pageState.currentDuration > 0) handleSeek(fracFromX(e.clientX) * pageState.currentDuration);
+        dragging = false;
+        dragFrac = null;
+        if (e.pointerType !== "mouse") hoverFrac = null; // no hover on touch after release
     }
 
-    function onMouseLeave() {
-        if (!dragging) hoverFrac = null;
+    function onPointerCancel() {
+        // e.g. the system took over the gesture
+        dragging = false;
+        dragFrac = null;
+        hoverFrac = null;
+    }
+
+    function onPointerLeave(e: PointerEvent) {
+        if (!dragging && e.pointerType === "mouse") hoverFrac = null;
     }
 
     function formatTime(seconds: number) {
@@ -98,6 +121,61 @@
 
     const hoverTime = $derived(hoverFrac !== null ? hoverFrac * pageState.currentDuration : null);
 
+    const thumbBucket = $derived(hoverTime !== null ? Math.floor(hoverTime / thumbInterval) : null);
+
+    let thumbUrl = $state<string | null>(null);
+    let thumbReq = 0;
+    const thumbCache = new Map<number, string>(); // bucket -> blob URL
+    const MAX_FRONT_CACHE = 120;
+
+    function clearThumbs() {
+        thumbReq++;
+        for (const url of thumbCache.values()) URL.revokeObjectURL(url);
+        thumbCache.clear();
+        thumbUrl = null;
+    }
+
+    $effect(() => {
+        pageState.cid; pageState.epNumber; pageState.isStreamLoaded;
+        untrack(clearThumbs);
+    });
+
+    $effect(() => {
+        const bucket = thumbBucket;
+        const step = thumbInterval;
+        const on = thumbsOn;
+        const id = ++thumbReq;
+        if (!on || bucket === null) return;
+
+        const cached = thumbCache.get(bucket);
+        if (cached) { thumbUrl = cached; return; }
+
+        const timer = setTimeout(async () => {
+            try {
+                const buf = await invoke<ArrayBuffer>("get_thumbnail", { time: bucket * step });
+                if (id !== thumbReq || buf.byteLength === 0) return; // stale or "no thumbnail"
+                const url = URL.createObjectURL(new Blob([buf], { type: "image/jpeg" }));
+                if (thumbCache.size >= MAX_FRONT_CACHE) {
+                    const oldest = thumbCache.keys().next().value!;
+                    URL.revokeObjectURL(thumbCache.get(oldest)!);
+                    thumbCache.delete(oldest);
+                }
+                thumbCache.set(bucket, url);
+                thumbUrl = url;
+            } catch { /* ignore: no thumbnail */ }
+        }, 150);
+
+        return () => clearTimeout(timer);
+    });
+
+    onDestroy(clearThumbs);
+
+    const tooltipLeftPx = $derived.by(() => {
+        if (hoverFrac === null) return 0;
+        const half = (thumbUrl ? thumbWidth : 40) / 2;
+        return Math.max(half, Math.min(trackWidth - half, hoverFrac * trackWidth));
+    });
+
     // We explicitly calculate which chapter is hovered across the entire track hitbox
     const hoverChapter = $derived(
         hoverTime !== null ? processedChapters.find((c, i) =>
@@ -107,17 +185,15 @@
     const activeChapterStart = $derived(hoverChapter?.start ?? -1);
 </script>
 
-<svelte:window
-        onmousemove={dragging ? onMouseMove : undefined}
-        onmouseup={dragging ? onMouseUp : undefined}
-/>
-
 <div
-        class="relative flex items-center w-full py-2 cursor-pointer touch-none"
+        class="relative flex items-center w-full py-3 cursor-pointer touch-none"
         bind:this={trackEl}
-        onmousedown={onMouseDown}
-        onmousemove={onMouseMove}
-        onmouseleave={onMouseLeave}
+        bind:clientWidth={trackWidth}
+        onpointerdown={onPointerDown}
+        onpointermove={onPointerMove}
+        onpointerup={onPointerUp}
+        onpointercancel={onPointerCancel}
+        onpointerleave={onPointerLeave}
         role="slider"
         tabindex="0"
         aria-label={i18n.t('watch.player.seek')}
@@ -173,13 +249,24 @@
 
     {#if hoverFrac !== null && hoverTime !== null}
         <div
-                class="absolute bottom-full mb-3 px-2.5 py-1.5 bg-black/90 text-white rounded-lg shadow-xl pointer-events-none flex flex-col items-center gap-0.5 z-[100] transform -translate-x-1/2 whitespace-nowrap border border-white/10"
-                style="left: {hoverFrac * 100}%"
+                class="absolute bottom-full mb-3 flex flex-col items-center gap-1.5 pointer-events-none z-[100] -translate-x-1/2"
+                style="left: {tooltipLeftPx}px"
         >
-            {#if hoverChapter?.title}
-                <span class="text-[11px] font-medium text-white/70">{hoverChapter.title}</span>
+            {#if thumbUrl}
+                <img
+                        src={thumbUrl}
+                        alt=""
+                        draggable="false"
+                        class="rounded-lg object-cover shadow-2xl ring-1 ring-white/20"
+                        style="width: {thumbWidth}px"
+                />
             {/if}
-            <span class="text-xs font-bold tabular-nums">{formatTime(hoverTime)}</span>
+            <div class="flex flex-col items-center px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-sm text-white whitespace-nowrap">
+                {#if hoverChapter?.title}
+                    <span class="text-[10px] font-medium text-white/70 leading-tight">{hoverChapter.title}</span>
+                {/if}
+                <span class="text-xs font-bold tabular-nums leading-tight">{formatTime(hoverTime)}</span>
+            </div>
         </div>
     {/if}
 </div>

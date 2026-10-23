@@ -193,6 +193,7 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let tauri::RunEvent::ExitRequested { .. } = event {
             let state = app_handle.state::<std::sync::Arc<hoshi_core::AppState>>().inner().clone();
             async_runtime::block_on(async {
+                state.thumbnails.shutdown();
                 if let Err(e) = state.playback.shutdown().await {
                     error!(error = ?e, "failed to shut down playback core on exit");
                 }

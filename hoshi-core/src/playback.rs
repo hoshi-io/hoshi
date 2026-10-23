@@ -106,7 +106,7 @@ pub enum PlaybackEvent {
     Error(String),
 }
 
-type ProtocolHook = Box<dyn Fn(&Mpv) -> libmpv2::Result<()> + Send + Sync>;
+pub type ProtocolHook = Box<dyn Fn(&Mpv) -> libmpv2::Result<()> + Send + Sync>;
 
 #[derive(Clone)]
 pub struct PlaybackHandle {

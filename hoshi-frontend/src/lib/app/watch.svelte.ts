@@ -179,6 +179,8 @@ export class WatchState {
     private appliedVideoKey: string | null = null;
     private appliedSubStyleKey: string | null = null;
 
+    isScrubbing = $state(false);
+
     constructor() {
         invoke("lock_orientation", { orientation: "landscape" }).catch(() => {});
         invoke("enter_fullscreen").catch(() => {});

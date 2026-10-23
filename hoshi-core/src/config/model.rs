@@ -146,6 +146,15 @@ pub struct PlayerConfig {
     pub deband: bool,
     pub anime4k_mode: String,
     pub anime4k_tier: String,
+    pub thumbnails_enabled: bool,
+    pub thumbnail_interval_seconds: u8,
+    pub thumbnail_width: u16,
+    pub thumbnail_quality: u8,
+    pub thumbnail_cache_size: u16,
+    pub thumbnail_hls: bool,
+    pub thumbnail_torrent: bool,
+    pub thumbnail_hwdec: bool,
+    pub thumbnail_precise_seek: bool,
 }
 
 impl Default for PlayerConfig {
@@ -164,6 +173,15 @@ impl Default for PlayerConfig {
             deband: true,
             anime4k_mode: "A".to_string(),
             anime4k_tier: "off".to_string(),
+            thumbnails_enabled: true,
+            thumbnail_interval_seconds: 10,
+            thumbnail_width: 240,
+            thumbnail_quality: 70,
+            thumbnail_cache_size: 200,
+            thumbnail_hls: true,
+            thumbnail_torrent: true,
+            thumbnail_hwdec: false,
+            thumbnail_precise_seek: false,
         }
     }
 }

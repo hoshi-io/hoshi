@@ -39,21 +39,44 @@ pub fn register(mpv: &Mpv, torrent: TorrentHandle) -> libmpv2::Result<()> {
 }
 
 fn open(handle: &mut TorrentHandle, uri: &str) -> TorrentStreamCookie {
-    let session_id = uri
-        .strip_prefix("torrent://")
-        .expect("registered for torrent:// only");
+    open_with(handle, uri, "torrent://")
+}
 
+fn open_thumb(handle: &mut TorrentHandle, uri: &str) -> TorrentStreamCookie {
+    open_with(handle, uri, "torrentthumb://")
+}
+
+
+fn read_thumb(cookie: &mut TorrentStreamCookie, buf: &mut [c_char]) -> i64 {
+    let buf_u8 = unsafe { std::slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut u8, buf.len()) };
+    match cookie.rt.block_on(async {
+        tokio::time::timeout(THUMB_READ_TIMEOUT, cookie.stream.read(buf_u8)).await
+    }) {
+        Ok(Ok(n)) => n as i64,
+        _ => -1, // data not there in time: no thumbnail
+    }
+}
+
+pub fn register_thumb(mpv: &Mpv, torrent: TorrentHandle) -> libmpv2::Result<()> {
+    let protocol = unsafe {
+        Protocol::new(mpv, "torrentthumb".into(), torrent, open_thumb, close, read_thumb, Some(seek), Some(size))
+    };
+    protocol.register()?;
+    std::mem::forget(protocol);
+    Ok(())
+}
+
+const THUMB_READ_TIMEOUT: Duration = Duration::from_millis(1500);
+
+fn open_with(handle: &mut TorrentHandle, uri: &str, prefix: &str) -> TorrentStreamCookie {
+    let session_id = uri.strip_prefix(prefix).expect("registered for this scheme only");
     let (torrent, file_index, len, rt) = handle
         .lookup_session(session_id)
         .expect("unknown or expired torrent stream session");
-
     let stream = rt
-        .block_on(async {
-            tokio::time::timeout(OPEN_TIMEOUT, torrent.stream(file_index)).await
-        })
+        .block_on(async { tokio::time::timeout(OPEN_TIMEOUT, torrent.stream(file_index)).await })
         .expect("timed out opening torrent file stream")
         .expect("failed to open torrent file stream");
-
     TorrentStreamCookie { stream: Box::new(stream), len, rt }
 }
 
