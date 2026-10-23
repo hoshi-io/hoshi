@@ -201,7 +201,6 @@
         aria-valuemax={pageState.currentDuration}
         aria-valuenow={pageState.currentTime}
 >
-    <!-- Increased internal container height to h-[12px] to give the 8px bar room to transition cleanly without jumping -->
     <div class="relative flex items-center w-full h-[12px] gap-0.5">
         {#if processedChapters.length > 0}
             {#each processedChapters as segment}
@@ -209,7 +208,6 @@
                         class="relative flex items-center h-full"
                         style="width: {segment.width}%"
                 >
-                    <!-- Instead of CSS group-hover, we apply height/color based on our JS logic -->
                     <div
                             class="relative w-full rounded-sm overflow-hidden transition-all duration-200 ease-out {activeChapterStart === segment.start ? 'h-[8px] bg-white/30' : 'h-[6px] bg-white/20'}"
                     >
@@ -257,7 +255,7 @@
                         src={thumbUrl}
                         alt=""
                         draggable="false"
-                        class="rounded-lg object-cover shadow-2xl ring-1 ring-white/20"
+                        class="rounded-sm object-cover shadow-2xl ring-1 ring-white/20"
                         style="width: {thumbWidth}px"
                 />
             {/if}

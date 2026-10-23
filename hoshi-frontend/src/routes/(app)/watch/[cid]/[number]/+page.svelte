@@ -34,6 +34,7 @@
     const HIDE_DELAY_MOBILE_MS = 3000;
     let showControls = $state(true);
     let hideTimer: ReturnType<typeof setTimeout> | null = null;
+    let isHoveringControls = $state(false);
 
     function clearHideTimer() {
         if (hideTimer) {
@@ -44,10 +45,26 @@
 
     function scheduleHide() {
         clearHideTimer();
-        if (pageState.isPaused || pageState.isScrubbing || showSettings || pageState.showTorrentPicker || showEpisodes) return;
-        const delay = layoutState.isMobile ? HIDE_DELAY_MOBILE_MS : HIDE_DELAY_DESKTOP_MS;
+
+        if (
+            pageState.isPaused ||
+            pageState.isScrubbing ||
+            showSettings ||
+            pageState.showTorrentPicker ||
+            showEpisodes ||
+            isHoveringControls
+        ) {
+            return;
+        }
+
+        const delay = layoutState.isMobile
+            ? HIDE_DELAY_MOBILE_MS
+            : HIDE_DELAY_DESKTOP_MS;
+
         hideTimer = setTimeout(() => {
-            showControls = false;
+            if (!isHoveringControls) {
+                showControls = false;
+            }
         }, delay);
     }
 
@@ -243,16 +260,6 @@
         touchStartY = currentY;
     }
 
-    let lastMouseX = -1;
-    let lastMouseY = -1;
-
-    function handleMouseMove(e: MouseEvent) {
-        if (e.clientX === lastMouseX && e.clientY === lastMouseY) return; // synthetic event
-        lastMouseX = e.clientX;
-        lastMouseY = e.clientY;
-        handleActivity();
-    }
-
     $effect(() => {
         const paused = pageState.isPaused;
         const scrubbing = pageState.isScrubbing;
@@ -281,7 +288,6 @@
             window.addEventListener("mousedown", handleActivity);
             window.addEventListener("touchstart", handleActivity);
             window.addEventListener("wheel", handleActivity);
-            window.addEventListener("mousemove", handleMouseMove);
             scheduleHide();
         }
 
@@ -291,7 +297,6 @@
             window.removeEventListener("mousedown", handleActivity);
             window.removeEventListener("touchstart", handleActivity);
             window.removeEventListener("wheel", handleActivity);
-            window.removeEventListener("mousemove", handleMouseMove);
             clearHideTimer();
             if (brightnessOverlayTimer) clearTimeout(brightnessOverlayTimer);
             if (volumeOverlayTimer) clearTimeout(volumeOverlayTimer);
@@ -379,7 +384,19 @@
                     error={pageState.error}
             />
 
-            <div class="transition-opacity duration-300 ease-out {showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}">
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div
+                    onmouseenter={() => {
+        isHoveringControls = true;
+        clearHideTimer();
+        showControls = true;
+    }}
+                    onmouseleave={() => {
+        isHoveringControls = false;
+        scheduleHide();
+    }}
+                    class="transition-opacity duration-300 ease-out {showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}"
+            >
                 <DesktopControls
                         {pageState}
                         {isFullscreen}
