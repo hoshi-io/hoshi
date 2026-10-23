@@ -92,6 +92,29 @@
         { value: "c", label: "C" },
     ];
 
+    const thumbIntervalOptions = [
+        { value: "5",  label: i18n.t('settings.player_section.seconds', { num: 5 }) },
+        { value: "10", label: i18n.t('settings.player_section.seconds', { num: 10 }) },
+        { value: "20", label: i18n.t('settings.player_section.seconds', { num: 20 }) },
+        { value: "30", label: i18n.t('settings.player_section.seconds', { num: 30 }) }
+    ];
+
+    const thumbWidthOptions = [
+        { value: "160", label: i18n.t('settings.player_section.thumb_size_small') },
+        { value: "240", label: i18n.t('settings.player_section.thumb_size_medium') },
+        { value: "320", label: i18n.t('settings.player_section.thumb_size_large') }
+    ];
+
+    function handleThumbIntervalChange(val: string) {
+        playerConfig.thumbnailIntervalSeconds = parseInt(val);
+        onSave();
+    }
+
+    function handleThumbWidthChange(val: string) {
+        playerConfig.thumbnailWidth = parseInt(val);
+        onSave();
+    }
+
     function handleAnime4kTierChange(val: string) {
         playerConfig.anime4kTier = val;
         onSave();
@@ -267,6 +290,56 @@
                         <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.anime4k_mode_desc')}</p>
                     </div>
                     <ResponsiveSelect value={playerConfig.anime4kMode} items={anime4kModeOptions} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleAnime4kModeChange} />
+                </div>
+            {/if}
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
+                <div class="space-y-1 pr-4">
+                    <Label class="text-base font-bold" for="thumbnailsEnabled">{i18n.t('settings.player_section.thumbnails')}</Label>
+                    <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.thumbnails_desc')}</p>
+                </div>
+                <Switch id="thumbnailsEnabled" bind:checked={playerConfig.thumbnailsEnabled} onCheckedChange={onSave} class="shrink-0 scale-125" />
+            </div>
+
+            {#if playerConfig.thumbnailsEnabled}
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
+                    <div class="space-y-1 pr-4 flex-1">
+                        <Label class="text-base font-bold">{i18n.t('settings.player_section.thumb_interval')}</Label>
+                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.thumb_interval_desc')}</p>
+                    </div>
+                    <ResponsiveSelect value={playerConfig.thumbnailIntervalSeconds.toString()} items={thumbIntervalOptions} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleThumbIntervalChange} />
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
+                    <div class="space-y-1 pr-4 flex-1">
+                        <Label class="text-base font-bold">{i18n.t('settings.player_section.thumb_size')}</Label>
+                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.thumb_size_desc')}</p>
+                    </div>
+                    <ResponsiveSelect value={playerConfig.thumbnailWidth.toString()} items={thumbWidthOptions} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleThumbWidthChange} />
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
+                    <div class="space-y-1 pr-4">
+                        <Label class="text-base font-bold" for="thumbnailHls">{i18n.t('settings.player_section.thumb_hls')}</Label>
+                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.thumb_hls_desc')}</p>
+                    </div>
+                    <Switch id="thumbnailHls" bind:checked={playerConfig.thumbnailHls} onCheckedChange={onSave} class="shrink-0 scale-125" />
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
+                    <div class="space-y-1 pr-4">
+                        <Label class="text-base font-bold" for="thumbnailTorrent">{i18n.t('settings.player_section.thumb_torrent')}</Label>
+                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.thumb_torrent_desc')}</p>
+                    </div>
+                    <Switch id="thumbnailTorrent" bind:checked={playerConfig.thumbnailTorrent} onCheckedChange={onSave} class="shrink-0 scale-125" />
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6">
+                    <div class="space-y-1 pr-4">
+                        <Label class="text-base font-bold" for="thumbnailPreciseSeek">{i18n.t('settings.player_section.thumb_precise')}</Label>
+                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.thumb_precise_desc')}</p>
+                    </div>
+                    <Switch id="thumbnailPreciseSeek" bind:checked={playerConfig.thumbnailPreciseSeek} onCheckedChange={onSave} class="shrink-0 scale-125" />
                 </div>
             {/if}
 

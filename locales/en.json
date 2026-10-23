@@ -752,7 +752,22 @@
       "anime4k_fast": "Fast",
       "anime4k_hq": "HQ",
       "anime4k_mode": "Anime4K Mode",
-      "anime4k_mode_desc": "A, B, and C target different source degradations."
+      "anime4k_mode_desc": "A, B, and C target different source degradations.",
+      "thumbnails": "Seek bar thumbnails",
+      "thumbnails_desc": "Show a preview frame when hovering or dragging the seek bar. Applies from the next episode.",
+      "thumb_interval": "Thumbnail interval",
+      "thumb_interval_desc": "Time between previews. Longer intervals use less data, especially on streams.",
+      "thumb_size": "Thumbnail size",
+      "thumb_size_desc": "Width of the preview image.",
+      "thumb_size_small": "Small",
+      "thumb_size_medium": "Medium",
+      "thumb_size_large": "Large",
+      "thumb_hls": "Thumbnails on streams (HLS)",
+      "thumb_hls_desc": "Downloads extra video data while you scrub.",
+      "thumb_torrent": "Thumbnails on torrents",
+      "thumb_torrent_desc": "Only already-downloaded parts can be previewed.",
+      "thumb_precise": "Precise frames",
+      "thumb_precise_desc": "Show the exact frame instead of the nearest keyframe. Slower."
     },
 
     "readers_section": {
