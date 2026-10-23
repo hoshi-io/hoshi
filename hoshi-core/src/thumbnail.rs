@@ -193,16 +193,10 @@ impl Worker {
 
         let r = (|| -> libmpv2::Result<()> {
             let m = &self.mpv;
-
-            // Thumbnails need CPU-readable frames. On Android, mediacodec decodes into a
-            // surface that vo=null can't read back, so screenshot-to-file fails.
             let hwdec = if cfg!(target_os = "android") || !cfg.hwdec { "no" } else { "auto-safe" };
             if let Err(e) = m.set_property("hwdec", hwdec) { warn!(?e, "thumb: hwdec failed"); }
             if let Err(e) = m.set_property("hr-seek", if cfg.precise { "yes" } else { "no" }) {
                 warn!(?e, "thumb: hr-seek failed");
-            }
-            if let Err(e) = m.command("vf", &["set", &format!("scale={}:-2", cfg.width)]) {
-                warn!(?e, "thumb: vf set failed");
             }
             m.set_property("screenshot-jpeg-quality", cfg.quality as i64)?;
             m.set_property("hls-bitrate", "min")?;
@@ -218,12 +212,12 @@ impl Worker {
         if r.is_err() { return false; }
         self.cfg = Some(cfg);
 
-        // wait for the file to be ready, then read the duration
         if !self.wait(|e| matches!(e, Event::FileLoaded), Duration::from_secs(8)) {
             warn!("thumb: FileLoaded not received in 8s");
             self.close();
             return false;
         }
+        let _ = self.wait(|e| matches!(e, Event::PlaybackRestart), Duration::from_secs(3));
         self.duration = self.mpv.get_property::<f64>("duration").unwrap_or(0.0);
         warn!(duration = self.duration, "thumb: opened");
         self.duration > 0.0
@@ -246,6 +240,7 @@ impl Worker {
 
         let timeout = if self.kind == SourceKind::File { Duration::from_secs(3) } else { Duration::from_secs(5) };
         let flags = if cfg.precise { "absolute+exact" } else { "absolute+keyframes" };
+        while self.mpv.wait_event(0.0).is_some() {}
         self.mpv.command("seek", &[&snapped.to_string(), flags])
             .map_err(|e| { warn!(?e, "thumb: seek failed"); ThumbError::Unavailable })?;
 
@@ -254,12 +249,23 @@ impl Worker {
             return Err(ThumbError::Unavailable);
         }
 
-        let path = self.tmp.to_string_lossy().to_string();
-        self.mpv.command("screenshot-to-file", &[&path, "video"])
-            .map_err(|e| { warn!(?e, path = %path, "thumb: screenshot failed"); ThumbError::Unavailable })?;
-        let jpeg = std::fs::read(&self.tmp)
-            .map_err(|e| { warn!(?e, "thumb: read failed"); ThumbError::Unavailable })?;
-        let _ = std::fs::remove_file(&self.tmp);
+        let jpeg = {
+            #[cfg(target_os = "android")]
+            {
+                raw_jpeg(&self.mpv, cfg.width as u32, cfg.quality)
+                    .ok_or_else(|| { warn!("thumb: raw screenshot failed"); ThumbError::Unavailable })?
+            }
+            #[cfg(not(target_os = "android"))]
+            {
+                let path = self.tmp.to_string_lossy().to_string();
+                self.mpv.command("screenshot-to-file", &[&path, "video"])
+                    .map_err(|e| { warn!(?e, path = %path, "thumb: screenshot failed"); ThumbError::Unavailable })?;
+                let jpeg = std::fs::read(&self.tmp)
+                    .map_err(|e| { warn!(?e, "thumb: read failed"); ThumbError::Unavailable })?;
+                let _ = std::fs::remove_file(&self.tmp);
+                jpeg
+            }
+        };
 
         self.cache.put((self.open_id, bucket), Arc::new(jpeg.clone()));
         Ok(Thumbnail { time: snapped, jpeg })
@@ -313,4 +319,61 @@ fn apply_headers(m: &Mpv, headers: &[(String, String)]) -> libmpv2::Result<()> {
     }
     m.set_property("http-header-fields", other.join(","))?;
     m.set_property("user-agent", ua)
+}
+
+#[cfg(target_os = "android")]
+fn raw_jpeg(mpv: &Mpv, out_w: u32, quality: u8) -> Option<Vec<u8>> {
+    use libmpv2_sys as sys;
+    use std::ffi::{CStr, CString};
+
+    let (w, h, stride, data) = unsafe {
+        let c0 = CString::new("screenshot-raw").ok()?;
+        let c1 = CString::new("video").ok()?;
+        let mut args = [c0.as_ptr(), c1.as_ptr(), std::ptr::null()];
+        let mut res: sys::mpv_node = std::mem::zeroed();
+        if sys::mpv_command_ret(mpv.ctx.as_ptr(), args.as_mut_ptr(), &mut res) < 0 {
+            return None;
+        }
+        let parsed = (|| {
+            if res.format != sys::mpv_format_MPV_FORMAT_NODE_MAP { return None; }
+            let list = &*res.u.list;
+            let (mut w, mut h, mut stride, mut data) = (0i64, 0i64, 0i64, None);
+            for i in 0..list.num as usize {
+                let key = CStr::from_ptr(*list.keys.add(i)).to_str().ok()?;
+                let v = &*list.values.add(i);
+                match key {
+                    "w" => w = v.u.int64,
+                    "h" => h = v.u.int64,
+                    "stride" => stride = v.u.int64,
+                    "data" => {
+                        let ba = &*v.u.ba;
+                        data = Some(std::slice::from_raw_parts(ba.data as *const u8, ba.size).to_vec());
+                    }
+                    _ => {}
+                }
+            }
+            Some((w as u32, h as u32, stride as usize, data?))
+        })();
+        sys::mpv_free_node_contents(&mut res);
+        parsed?
+    };
+
+    // mpv's default raw format is bgr0, with a stride that may exceed w*4.
+    let mut rgb = Vec::with_capacity(w as usize * h as usize * 3);
+    for y in 0..h as usize {
+        let row = data.get(y * stride..y * stride + w as usize * 4)?;
+        for px in row.chunks_exact(4) {
+            rgb.extend_from_slice(&[px[2], px[1], px[0]]);
+        }
+    }
+    let mut img = image::RgbImage::from_raw(w, h, rgb)?;
+    if out_w < w {
+        let out_h = ((h as f32 * out_w as f32 / w as f32).round() as u32).max(1);
+        img = image::imageops::resize(&img, out_w, out_h, image::imageops::FilterType::Triangle);
+    }
+    let mut buf = Vec::new();
+    image::codecs::jpeg::JpegEncoder::new_with_quality(&mut buf, quality)
+        .encode_image(&img)
+        .ok()?;
+    Some(buf)
 }
