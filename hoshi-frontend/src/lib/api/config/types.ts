@@ -35,6 +35,7 @@ export interface GeneralConfig {
 export interface UiConfig {
     sidebarCollapsed: boolean;
     disableCardTrailers: boolean;
+    disableHeroTrailers: boolean;
     defaultHomeSection: HomeSection;
     titleLanguage: TitleLanguage;
 }

@@ -1,12 +1,11 @@
 <script lang="ts">
     import {getCardScore, getCardScoreIsStars, type NormalizedCard} from '@/utils/normalize';
     import { getCardTitle, getCardShouldBlur, getCardTrailerUrl } from '@/utils/normalize';
-    import { Button } from '@/components/ui/button';
-    import {Play, Plus, Check, Clock, Star} from 'lucide-svelte';
+    import {Play, Clock, Star} from 'lucide-svelte';
     import { fade, fly } from 'svelte/transition';
     import { i18n } from "@/stores/i18n.svelte.js";
-    import { listStore } from '@/app/list.svelte.js';
     import { scheduleStore } from "@/app/schedule.svelte.js";
+    import { appConfig } from "@/stores/config.svelte.js";
     import ListEditorButton from "@/components/ListEditorButton.svelte";
 
     const YOUTUBE_REGEXP = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -32,7 +31,8 @@
         return (match && match[2].length === 11) ? match[2] : null;
     }
 
-    let trailerId    = $derived(getYoutubeId(trailerUrl));
+    let disableTrailers = $derived(appConfig.data?.ui.disableHeroTrailers ?? false);
+    let trailerId    = $derived(disableTrailers ? null : getYoutubeId(trailerUrl));
     let thumbnailSrc = $derived(trailerId ? `https://i.ytimg.com/vi/${trailerId}/maxresdefault.jpg` : null);
 
     const startTimer = () => {
@@ -93,7 +93,6 @@
 
 {#if currentItem}
     {@const cid = currentItem.href.replace('/c/', '')}
-    {@const hasEntry = listStore.hasCid(cid)}
 
     <div
             class="relative w-full h-[75vh] md:h-[90vh] min-h-[550px] overflow-hidden bg-background select-none"

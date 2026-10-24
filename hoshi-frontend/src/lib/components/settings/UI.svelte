@@ -190,4 +190,13 @@
     >
         <Switch id="disableCardTrailers" bind:checked={config.disableCardTrailers} onCheckedChange={onSave} />
     </SettingRow>
+
+    <SettingRow
+            inline
+            for="disableHeroTrailers"
+            label={i18n.t('settings.ui_section.disable_hero_trailers')}
+            description={i18n.t('settings.ui_section.disable_hero_trailers_desc')}
+    >
+        <Switch id="disableHeroTrailers" bind:checked={config.disableHeroTrailers} onCheckedChange={onSave} />
+    </SettingRow>
 </SettingsSection>

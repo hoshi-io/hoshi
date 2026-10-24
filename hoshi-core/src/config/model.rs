@@ -52,6 +52,7 @@ pub struct UiConfig {
     pub disable_card_trailers: bool,
     pub default_home_section: HomeSection,
     pub title_language: TitleLanguage,
+    pub disable_hero_trailers: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -80,6 +81,7 @@ impl Default for UiConfig {
             disable_card_trailers: false,
             default_home_section: HomeSection::default(),
             title_language: TitleLanguage::default(),
+            disable_hero_trailers: false,
         }
     }
 }

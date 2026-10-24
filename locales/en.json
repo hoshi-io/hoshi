@@ -742,7 +742,9 @@
       "default_home_manga": "Manga",
       "default_home_novel": "Novels",
       "disable_card_trailers": "Disable card trailers",
-      "disable_card_trailers_desc": "Prevents trailers from automatically playing when hovering over cards."
+      "disable_card_trailers_desc": "Prevents trailers from automatically playing when hovering over cards.",
+      "disable_hero_trailers": "Disable hero trailers",
+      "disable_hero_trailers_desc": "Show the banner image instead of playing the trailer in the home page hero."
     },
 
     "content_section": {
