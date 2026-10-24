@@ -119,8 +119,11 @@
 
   "card": {
     "TV": "TV",
+    "TV_SHORT": "TV SHORT",
+    "LIGHT_NOVEL": "LIGHT NOVEL",
     "ONA": "ONA",
     "OVA": "OVA",
+    "MUSIC": "MUSIC",
     "MOVIE": "MOVIE",
     "SPECIAL": "SPECIAL",
     "airing": "Airing",
