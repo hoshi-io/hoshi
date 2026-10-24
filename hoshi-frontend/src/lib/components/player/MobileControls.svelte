@@ -18,6 +18,10 @@
     } = $props();
 
     const ptr = $derived(showControls ? "pointer-events-auto" : "pointer-events-none");
+
+    const isLoading = $derived(pageState.isLoadingMeta || pageState.isLoadingPlay);
+    const showMiddle = $derived(showControls && !isLoading);
+    const middlePtr = $derived(showMiddle ? "pointer-events-auto" : "pointer-events-none");
 </script>
 
 <div class="relative z-20 flex min-h-0 flex-1 flex-col pointer-events-none">
@@ -28,18 +32,18 @@
         </div>
     {:else}
         <!-- MIDDLE CONTROLS -->
-        <div class="flex min-h-0 flex-1 items-center justify-center gap-8 transition-opacity duration-300 ease-out {showControls ? 'opacity-100' : 'opacity-0'}">
+        <div class="flex min-h-0 flex-1 items-center justify-center gap-8 transition-opacity duration-300 ease-out {showMiddle ? 'opacity-100' : 'opacity-0'}">
             <button
                     onclick={() => pageState.goToEpisode(pageState.epNumber - 1)}
                     disabled={!pageState.hasPrev}
-                    class="p-3 rounded-full text-white {ptr} disabled:opacity-30 disabled:pointer-events-none transition-transform active:scale-95"
+                    class="p-3 rounded-full text-white {middlePtr} disabled:opacity-30 disabled:pointer-events-none transition-transform active:scale-95"
             >
                 <SkipBack class="w-8 h-8 fill-current" />
             </button>
 
             <button
                     onclick={() => pageState.togglePlay()}
-                    class="p-5 rounded-full text-white {ptr} transition-transform active:scale-95"
+                    class="p-5 rounded-full text-white {middlePtr} transition-transform active:scale-95"
             >
                 {#if pageState.isPaused}
                     <Play class="w-12 h-12 fill-current ml-1" />
@@ -51,7 +55,7 @@
             <button
                     onclick={() => pageState.goToEpisode(pageState.epNumber + 1)}
                     disabled={!pageState.hasNext}
-                    class="p-3 rounded-full text-white {ptr} disabled:opacity-30 disabled:pointer-events-none transition-transform active:scale-95"
+                    class="p-3 rounded-full text-white {middlePtr} disabled:opacity-30 disabled:pointer-events-none transition-transform active:scale-95"
             >
                 <SkipForward class="w-8 h-8 fill-current" />
             </button>

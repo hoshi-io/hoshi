@@ -481,7 +481,9 @@
 
         <!-- Mobile Drawer Settings -->
         <Drawer.Root bind:open={showSettings}>
-            <Drawer.Content class="bg-popover border-border text-popover-foreground z-[100]">
+            <Drawer.Content
+                    class="bg-popover border-border text-popover-foreground z-[100] mx-auto w-full max-w-md"
+            >
                 <div class="px-4 pb-8 overflow-y-auto max-h-[60vh]" data-vaul-no-drag>
                     <SettingsMenu {pageState} isMobile={true} />
                 </div>

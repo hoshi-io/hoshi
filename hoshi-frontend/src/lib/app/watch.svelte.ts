@@ -239,13 +239,19 @@ export class WatchState {
     }
 
     private async attachPlayerListeners() {
-        this.unlistenFns.push(
-            await listen<number>("player://position", (e) => this.handlePlayerProgress(e.payload)),
-            await listen<number>("player://buffered", (e) => { this.bufferedTime = e.payload; }),
-            await listen<void>("player://eof", () => this.handleEof()),
-            await listen<boolean>("player://pause-changed", (e) => { this.isPaused = e.payload; }),
-            await listen<string>("player://error", (e) => this.handlePlayerError(e.payload)),
-        );
+        const register = async <T,>(event: string, handler: (payload: T) => void) => {
+            const unlisten = await listen<T>(event, (e) => handler(e.payload));
+            if (this.destroyed) unlisten();
+            else this.unlistenFns.push(unlisten);
+        };
+
+        await Promise.all([
+            register<number>("player://position", (p) => this.handlePlayerProgress(p)),
+            register<number>("player://buffered", (p) => { this.bufferedTime = p; }),
+            register<void>("player://eof", () => this.handleEof()),
+            register<boolean>("player://pause-changed", (p) => { this.isPaused = p; }),
+            register<string>("player://error", (p) => this.handlePlayerError(p)),
+        ]);
     }
 
     private handlePlayerError(raw: string) {
@@ -523,6 +529,7 @@ export class WatchState {
         try {
             this.forcedTorrent = null;
             this.currentLoadedEp = targetEp;
+            const stale = () => this.cid !== targetCid || this.epNumber !== targetEp;
 
             if (!extensionsStore.initialized) {
                 await extensionsStore.load();
@@ -531,6 +538,7 @@ export class WatchState {
             if (targetCid !== this.currentLoadedCid) {
                 this.isLoadingMeta = true;
                 const contentRes = await contentApi.get_by_cid(targetCid);
+                if (stale()) return;
                 this.animeData = contentRes;
                 this.updateEpisodeTitle(targetEp);
 
@@ -683,7 +691,6 @@ export class WatchState {
         this.durationFetchInFlight = false;
         this.tracksFetchedThisLoad = false;
         this.currentTime = 0;
-        this.isPaused = false;
         this.tracks = [];
         this.bufferedTime = 0;
         this.lastSyncTime = 0;
