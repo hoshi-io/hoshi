@@ -197,6 +197,74 @@
       "conflict": "Conflict",
       "history": "history",
       "no_history": "no history"
+    },
+    "browse": "Browse content",
+    "no_matches_desc": "Nothing fits the current search or filters.",
+    "no_matches_title": "No matches",
+    "push_to": "Push to {{tracker}} ({{n}})",
+    "selection": {
+      "cancel": "Cancel",
+      "clear": "Clear",
+      "confirm_delete": "Delete {{n}} entries?",
+      "confirm_delete_trackers": "They will also be removed from your connected trackers.",
+      "count": "{{n}} selected",
+      "delete": "Delete",
+      "details": "Details",
+      "exit": "Exit selection",
+      "increment": "Add one to progress",
+      "push": "Push to {tracker}",
+      "push_short": "Push",
+      "select_all": "Select all ({{n}})",
+      "select_entry": "Select entry",
+      "toggle": "Select entries",
+      "toolbar": "Selection actions"
+    },
+    "sync": {
+      "all_synced": "Everything is in sync",
+      "batch": {
+        "complete": "Completed",
+        "delete": "Batch delete",
+        "edit": "Batch edit",
+        "finished_issues": "{{done}} done · {{n}} need attention",
+        "generic": "Batch",
+        "push": "Push to {{tracker}}",
+        "running": "{{done}} done · {{n}} left"
+      },
+      "batches": "Batches",
+      "cancel": "Cancel remaining",
+      "dismiss": "Dismiss",
+      "failed": "{{n}} failed",
+      "hide_details": "Hide details",
+      "indicator": {
+        "done": "Sync finished",
+        "failed": "Sync problems",
+        "paused": "Sync paused",
+        "syncing": "Syncing"
+      },
+      "loading": "Loading…",
+      "needs_attention": "Needs attention",
+      "paused": {
+        "auth": "Login expired · reconnect to continue",
+        "offline": "Offline · retrying automatically",
+        "rate": "Rate limited · resuming shortly"
+      },
+      "reason": {
+        "entry_missing": "No longer in your list",
+        "no_mapping": "Couldn't be matched on this tracker",
+        "no_remote_id": "Missing remote id",
+        "not_connected": "Tracker isn't connected",
+        "sync_disabled": "Sync is turned off for this tracker",
+        "unknown": "Unknown error",
+        "unknown_tracker": "Unknown tracker"
+      },
+      "reconnect": "Reconnect",
+      "retry_all": "Retry all failed",
+      "retry_failed": "Retry failed",
+      "retry_now": "Retry now",
+      "show_details": "Show details",
+      "syncing": "Syncing",
+      "title": "Sync",
+      "trackers": "Trackers"
     }
   },
   "marketplace": {

@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { listStore } from "@/app/list.svelte.js";
+    import { listStore, trackerLabel, type NormalizedListEntry } from "@/app/list.svelte.js";
+    import SelectionBar from "@/components/list/SelectionBar.svelte";
     import CardWrapper from "@/components/card/CardWrapper.svelte";
     import ListEditor from "@/components/modals/ListEditor.svelte";
     import * as Drawer from "$lib/components/ui/drawer";
@@ -8,7 +9,7 @@
     import { Skeleton } from "$lib/components/ui/skeleton";
     import { Button } from "$lib/components/ui/button";
     import {
-        Search, List, AlertCircle, SlidersHorizontal, X, RefreshCw, Compass
+        Search, List, AlertCircle, SlidersHorizontal, X, RefreshCw, Compass, ListChecks, CloudUpload
     } from "lucide-svelte";
 
     import { fade } from "svelte/transition";
@@ -21,6 +22,14 @@
     import {getCardScore, getCardScoreIsStars} from "@/utils/normalize";
     import ResponsiveMenu from "@/components/ResponsiveMenu.svelte";
     import { goto } from "$app/navigation";
+    import SyncIndicator from "@/components/list/SyncIndicator.svelte";
+    import SyncCard from "@/components/list/SyncCard.svelte";
+
+    $effect(() => () => listStore.exitSelection());
+
+    function reconnectTracker(_tracker: string) {
+        goto("/settings");
+    }
 
     type StatusFilter = typeof listStore.activeStatus;
     type TypeFilter = typeof listStore.activeType;
@@ -79,12 +88,21 @@
     const hasNoEntries = $derived(listStore.entries.length === 0);
     const searchTerm = $derived(listStore.searchQuery?.trim() ?? "");
 
-    // Falls back to English if a locale key hasn't been added yet.
-    function tr(key: string, fallback: string) {
-        const value = i18n.t(key);
-        return value && value !== key ? value : fallback;
-    }
 </script>
+
+{#snippet selectToggle()}
+    <Button
+            variant="ghost"
+            size="icon"
+            class="h-10 w-10 rounded-sm hover:bg-muted/50 {listStore.selectionMode ? 'bg-primary/10 text-primary' : ''}"
+            aria-pressed={listStore.selectionMode}
+            aria-label={i18n.t("list.selection.toggle")}
+            title={i18n.t("list.selection.toggle")}
+            onclick={() => (listStore.selectionMode ? listStore.exitSelection() : listStore.enterSelection())}
+    >
+        <ListChecks class="w-[22px] h-[22px]" />
+    </Button>
+{/snippet}
 
 {#snippet statusSelect()}
     <ResponsiveSelect
@@ -114,6 +132,19 @@
     )}
                     class="h-11 rounded-sm font-bold bg-card border border-border/40 shadow-sm"
             />
+
+            {#if listStore.missingOn !== "ALL" && listStore.filtered.length > 0 && !listStore.selectionMode}
+                <Button
+                        class="h-10 w-full gap-2 rounded-sm font-bold"
+                        onclick={() => {
+                            listStore.startPushSelection();
+                            listStore.isDrawerOpen = false;
+                        }}
+                >
+                    <CloudUpload class="size-4" />
+                    {i18n.t("list.push_to", { tracker: trackerLabel(listStore.missingOn), n: listStore.filtered.length })}
+                </Button>
+            {/if}
         </div>
     </div>
 {/snippet}
@@ -207,6 +238,69 @@
     </div>
 {/snippet}
 
+{#snippet cardFace(item: NormalizedListEntry)}
+    <div
+            role="button"
+            tabindex="0"
+            class="block w-full h-full cursor-pointer text-left"
+            onclick={(e) => {
+                    e.preventDefault();
+                    listStore.openEdit(item.original);
+                }}
+            onkeydown={(e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        listStore.openEdit(item.original);
+                    }
+                }}
+    >
+        <CardWrapper {...item.card} disablePreview={true}>
+            {#snippet overlay()}
+                <div class="absolute inset-0 p-2 flex flex-col justify-between pointer-events-none select-none">
+                    <div class="flex items-start justify-between w-full gap-2">
+                        <div class="flex flex-wrap gap-1.5 items-center max-w-[75%]">
+                            <span class="inline-flex items-center gap-1.5 bg-zinc-950/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide text-zinc-200 border border-white/5 shadow-sm">
+                <span class="h-1.5 w-1.5 rounded-full" class:bg-emerald-500={item.original.status === 'COMPLETED'} class:bg-sky-500={item.original.status === 'CURRENT'} class:bg-amber-500={item.original.status === 'PAUSED'} class:bg-rose-500={item.original.status === 'DROPPED'} class:bg-purple-500={item.original.status === 'REPEATING'} class:bg-zinc-400={item.original.status === 'PLANNING'}></span>
+                                {item.original.status}
+            </span>
+
+                            {#if item.original.isPrivate}
+                                <div class="bg-zinc-950/70 backdrop-blur-md p-1 rounded-md text-zinc-400 border border-white/5 shadow-sm" title="Private Entry">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                </div>
+                            {/if}
+
+                            {#if item.original.repeatCount > 0}
+                <span class="inline-flex items-center gap-1 bg-purple-950/50 backdrop-blur-md px-1.5 py-0.5 rounded-md text-[10px] font-bold text-purple-300 border border-purple-500/20 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+                    {item.original.repeatCount}
+                </span>
+                            {/if}
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between w-full mt-auto">
+                        <div class="bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-md shadow-md border border-white/5 flex items-center gap-1.5 font-mono">
+                            <span class="text-xs font-black text-primary">{item.original.progress}</span>
+                            <span class="text-[10px] font-medium text-zinc-500">/</span>
+                            <span class="text-[10px] font-bold text-zinc-400">{item.original.totalUnits || '—'}</span>
+                        </div>
+
+                        {#if item.original.score}
+                            <div class="bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-md shadow-md border border-white/5 flex items-center gap-1 font-mono text-xs font-black text-amber-400">
+                                {#if !getCardScoreIsStars(item.card)}
+                                    <span class="text-[10px] text-amber-500">★</span>
+                                {/if}
+                                <span>{getCardScore(item.card)}</span>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            {/snippet}
+        </CardWrapper>
+    </div>
+{/snippet}
+
 {#snippet mobileTopbar()}
     {#if listStore.isMobileSearchActive}
         <div class="flex items-center gap-1 w-full pl-2" in:fade={{ duration: 150 }}>
@@ -217,6 +311,7 @@
         </div>
     {:else}
         <div class="flex items-center gap-0.5 w-full justify-end" in:fade={{ duration: 150 }}>
+            <SyncIndicator onReconnect={reconnectTracker} />
             <Button variant="ghost" size="icon" class="h-10 w-10 rounded-full hover:bg-muted/50" onclick={() => listStore.isMobileSearchActive = true}>
                 <Search class="w-[22px] h-[22px]" />
             </Button>
@@ -231,7 +326,7 @@
                     </Button>
                 </Drawer.Trigger>
 
-                <Drawer.Content class="max-h-[85vh] rounded-t-3xl border-border/50">
+                <Drawer.Content class="max-h-[85vh] rounded-t-3xl border-border/50 z-100">
                     <div class="w-full h-full flex flex-col overflow-hidden">
                         <div class="flex items-center justify-between p-6 pb-2">
                             <h3 class="font-black text-2xl tracking-tight">{i18n.t("search.filters")}</h3>
@@ -276,7 +371,14 @@
 <main class="bg-background px-4 md:px-8 lg:pl-32 lg:pr-12 lg:pt-20 w-full max-w-[2000px] mx-auto space-y-10 pt-[max(0.25rem,calc(var(--mobile-top-h,6rem)_-_6rem_+_0.75rem))]">
     <div class="flex items-start gap-10 w-full">
         <aside class="hidden lg:flex flex-col gap-5 w-[280px] shrink-0 sticky top-18 max-h-[calc(100vh-7rem)] pb-4 overflow-y-auto hide-scrollbar">
-            <div class="space-y-2.5 p-0.5">{@render searchBar()}</div>
+            <div class="flex items-center gap-1 p-0.5">
+                <div class="flex-1 min-w-0">{@render searchBar()}</div>
+                {@render selectToggle()}
+            </div>
+
+            {#if listStore.syncVisible}
+                <SyncCard onReconnect={reconnectTracker} />
+            {/if}
             <div class="space-y-3 flex-1 flex flex-col justify-start">
                 <div class="space-y-2.5">
                     <h3 class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">{i18n.t("list.sort_by")}</h3>
@@ -343,12 +445,12 @@
                         <p class="mt-2 max-w-sm text-sm font-medium leading-relaxed text-muted-foreground">{i18n.t('list.empty_desc')}</p>
                         <Button class="mt-6 h-10 gap-2 rounded-sm px-5 font-bold" onclick={() => goto('/')}>
                             <Compass class="size-4" />
-                            {tr('list.browse', 'Browse content')}
+                            {i18n.t("list.browse")}
                         </Button>
                     {:else}
-                        <h2 class="mt-8 text-xl font-bold tracking-tight">{tr('list.no_matches_title', 'No matches')}</h2>
+                        <h2 class="mt-8 text-xl font-bold tracking-tight">{i18n.t("list.no_matches_title")}</h2>
                         <p class="mt-2 max-w-sm text-sm font-medium leading-relaxed text-muted-foreground">
-                            {tr('list.no_matches_desc', 'Nothing fits the current search or filters.')}
+                            {i18n.t("list.no_matches_desc")}
                         </p>
                         {#if searchTerm}
                             <p class="mt-1 max-w-sm truncate text-sm font-bold text-foreground/80">“{searchTerm}”</p>
@@ -361,6 +463,12 @@
                 </div>
             {:else}
                 <LazyCardGrid
+                        class="space-y-6 mb-10 {listStore.selectionMode ? 'pb-28' : ''}"
+                        selectionMode={listStore.selectionMode}
+                        selectLabel={i18n.t("list.selection.select_entry")}
+                        isSelected={(item) => listStore.selected.has(item.original.cid)}
+                        onToggle={(item) => listStore.toggleSelect(item.original.cid)}
+                        onLongPress={layoutState.isMobile ? (item) => listStore.enterSelection([item.original.cid]) : undefined}
                         items={visibleItems}
                         keyFn={(item) => item.original.cid}
                         hasMore={visibleCount < listStore.sorted.length}
@@ -369,82 +477,35 @@
         }}
                 >
                     {#snippet cardContent(item)}
-                        <ResponsiveMenu
-                                title={item.original.titleI18n?.[appConfig.data?.ui?.titleLanguage || 'romaji'] || item.original.title}
-                                status={item.original.status}
-                                onDetails={() => goto(`/c/${item.original.cid}`)}
-                                onIncrement={() => listStore.incrementProgress(item.original)}
-                                onDelete={() => listStore.removeEntry(item.original.cid)}
-                        >
-                            {#snippet trigger()}
-                                <div
-                                        role="button"
-                                        tabindex="0"
-                                        class="block w-full h-full cursor-pointer text-left"
-                                        onclick={(e) => {
-                    e.preventDefault();
-                    listStore.openEdit(item.original);
-                }}
-                                        onkeydown={(e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        listStore.openEdit(item.original);
-                    }
-                }}
-                                >
-                                    <CardWrapper {...item.card} disablePreview={true}>
-                                        {#snippet overlay()}
-                                            <div class="absolute inset-0 p-2 flex flex-col justify-between pointer-events-none select-none">
-                                                <div class="flex items-start justify-between w-full gap-2">
-                                                    <div class="flex flex-wrap gap-1.5 items-center max-w-[75%]">
-                                    <span class="inline-flex items-center gap-1.5 bg-zinc-950/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide text-zinc-200 border border-white/5 shadow-sm">
-                                        <span class="h-1.5 w-1.5 rounded-full" class:bg-emerald-500={item.original.status === 'COMPLETED'} class:bg-sky-500={item.original.status === 'CURRENT'} class:bg-amber-500={item.original.status === 'PAUSED'} class:bg-rose-500={item.original.status === 'DROPPED'} class:bg-purple-500={item.original.status === 'REPEATING'} class:bg-zinc-400={item.original.status === 'PLANNING'}></span>
-                                        {item.original.status}
-                                    </span>
-
-                                                        {#if item.original.isPrivate}
-                                                            <div class="bg-zinc-950/70 backdrop-blur-md p-1 rounded-md text-zinc-400 border border-white/5 shadow-sm" title="Private Entry">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                                            </div>
-                                                        {/if}
-
-                                                        {#if item.original.repeatCount > 0}
-                                        <span class="inline-flex items-center gap-1 bg-purple-950/50 backdrop-blur-md px-1.5 py-0.5 rounded-md text-[10px] font-bold text-purple-300 border border-purple-500/20 shadow-sm">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
-                                            {item.original.repeatCount}
-                                        </span>
-                                                        {/if}
-                                                    </div>
-                                                </div>
-
-                                                <div class="flex items-center justify-between w-full mt-auto">
-                                                    <div class="bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-md shadow-md border border-white/5 flex items-center gap-1.5 font-mono">
-                                                        <span class="text-xs font-black text-primary">{item.original.progress}</span>
-                                                        <span class="text-[10px] font-medium text-zinc-500">/</span>
-                                                        <span class="text-[10px] font-bold text-zinc-400">{item.original.totalUnits || '—'}</span>
-                                                    </div>
-
-                                                    {#if item.original.score}
-                                                        <div class="bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-md shadow-md border border-white/5 flex items-center gap-1 font-mono text-xs font-black text-amber-400">
-                                                            {#if !getCardScoreIsStars(item.card)}
-                                                                <span class="text-[10px] text-amber-500">★</span>
-                                                            {/if}
-                                                            <span>{getCardScore(item.card)}</span>
-                                                        </div>
-                                                    {/if}
-                                                </div>
-                                            </div>
-                                        {/snippet}
-                                    </CardWrapper>
-                                </div>
-                            {/snippet}
-                        </ResponsiveMenu>
+                        {#if layoutState.isMobile}
+                            <!-- Touch: long-press selects (see LazyCardGrid). The card menu would fight for that gesture,
+                                 so its actions live in the selection bar instead (details, +1, delete). -->
+                            {@render cardFace(item)}
+                        {:else}
+                            <ResponsiveMenu
+                                    title={item.original.titleI18n?.[appConfig.data?.ui?.titleLanguage || 'romaji'] || item.original.title}
+                                    status={item.original.status}
+                                    onDetails={() => goto(`/c/${item.original.cid}`)}
+                                    onIncrement={() => listStore.incrementProgress(item.original)}
+                                    onDelete={() => listStore.removeEntry(item.original.cid)}
+                            >
+                                {#snippet trigger()}
+                                    {@render cardFace(item)}
+                                {/snippet}
+                            </ResponsiveMenu>
+                        {/if}
                     {/snippet}
                 </LazyCardGrid>
             {/if}
         </section>
     </div>
 </main>
+
+{#if listStore.selectionMode}
+    <SelectionBar />
+{/if}
+
+<svelte:window onkeydown={(e) => { if (e.key === 'Escape' && listStore.selectionMode) listStore.exitSelection(); }} />
 
 {#if listStore.selectedEntry}
     <ListEditor

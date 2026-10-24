@@ -157,6 +157,22 @@ pub struct UpsertEntryResponse {
     pub is_new: bool,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchItemError {
+    pub cid: String,
+    pub error: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchWriteResponse {
+    pub batch_id: String,
+    pub applied: usize,
+    pub enqueued: usize,
+    pub errors: Vec<BatchItemError>,
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SuccessResponse {
@@ -208,4 +224,81 @@ pub struct FinalFields {
     pub progress: i32,
     pub start_date: Option<String>,
     pub end_date: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SyncOp {
+    Upsert,
+    Delete,
+}
+
+impl SyncOp {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SyncOp::Upsert => "UPSERT",
+            SyncOp::Delete => "DELETE",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncEvent {
+    pub tracker: String,
+    pub batch_id: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchHandle {
+    pub batch_id: String,
+    pub enqueued: usize,
+}
+
+#[derive(Debug, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchStatus {
+    pub batch_id: String,
+    pub total: i64,
+    pub pending: i64,
+    pub running: i64,
+    pub done: i64,
+    pub failed: i64,
+    pub skipped: i64,
+    pub finished: bool,
+}
+
+#[derive(Debug, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TrackerSyncStatus {
+    pub tracker: String,
+    pub pending: i64,
+    pub running: i64,
+    pub failed: i64,
+    /// "offline" | "auth_expired" | "rate_limited" while the lane is paused.
+    pub paused_reason: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncStatus {
+    pub trackers: Vec<TrackerSyncStatus>,
+}
+
+/// A job that ended FAILED or SKIPPED, for the "needs attention" list of a batch.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchIssue {
+    pub cid: String,
+    pub tracker: String,
+    pub op: String,
+    pub status: String,
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct DeleteTarget {
+    pub cid: String,
+    pub tracker: String,
+    pub remote_id: String,
 }

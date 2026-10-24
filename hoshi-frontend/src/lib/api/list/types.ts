@@ -125,3 +125,54 @@ export interface UpsertEntryResponse {
     changes: number;
     isNew: boolean;
 }
+
+export interface BatchItemError {
+    cid: string;
+    error: string;
+}
+
+export interface BatchWriteResponse {
+    batchId: string;
+    applied: number;
+    enqueued: number;
+    errors: BatchItemError[];
+}
+
+export interface BatchHandle {
+    batchId: string;
+    enqueued: number;
+}
+
+export interface BatchStatus {
+    batchId: string;
+    total: number;
+    pending: number;
+    running: number;
+    done: number;
+    failed: number;
+    skipped: number;
+    finished: boolean;
+}
+
+export interface BatchIssue {
+    cid: string;
+    tracker: string;
+    op: "UPSERT" | "DELETE";
+    status: "FAILED" | "SKIPPED";
+    /** Skip reason key (no_mapping, entry_missing, not_connected, ...) or the failure message. */
+    reason: string | null;
+}
+
+export type SyncPauseReason = "offline" | "auth_expired" | "rate_limited";
+
+export interface TrackerSyncStatus {
+    tracker: string;
+    pending: number;
+    running: number;
+    failed: number;
+    pausedReason: SyncPauseReason | null;
+}
+
+export interface SyncStatus {
+    trackers: TrackerSyncStatus[];
+}

@@ -249,6 +249,7 @@
             };
 
             await listApi.upsert(body);
+            listStore.kickSync();
 
             const res = await listApi.getEntry(cid);
             if (res.found && res.entry) {
@@ -271,6 +272,7 @@
         try {
             await listApi.delete(cid);
             listStore.deleteLocal(cid);
+            listStore.kickSync();
             open = false;
         } catch (err) {
             const error = err as CoreError;

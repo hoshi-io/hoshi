@@ -113,7 +113,7 @@ pub enum ScoreFormat {
 
 impl Default for ScoreFormat {
     fn default() -> Self {
-        Self::Point10
+        Self::Point10Decimal
     }
 }
 

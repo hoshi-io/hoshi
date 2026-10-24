@@ -14,6 +14,7 @@ export async function initApp(setTouchDevice: (v: boolean) => void) {
     if (auth.isAuthenticated) {
         extensions.load();
         listStore.loadData();
+        listStore.initSync();
         scheduleStore.load();
     }
 }

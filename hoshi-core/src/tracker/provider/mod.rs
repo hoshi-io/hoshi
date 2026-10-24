@@ -107,9 +107,26 @@ pub struct TrackerAuthConfig {
     pub scopes: Vec<String>,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct RateLimit {
+    pub min_interval: std::time::Duration,
+}
+
+impl Default for RateLimit {
+    fn default() -> Self {
+        // ~85 req/min; safe under AniList's 90/min and conservative for the rest.
+        Self { min_interval: std::time::Duration::from_millis(700) }
+    }
+}
+
 #[async_trait]
 pub trait TrackerProvider: Send + Sync {
     fn name(&self) -> &'static str;
+
+    fn rate_limit(&self) -> RateLimit {
+        RateLimit::default()
+    }
+
     fn display_name(&self) -> &'static str;
     fn icon_url(&self) -> &'static str;
     fn supported_types(&self) -> Vec<ContentType>;

@@ -5,6 +5,7 @@
     import type { Snippet } from "svelte";
     import { tick } from "svelte";
     import { Skeleton } from "$lib/components/ui/skeleton";
+    import { Check } from "lucide-svelte";
 
     let {
         items,
@@ -13,6 +14,11 @@
         isLoading = false,
         onLoadMore,
         cardContent,
+        selectionMode = false,
+        isSelected,
+        onToggle,
+        onLongPress,
+        selectLabel = "Select",
         class: className = "space-y-6 mb-10",
         gridClass = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-8 gap-x-4 gap-y-6 md:gap-x-5 md:gap-y-8",
     }: {
@@ -22,9 +28,65 @@
         isLoading?: boolean;
         onLoadMore?: () => void;
         cardContent: Snippet<[T]>;
+        /** Optional multi-select. While on, cards become inert and tapping one toggles it. */
+        selectionMode?: boolean;
+        isSelected?: (item: T) => boolean;
+        onToggle?: (item: T) => void;
+        /** Touch long-press on a card (when not already selecting). Leave unset to disable. */
+        onLongPress?: (item: T) => void;
+        selectLabel?: string;
         class?: string;
         gridClass?: string;
     } = $props();
+
+    const sel = (item: T) => selectionMode && (isSelected?.(item) ?? false);
+
+    const LONG_PRESS_MS = 450;
+    const MOVE_TOLERANCE_PX = 10;
+
+    let pressTimer: ReturnType<typeof setTimeout> | null = null;
+    let pressOrigin = { x: 0, y: 0 };
+    // After a long-press the finger lifts and the browser still sends a click; that click must not
+    // open the card or toggle the selection we just made. Cleared by the next pointerdown.
+    let swallowClick = false;
+
+    function cancelPress() {
+        if (pressTimer) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+        }
+    }
+
+    function onPressStart(e: PointerEvent, item: T) {
+        swallowClick = false;
+        if (!onLongPress || selectionMode || e.pointerType === "mouse" || !e.isPrimary) return;
+
+        cancelPress();
+        pressOrigin = { x: e.clientX, y: e.clientY };
+        pressTimer = setTimeout(() => {
+            pressTimer = null;
+            swallowClick = true;
+            navigator.vibrate?.(15);
+            onLongPress?.(item);
+        }, LONG_PRESS_MS);
+    }
+
+    function onPressMove(e: PointerEvent) {
+        if (!pressTimer) return;
+        if (Math.hypot(e.clientX - pressOrigin.x, e.clientY - pressOrigin.y) > MOVE_TOLERANCE_PX) cancelPress();
+    }
+
+    function onClickCapture(e: MouseEvent) {
+        if (!swallowClick) return;
+        swallowClick = false;
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Stops the OS "save image / open link" sheet from hijacking the hold.
+    function onContextMenu(e: Event) {
+        if (onLongPress && !selectionMode) e.preventDefault();
+    }
 
     let sentinel = $state<HTMLElement | null>(null);
     let isIntersecting = $state(false);
@@ -54,7 +116,6 @@
         }
     });
 
-    // ---- Entrance ----------------------------------------------------------------------------
 
     const prefersReducedMotion =
         typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -84,7 +145,7 @@
     });
 
     function premiumPop(
-        node: HTMLElement,
+        _node: HTMLElement,
         { delay = 0, duration = 400 }: { delay?: number; duration?: number } = {}
     ) {
         return {
@@ -108,9 +169,32 @@
                     animate:flip={{ duration: 350, easing: cubicOut }}
                     in:premiumPop|global={{ delay: Math.min(entrance.get(keyFn(item)) ?? 0, STAGGER_CAP) * STAGGER_MS, duration: 200 }}
                     out:fly={{ y: -10, duration: 150 }}
-                    class="group will-change-transform"
+                    class="group relative will-change-transform {onLongPress ? 'select-none [-webkit-touch-callout:none]' : ''}"
+                    onpointerdown={(e) => onPressStart(e, item)}
+                    onpointermove={onPressMove}
+                    onpointerup={cancelPress}
+                    onpointercancel={cancelPress}
+                    onpointerleave={cancelPress}
+                    onclickcapture={onClickCapture}
+                    oncontextmenu={onContextMenu}
             >
-                {@render cardContent(item)}
+                <div inert={selectionMode}>
+                    {@render cardContent(item)}
+                </div>
+
+                {#if selectionMode}
+                    <button
+                            type="button"
+                            class="absolute inset-0 z-20 cursor-pointer rounded-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary {sel(item) ? 'bg-primary/15 ring-2 ring-primary' : 'hover:bg-foreground/5'}"
+                            aria-pressed={sel(item)}
+                            aria-label={selectLabel}
+                            onclick={() => onToggle?.(item)}
+                    >
+                        <span class="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full border-2 transition-colors {sel(item) ? 'border-primary bg-primary text-primary-foreground' : 'border-white/70 bg-black/40'}">
+                            {#if sel(item)}<Check class="size-3.5" strokeWidth={3} />{/if}
+                        </span>
+                    </button>
+                {/if}
             </div>
         {/each}
 

@@ -2,20 +2,24 @@ use std::sync::Arc;
 use serde_json::{json, Value};
 use chrono::Utc;
 use futures::future::join_all;
-use sqlx::SqlitePool;
-use tracing::{debug, error, info, instrument, warn};
+use sqlx::{SqliteConnection, SqlitePool};
+use tracing::{error, info, instrument, warn};
 use crate::content::models::EpisodeData;
 use crate::content::repositories::content::ContentRepository;
 use crate::diff_field;
 use crate::error::{CoreError, CoreResult};
 use crate::list::repository::ListRepository;
-use crate::tracker::repository::TrackerRepository;
-use crate::tracker::types::TrackerIntegration;
-use crate::list::types::{ChangeSource, EnrichedListEntry, EntryHistoryResponse, FilterQuery, FinalFields, ListEntry, ListResponse, SingleEntryResponse, SuccessResponse, UpsertEntryBody, UpsertEntryResponse, UserStats};
-use crate::tracker::provider::UpdateEntryParams;
+use crate::list::sync_queue::SyncQueue;
+use crate::list::types::{BatchItemError, BatchWriteResponse, ChangeSource, EnrichedListEntry, EntryHistoryResponse, FilterQuery, FinalFields, ListEntry, ListResponse, SingleEntryResponse, SuccessResponse, UpsertEntryBody, UpsertEntryResponse, UserStats};
 use crate::state::AppState;
 
 pub struct ListService;
+
+struct UpsertOutcome {
+    changes: usize,
+    is_new: bool,
+    written: bool,
+}
 
 impl ListService {
 
@@ -115,27 +119,28 @@ impl ListService {
         FinalFields { status: final_status, progress: new_progress, start_date: final_start_date, end_date: final_end_date }
     }
 
-    #[instrument(skip(state, body), fields(cid = %body.cid, status = %body.status))]
-    pub async fn upsert_entry(
-        state: Arc<AppState>,
+    /// Validates that the content exists and returns its total episodes/chapters.
+    async fn resolve_total_units(pool: &SqlitePool, cid: &str) -> CoreResult<Option<i32>> {
+        ContentRepository::get_content_by_cid(pool, cid).await?
+            .ok_or_else(|| {
+                warn!("Attempted to upsert entry for non-existent content");
+                CoreError::NotFound("error.list.content_not_found".into())
+            })?;
+
+        Ok(ContentRepository::get_by_cid(pool, cid).await?
+            .map(|m| match m.eps_or_chapters {
+                EpisodeData::Count(n) => n,
+                EpisodeData::List(ref l)  => l.len() as i32,
+            }))
+    }
+    
+    async fn apply_upsert(
+        conn: &mut SqliteConnection,
         user_id: i32,
-        body: UpsertEntryBody,
-    ) -> CoreResult<UpsertEntryResponse> {
-        let total_units = {
-            ContentRepository::get_content_by_cid(&state.pool, &body.cid).await?
-                .ok_or_else(|| {
-                    warn!("Attempted to upsert entry for non-existent content");
-                    CoreError::NotFound("error.list.content_not_found".into())
-                })?;
-
-            ContentRepository::get_by_cid(&state.pool, &body.cid).await?
-                .map(|m| match m.eps_or_chapters {
-                    EpisodeData::Count(n) => n,
-                    EpisodeData::List(ref l)  => l.len() as i32,
-                })
-        };
-
-        let prev_entry = ListRepository::get_entry(&state.pool, user_id, &body.cid).await?;
+        body: &UpsertEntryBody,
+        total_units: Option<i32>,
+    ) -> CoreResult<UpsertOutcome> {
+        let prev_entry = ListRepository::get_entry_conn(conn, user_id, &body.cid).await?;
 
         let is_new        = prev_entry.is_none();
         let prev_progress = prev_entry.as_ref().map(|e| e.progress).unwrap_or(0);
@@ -143,37 +148,95 @@ impl ListService {
 
         if !is_new && body.progress.is_some() && new_progress < prev_progress {
             warn!(prev = prev_progress, new = new_progress, "Ignoring progress downgrade for user");
-            return Ok(UpsertEntryResponse { success: true, changes: 0, is_new: false });
+            return Ok(UpsertOutcome { changes: 0, is_new: false, written: false });
         }
 
-        let fields = Self::compute_final_fields(prev_entry.as_ref(), &body, total_units, new_progress);
+        let fields = Self::compute_final_fields(prev_entry.as_ref(), body, total_units, new_progress);
+        let changes = Self::persist_and_diff(conn, user_id, body, prev_entry.as_ref(), &fields).await?;
 
-        let changes = Self::persist_and_diff(&state.pool, user_id, &body, prev_entry.as_ref(), &fields).await?;
+        Ok(UpsertOutcome { changes, is_new, written: true })
+    }
 
-        info!(is_new = is_new, "List entry successfully saved");
+    #[instrument(skip(state, body), fields(cid = %body.cid, status = %body.status))]
+    pub async fn upsert_entry(
+        state: Arc<AppState>,
+        user_id: i32,
+        body: UpsertEntryBody,
+    ) -> CoreResult<UpsertEntryResponse> {
+        let total_units = Self::resolve_total_units(&state.pool, &body.cid).await?;
 
-        let cid_clone   = body.cid.clone();
-        let state_clone = state.clone();
-        tokio::task::spawn(async move {
-            if let Err(e) = Self::sync_entry_to_all_trackers(&state_clone, user_id, &cid_clone).await {
-                error!(error = ?e, cid = %cid_clone, "Background sync failed for entry");
-            } else {
-                debug!(cid = %cid_clone, "Background sync completed successfully");
+        let outcome = {
+            let mut conn = state.pool.acquire().await?;
+            Self::apply_upsert(&mut conn, user_id, &body, total_units).await?
+        };
+
+        if outcome.written {
+            info!(is_new = outcome.is_new, "List entry successfully saved");
+
+            // Tracker sync is eventual: record the intent, the worker does the rest.
+            // A queue failure must not fail the (already committed) local save.
+            if let Err(e) = SyncQueue::enqueue_entries(
+                &state.pool, user_id, std::slice::from_ref(&body.cid), None, None,
+            ).await {
+                error!(error = ?e, cid = %body.cid, "Failed to enqueue tracker sync");
             }
-        });
+        }
 
-        Ok(UpsertEntryResponse { success: true, changes, is_new })
+        Ok(UpsertEntryResponse { success: true, changes: outcome.changes, is_new: outcome.is_new })
     }
     
+    #[instrument(skip(state, bodies), fields(count = bodies.len()))]
+    pub async fn batch_upsert_entries(
+        state: Arc<AppState>,
+        user_id: i32,
+        bodies: Vec<UpsertEntryBody>,
+    ) -> CoreResult<BatchWriteResponse> {
+        let batch_id = SyncQueue::new_batch_id(user_id);
+        let mut errors: Vec<BatchItemError> = vec![];
+
+        // Reads first, outside the write transaction.
+        let mut prepared = Vec::with_capacity(bodies.len());
+        for body in bodies {
+            match Self::resolve_total_units(&state.pool, &body.cid).await {
+                Ok(total) => prepared.push((body, total)),
+                Err(e) => errors.push(BatchItemError { cid: body.cid, error: e.to_string() }),
+            }
+        }
+
+        let mut written: Vec<String> = vec![];
+        let mut tx = state.pool.begin().await?;
+        for (body, total) in &prepared {
+            match Self::apply_upsert(&mut *tx, user_id, body, *total).await {
+                Ok(o) if o.written => written.push(body.cid.clone()),
+                Ok(_) => {}
+                Err(e) => errors.push(BatchItemError { cid: body.cid.clone(), error: e.to_string() }),
+            }
+        }
+        tx.commit().await?;
+
+        written.sort();
+        written.dedup();
+
+        let enqueued = SyncQueue::enqueue_entries(&state.pool, user_id, &written, Some(&batch_id), None)
+            .await
+            .unwrap_or_else(|e| {
+                error!(error = ?e, "Failed to enqueue batch sync");
+                0
+            });
+
+        info!(applied = written.len(), enqueued, failed = errors.len(), "Batch upsert finished");
+        Ok(BatchWriteResponse { batch_id, applied: written.len(), enqueued, errors })
+    }
+
     async fn persist_and_diff(
-        pool: &SqlitePool,
+        conn: &mut SqliteConnection,
         user_id: i32,
         body: &UpsertEntryBody,
         prev_entry: Option<&ListEntry>,
         fields: &FinalFields,
     ) -> CoreResult<usize> {
-        let changes = ListRepository::upsert_entry(
-            pool,
+        let changes = ListRepository::upsert_entry_conn(
+            conn,
             user_id,
             body,
             &fields.status,
@@ -192,10 +255,10 @@ impl ListService {
         );
 
         if !changes_rows.is_empty() {
-            if let Ok(Some(saved)) = ListRepository::get_entry(pool, user_id, &body.cid).await {
+            if let Ok(Some(saved)) = ListRepository::get_entry_conn(conn, user_id, &body.cid).await {
                 if let Some(entry_id) = saved.id {
-                    if let Err(e) = ListRepository::insert_changes(
-                        pool,
+                    if let Err(e) = ListRepository::insert_changes_conn(
+                        conn,
                         entry_id,
                         user_id,
                         ChangeSource::Local.as_str(),
@@ -217,22 +280,59 @@ impl ListService {
         user_id: i32,
         cid: String,
     ) -> CoreResult<SuccessResponse> {
-        let state_clone = state.clone();
-        let cid_clone   = cid.clone();
-        tokio::task::spawn(async move {
-            if let Err(e) = Self::delete_from_trackers(&state_clone, user_id, &cid_clone).await {
-                warn!(error = ?e, "Failed to delete entry from external trackers");
-            }
-        });
+        let targets = SyncQueue::capture_delete_targets(&state.pool, user_id, std::slice::from_ref(&cid))
+            .await
+            .unwrap_or_else(|e| {
+                warn!(error = ?e, "Could not read tracker mappings; remote delete will not be queued");
+                vec![]
+            });
 
         let deleted = ListRepository::delete_entry(&state.pool, user_id, &cid).await?;
 
         if deleted {
             info!("Entry deleted successfully from local database");
+            if let Err(e) = SyncQueue::enqueue_deletes(&state.pool, user_id, &targets, None).await {
+                error!(error = ?e, "Failed to enqueue tracker deletes");
+            }
             Ok(SuccessResponse { success: true })
         } else {
             Err(CoreError::NotFound("error.list.entry_not_found".into()))
         }
+    }
+
+    #[instrument(skip(state, cids), fields(count = cids.len()))]
+    pub async fn batch_delete_entries(
+        state: Arc<AppState>,
+        user_id: i32,
+        cids: Vec<String>,
+    ) -> CoreResult<BatchWriteResponse> {
+        let batch_id = SyncQueue::new_batch_id(user_id);
+
+        let targets = SyncQueue::capture_delete_targets(&state.pool, user_id, &cids).await?;
+
+        let mut deleted: Vec<String> = vec![];
+        let mut tx = state.pool.begin().await?;
+        for cid in &cids {
+            if ListRepository::delete_entry_conn(&mut *tx, user_id, cid).await? {
+                deleted.push(cid.clone());
+            }
+        }
+        tx.commit().await?;
+
+        let targets: Vec<_> = targets.into_iter().filter(|t| deleted.contains(&t.cid)).collect();
+        let enqueued = SyncQueue::enqueue_deletes(&state.pool, user_id, &targets, Some(&batch_id))
+            .await
+            .unwrap_or_else(|e| {
+                error!(error = ?e, "Failed to enqueue batch deletes");
+                0
+            });
+
+        let errors = cids.iter()
+            .filter(|c| !deleted.contains(c))
+            .map(|c| BatchItemError { cid: c.clone(), error: "error.list.entry_not_found".into() })
+            .collect();
+
+        Ok(BatchWriteResponse { batch_id, applied: deleted.len(), enqueued, errors })
     }
 
     async fn enrich_entries(
@@ -310,108 +410,6 @@ impl ListService {
         });
 
         Ok(join_all(futures).await)
-    }
-
-    #[instrument(skip(state))]
-    async fn sync_entry_to_all_trackers(
-        state: &Arc<AppState>,
-        user_id: i32,
-        cid: &str,
-    ) -> CoreResult<()> {
-        let integrations = TrackerRepository::get_user_integrations(&state.pool, user_id).await?;
-
-        for integration in integrations {
-            if !integration.sync_enabled { continue; }
-            if let Err(e) = Self::sync_entry_to_single_tracker(state, user_id, cid, &integration).await {
-                error!(tracker = %integration.tracker_name, error = ?e, "Sync error for tracker");
-            }
-        }
-        Ok(())
-    }
-
-    async fn sync_entry_to_single_tracker(
-        state: &Arc<AppState>,
-        user_id: i32,
-        cid: &str,
-        integration: &TrackerIntegration,
-    ) -> CoreResult<()> {
-        let provider = match state.tracker_registry.get(&integration.tracker_name) {
-            Some(p) => p,
-            None => {
-                warn!("Tracker '{}' not found in registry, skipping sync", integration.tracker_name);
-                return Ok(());
-            }
-        };
-
-        let remote_id = {
-            let mappings  = TrackerRepository::get_mappings_by_cid(&state.pool, cid).await?;
-            mappings.into_iter()
-                .find(|m| m.tracker_name == integration.tracker_name)
-                .map(|m| m.tracker_id)
-        };
-
-        let remote_id = match remote_id {
-            Some(id) => id,
-            None => return Ok(()),
-        };
-
-        let entry = ListRepository::get_entry(&state.pool, user_id, cid).await?;
-
-        let entry = match entry {
-            Some(e) => e,
-            None => return Ok(()),
-        };
-
-        let params = UpdateEntryParams {
-            media_id:     remote_id,
-            status:       Some(entry.status),
-            progress:     Some(entry.progress),
-            score:        entry.score,
-            start_date:   entry.start_date,
-            end_date:     entry.end_date,
-            repeat_count: Some(entry.repeat_count),
-            notes:        entry.notes,
-            is_private:   Some(entry.is_private),
-            score_format: integration.score_format.clone(),
-        };
-
-        provider.update_entry(&integration.access_token, params).await?;
-        Ok(())
-    }
-
-    async fn delete_from_trackers(
-        state: &Arc<AppState>,
-        user_id: i32,
-        cid: &str,
-    ) -> CoreResult<()> {
-        let integrations = TrackerRepository::get_user_integrations(&state.pool, user_id).await?;
-
-        for integration in integrations {
-            if !integration.sync_enabled { continue; }
-
-            let provider = match state.tracker_registry.get(&integration.tracker_name) {
-                Some(p) => p,
-                None => {
-                    warn!("Tracker '{}' not found in registry, skipping delete", integration.tracker_name);
-                    continue;
-                }
-            };
-
-            let remote_id = {
-                let mappings  = TrackerRepository::get_mappings_by_cid(&state.pool, cid).await?;
-                mappings.into_iter()
-                    .find(|m| m.tracker_name == integration.tracker_name)
-                    .map(|m| m.tracker_id)
-            };
-
-            if let Some(id) = remote_id {
-                if let Err(e) = provider.delete_entry(&integration.access_token, &id).await {
-                    error!("Failed to delete from tracker '{}': {}", integration.tracker_name, e);
-                }
-            }
-        }
-
-        Ok(())
     }
 
     pub fn diff_entry(
