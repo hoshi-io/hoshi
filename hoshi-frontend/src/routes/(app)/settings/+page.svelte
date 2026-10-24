@@ -101,11 +101,17 @@
     });
 
     const triggerClass =
-        "group relative w-full flex items-center justify-between rounded-sm px-3 py-3 md:py-3.5 " +
-        "text-base md:text-[15px] font-bold text-foreground/70 transition-colors duration-200 " +
-        "hover:text-foreground data-[state=active]:text-primary " +
+        "group relative w-full flex items-center justify-between rounded-md md:rounded-sm px-3 py-3 md:py-2.5 " +
+        "text-base md:text-[15px] font-semibold text-foreground/75 transition-colors duration-200 " +
+        "hover:text-foreground data-[state=active]:md:text-foreground " +
         "data-[state=inactive]:md:hover:bg-muted/40 data-[state=inactive]:active:bg-muted/40 " +
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+
+    const chipClass =
+        "grid shrink-0 place-items-center size-9 md:size-8 rounded-lg bg-muted/60 md:bg-transparent text-muted-foreground " +
+        "transition-colors duration-200 " +
+        "group-hover:text-foreground " +
+        "group-data-[state=active]:md:bg-transparent group-data-[state=active]:md:text-foreground";
 
     onMount(() => {
         const mediaQuery = window.matchMedia('(min-width: 768px)');
@@ -251,30 +257,35 @@
                 >
                     <Tabs.List class="{isMobileDetail ? 'hidden md:flex' : 'flex'} flex-col justify-start bg-transparent h-auto p-0 gap-1 w-full md:w-72 shrink-0 md:sticky md:top-24 md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:hide-scrollbar">
                         {#each visibleGroups as group, gi (group.title)}
-                            <div class="px-3 {gi === 0 ? 'pt-1' : 'pt-6'} pb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 text-left w-full">
+                            <div class="px-3 {gi === 0 ? 'pt-1' : 'pt-6'} pb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground/70 text-left w-full">
                                 {group.title}
                             </div>
 
-                            {#each group.items as item (item.id)}
-                                <div class="nav-item w-full" style="--i: {item.n}">
-                                    <Tabs.Trigger value={item.id} class={triggerClass}>
-                                        {#if activeTab === item.id}
-                                            <span
-                                                    aria-hidden="true"
-                                                    class="absolute inset-0 hidden md:block rounded-sm bg-primary/10"
-                                                    in:receive={{ key: 'settings-nav' }}
-                                                    out:send={{ key: 'settings-nav' }}
-                                            ></span>
-                                        {/if}
+                            <!-- Mobile: each group is an inset card. Desktop: items sit flat in the sidebar. -->
+                            <div class="w-full flex flex-col gap-0 md:gap-0.5 rounded-xl border border-border/40 bg-muted/20 p-1 md:contents">
+                                {#each group.items as item (item.id)}
+                                    <div class="nav-item w-full" style="--i: {item.n}">
+                                        <Tabs.Trigger value={item.id} class={triggerClass}>
+                                            {#if activeTab === item.id}
+                                                <span
+                                                        aria-hidden="true"
+                                                        class="absolute inset-0 hidden md:block rounded-sm bg-primary/10 ring-1 ring-inset ring-primary/15"
+                                                        in:receive={{ key: 'settings-nav' }}
+                                                        out:send={{ key: 'settings-nav' }}
+                                                ></span>
+                                            {/if}
 
-                                        <div class="relative flex items-center gap-4">
-                                            <item.icon class="size-5 md:size-[1.15rem] transition-transform duration-300 {item.hover}" />
-                                            {item.label}
-                                        </div>
-                                        <ChevronRight class="relative h-5 w-5 md:hidden text-muted-foreground opacity-50 transition-transform group-hover:translate-x-0.5" />
-                                    </Tabs.Trigger>
-                                </div>
-                            {/each}
+                                            <div class="relative flex items-center gap-3.5">
+                                                <span class={chipClass}>
+                                                    <item.icon class="size-[1.1rem] md:size-4 transition-transform duration-300 {item.hover}" />
+                                                </span>
+                                                {item.label}
+                                            </div>
+                                            <ChevronRight class="relative size-4 md:hidden text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
+                                        </Tabs.Trigger>
+                                    </div>
+                                {/each}
+                            </div>
                         {/each}
 
                         <div class="mt-8 md:mt-auto pt-4 pb-4 px-3 w-full flex flex-col items-center md:items-start gap-4 text-center md:text-left">

@@ -10,6 +10,8 @@
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import { Spinner } from "$lib/components/ui/spinner";
+    import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
+    import SettingRow from "@/components/settings/parts/SettingRow.svelte";
 
     import { Trash2, AlertTriangle, Camera } from "lucide-svelte";
 
@@ -53,9 +55,14 @@
         (!user.hasPassword || currentPassword.length > 0)
     );
 
+    // Only flag a mismatch once the person has started typing the confirmation.
+    let passwordMismatch = $derived(confirmPassword.length > 0 && confirmPassword !== newPassword);
+
     let showDeleteAlert = $state(false);
     let deletingAccount = $state(false);
     let deletePassword = $state("");
+
+    const fieldClass = "rounded-md h-11 w-full sm:w-72";
 
     function handleFileSelect(e: Event) {
         const target = e.target as HTMLInputElement;
@@ -132,132 +139,132 @@
     }
 </script>
 
-<div class="space-y-16 w-full">
+<div class="space-y-14 w-full">
 
-    <section>
-        <div class="mb-2">
-            <h2 class="text-2xl font-bold tracking-tight">{i18n.t('settings.account_section.profile')}</h2>
-            <p class="text-sm text-muted-foreground mt-1">{i18n.t('settings.account_section.profile_desc')}</p>
-        </div>
-
-        <form onsubmit={handleUpdateProfile} class="space-y-0">
-            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-8 py-8 border-b border-border/40">
-
-                <div class="shrink-0 flex flex-col items-center gap-3 sm:w-40">
+    <SettingsSection
+            title={i18n.t('settings.account_section.profile')}
+            description={i18n.t('settings.account_section.profile_desc')}
+    >
+        <form onsubmit={handleUpdateProfile}>
+            <div class="flex items-start gap-5 sm:gap-8 py-6 border-b border-border/40">
+                <div class="shrink-0 flex flex-col items-center gap-2.5 sm:w-32">
                     <button
                             type="button"
                             class="relative group rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-transform active:scale-95"
-                            onclick={() => fileInput.click()}
+                            onclick={() => fileInput?.click()}
                             aria-label={i18n.t('settings.account_section.change_avatar')}
                     >
-                        <Avatar.Root class="h-24 w-24 sm:h-28 sm:w-28 border border-border/50 shadow-sm transition-opacity group-hover:opacity-90">
+                        <Avatar.Root class="size-20 sm:size-24 border border-border/50 shadow-sm transition-opacity group-hover:opacity-90">
                             {#if previewAvatarUrl}
                                 <Avatar.Image src={previewAvatarUrl} alt={username} class="object-cover" />
                             {/if}
-                            <Avatar.Fallback class="bg-primary/10 text-primary text-4xl font-bold uppercase">
+                            <Avatar.Fallback class="bg-primary/10 text-primary text-3xl font-bold uppercase">
                                 {username.charAt(0)}
                             </Avatar.Fallback>
                         </Avatar.Root>
 
-                        <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity text-white backdrop-blur-[2px]">
-                            <Camera class="size-8" />
+                        <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity text-white backdrop-blur-[2px]">
+                            <Camera class="size-6" />
                         </div>
                     </button>
                     <input bind:this={fileInput} type="file" accept="image/png, image/jpeg, image/webp" class="hidden" onchange={handleFileSelect} />
 
-                    <div class="flex items-center gap-3 text-sm">
-                        <button type="button" class="font-semibold text-muted-foreground hover:text-foreground transition-colors" onclick={() => fileInput.click()}>
+                    <div class="flex items-center gap-2.5 text-xs sm:text-sm">
+                        <button type="button" class="font-semibold text-muted-foreground hover:text-foreground transition-colors" onclick={() => fileInput?.click()}>
                             {i18n.t('settings.account_section.change_avatar').split(' ')[0]}
                         </button>
                         {#if previewAvatarUrl}
-                            <span class="text-border/50">•</span>
-                            <button type="button" class="font-semibold text-destructive hover:underline transition-all" onclick={handleRemoveAvatar}>
+                            <span class="text-border">•</span>
+                            <button type="button" class="font-semibold text-destructive hover:underline" onclick={handleRemoveAvatar}>
                                 {i18n.t('settings.account_section.remove')}
                             </button>
                         {/if}
                     </div>
                 </div>
 
-                <div class="flex-1 w-full space-y-2 sm:pt-2">
-                    <Label for="username" class="text-base font-bold">{i18n.t('settings.account_section.username')}</Label>
-                    <Input id="username" bind:value={username} class="rounded-sm h-11 w-full sm:max-w-md" required />
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.account_section.username_desc')}</p>
+                <div class="flex-1 min-w-0 space-y-2 pt-1 sm:pt-3">
+                    <Label for="username" class="text-[15px] font-semibold">{i18n.t('settings.account_section.username')}</Label>
+                    <Input id="username" bind:value={username} class="rounded-md h-11 w-full sm:max-w-md" required />
+                    <p class="text-sm text-muted-foreground leading-snug">{i18n.t('settings.account_section.username_desc')}</p>
                 </div>
             </div>
 
-            <div class="flex justify-end pt-8">
-                <Button type="submit" disabled={!hasChanges || savingProfile} class="rounded-sm px-8 h-11 font-bold shadow-sm transition-all">
+            <div class="flex justify-end pt-6">
+                <Button type="submit" disabled={!hasChanges || savingProfile} class="rounded-md px-8 h-11 font-semibold transition-all">
                     {#if savingProfile}<Spinner class="mr-2 h-4 w-4" />{/if}
                     {hasChanges ? i18n.t('settings.account_section.save') : i18n.t('settings.account_section.saved')}
                 </Button>
             </div>
         </form>
-    </section>
+    </SettingsSection>
 
-    <section>
-        <div class="mb-2">
-            <h2 class="text-2xl font-bold tracking-tight">{i18n.t('settings.account_section.security')}</h2>
-            <p class="text-sm text-muted-foreground mt-1">{i18n.t('settings.account_section.security_desc')}</p>
-        </div>
-
-        <form onsubmit={handleChangePassword} class="space-y-0">
+    <SettingsSection
+            title={i18n.t('settings.account_section.security')}
+            description={i18n.t('settings.account_section.security_desc')}
+    >
+        <form onsubmit={handleChangePassword}>
             {#if user.hasPassword}
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4">
-                        <Label for="currentPassword" class="text-base font-bold">{i18n.t('settings.account_section.current_password')}</Label>
-                        <p class="text-sm text-muted-foreground">{i18n.t('settings.account_section.current_password_desc')}</p>
-                    </div>
-                    <Input id="currentPassword" type="password" bind:value={currentPassword} class="rounded-sm h-11 w-full sm:max-w-md" required />
-                </div>
+                <SettingRow
+                        for="currentPassword"
+                        label={i18n.t('settings.account_section.current_password')}
+                        description={i18n.t('settings.account_section.current_password_desc')}
+                >
+                    <Input id="currentPassword" type="password" autocomplete="current-password" bind:value={currentPassword} class={fieldClass} required />
+                </SettingRow>
             {/if}
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4">
-                    <Label for="newPassword" class="text-base font-bold">{i18n.t('settings.account_section.new_password')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.account_section.new_password_desc')}</p>
-                </div>
-                <Input id="newPassword" type="password" bind:value={newPassword} class="rounded-sm h-11 w-full sm:max-w-md" required />
-            </div>
+            <SettingRow
+                    for="newPassword"
+                    label={i18n.t('settings.account_section.new_password')}
+                    description={i18n.t('settings.account_section.new_password_desc')}
+            >
+                <Input id="newPassword" type="password" autocomplete="new-password" bind:value={newPassword} class={fieldClass} required />
+            </SettingRow>
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4">
-                    <Label for="confirmPassword" class="text-base font-bold">{i18n.t('settings.account_section.confirm_password')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.account_section.confirm_new_password')}</p>
-                </div>
-                <Input id="confirmPassword" type="password" bind:value={confirmPassword} class="rounded-sm h-11 w-full sm:max-w-md" required />
-            </div>
+            <SettingRow
+                    for="confirmPassword"
+                    label={i18n.t('settings.account_section.confirm_password')}
+                    description={i18n.t('settings.account_section.confirm_new_password')}
+            >
+                <Input
+                        id="confirmPassword"
+                        type="password"
+                        autocomplete="new-password"
+                        aria-invalid={passwordMismatch}
+                        bind:value={confirmPassword}
+                        class="{fieldClass} {passwordMismatch ? 'border-destructive focus-visible:ring-destructive/40' : ''}"
+                        required
+                />
+            </SettingRow>
 
-            <div class="flex justify-end pt-8">
-                <Button type="submit" disabled={!canSavePassword || savingPassword} variant="secondary" class="rounded-sm px-8 h-11 font-bold shadow-sm transition-all">
+            <div class="flex justify-end pt-6">
+                <Button type="submit" disabled={!canSavePassword || savingPassword} variant="secondary" class="rounded-md px-8 h-11 font-semibold transition-all">
                     {#if savingPassword}<Spinner class="mr-2 h-4 w-4" />{/if}
                     {i18n.t('settings.account_section.update_password')}
                 </Button>
             </div>
         </form>
-    </section>
+    </SettingsSection>
 
-    <section>
-        <div class="mb-2">
-            <h2 class="text-xl font-bold tracking-tight text-destructive">{i18n.t('settings.account_section.danger_zone')}</h2>
-            <p class="text-sm text-muted-foreground mt-1">{i18n.t('settings.account_section.danger_zone_desc')}</p>
-        </div>
-
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-y border-border/40">
-            <div class="space-y-1 pr-4">
-                <Label class="text-base font-bold text-foreground">{i18n.t('settings.account_section.delete_account')}</Label>
-                <p class="text-sm text-muted-foreground">{i18n.t('settings.account_section.delete_account_desc')}</p>
+    <SettingsSection
+            variant="danger"
+            title={i18n.t('settings.account_section.danger_zone')}
+            description={i18n.t('settings.account_section.danger_zone_desc')}
+    >
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-destructive/5 p-5">
+            <div class="space-y-0.5 min-w-0">
+                <p class="text-[15px] font-semibold leading-snug">{i18n.t('settings.account_section.delete_account')}</p>
+                <p class="text-sm text-muted-foreground leading-snug">{i18n.t('settings.account_section.delete_account_desc')}</p>
             </div>
-            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto shrink-0">
-                <Button type="button" variant="destructive" class="rounded-sm h-11 font-bold w-full sm:w-auto shadow-sm" onclick={() => showDeleteAlert = true}>
-                    <Trash2 class="mr-2 h-4 w-4" /> {i18n.t('settings.account_section.delete_account')}
-                </Button>
-            </div>
+            <Button type="button" variant="destructive" class="rounded-md h-11 font-semibold w-full sm:w-auto shrink-0" onclick={() => showDeleteAlert = true}>
+                <Trash2 class="mr-2 h-4 w-4" /> {i18n.t('settings.account_section.delete_account')}
+            </Button>
         </div>
-    </section>
+    </SettingsSection>
 </div>
 
 <AlertDialog.Root bind:open={showDeleteAlert}>
-    <AlertDialog.Content class="border-destructive/20 sm:rounded-sm">
+    <AlertDialog.Content class="border-destructive/20 sm:rounded-lg">
         <AlertDialog.Header>
             <AlertDialog.Title class="text-destructive flex items-center gap-2 text-xl">
                 <AlertTriangle class="h-6 w-6" /> {i18n.t('settings.account_section.are_you_sure')}
@@ -270,6 +277,7 @@
                         <Label class="text-foreground">{i18n.t('settings.account_section.verify_password')}</Label>
                         <Input
                                 type="password"
+                                autocomplete="current-password"
                                 bind:value={deletePassword}
                                 placeholder="••••••••"
                                 class="border-destructive/30 focus-visible:ring-destructive/50"
@@ -279,9 +287,9 @@
             </AlertDialog.Description>
         </AlertDialog.Header>
         <AlertDialog.Footer class="flex-col sm:flex-row gap-3 sm:gap-2 mt-6">
-            <AlertDialog.Cancel class="rounded-sm font-bold">{i18n.t('content.cancel')}</AlertDialog.Cancel>
+            <AlertDialog.Cancel class="rounded-md font-semibold">{i18n.t('content.cancel')}</AlertDialog.Cancel>
             <AlertDialog.Action
-                    class="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-sm font-bold"
+                    class="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-md font-semibold"
                     onclick={handleDeleteAccount}
                     disabled={user.hasPassword && !deletePassword}
             >

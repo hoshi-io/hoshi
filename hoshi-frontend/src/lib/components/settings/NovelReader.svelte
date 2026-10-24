@@ -1,8 +1,8 @@
 <script lang="ts">
-    import * as Tabs from "$lib/components/ui/tabs";
     import { Button } from "$lib/components/ui/button";
     import { Label } from "$lib/components/ui/label";
-    import { Slider } from "$lib/components/ui/slider";
+    import SettingSlider from "@/components/settings/parts/SettingSlider.svelte";
+    import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
     import * as Kbd from "$lib/components/ui/kbd/index.js";
     import {
         Type,
@@ -53,6 +53,20 @@
         { label: i18n.t('reader.increase_font'), keys: ["+", "="] },
         { label: i18n.t('reader.decrease_font'), keys: ["-"] },
     ];
+
+    const fontFamilyOptions = [
+        { value: "sans", label: "Sans", class: "font-sans" },
+        { value: "serif", label: "Serif", class: "font-serif" },
+        { value: "mono", label: "Mono", class: "font-mono" }
+    ];
+
+    const alignOptions = [
+        { value: "left", label: i18n.t('reader.align_left'), icon: AlignLeft },
+        { value: "justify", label: i18n.t('reader.align_justify'), icon: AlignJustify }
+    ];
+
+    function changeFontFamily(v: string) { config.fontFamily = v as FontFamily; onSave(); }
+    function changeAlign(v: string) { config.textAlign = v as NovelConfig['textAlign']; onSave(); }
 
     function handleCommitSize(val: number) { config.fontSize = val; onSave(); }
     function handleCommitLine(val: number) { config.lineHeight = val; onSave(); }
@@ -139,32 +153,27 @@
             <div class="grid sm:grid-cols-2 gap-8">
                 <div class="space-y-4">
                     <Label class="font-bold flex items-center gap-2"><Type class="size-4 text-primary"/> {i18n.t('reader.font_family')}</Label>
-                    <Tabs.Root value={config.fontFamily} onValueChange={(v) => { config.fontFamily = v as FontFamily; onSave(); }}>
-                        <Tabs.List class="grid w-full grid-cols-3 rounded-sm h-11 p-1 bg-muted/50">
-                            <Tabs.Trigger value="sans" class="rounded-lg font-sans font-bold">Sans</Tabs.Trigger>
-                            <Tabs.Trigger value="serif" class="rounded-lg font-serif font-bold">Serif</Tabs.Trigger>
-                            <Tabs.Trigger value="mono" class="rounded-lg font-mono font-bold">Mono</Tabs.Trigger>
-                        </Tabs.List>
-                    </Tabs.Root>
+                    <div>
+                        <SegmentedControl
+                                fluid
+                                label={i18n.t('reader.font_family')}
+                                value={config.fontFamily}
+                                options={fontFamilyOptions}
+                                onValueChange={changeFontFamily}
+                        />
+                    </div>
                 </div>
 
                 <div class="space-y-4">
                     <Label class="font-bold flex items-center gap-2">{i18n.t('reader.alignment')}</Label>
-                    <div class="flex bg-muted/50 p-1 rounded-sm h-11">
-                        <Button
-                                variant={config.textAlign === 'left' ? 'secondary' : 'ghost'}
-                                class="flex-1 rounded-lg font-bold"
-                                onclick={() => { config.textAlign = 'left'; onSave(); }}
-                        >
-                            <AlignLeft class="size-4 mr-2"/> {i18n.t('reader.align_left')}
-                        </Button>
-                        <Button
-                                variant={config.textAlign === 'justify' ? 'secondary' : 'ghost'}
-                                class="flex-1 rounded-lg font-bold"
-                                onclick={() => { config.textAlign = 'justify'; onSave(); }}
-                        >
-                            <AlignJustify class="size-4 mr-2"/> {i18n.t('reader.align_justify')}
-                        </Button>
+                    <div>
+                        <SegmentedControl
+                                fluid
+                                label={i18n.t('reader.alignment')}
+                                value={config.textAlign}
+                                options={alignOptions}
+                                onValueChange={changeAlign}
+                        />
                     </div>
                 </div>
             </div>
@@ -179,7 +188,7 @@
                         </div>
                         <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{localSize}px</span>
                     </div>
-                    <Slider type="single" bind:value={localSize} min={12} max={32} step={1} onValueCommit={handleCommitSize} />
+                    <SettingSlider fluid showValue={false} bind:value={localSize} min={12} max={32} step={1} oncommit={handleCommitSize} />
                 </div>
 
                 <div class="space-y-4">
@@ -190,7 +199,7 @@
                         </div>
                         <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{localLine}</span>
                     </div>
-                    <Slider type="single" bind:value={localLine} min={1} max={3} step={0.1} onValueCommit={handleCommitLine} />
+                    <SettingSlider fluid showValue={false} bind:value={localLine} min={1} max={3} step={0.1} oncommit={handleCommitLine} />
                 </div>
 
                 <div class="space-y-4">
@@ -201,7 +210,7 @@
                         </div>
                         <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{localSpacing}em</span>
                     </div>
-                    <Slider type="single" bind:value={localSpacing} min={0.5} max={4} step={0.1} onValueCommit={handleCommitSpacing} />
+                    <SettingSlider fluid showValue={false} bind:value={localSpacing} min={0.5} max={4} step={0.1} oncommit={handleCommitSpacing} />
                 </div>
 
                 <div class="space-y-4">
@@ -212,7 +221,7 @@
                         </div>
                         <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{localWidth}px</span>
                     </div>
-                    <Slider type="single" bind:value={localWidth} min={400} max={1200} step={50} onValueCommit={handleCommitWidth} />
+                    <SettingSlider fluid showValue={false} bind:value={localWidth} min={400} max={1200} step={50} oncommit={handleCommitWidth} />
                 </div>
             </div>
         </div>

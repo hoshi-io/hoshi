@@ -1,20 +1,24 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
+    import { fly } from "svelte/transition";
+    import { cubicOut } from "svelte/easing";
     import * as Tabs from "$lib/components/ui/tabs";
     import { Switch } from "$lib/components/ui/switch";
-    import { Label } from "$lib/components/ui/label";
     import { Input } from "$lib/components/ui/input";
     import type { TorrentConfig } from "@/api/config/types";
     import type { TorrentCacheEntry, TorrentStorageStats } from "@/api/torrent/types";
     import { torrentApi } from "@/api/torrent/torrent";
     import { i18n } from "@/stores/i18n.svelte.js";
     import {
-        Sparkles, ArrowDownUp, HardDrive, RefreshCw, FolderOpen,
-        Trash2, ChevronDown, ChevronRight
+        RefreshCw, FolderOpen,
+        Trash2, ChevronRight
     } from "lucide-svelte";
     import { platform } from "@tauri-apps/plugin-os";
     import { openPath } from "@tauri-apps/plugin-opener";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
+    import SettingRow from "@/components/settings/parts/SettingRow.svelte";
+    import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
 
     let {
         torrentConfig = $bindable(),
@@ -157,6 +161,20 @@
         onSave();
     }
 
+
+    // ------------------------------------------------------------------ tabs
+
+    const tabs = [
+        { id: "torrent_selection", label: () => t("tab_selection") },
+        { id: "torrent_network", label: () => t("tab_network") },
+        { id: "torrent_storage", label: () => t("tab_storage") }
+    ];
+
+    // Dependent settings stay visible but inert while auto-select is off.
+    const selectionOff = $derived(!torrentConfig.autoSelect);
+
+    const fieldWidth = "w-full sm:w-72";
+
     // ------------------------------------------------------------------ storage
 
     let activeTab = $state("torrent_selection");
@@ -266,364 +284,332 @@
     });
 </script>
 
-<div class="space-y-6">
-    <div>
-        <h2 class="text-2xl font-bold tracking-tight">{i18n.t('settings.torrent')}</h2>
-        <p class="text-sm text-muted-foreground mt-1">{t('torrent_desc')}</p>
-    </div>
-
+<SettingsSection variant="bare" title={i18n.t('settings.torrent')} description={t('torrent_desc')}>
     <Tabs.Root bind:value={activeTab} class="w-full">
-        <Tabs.List class="grid w-full max-w-[560px] grid-cols-3 rounded-sm h-11 p-1 bg-muted/50">
-            <Tabs.Trigger value="torrent_selection" class="rounded-lg font-bold flex items-center gap-2">
-                <Sparkles class="size-4" /> {t('tab_selection')}
-            </Tabs.Trigger>
-            <Tabs.Trigger value="torrent_network" class="rounded-lg font-bold flex items-center gap-2">
-                <ArrowDownUp class="size-4" /> {t('tab_network')}
-            </Tabs.Trigger>
-            <Tabs.Trigger value="torrent_storage" class="rounded-lg font-bold flex items-center gap-2">
-                <HardDrive class="size-4" /> {t('tab_storage')}
-            </Tabs.Trigger>
-        </Tabs.List>
+        <div class="pt-1 pb-2">
+            <Tabs.List class="flex w-full sm:inline-flex sm:w-auto h-auto gap-1 p-1 rounded-lg bg-muted/50">
+                {#each tabs as tab (tab.id)}
+                    <Tabs.Trigger
+                            value={tab.id}
+                            class="flex-1 sm:flex-none h-9 px-5 rounded-md text-sm font-semibold text-muted-foreground
+                                   transition-all duration-200 hover:text-foreground
+                                   data-[state=active]:bg-background data-[state=active]:text-foreground
+                                   data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-border/60
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    >
+                        {tab.label()}
+                    </Tabs.Trigger>
+                {/each}
+            </Tabs.List>
+        </div>
 
         <!-- AUTO SELECTION -->
         <Tabs.Content value="torrent_selection" class="focus-visible:outline-none mt-0">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4">
-                    <Label class="text-base font-bold" for="autoSelect">{t('auto_select')}</Label>
-                    <p class="text-sm text-muted-foreground">{t('auto_select_desc')}</p>
-                </div>
-                <Switch id="autoSelect" bind:checked={torrentConfig.autoSelect} onCheckedChange={onSave} class="shrink-0 scale-125" />
-            </div>
+            {#if activeTab === "torrent_selection"}
+                <div in:fly={{ y: 8, duration: 220, easing: cubicOut }}>
+                    <SettingRow
+                            inline
+                            for="autoSelect"
+                            label={t('auto_select')}
+                            description={t('auto_select_desc')}
+                    >
+                        <Switch id="autoSelect" bind:checked={torrentConfig.autoSelect} onCheckedChange={onSave} />
+                    </SettingRow>
 
-            {#if torrentConfig.autoSelect}
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4 flex-1">
-                        <Label class="text-base font-bold">{t('preferred_groups')}</Label>
-                        <p class="text-sm text-muted-foreground">{t('preferred_groups_desc')}</p>
-                    </div>
-                    <div class="w-full sm:max-w-md">
+                    <SettingRow disabled={selectionOff} label={t('preferred_groups')} description={t('preferred_groups_desc')}>
                         <Input
                                 value={torrentConfig.preferredGroups.join(", ")}
                                 onchange={(e) => handleListChange("preferredGroups", e.currentTarget)}
                                 placeholder="Group1, Group2"
-                                class="rounded-sm h-11"
+                                disabled={selectionOff}
+                                class="rounded-sm h-11 {fieldWidth}"
                         />
-                    </div>
-                </div>
+                    </SettingRow>
 
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4 flex-1">
-                        <Label class="text-base font-bold">{t('preferred_resolution')}</Label>
-                        <p class="text-sm text-muted-foreground">{t('preferred_resolution_desc')}</p>
-                    </div>
-                    <ResponsiveSelect value={torrentConfig.preferredResolution} items={resolutionOptions} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleResolutionChange} />
-                </div>
+                    <SettingRow disabled={selectionOff} label={t('preferred_resolution')} description={t('preferred_resolution_desc')}>
+                        <SegmentedControl
+                                label={t('preferred_resolution')}
+                                value={torrentConfig.preferredResolution}
+                                options={resolutionOptions}
+                                onValueChange={handleResolutionChange}
+                        />
+                    </SettingRow>
 
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4 flex-1">
-                        <Label class="text-base font-bold">{t('preferred_codec')}</Label>
-                        <p class="text-sm text-muted-foreground">{t('preferred_codec_desc')}</p>
-                    </div>
-                    <ResponsiveSelect value={torrentConfig.preferredCodec ?? "any"} items={codecOptions} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleCodecChange} />
-                </div>
+                    <SettingRow disabled={selectionOff} label={t('preferred_codec')} description={t('preferred_codec_desc')}>
+                        <SegmentedControl
+                                label={t('preferred_codec')}
+                                value={torrentConfig.preferredCodec ?? "any"}
+                                options={codecOptions}
+                                onValueChange={handleCodecChange}
+                        />
+                    </SettingRow>
 
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4">
-                        <Label class="text-base font-bold" for="preferDualAudio">{t('prefer_dual_audio')}</Label>
-                        <p class="text-sm text-muted-foreground">{t('prefer_dual_audio_desc')}</p>
-                    </div>
-                    <Switch id="preferDualAudio" bind:checked={torrentConfig.preferDualAudio} onCheckedChange={onSave} class="shrink-0 scale-125" />
-                </div>
+                    <SettingRow
+                            inline
+                            for="preferDualAudio"
+                            disabled={selectionOff}
+                            label={t('prefer_dual_audio')}
+                            description={t('prefer_dual_audio_desc')}
+                    >
+                        <Switch id="preferDualAudio" bind:checked={torrentConfig.preferDualAudio} disabled={selectionOff} onCheckedChange={onSave} />
+                    </SettingRow>
 
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4 flex-1">
-                        <Label class="text-base font-bold">{t('require_batch')}</Label>
-                        <p class="text-sm text-muted-foreground">{t('require_batch_desc')}</p>
-                    </div>
-                    <ResponsiveSelect
-                            value={torrentConfig.requireBatch == null ? "any" : torrentConfig.requireBatch ? "batch" : "single"}
-                            items={batchOptions}
-                            class="rounded-sm h-11 w-full sm:max-w-md"
-                            onValueChange={handleBatchChange}
-                    />
-                </div>
+                    <SettingRow disabled={selectionOff} label={t('require_batch')} description={t('require_batch_desc')}>
+                        <div class="w-full sm:w-60">
+                            <ResponsiveSelect
+                                    value={torrentConfig.requireBatch == null ? "any" : torrentConfig.requireBatch ? "batch" : "single"}
+                                    items={batchOptions}
+                                    class="rounded-sm h-11"
+                                    onValueChange={handleBatchChange}
+                            />
+                        </div>
+                    </SettingRow>
 
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4 flex-1">
-                        <Label class="text-base font-bold">{t('min_seeders')}</Label>
-                        <p class="text-sm text-muted-foreground">{t('min_seeders_desc')}</p>
-                    </div>
-                    <div class="w-full sm:max-w-md">
+                    <SettingRow disabled={selectionOff} label={t('min_seeders')} description={t('min_seeders_desc')}>
                         <Input
                                 type="number" min="0" step="1"
                                 value={torrentConfig.minSeeders}
                                 onchange={(e) => handleMinSeedersChange(e.currentTarget)}
-                                class="rounded-sm h-11"
+                                disabled={selectionOff}
+                                class="rounded-sm h-11 w-full sm:w-32"
                         />
-                    </div>
-                </div>
+                    </SettingRow>
 
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4 flex-1">
-                        <Label class="text-base font-bold">{t('exclude_keywords')}</Label>
-                        <p class="text-sm text-muted-foreground">{t('exclude_keywords_desc')}</p>
-                    </div>
-                    <div class="w-full sm:max-w-md">
+                    <SettingRow disabled={selectionOff} label={t('exclude_keywords')} description={t('exclude_keywords_desc')}>
                         <Input
                                 value={torrentConfig.excludeKeywords.join(", ")}
                                 onchange={(e) => handleListChange("excludeKeywords", e.currentTarget)}
                                 placeholder="CAM, HDTS, hardsub"
-                                class="rounded-sm h-11"
+                                disabled={selectionOff}
+                                class="rounded-sm h-11 {fieldWidth}"
                         />
-                    </div>
-                </div>
+                    </SettingRow>
 
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4">
-                        <Label class="text-base font-bold" for="fallbackToManual">{t('fallback_to_manual')}</Label>
-                        <p class="text-sm text-muted-foreground">{t('fallback_to_manual_desc')}</p>
-                    </div>
-                    <Switch id="fallbackToManual" bind:checked={torrentConfig.fallbackToManual} onCheckedChange={onSave} class="shrink-0 scale-125" />
+                    <SettingRow
+                            inline
+                            for="fallbackToManual"
+                            disabled={selectionOff}
+                            label={t('fallback_to_manual')}
+                            description={t('fallback_to_manual_desc')}
+                    >
+                        <Switch id="fallbackToManual" bind:checked={torrentConfig.fallbackToManual} disabled={selectionOff} onCheckedChange={onSave} />
+                    </SettingRow>
                 </div>
             {/if}
         </Tabs.Content>
 
         <!-- NETWORK & PLAYBACK -->
         <Tabs.Content value="torrent_network" class="focus-visible:outline-none mt-0">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4 flex-1">
-                    <Label class="text-base font-bold">{t('download_limit')}</Label>
-                    <p class="text-sm text-muted-foreground">{t('download_limit_desc')}</p>
-                </div>
-                <div class="w-full sm:max-w-md flex items-center gap-3">
-                    <Input
-                            type="number" min="0" step="1"
-                            value={torrentConfig.downloadRateLimitKbps ?? ""}
-                            onchange={(e) => handleRateChange("downloadRateLimitKbps", e.currentTarget)}
-                            placeholder={t('unlimited')}
-                            class="rounded-sm h-11"
-                    />
-                    <span class="text-sm text-muted-foreground shrink-0">KB/s</span>
-                </div>
-            </div>
+            {#if activeTab === "torrent_network"}
+                <div in:fly={{ y: 8, duration: 220, easing: cubicOut }}>
+                    <SettingRow label={t('download_limit')} description={t('download_limit_desc')}>
+                        <div class="flex items-center gap-3 w-full sm:w-52">
+                            <Input
+                                    type="number" min="0" step="1"
+                                    value={torrentConfig.downloadRateLimitKbps ?? ""}
+                                    onchange={(e) => handleRateChange("downloadRateLimitKbps", e.currentTarget)}
+                                    placeholder={t('unlimited')}
+                                    class="rounded-sm h-11"
+                            />
+                            <span class="text-sm text-muted-foreground shrink-0 w-9">KB/s</span>
+                        </div>
+                    </SettingRow>
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4 flex-1">
-                    <Label class="text-base font-bold">{t('upload_limit')}</Label>
-                    <p class="text-sm text-muted-foreground">{t('upload_limit_desc')}</p>
-                </div>
-                <div class="w-full sm:max-w-md flex items-center gap-3">
-                    <Input
-                            type="number" min="0" step="1"
-                            value={torrentConfig.uploadRateLimitKbps ?? ""}
-                            onchange={(e) => handleRateChange("uploadRateLimitKbps", e.currentTarget)}
-                            placeholder={t('unlimited')}
-                            class="rounded-sm h-11"
-                    />
-                    <span class="text-sm text-muted-foreground shrink-0">KB/s</span>
-                </div>
-            </div>
+                    <SettingRow label={t('upload_limit')} description={t('upload_limit_desc')}>
+                        <div class="flex items-center gap-3 w-full sm:w-52">
+                            <Input
+                                    type="number" min="0" step="1"
+                                    value={torrentConfig.uploadRateLimitKbps ?? ""}
+                                    onchange={(e) => handleRateChange("uploadRateLimitKbps", e.currentTarget)}
+                                    placeholder={t('unlimited')}
+                                    class="rounded-sm h-11"
+                            />
+                            <span class="text-sm text-muted-foreground shrink-0 w-9">KB/s</span>
+                        </div>
+                    </SettingRow>
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4 flex-1">
-                    <Label class="text-base font-bold">{t('max_concurrent')}</Label>
-                    <p class="text-sm text-muted-foreground">{t('max_concurrent_desc')}</p>
-                </div>
-                <div class="w-full sm:max-w-md">
-                    <Input
-                            type="number" min="1" step="1"
-                            value={torrentConfig.maxConcurrentTorrents}
-                            onchange={(e) => handleMaxConcurrentChange(e.currentTarget)}
-                            class="rounded-sm h-11"
-                    />
-                </div>
-            </div>
+                    <SettingRow label={t('max_concurrent')} description={t('max_concurrent_desc')}>
+                        <Input
+                                type="number" min="1" step="1"
+                                value={torrentConfig.maxConcurrentTorrents}
+                                onchange={(e) => handleMaxConcurrentChange(e.currentTarget)}
+                                class="rounded-sm h-11 w-full sm:w-32"
+                        />
+                    </SettingRow>
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4">
-                    <Label class="text-base font-bold" for="stopSeeding">{t('stop_seeding')}</Label>
-                    <p class="text-sm text-muted-foreground">{t('stop_seeding_desc')}</p>
+                    <SettingRow inline for="stopSeeding" label={t('stop_seeding')} description={t('stop_seeding_desc')}>
+                        <Switch id="stopSeeding" bind:checked={torrentConfig.stopSeedingOnPlaybackEnd} onCheckedChange={onSave} />
+                    </SettingRow>
                 </div>
-                <Switch id="stopSeeding" bind:checked={torrentConfig.stopSeedingOnPlaybackEnd} onCheckedChange={onSave} class="shrink-0 scale-125" />
-            </div>
+            {/if}
         </Tabs.Content>
 
         <!-- STORAGE -->
         <Tabs.Content value="torrent_storage" class="focus-visible:outline-none mt-0">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4 flex-1">
-                    <Label class="text-base font-bold">{t('max_disk_usage')}</Label>
-                    <p class="text-sm text-muted-foreground">{t('max_disk_usage_desc')}</p>
-                </div>
-                <div class="w-full sm:max-w-md flex items-center gap-3">
-                    <Input
-                            type="number" min="1" step="0.5"
-                            value={bytesToGib(torrentConfig.maxDiskUsageBytes)}
-                            onchange={(e) => handleMaxDiskChange(e.currentTarget)}
-                            class="rounded-sm h-11"
-                    />
-                    <span class="text-sm text-muted-foreground shrink-0">GB</span>
-                </div>
-            </div>
+            {#if activeTab === "torrent_storage"}
+                <div in:fly={{ y: 8, duration: 220, easing: cubicOut }}>
+                    <SettingRow label={t('max_disk_usage')} description={t('max_disk_usage_desc')}>
+                        <div class="flex items-center gap-3 w-full sm:w-44">
+                            <Input
+                                    type="number" min="1" step="0.5"
+                                    value={bytesToGib(torrentConfig.maxDiskUsageBytes)}
+                                    onchange={(e) => handleMaxDiskChange(e.currentTarget)}
+                                    class="rounded-sm h-11"
+                            />
+                            <span class="text-sm text-muted-foreground shrink-0 w-7">GB</span>
+                        </div>
+                    </SettingRow>
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4 flex-1">
-                    <Label class="text-base font-bold">{t('min_free_disk')}</Label>
-                    <p class="text-sm text-muted-foreground">{t('min_free_disk_desc')}</p>
-                </div>
-                <div class="w-full sm:max-w-md flex items-center gap-3">
-                    <Input
-                            type="number" min="0" step="0.5"
-                            value={bytesToGib(torrentConfig.minFreeDiskSpaceBytes)}
-                            onchange={(e) => handleMinFreeDiskChange(e.currentTarget)}
-                            class="rounded-sm h-11"
-                    />
-                    <span class="text-sm text-muted-foreground shrink-0">GB</span>
-                </div>
-            </div>
+                    <SettingRow label={t('min_free_disk')} description={t('min_free_disk_desc')}>
+                        <div class="flex items-center gap-3 w-full sm:w-44">
+                            <Input
+                                    type="number" min="0" step="0.5"
+                                    value={bytesToGib(torrentConfig.minFreeDiskSpaceBytes)}
+                                    onchange={(e) => handleMinFreeDiskChange(e.currentTarget)}
+                                    class="rounded-sm h-11"
+                            />
+                            <span class="text-sm text-muted-foreground shrink-0 w-7">GB</span>
+                        </div>
+                    </SettingRow>
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4 flex-1">
-                    <Label class="text-base font-bold">{t('finished_ttl')}</Label>
-                    <p class="text-sm text-muted-foreground">{t('finished_ttl_desc')}</p>
-                </div>
-                <ResponsiveSelect
-                        value={torrentConfig.finishedFileTtlSeconds.toString()}
-                        items={ttlOptions}
-                        class="rounded-sm h-11 w-full sm:max-w-md"
-                        onValueChange={handleTtlChange}
-                />
-            </div>
+                    <SettingRow label={t('finished_ttl')} description={t('finished_ttl_desc')}>
+                        <div class="w-full sm:w-60">
+                            <ResponsiveSelect
+                                    value={torrentConfig.finishedFileTtlSeconds.toString()}
+                                    items={ttlOptions}
+                                    class="rounded-sm h-11"
+                                    onValueChange={handleTtlChange}
+                            />
+                        </div>
+                    </SettingRow>
 
-            <!-- Disk usage overview -->
-            <div class="py-6 border-b border-border/40 space-y-4">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div class="space-y-1">
-                        <Label class="text-base font-bold">{t('storage_used')}</Label>
-                        <p class="text-sm text-muted-foreground">
-                            {#if stats}
-                                {t('storage_of', {
-                                    used: formatBytes(stats.usedBytes),
-                                    limit: formatBytes(torrentConfig.maxDiskUsageBytes)
-                                })}
-                                · {t('disk_free', { size: formatBytes(stats.freeBytes) })}
-                            {:else if loadFailed}
-                                {t('storage_load_failed')}
-                            {:else}
-                                …
-                            {/if}
-                        </p>
-                    </div>
+                    <!-- Disk usage overview -->
+                    <div class="mt-6 rounded-lg border border-border/50 bg-muted/20 p-5 space-y-4">
+                        <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+                            <div class="space-y-0.5 min-w-0">
+                                <p class="text-[15px] font-semibold leading-snug">{t('storage_used')}</p>
+                                <p class="text-sm text-muted-foreground tabular-nums">
+                                    {#if stats}
+                                        {t('storage_of', {
+                                            used: formatBytes(stats.usedBytes),
+                                            limit: formatBytes(torrentConfig.maxDiskUsageBytes)
+                                        })}
+                                        · {t('disk_free', { size: formatBytes(stats.freeBytes) })}
+                                    {:else if loadFailed}
+                                        {t('storage_load_failed')}
+                                    {:else}
+                                        …
+                                    {/if}
+                                </p>
+                            </div>
 
-                    <div class="flex items-center gap-2">
-                        <button
-                                type="button"
-                                class="inline-flex items-center gap-2 rounded-sm border border-border h-10 px-3 text-sm font-medium hover:bg-muted/60 transition-colors disabled:opacity-50"
-                                onclick={refresh}
-                                disabled={loading}
-                        >
-                            <RefreshCw class="size-4 {loading ? 'animate-spin' : ''}" /> {t('refresh')}
-                        </button>
-                        {#if canOpenFolder}
-                            <button
-                                    type="button"
-                                    class="inline-flex items-center gap-2 rounded-sm border border-border h-10 px-3 text-sm font-medium hover:bg-muted/60 transition-colors"
-                                    onclick={handleOpenFolder}
-                            >
-                                <FolderOpen class="size-4" /> {t('open_folder')}
-                            </button>
-                        {/if}
-                        <button
-                                type="button"
-                                class="inline-flex items-center gap-2 rounded-sm border h-10 px-3 text-sm font-medium transition-colors disabled:opacity-50
-                                    {confirmClear
-                                        ? 'border-destructive bg-destructive text-destructive-foreground'
-                                        : 'border-border text-destructive hover:bg-destructive/10'}"
-                                onclick={handleClearClick}
-                                disabled={clearing || entries.length === 0}
-                        >
-                            <Trash2 class="size-4" /> {confirmClear ? t('clear_cache_confirm') : t('clear_cache')}
-                        </button>
-                    </div>
-                </div>
-
-                <div class="h-2 w-full rounded-full bg-muted overflow-hidden">
-                    <div
-                            class="h-full rounded-full transition-all duration-300 {usedPct >= 90 ? 'bg-destructive' : 'bg-primary'}"
-                            style="width: {usedPct}%"
-                    ></div>
-                </div>
-
-                <p class="text-xs text-muted-foreground">{t('clear_cache_desc')}</p>
-
-                {#if actionFailed}
-                    <p class="text-sm text-destructive">{t('storage_action_failed')}</p>
-                {/if}
-            </div>
-
-            <!-- Cached torrents -->
-            <div class="pt-6">
-                <Label class="text-base font-bold">{t('cache_entries', { num: entries.length })}</Label>
-
-                {#if sortedEntries.length === 0}
-                    <p class="text-sm text-muted-foreground py-6">{t('cache_empty')}</p>
-                {:else}
-                    <div class="mt-2">
-                        {#each sortedEntries as entry (entry.key)}
-                            <div class="py-4 border-b border-border/40">
-                                <div class="flex items-center justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button
+                                        type="button"
+                                        class="inline-flex items-center gap-2 rounded-sm border border-border bg-background h-10 px-3 text-sm font-medium hover:bg-muted/60 transition-colors disabled:opacity-50"
+                                        onclick={refresh}
+                                        disabled={loading}
+                                >
+                                    <RefreshCw class="size-4 {loading ? 'animate-spin' : ''}" /> {t('refresh')}
+                                </button>
+                                {#if canOpenFolder}
                                     <button
                                             type="button"
-                                            class="flex items-center gap-2 min-w-0 flex-1 text-left"
-                                            onclick={() => toggleExpanded(entry.key)}
-                                            aria-expanded={!!expanded[entry.key]}
+                                            class="inline-flex items-center gap-2 rounded-sm border border-border bg-background h-10 px-3 text-sm font-medium hover:bg-muted/60 transition-colors"
+                                            onclick={handleOpenFolder}
                                     >
-                                        {#if expanded[entry.key]}
-                                            <ChevronDown class="size-4 shrink-0 text-muted-foreground" />
-                                        {:else}
-                                            <ChevronRight class="size-4 shrink-0 text-muted-foreground" />
-                                        {/if}
-                                        <div class="min-w-0">
-                                            <p class="text-sm font-medium truncate">{entry.name}</p>
-                                            <p class="text-xs text-muted-foreground">
-                                                {formatBytes(entry.sizeBytes)}
-                                                · {t('files_count', { num: entry.files.length })}
-                                                · {t('last_used', { date: formatDate(entry.lastUsedMs) })}
-                                            </p>
-                                        </div>
+                                        <FolderOpen class="size-4" /> {t('open_folder')}
                                     </button>
+                                {/if}
+                                <button
+                                        type="button"
+                                        class="inline-flex items-center gap-2 rounded-sm border h-10 px-3 text-sm font-medium transition-colors disabled:opacity-50
+                                    {confirmClear
+                                        ? 'border-destructive bg-destructive text-destructive-foreground'
+                                        : 'border-border bg-background text-destructive hover:bg-destructive/10'}"
+                                        onclick={handleClearClick}
+                                        disabled={clearing || entries.length === 0}
+                                >
+                                    <Trash2 class="size-4" /> {confirmClear ? t('clear_cache_confirm') : t('clear_cache')}
+                                </button>
+                            </div>
+                        </div>
 
-                                    <span class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold {stateClass(entry.state)}">
+                        <div class="h-2 w-full rounded-full bg-muted overflow-hidden">
+                            <div
+                                    class="h-full rounded-full transition-all duration-500 {usedPct >= 90 ? 'bg-destructive' : 'bg-primary'}"
+                                    style="width: {usedPct}%"
+                            ></div>
+                        </div>
+
+                        <p class="text-xs text-muted-foreground">{t('clear_cache_desc')}</p>
+
+                        {#if actionFailed}
+                            <p class="text-sm text-destructive">{t('storage_action_failed')}</p>
+                        {/if}
+                    </div>
+
+                    <!-- Cached torrents -->
+                    <div class="pt-8">
+                        <p class="text-[15px] font-semibold">{t('cache_entries', { num: entries.length })}</p>
+
+                        {#if sortedEntries.length === 0}
+                            <p class="text-sm text-muted-foreground py-6">{t('cache_empty')}</p>
+                        {:else}
+                            <div class="mt-3 rounded-lg border border-border/50 divide-y divide-border/40 overflow-hidden">
+                                {#each sortedEntries as entry (entry.key)}
+                                    <div class="px-4 py-3">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <button
+                                                    type="button"
+                                                    class="flex items-center gap-2 min-w-0 flex-1 text-left"
+                                                    onclick={() => toggleExpanded(entry.key)}
+                                                    aria-expanded={!!expanded[entry.key]}
+                                            >
+                                                <ChevronRight class="size-4 shrink-0 text-muted-foreground transition-transform duration-200 {expanded[entry.key] ? 'rotate-90' : ''}" />
+                                                <div class="min-w-0">
+                                                    <p class="text-sm font-medium truncate">{entry.name}</p>
+                                                    <p class="text-xs text-muted-foreground">
+                                                        {formatBytes(entry.sizeBytes)}
+                                                        · {t('files_count', { num: entry.files.length })}
+                                                        · {t('last_used', { date: formatDate(entry.lastUsedMs) })}
+                                                    </p>
+                                                </div>
+                                            </button>
+
+                                            <span class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold {stateClass(entry.state)}">
                                         {stateLabel(entry.state)}
                                     </span>
 
-                                    <button
-                                            type="button"
-                                            class="shrink-0 inline-flex items-center justify-center size-9 rounded-sm text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40 disabled:pointer-events-none"
-                                            title={t('delete_entry')}
-                                            aria-label={t('delete_entry')}
-                                            disabled={entry.state === "active" || busyKey === entry.key || clearing}
-                                            onclick={() => deleteEntry(entry.key)}
-                                    >
-                                        <Trash2 class="size-4" />
-                                    </button>
-                                </div>
+                                            <button
+                                                    type="button"
+                                                    class="shrink-0 inline-flex items-center justify-center size-9 rounded-sm text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                                                    title={t('delete_entry')}
+                                                    aria-label={t('delete_entry')}
+                                                    disabled={entry.state === "active" || busyKey === entry.key || clearing}
+                                                    onclick={() => deleteEntry(entry.key)}
+                                            >
+                                                <Trash2 class="size-4" />
+                                            </button>
+                                        </div>
 
-                                {#if expanded[entry.key]}
-                                    <ul class="mt-3 ml-6 space-y-1.5">
-                                        {#each entry.files as file (file.path)}
-                                            <li class="flex items-center justify-between gap-4 text-xs">
-                                                <span class="truncate text-muted-foreground" title={file.path}>{file.path}</span>
-                                                <span class="shrink-0 tabular-nums">{formatBytes(file.size)}</span>
-                                            </li>
-                                        {/each}
-                                    </ul>
-                                {/if}
+                                        {#if expanded[entry.key]}
+                                            <ul class="mt-3 ml-6 space-y-1.5">
+                                                {#each entry.files as file (file.path)}
+                                                    <li class="flex items-center justify-between gap-4 text-xs">
+                                                        <span class="truncate text-muted-foreground" title={file.path}>{file.path}</span>
+                                                        <span class="shrink-0 tabular-nums">{formatBytes(file.size)}</span>
+                                                    </li>
+                                                {/each}
+                                            </ul>
+                                        {/if}
+                                    </div>
+                                {/each}
                             </div>
-                        {/each}
+                        {/if}
                     </div>
-                {/if}
-            </div>
+                </div>
+            {/if}
         </Tabs.Content>
     </Tabs.Root>
-</div>
+</SettingsSection>

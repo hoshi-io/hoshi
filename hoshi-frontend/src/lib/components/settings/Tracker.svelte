@@ -17,6 +17,8 @@
     import { Spinner } from "$lib/components/ui/spinner";
     import type { ListConfig, MergeStrategy } from "@/api/config/types";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
+    import SettingRow from "@/components/settings/parts/SettingRow.svelte";
 
     let {
         config = $bindable(),
@@ -228,65 +230,62 @@
     }
 </script>
 
-<section class="space-y-2 w-full">
-    <div class="mb-6">
-        <h2 class="text-2xl font-bold tracking-tight">{i18n.t('settings.trackers_section.trackers_title')}</h2>
-        <p class="text-sm text-muted-foreground mt-1">{i18n.t('settings.trackers_section.trackers_desc')}</p>
+<SettingsSection
+        title={i18n.t('settings.trackers_section.trackers_title')}
+        description={i18n.t('settings.trackers_section.trackers_desc')}
+>
+    <SettingRow
+            inline
+            for="syncOnStartup"
+            label={i18n.t("settings.trackers_section.sync_startup")}
+            description={i18n.t("settings.trackers_section.sync_startup_desc")}
+    >
+        <Switch id="syncOnStartup" bind:checked={config.syncOnStartup} onCheckedChange={onSave} />
+    </SettingRow>
+
+    <!--
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
+        <div class="space-y-1 pr-4">
+            <Label class="text-base font-bold cursor-pointer" for="privateByDefault">{i18n.t("settings.trackers_section.private")}</Label>
+            <p class="text-sm text-muted-foreground">{i18n.t("settings.trackers_section.private_desc")}</p>
+        </div>
+        <Switch id="privateByDefault" bind:checked={config.privateByDefault} onCheckedChange={onSave} class="shrink-0 scale-125" />
     </div>
 
-    <div class="w-full">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-            <div class="space-y-1 pr-4">
-                <Label class="text-base font-bold cursor-pointer" for="syncOnStartup">{i18n.t("settings.trackers_section.sync_startup")}</Label>
-                <p class="text-sm text-muted-foreground">{i18n.t("settings.trackers_section.sync_startup_desc")}</p>
-            </div>
-            <Switch id="syncOnStartup" bind:checked={config.syncOnStartup} onCheckedChange={onSave} class="shrink-0 scale-125" />
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
+        <div class="space-y-1 pr-4 flex-1">
+            <Label class="text-base font-bold" for="syncIntervalSeconds">{i18n.t("settings.trackers_section.sync_interval")}</Label>
+            <p class="text-sm text-muted-foreground">{i18n.t("settings.trackers_section.sync_interval_desc")}</p>
         </div>
-
-        <!--
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-            <div class="space-y-1 pr-4">
-                <Label class="text-base font-bold cursor-pointer" for="privateByDefault">{i18n.t("settings.trackers_section.private")}</Label>
-                <p class="text-sm text-muted-foreground">{i18n.t("settings.trackers_section.private_desc")}</p>
-            </div>
-            <Switch id="privateByDefault" bind:checked={config.privateByDefault} onCheckedChange={onSave} class="shrink-0 scale-125" />
-        </div>
-
-
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-            <div class="space-y-1 pr-4 flex-1">
-                <Label class="text-base font-bold" for="syncIntervalSeconds">{i18n.t("settings.trackers_section.sync_interval")}</Label>
-                <p class="text-sm text-muted-foreground">{i18n.t("settings.trackers_section.sync_interval_desc")}</p>
-            </div>
-            <div class="w-full sm:max-w-[200px]">
-                <Input
-                        id="syncIntervalSeconds"
-                        type="number"
-                        min="60"
-                        bind:value={config.syncIntervalSeconds}
-                        onchange={onSave}
-                        class="rounded-sm h-11 text-right w-full"
-                />
-            </div>
-        </div>
-                -->
-
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6">
-            <div class="space-y-1 pr-4 flex-1">
-                <Label class="text-base font-bold" for="mergeStrategy">{i18n.t("settings.trackers_section.conflict_strategy")}</Label>
-                <p class="text-sm text-muted-foreground">{i18n.t("settings.trackers_section.conflict_strategy_desc")}</p>
-            </div>
-            <div class="w-full sm:max-w-[240px]">
-                <ResponsiveSelect
-                        items={mergeStrategies}
-                        bind:value={config.mergeStrategy}
-                        onValueChange={onSave}
-                        placeholder="Select strategy..."
-                        class="h-11 rounded-sm bg-muted/20 border-transparent hover:bg-muted/30 font-medium text-sm text-foreground transition-colors"
-                />
-            </div>
+        <div class="w-full sm:max-w-[200px]">
+            <Input
+                    id="syncIntervalSeconds"
+                    type="number"
+                    min="60"
+                    bind:value={config.syncIntervalSeconds}
+                    onchange={onSave}
+                    class="rounded-sm h-11 text-right w-full"
+            />
         </div>
     </div>
+            -->
+
+    <SettingRow
+            label={i18n.t("settings.trackers_section.conflict_strategy")}
+            description={i18n.t("settings.trackers_section.conflict_strategy_desc")}
+    >
+        <div class="w-full sm:w-60">
+            <ResponsiveSelect
+                    items={mergeStrategies}
+                    bind:value={config.mergeStrategy}
+                    onValueChange={onSave}
+                    placeholder="Select strategy..."
+                    class="h-11 rounded-sm bg-muted/20 border-transparent hover:bg-muted/30 font-medium text-sm text-foreground transition-colors"
+            />
+        </div>
+    </SettingRow>
+
     {#if loading}
         <div in:fade class="flex justify-center py-12 text-muted-foreground border-b border-border/40">
             <Spinner class="h-8 w-8 text-primary" />
@@ -315,7 +314,7 @@
 
                             <div class="min-w-0 space-y-1">
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <Label class="text-base font-bold capitalize text-foreground">
+                                    <Label class="text-[15px] font-semibold capitalize text-foreground">
                                         {tracker.connected && tracker.displayName_user ? tracker.displayName_user : tracker.displayName}
                                     </Label>
                                 </div>
@@ -393,7 +392,7 @@
             {/each}
         </div>
     {/if}
-</section>
+</SettingsSection>
 
 <Dialog.Root bind:open={showAddTrackerDialog}>
     <Dialog.Content class="sm:max-w-md sm:rounded-sm">

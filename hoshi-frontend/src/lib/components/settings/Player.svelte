@@ -1,13 +1,18 @@
 <script lang="ts">
     import * as Tabs from "$lib/components/ui/tabs";
     import { Switch } from "$lib/components/ui/switch";
-    import { Label } from "$lib/components/ui/label";
     import { Input } from "$lib/components/ui/input";
     import type { PlayerConfig, SubtitleConfig } from "@/api/config/types";
     import { i18n } from "@/stores/i18n.svelte.js";
-    import { Play, Captions } from "lucide-svelte";
+    import { fly } from "svelte/transition";
+    import { cubicOut } from "svelte/easing";
     import { platform } from "@tauri-apps/plugin-os";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
+    import SettingRow from "@/components/settings/parts/SettingRow.svelte";
+    import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
+    import SettingSlider from "@/components/settings/parts/SettingSlider.svelte";
+    import ColorInput from "@/components/settings/parts/ColorInput.svelte";
     import * as Kbd from "$lib/components/ui/kbd";
     import {openUrl} from "@tauri-apps/plugin-opener";
 
@@ -154,305 +159,347 @@
         subConfig.justify = val as "auto" | "left" | "center" | "right";
         onSave();
     }
+
+    // ------------------------------------------------------------------ layout
+
+    let activeTab = $state("player_general");
+
+    const tabs = [
+        { id: "player_general", label: () => i18n.t("settings.general") },
+        { id: "player_thumbnails", label: () => i18n.t("settings.player_section.thumbnails") },
+        { id: "player_subtitles", label: () => i18n.t("watch.settings.subtitles") }
+    ];
+
+    const fieldWidth = "w-full sm:w-64";
+
+    // subtitle grid cells
+    // cell: label on top, control below (selects, segmented controls, inputs)
+    // cellRow: label left, control right (sliders, colors, switches)
+    const cell = "flex flex-col justify-between gap-3 rounded-xl border border-border/50 bg-muted/10 p-4";
+    const cellRow = "flex items-center justify-between gap-4 rounded-xl border border-border/50 bg-muted/10 p-4";
+    const cellLabel = "text-sm font-medium";
+    const cellDesc = "mt-0.5 text-xs text-muted-foreground";
+
+    const anime4kOff = $derived(playerConfig.anime4kTier === "off");
+    const thumbsOff = $derived(!playerConfig.thumbnailsEnabled);
 </script>
 
-<div class="space-y-6">
-    <div>
-        <h2 class="text-2xl font-bold tracking-tight">{i18n.t('settings.player')}</h2>
-        <p class="text-sm text-muted-foreground mt-1">{i18n.t('settings.player_section.player_desc')}</p>
-    </div>
+{#snippet groupHeader(title: string)}
+    <h4 class="px-1 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {title}
+    </h4>
+{/snippet}
 
-    <Tabs.Root value="player_general" class="w-full">
-        <Tabs.List class="grid w-full max-w-[400px] grid-cols-2 rounded-sm h-11 p-1 bg-muted/50">
-            <Tabs.Trigger value="player_general" class="rounded-lg font-bold flex items-center gap-2">
-                <Play class="size-4" /> {i18n.t("settings.general")}
-            </Tabs.Trigger>
-            <Tabs.Trigger value="player_subtitles" class="rounded-lg font-bold flex items-center gap-2">
-                <Captions class="size-4" /> {i18n.t("watch.settings.subtitles")}
-            </Tabs.Trigger>
-        </Tabs.List>
+{#snippet anime4kLink()}
+    <button
+            type="button"
+            class="underline hover:text-foreground transition-colors"
+            onclick={() => openUrl('https://github.com/bloc97/Anime4K')}
+    >
+        {i18n.t('settings.player_section.anime4k_learn_more')}
+    </button>
+{/snippet}
 
-        <!-- GENERAL PLAYER CONFIG -->
-        <Tabs.Content value="player_general" class="focus-visible:outline-none mt-0">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4 flex-1">
-                    <Label class="text-base font-bold">{i18n.t('settings.player_section.preferred_sub_lang')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.preferred_sub_lang_desc')}</p>
-                </div>
-                <div class="w-full sm:max-w-md">
-                    <Input bind:value={playerConfig.preferredSubLang} onchange={onSave} placeholder="en, es, ja" class="rounded-sm h-11" />
-                </div>
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4 flex-1">
-                    <Label class="text-base font-bold">{i18n.t('settings.player_section.preferred_dub_lang')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.preferred_dub_lang_desc')}</p>
-                </div>
-                <div class="w-full sm:max-w-md">
-                    <Input bind:value={playerConfig.preferredDubLang} onchange={onSave} placeholder="ja, en" class="rounded-sm h-11" />
-                </div>
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4">
-                    <Label class="text-base font-bold">{i18n.t('settings.player_section.seek_step')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.seek_step_desc')}</p>
-                </div>
-                <ResponsiveSelect value={playerConfig.seekStep.toString()} items={seekSteps} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleSeekStepChange} />
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4">
-                    <Label class="text-base font-bold" for="autoNext">{i18n.t('settings.player_section.autoplay')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.autoplay_desc')}</p>
-                </div>
-                <Switch id="autoNext" bind:checked={playerConfig.autoplayNextEpisode} onCheckedChange={onSave} class="shrink-0 scale-125" />
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4">
-                    <Label class="text-base font-bold" for="resumeFromLastPos">{i18n.t('settings.player_section.resume_playback')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.resume_playback_desc')}</p>
-                </div>
-                <Switch id="resumeFromLastPos" bind:checked={playerConfig.resumeFromLastPos} onCheckedChange={onSave} class="shrink-0 scale-125" />
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4">
-                    <Label class="text-base font-bold" for="autoSkipIntro">{i18n.t('settings.player_section.auto_skip_intro')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.auto_skip_intro_desc')}</p>
-                </div>
-                <Switch id="autoSkipIntro" bind:checked={playerConfig.autoSkipIntro} onCheckedChange={onSave} class="shrink-0 scale-125" />
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4">
-                    <Label class="text-base font-bold" for="autoSkipOutro">{i18n.t('settings.player_section.auto_skip_outro')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.auto_skip_outro_desc')}</p>
-                </div>
-                <Switch id="autoSkipOutro" bind:checked={playerConfig.autoSkipOutro} onCheckedChange={onSave} class="shrink-0 scale-125" />
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4 flex-1">
-                    <Label class="text-base font-bold">{i18n.t('settings.player_section.hwdec')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.hwdec_desc')}</p>
-                </div>
-                <ResponsiveSelect value={playerConfig.hwdec} items={hwdecOptions} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleHwdecChange} />
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4 flex-1">
-                    <Label class="text-base font-bold">{i18n.t('settings.player_section.scale_algorithm')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.scale_algorithm_desc')}</p>
-                </div>
-                <ResponsiveSelect value={playerConfig.scaleAlgorithm} items={scaleOptions} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleScaleChange} />
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4">
-                    <Label class="text-base font-bold" for="interpolation">{i18n.t('settings.player_section.interpolation')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.interpolation_desc')}</p>
-                </div>
-                <Switch id="interpolation" bind:checked={playerConfig.interpolation} onCheckedChange={onSave} class="shrink-0 scale-125" />
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4">
-                    <Label class="text-base font-bold" for="deband">{i18n.t('settings.player_section.deband')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.deband_desc')}</p>
-                </div>
-                <Switch id="deband" bind:checked={playerConfig.deband} onCheckedChange={onSave} class="shrink-0 scale-125" />
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4 flex-1">
-                    <Label class="text-base font-bold">{i18n.t('settings.player_section.anime4k')}</Label>
-                    <p class="text-sm text-muted-foreground">
-                        {i18n.t('settings.player_section.anime4k_desc')}
-                        <button
-                                type="button"
-                                class="underline hover:text-foreground transition-colors"
-                                onclick={() => openUrl('https://github.com/bloc97/Anime4K')}
-                        >
-                            {i18n.t('settings.player_section.anime4k_learn_more')}
-                        </button>
-                    </p>
-                </div>
-                <ResponsiveSelect value={playerConfig.anime4kTier} items={anime4kTierOptions} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleAnime4kTierChange} />
-            </div>
-
-            {#if playerConfig.anime4kTier !== "off"}
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4 flex-1">
-                        <Label class="text-base font-bold">{i18n.t('settings.player_section.anime4k_mode')}</Label>
-                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.anime4k_mode_desc')}</p>
-                    </div>
-                    <ResponsiveSelect value={playerConfig.anime4kMode} items={anime4kModeOptions} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleAnime4kModeChange} />
-                </div>
-            {/if}
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                <div class="space-y-1 pr-4">
-                    <Label class="text-base font-bold" for="thumbnailsEnabled">{i18n.t('settings.player_section.thumbnails')}</Label>
-                    <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.thumbnails_desc')}</p>
-                </div>
-                <Switch id="thumbnailsEnabled" bind:checked={playerConfig.thumbnailsEnabled} onCheckedChange={onSave} class="shrink-0 scale-125" />
-            </div>
-
-            {#if playerConfig.thumbnailsEnabled}
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4 flex-1">
-                        <Label class="text-base font-bold">{i18n.t('settings.player_section.thumb_interval')}</Label>
-                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.thumb_interval_desc')}</p>
-                    </div>
-                    <ResponsiveSelect value={playerConfig.thumbnailIntervalSeconds.toString()} items={thumbIntervalOptions} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleThumbIntervalChange} />
-                </div>
-
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4 flex-1">
-                        <Label class="text-base font-bold">{i18n.t('settings.player_section.thumb_size')}</Label>
-                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.thumb_size_desc')}</p>
-                    </div>
-                    <ResponsiveSelect value={playerConfig.thumbnailWidth.toString()} items={thumbWidthOptions} class="rounded-sm h-11 w-full sm:max-w-md" onValueChange={handleThumbWidthChange} />
-                </div>
-
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4">
-                        <Label class="text-base font-bold" for="thumbnailHls">{i18n.t('settings.player_section.thumb_hls')}</Label>
-                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.thumb_hls_desc')}</p>
-                    </div>
-                    <Switch id="thumbnailHls" bind:checked={playerConfig.thumbnailHls} onCheckedChange={onSave} class="shrink-0 scale-125" />
-                </div>
-
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-                    <div class="space-y-1 pr-4">
-                        <Label class="text-base font-bold" for="thumbnailTorrent">{i18n.t('settings.player_section.thumb_torrent')}</Label>
-                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.thumb_torrent_desc')}</p>
-                    </div>
-                    <Switch id="thumbnailTorrent" bind:checked={playerConfig.thumbnailTorrent} onCheckedChange={onSave} class="shrink-0 scale-125" />
-                </div>
-
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6">
-                    <div class="space-y-1 pr-4">
-                        <Label class="text-base font-bold" for="thumbnailPreciseSeek">{i18n.t('settings.player_section.thumb_precise')}</Label>
-                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.thumb_precise_desc')}</p>
-                    </div>
-                    <Switch id="thumbnailPreciseSeek" bind:checked={playerConfig.thumbnailPreciseSeek} onCheckedChange={onSave} class="shrink-0 scale-125" />
-                </div>
-            {/if}
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 border-t border-border/40 mt-2">
-                {#each keyboardShortcuts as shortcut}
-                    <div class="flex items-center justify-between py-4 border-b border-border/40">
-                        <div class="flex flex-col gap-0.5">
-                            <span class="text-sm font-medium">{shortcut.label}</span>
-                        </div>
-                        <Kbd.Group>
-                            {#each shortcut.keys as key, i}
-                                <Kbd.Root>{key}</Kbd.Root>
-                                {#if i < shortcut.keys.length - 1}
-                                    <span class="text-xs text-muted-foreground/50 mx-1">/</span>
-                                {/if}
-                            {/each}
-                        </Kbd.Group>
-                    </div>
+<SettingsSection variant="bare" title={i18n.t('settings.player')} description={i18n.t('settings.player_section.player_desc')}>
+    <Tabs.Root bind:value={activeTab} class="w-full">
+        <div class="pt-1 pb-4">
+            <Tabs.List class="flex w-full sm:inline-flex sm:w-auto h-auto gap-1 p-1 rounded-lg bg-muted/50">
+                {#each tabs as tab (tab.id)}
+                    <Tabs.Trigger
+                            value={tab.id}
+                            class="flex-1 sm:flex-none h-9 min-w-0 px-5 rounded-md text-sm font-semibold text-muted-foreground
+                                   transition-all duration-200 hover:text-foreground
+                                   data-[state=active]:bg-background data-[state=active]:text-foreground
+                                   data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-border/60
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    >
+                        <span class="truncate">{tab.label()}</span>
+                    </Tabs.Trigger>
                 {/each}
-            </div>
+            </Tabs.List>
+        </div>
+
+        <!-- GENERAL -->
+        <Tabs.Content value="player_general" class="focus-visible:outline-none mt-0">
+            {#if activeTab === "player_general"}
+                <div in:fly={{ y: 8, duration: 220, easing: cubicOut }} class="space-y-4">
+                    <!-- Playback -->
+                    <div>
+                        <SettingRow label={i18n.t('settings.player_section.preferred_sub_lang')} description={i18n.t('settings.player_section.preferred_sub_lang_desc')}>
+                            <Input bind:value={playerConfig.preferredSubLang} onchange={onSave} placeholder="en, es, ja" class="rounded-sm h-11 {fieldWidth}" />
+                        </SettingRow>
+
+                        <SettingRow label={i18n.t('settings.player_section.preferred_dub_lang')} description={i18n.t('settings.player_section.preferred_dub_lang_desc')}>
+                            <Input bind:value={playerConfig.preferredDubLang} onchange={onSave} placeholder="ja, en" class="rounded-sm h-11 {fieldWidth}" />
+                        </SettingRow>
+
+                        <SettingRow label={i18n.t('settings.player_section.seek_step')} description={i18n.t('settings.player_section.seek_step_desc')}>
+                            <SegmentedControl
+                                    label={i18n.t('settings.player_section.seek_step')}
+                                    value={playerConfig.seekStep.toString()}
+                                    options={seekSteps}
+                                    onValueChange={handleSeekStepChange}
+                            />
+                        </SettingRow>
+
+                        <SettingRow inline for="autoNext" label={i18n.t('settings.player_section.autoplay')} description={i18n.t('settings.player_section.autoplay_desc')}>
+                            <Switch id="autoNext" bind:checked={playerConfig.autoplayNextEpisode} onCheckedChange={onSave} />
+                        </SettingRow>
+
+                        <SettingRow inline for="resumeFromLastPos" label={i18n.t('settings.player_section.resume_playback')} description={i18n.t('settings.player_section.resume_playback_desc')}>
+                            <Switch id="resumeFromLastPos" bind:checked={playerConfig.resumeFromLastPos} onCheckedChange={onSave} />
+                        </SettingRow>
+
+                        <SettingRow inline for="autoSkipIntro" label={i18n.t('settings.player_section.auto_skip_intro')} description={i18n.t('settings.player_section.auto_skip_intro_desc')}>
+                            <Switch id="autoSkipIntro" bind:checked={playerConfig.autoSkipIntro} onCheckedChange={onSave} />
+                        </SettingRow>
+
+                        <SettingRow inline for="autoSkipOutro" label={i18n.t('settings.player_section.auto_skip_outro')} description={i18n.t('settings.player_section.auto_skip_outro_desc')}>
+                            <Switch id="autoSkipOutro" bind:checked={playerConfig.autoSkipOutro} onCheckedChange={onSave} />
+                        </SettingRow>
+                    </div>
+
+                    <!-- Video -->
+                    <div>
+                        <SettingRow label={i18n.t('settings.player_section.hwdec')} description={i18n.t('settings.player_section.hwdec_desc')}>
+                            <div class="w-full sm:w-60">
+                                <ResponsiveSelect value={playerConfig.hwdec} items={hwdecOptions} class="rounded-sm h-11" onValueChange={handleHwdecChange} />
+                            </div>
+                        </SettingRow>
+
+                        <SettingRow label={i18n.t('settings.player_section.scale_algorithm')} description={i18n.t('settings.player_section.scale_algorithm_desc')}>
+                            <SegmentedControl
+                                    label={i18n.t('settings.player_section.scale_algorithm')}
+                                    value={playerConfig.scaleAlgorithm}
+                                    options={scaleOptions}
+                                    onValueChange={handleScaleChange}
+                            />
+                        </SettingRow>
+
+                        <SettingRow inline for="interpolation" label={i18n.t('settings.player_section.interpolation')} description={i18n.t('settings.player_section.interpolation_desc')}>
+                            <Switch id="interpolation" bind:checked={playerConfig.interpolation} onCheckedChange={onSave} />
+                        </SettingRow>
+
+                        <SettingRow inline for="deband" label={i18n.t('settings.player_section.deband')} description={i18n.t('settings.player_section.deband_desc')}>
+                            <Switch id="deband" bind:checked={playerConfig.deband} onCheckedChange={onSave} />
+                        </SettingRow>
+
+                        <SettingRow label={i18n.t('settings.player_section.anime4k')} description={i18n.t('settings.player_section.anime4k_desc')} extra={anime4kLink}>
+                            <SegmentedControl
+                                    label={i18n.t('settings.player_section.anime4k')}
+                                    value={playerConfig.anime4kTier}
+                                    options={anime4kTierOptions}
+                                    onValueChange={handleAnime4kTierChange}
+                            />
+                        </SettingRow>
+
+                        <SettingRow disabled={anime4kOff} label={i18n.t('settings.player_section.anime4k_mode')} description={i18n.t('settings.player_section.anime4k_mode_desc')}>
+                            <SegmentedControl
+                                    label={i18n.t('settings.player_section.anime4k_mode')}
+                                    value={playerConfig.anime4kMode}
+                                    options={anime4kModeOptions}
+                                    onValueChange={handleAnime4kModeChange}
+                            />
+                        </SettingRow>
+                    </div>
+
+                    <!-- Keyboard shortcuts -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 px-5 py-2 rounded-xl border border-border/50 bg-muted/10">
+                        {#each keyboardShortcuts as shortcut}
+                            <div class="flex items-center justify-between gap-4 py-2.5">
+                                <span class="text-sm font-medium">{shortcut.label}</span>
+                                <Kbd.Group>
+                                    {#each shortcut.keys as key, i}
+                                        <Kbd.Root>{key}</Kbd.Root>
+                                        {#if i < shortcut.keys.length - 1}
+                                            <span class="text-xs text-muted-foreground/50 mx-1">/</span>
+                                        {/if}
+                                    {/each}
+                                </Kbd.Group>
+                            </div>
+                        {/each}
+                    </div>
+                </div>
+            {/if}
         </Tabs.Content>
 
-        <!-- SUBTITLE CONFIG -->
+        <!-- THUMBNAILS -->
+        <Tabs.Content value="player_thumbnails" class="focus-visible:outline-none mt-0">
+            {#if activeTab === "player_thumbnails"}
+                <div in:fly={{ y: 8, duration: 220, easing: cubicOut }}>
+                    <SettingRow inline for="thumbnailsEnabled" label={i18n.t('settings.player_section.thumbnails')} description={i18n.t('settings.player_section.thumbnails_desc')}>
+                        <Switch id="thumbnailsEnabled" bind:checked={playerConfig.thumbnailsEnabled} onCheckedChange={onSave} />
+                    </SettingRow>
+
+                    <SettingRow disabled={thumbsOff} label={i18n.t('settings.player_section.thumb_interval')} description={i18n.t('settings.player_section.thumb_interval_desc')}>
+                        <SegmentedControl
+                                label={i18n.t('settings.player_section.thumb_interval')}
+                                value={playerConfig.thumbnailIntervalSeconds.toString()}
+                                options={thumbIntervalOptions}
+                                onValueChange={handleThumbIntervalChange}
+                        />
+                    </SettingRow>
+
+                    <SettingRow disabled={thumbsOff} label={i18n.t('settings.player_section.thumb_size')} description={i18n.t('settings.player_section.thumb_size_desc')}>
+                        <SegmentedControl
+                                label={i18n.t('settings.player_section.thumb_size')}
+                                value={playerConfig.thumbnailWidth.toString()}
+                                options={thumbWidthOptions}
+                                onValueChange={handleThumbWidthChange}
+                        />
+                    </SettingRow>
+
+                    <SettingRow inline for="thumbnailHls" disabled={thumbsOff} label={i18n.t('settings.player_section.thumb_hls')} description={i18n.t('settings.player_section.thumb_hls_desc')}>
+                        <Switch id="thumbnailHls" bind:checked={playerConfig.thumbnailHls} disabled={thumbsOff} onCheckedChange={onSave} />
+                    </SettingRow>
+
+                    <SettingRow inline for="thumbnailTorrent" disabled={thumbsOff} label={i18n.t('settings.player_section.thumb_torrent')} description={i18n.t('settings.player_section.thumb_torrent_desc')}>
+                        <Switch id="thumbnailTorrent" bind:checked={playerConfig.thumbnailTorrent} disabled={thumbsOff} onCheckedChange={onSave} />
+                    </SettingRow>
+
+                    <SettingRow inline for="thumbnailPreciseSeek" disabled={thumbsOff} label={i18n.t('settings.player_section.thumb_precise')} description={i18n.t('settings.player_section.thumb_precise_desc')}>
+                        <Switch id="thumbnailPreciseSeek" bind:checked={playerConfig.thumbnailPreciseSeek} disabled={thumbsOff} onCheckedChange={onSave} />
+                    </SettingRow>
+                </div>
+            {/if}
+        </Tabs.Content>
+
+        <!-- SUBTITLES -->
         <Tabs.Content value="player_subtitles" class="focus-visible:outline-none mt-0">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 py-4">
-                <div class="flex flex-col gap-2">
-                    <Label class="text-sm font-bold">{i18n.t('settings.player_section.sub_font')}</Label>
-                    <p class="text-xs text-muted-foreground">{i18n.t('settings.player_section.sub_font_desc')}</p>
-                    <ResponsiveSelect value={subConfig.font} items={fontOptions} class="rounded-sm h-10 w-full" onValueChange={handleFontChange} />
-                </div>
+            {#if activeTab === "player_subtitles"}
+                <div in:fly={{ y: 8, duration: 220, easing: cubicOut }} class="space-y-6">
+                    <!-- Text -->
+                    <div>
+                        {@render groupHeader(i18n.t('settings.player_section.sub_group_text'))}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class={cell}>
+                                <div>
+                                    <div class={cellLabel}>{i18n.t('settings.player_section.sub_font')}</div>
+                                    <p class={cellDesc}>{i18n.t('settings.player_section.sub_font_desc')}</p>
+                                </div>
+                                <ResponsiveSelect value={subConfig.font} items={fontOptions} class="rounded-sm h-11 w-full" onValueChange={handleFontChange} />
+                            </div>
 
-                <div class="flex flex-col gap-2">
-                    <Label class="text-sm font-bold">{i18n.t('settings.player_section.sub_font_size')}</Label>
-                    <p class="text-xs text-muted-foreground">{i18n.t('settings.player_section.sub_font_size_desc')}</p>
-                    <ResponsiveSelect value={subConfig.fontSize.toString()} items={fontSizeOptions} class="rounded-sm h-10 w-full" onValueChange={handleFontSizeChange} />
-                </div>
+                            <div class={cell}>
+                                <div>
+                                    <div class={cellLabel}>{i18n.t('settings.player_section.sub_font_size')}</div>
+                                    <p class={cellDesc}>{i18n.t('settings.player_section.sub_font_size_desc')}</p>
+                                </div>
+                                <SegmentedControl
+                                        label={i18n.t('settings.player_section.sub_font_size')}
+                                        class="self-start"
+                                        value={subConfig.fontSize.toString()}
+                                        options={fontSizeOptions}
+                                        onValueChange={handleFontSizeChange}
+                                />
+                            </div>
 
-                <div class="flex flex-col gap-1">
-                    <div class="flex items-center justify-between">
-                        <Label class="text-sm font-bold">{i18n.t('settings.player_section.sub_color')}</Label>
-                        <input type="color" bind:value={subConfig.color} onchange={onSave} class="w-10 h-10 rounded bg-transparent cursor-pointer" />
+                            <div class="{cellRow}">
+                                <div class="min-w-0">
+                                    <div class={cellLabel}>{i18n.t('settings.player_section.sub_scale')}</div>
+                                </div>
+                                <SettingSlider bind:value={subConfig.scale} min={0.5} max={2} step={0.05} format={(v) => `${v.toFixed(2)}×`} oncommit={onSave} />
+                            </div>
+                            <div class="{cellRow}">
+                                <div class="min-w-0">
+                                    <div class={cellLabel}>{i18n.t('settings.player_section.sub_color')}</div>
+                                    <p class={cellDesc}>{i18n.t('settings.player_section.sub_color_desc')}</p>
+                                </div>
+                                <ColorInput bind:value={subConfig.color} onchange={onSave} label={i18n.t('settings.player_section.sub_color')} />
+                            </div>
+                        </div>
                     </div>
-                    <p class="text-xs text-muted-foreground">{i18n.t('settings.player_section.sub_color_desc')}</p>
-                </div>
 
-                <div class="flex items-center justify-between py-2">
-                    <Label class="text-sm font-bold">{i18n.t('settings.player_section.sub_border_color')}</Label>
-                    <input type="color" bind:value={subConfig.borderColor} onchange={onSave} class="w-10 h-10 rounded bg-transparent cursor-pointer" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <Label class="text-sm font-bold">{i18n.t('settings.player_section.sub_border_size')}</Label>
-                    <input type="range" min="0" max="10" step="0.5" bind:value={subConfig.borderSize} oninput={onSave} class="w-full accent-primary" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <Label class="text-sm font-bold">{i18n.t('settings.player_section.sub_scale')}</Label>
-                    <input type="range" min="0.5" max="2" step="0.05" bind:value={subConfig.scale} oninput={onSave} class="w-full accent-primary" />
-                </div>
-
-                <div class="flex items-center justify-between py-2">
-                    <Label class="text-sm font-bold">{i18n.t('settings.player_section.sub_shadow_color')}</Label>
-                    <input type="color" bind:value={subConfig.shadowColor} onchange={onSave} class="w-10 h-10 rounded bg-transparent cursor-pointer" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <Label class="text-sm font-bold">{i18n.t('settings.player_section.sub_shadow_offset')}</Label>
-                    <input type="range" min="0" max="10" step="0.5" bind:value={subConfig.shadowOffset} oninput={onSave} class="w-full accent-primary" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <Label class="text-sm font-bold">{i18n.t('settings.player_section.sub_position')}</Label>
-                    <p class="text-xs text-muted-foreground">{i18n.t('settings.player_section.sub_position_desc')}</p>
-                    <input type="range" min="0" max="100" step="1" bind:value={subConfig.position} oninput={onSave} class="w-full accent-primary" />
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <Label class="text-sm font-bold">{i18n.t('settings.player_section.sub_delay')}</Label>
-                    <Input type="number" bind:value={subConfig.delay} onchange={onSave} class="rounded-sm h-10" />
-                </div>
-
-                <div class="flex flex-col gap-2 md:col-span-2">
-                    <Label class="text-sm font-bold">{i18n.t('settings.player_section.sub_justify')}</Label>
-                    <ResponsiveSelect value={subConfig.justify} items={alignmentOptions} class="rounded-sm h-10 w-full" onValueChange={handleAlignmentChange} />
-                </div>
-            </div>
-
-            <div class="mt-4 space-y-2 border-t border-border/40 pt-4">
-                <div class="flex items-center justify-between py-4 border-b border-border/40">
-                    <div class="space-y-1 pr-4">
-                        <Label class="text-base font-bold" for="forceStyle">{i18n.t('settings.player_section.sub_force_style')}</Label>
-                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.sub_force_style_desc')}</p>
+                    <!-- Outline & shadow -->
+                    <div>
+                        {@render groupHeader(i18n.t('settings.player_section.sub_group_outline'))}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="{cellRow}">
+                                <div class="min-w-0">
+                                    <div class={cellLabel}>{i18n.t('settings.player_section.sub_border_color')}</div>
+                                </div>
+                                <ColorInput bind:value={subConfig.borderColor} onchange={onSave} label={i18n.t('settings.player_section.sub_border_color')} />
+                            </div>
+                            <div class="{cellRow}">
+                                <div class="min-w-0">
+                                    <div class={cellLabel}>{i18n.t('settings.player_section.sub_border_size')}</div>
+                                </div>
+                                <SettingSlider bind:value={subConfig.borderSize} min={0} max={10} step={0.5} oncommit={onSave} />
+                            </div>
+                            <div class="{cellRow}">
+                                <div class="min-w-0">
+                                    <div class={cellLabel}>{i18n.t('settings.player_section.sub_shadow_color')}</div>
+                                </div>
+                                <ColorInput bind:value={subConfig.shadowColor} onchange={onSave} label={i18n.t('settings.player_section.sub_shadow_color')} />
+                            </div>
+                            <div class="{cellRow}">
+                                <div class="min-w-0">
+                                    <div class={cellLabel}>{i18n.t('settings.player_section.sub_shadow_offset')}</div>
+                                </div>
+                                <SettingSlider bind:value={subConfig.shadowOffset} min={0} max={10} step={0.5} oncommit={onSave} />
+                            </div>
+                        </div>
                     </div>
-                    <Switch id="forceStyle" bind:checked={subConfig.forceStyle} onCheckedChange={onSave} class="shrink-0 scale-125" />
-                </div>
 
-                <div class="flex items-center justify-between py-4 border-b border-border/40">
-                    <div class="space-y-1 pr-4">
-                        <Label class="text-base font-bold" for="sdhFilter">{i18n.t('settings.player_section.sub_sdh_filter')}</Label>
-                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.sub_sdh_filter_desc')}</p>
-                    </div>
-                    <Switch id="sdhFilter" bind:checked={subConfig.sdhFilter} onCheckedChange={onSave} class="shrink-0 scale-125" />
-                </div>
+                    <!-- Placement & timing -->
+                    <div>
+                        {@render groupHeader(i18n.t('settings.player_section.sub_group_placement'))}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class={cell}>
+                                <div class={cellLabel}>{i18n.t('settings.player_section.sub_justify')}</div>
+                                <SegmentedControl
+                                        label={i18n.t('settings.player_section.sub_justify')}
+                                        class="self-start"
+                                        value={subConfig.justify}
+                                        options={alignmentOptions}
+                                        onValueChange={handleAlignmentChange}
+                                />
+                            </div>
 
-                <div class="flex items-center justify-between py-4 border-b border-border/40">
-                    <div class="space-y-1 pr-4">
-                        <Label class="text-base font-bold" for="sdhFilterHarder">{i18n.t('settings.player_section.sub_sdh_filter_harder')}</Label>
-                        <p class="text-sm text-muted-foreground">{i18n.t('settings.player_section.sub_sdh_filter_harder_desc')}</p>
+                            <div class={cell}>
+                                <div class={cellLabel}>{i18n.t('settings.player_section.sub_delay')}</div>
+                                <Input type="number" bind:value={subConfig.delay} onchange={onSave} class="rounded-sm h-11 w-full" />
+                            </div>
+
+                            <div class="{cellRow} md:col-span-2">
+                                <div class="min-w-0">
+                                    <div class={cellLabel}>{i18n.t('settings.player_section.sub_position')}</div>
+                                    <p class={cellDesc}>{i18n.t('settings.player_section.sub_position_desc')}</p>
+                                </div>
+                                <SettingSlider bind:value={subConfig.position} min={0} max={100} step={1} oncommit={onSave} />
+                            </div>
+                        </div>
                     </div>
-                    <Switch id="sdhFilterHarder" bind:checked={subConfig.sdhFilterHarder} onCheckedChange={onSave} class="shrink-0 scale-125" />
+
+                    <!-- Behavior -->
+                    <div>
+                        {@render groupHeader(i18n.t('settings.player_section.sub_group_behavior'))}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="{cellRow} md:col-span-2">
+                                <div class="min-w-0">
+                                    <label for="forceStyle" class={cellLabel}>{i18n.t('settings.player_section.sub_force_style')}</label>
+                                    <p class={cellDesc}>{i18n.t('settings.player_section.sub_force_style_desc')}</p>
+                                </div>
+                                <Switch id="forceStyle" bind:checked={subConfig.forceStyle} onCheckedChange={onSave} />
+                            </div>
+                            <div class={cellRow}>
+                                <div class="min-w-0">
+                                    <label for="sdhFilter" class={cellLabel}>{i18n.t('settings.player_section.sub_sdh_filter')}</label>
+                                    <p class={cellDesc}>{i18n.t('settings.player_section.sub_sdh_filter_desc')}</p>
+                                </div>
+                                <Switch id="sdhFilter" bind:checked={subConfig.sdhFilter} onCheckedChange={onSave} />
+                            </div>
+                            <div class={cellRow}>
+                                <div class="min-w-0">
+                                    <label for="sdhFilterHarder" class={cellLabel}>{i18n.t('settings.player_section.sub_sdh_filter_harder')}</label>
+                                    <p class={cellDesc}>{i18n.t('settings.player_section.sub_sdh_filter_harder_desc')}</p>
+                                </div>
+                                <Switch id="sdhFilterHarder" bind:checked={subConfig.sdhFilterHarder} onCheckedChange={onSave} />
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            {/if}
         </Tabs.Content>
-
     </Tabs.Root>
-</div>
+</SettingsSection>

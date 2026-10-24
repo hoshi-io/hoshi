@@ -1,13 +1,15 @@
 <script lang="ts">
-    import * as Select from "$lib/components/ui/select";
+    import { scale } from "svelte/transition";
     import { Switch } from "$lib/components/ui/switch";
     import { Label } from "$lib/components/ui/label";
     import type { UiConfig } from "@/api/config/types";
-    import {i18n} from "@/stores/i18n.svelte.js";
-    import {themeManager} from "@/stores/theme.svelte";
-    import {Check, Palette} from "lucide-svelte";
-    import {Input} from "@/components/ui/input";
+    import { i18n } from "@/stores/i18n.svelte.js";
+    import { themeManager } from "@/stores/theme.svelte";
+    import { Check } from "lucide-svelte";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
+    import SettingRow from "@/components/settings/parts/SettingRow.svelte";
+    import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
 
     let {
         config = $bindable(),
@@ -34,6 +36,9 @@
         { name: 'Pink', value: '#ec4899' },
     ];
 
+    const accent = $derived(themeManager.accentColor || '');
+    const isPreset = $derived(colorPresets.some((p) => p.value.toLowerCase() === accent.toLowerCase()));
+
     function changeTheme(themeId: string) {
         themeManager.setTheme(themeId);
     }
@@ -47,6 +52,7 @@
         themeManager.setAccentColor(input.value);
     }
 
+    // Labels are translated and can be long, so title language stays a dropdown.
     const titleLanguageItems = [
         { value: "romaji", label: i18n.t('settings.ui_section.title_language_romaji') },
         { value: "english", label: i18n.t('settings.ui_section.title_language_english') },
@@ -54,6 +60,7 @@
         { value: "chinese", label: i18n.t('settings.ui_section.title_language_chinese') },
     ];
 
+    // Three short options: a segmented control is quicker than opening a menu.
     const homeSectionItems = [
         { value: "anime", label: i18n.t('settings.ui_section.default_home_anime') },
         { value: "manga", label: i18n.t('settings.ui_section.default_home_manga') },
@@ -61,109 +68,126 @@
     ];
 </script>
 
-<section>
-    <div class="mb-6">
-        <h2 class="text-2xl font-bold tracking-tight">{i18n.t('settings.interface')}</h2>
-        <p class="text-sm text-muted-foreground mt-1">{i18n.t('settings.ui_section.interface_desc')}</p>
-    </div>
-
-    <div class="flex flex-col gap-4 py-6 border-b border-border/40">
-        <div class="space-y-1">
-            <Label class="text-base font-bold flex items-center gap-2">
-                <Palette class="size-4" /> {i18n.t('settings.general_section.theme')}
-            </Label>
-            <p class="text-sm text-muted-foreground">{i18n.t('settings.general_section.theme_desc')}</p>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
-            {#each themes as theme}
+<SettingsSection
+        title={i18n.t('settings.interface')}
+        description={i18n.t('settings.ui_section.interface_desc')}
+>
+    <SettingRow
+            stacked
+            label={i18n.t('settings.general_section.theme')}
+            description={i18n.t('settings.general_section.theme_desc')}
+    >
+        <div role="radiogroup" aria-label={i18n.t('settings.general_section.theme')} class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+            {#each themes as theme (theme.id)}
+                {@const selected = themeManager.theme === theme.id}
                 <button
                         type="button"
+                        role="radio"
+                        aria-checked={selected}
                         onclick={() => changeTheme(theme.id)}
-                        class="relative flex items-center justify-center h-14 rounded-sm border-2 font-bold transition-all overflow-hidden {theme.classes}
-        {themeManager.theme === theme.id
-            ? 'ring-2 ring-primary ring-offset-2 ring-offset-background border-transparent'
-            : 'opacity-80 hover:opacity-100 border-transparent'}"
+                        class="relative flex items-center justify-center h-14 rounded-sm border-2 font-bold overflow-hidden transition-all duration-200
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 {theme.classes}
+                               {selected
+                                   ? 'ring-2 ring-primary ring-offset-2 ring-offset-background border-transparent'
+                                   : 'opacity-80 hover:opacity-100 hover:-translate-y-px active:scale-[0.98] border-transparent'}"
                 >
                     {theme.label}
-                    {#if themeManager.theme === theme.id}
-                        <div class="absolute top-1.5 right-1.5 bg-primary rounded-full p-0.5">
+                    {#if selected}
+                        <div in:scale={{ start: 0.4, duration: 200 }} class="absolute top-1.5 right-1.5 bg-primary rounded-full p-0.5">
                             <Check class="size-3 text-primary-foreground" />
                         </div>
                     {/if}
                 </button>
             {/each}
         </div>
-    </div>
+    </SettingRow>
 
-    <div class="flex flex-col gap-4 py-6 border-b border-border/40">
-        <div class="space-y-1">
-            <Label class="text-base font-bold">{i18n.t('settings.general_section.accent_color')}</Label>
-            <p class="text-sm text-muted-foreground">{i18n.t('settings.general_section.accent_color_desc')}</p>
-        </div>
+    <SettingRow
+            stacked
+            label={i18n.t('settings.general_section.accent_color')}
+            description={i18n.t('settings.general_section.accent_color_desc')}
+    >
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-3">
+            {#each colorPresets as preset (preset.value)}
+                {@const selected = accent.toLowerCase() === preset.value.toLowerCase()}
+                <button
+                        type="button"
+                        onclick={() => setPresetColor(preset.value)}
+                        aria-label={preset.name}
+                        aria-pressed={selected}
+                        title={preset.name}
+                        class="grid place-items-center size-9 rounded-full shadow-sm transition-all duration-200 active:scale-90 hover:scale-110
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background
+                               {selected ? 'ring-2 ring-offset-2 ring-offset-background scale-105' : ''}"
+                        style="background-color: {preset.value}; --tw-ring-color: {preset.value}"
+                >
+                    {#if selected}
+                        <Check class="size-4 text-white drop-shadow" strokeWidth={3} />
+                    {/if}
+                </button>
+            {/each}
 
-        <div class="flex flex-wrap items-center gap-3">
-            <div class="relative flex items-center gap-3 bg-muted/20 p-2 rounded-2xl border border-border/50">
-                <Input
+            <div class="h-6 w-px bg-border/60 mx-1 hidden sm:block"></div>
+
+            <!-- Custom colour: rainbow swatch until a non-preset colour is active, then it shows that colour. -->
+            <label
+                    title="Custom"
+                    class="relative grid place-items-center size-9 rounded-full shadow-sm cursor-pointer transition-all duration-200 hover:scale-110 active:scale-90
+                           focus-within:ring-2 focus-within:ring-primary/50 focus-within:ring-offset-2 focus-within:ring-offset-background
+                           {!isPreset && accent ? 'ring-2 ring-offset-2 ring-offset-background scale-105' : ''}"
+                    style="background: {!isPreset && accent
+                        ? accent
+                        : 'conic-gradient(from 0deg, #f43f5e, #f59e0b, #22c55e, #06b6d4, #3b82f6, #a855f7, #f43f5e)'};
+                        {!isPreset && accent ? `--tw-ring-color: ${accent}` : ''}"
+            >
+                <input
                         type="color"
-                        value={themeManager.accentColor || '#ffffff'}
+                        value={accent || '#ffffff'}
                         onchange={handleCustomColor}
-                        class="w-10 h-10 p-0 rounded-lg border-none cursor-pointer bg-transparent shrink-0"
+                        aria-label="Custom colour"
+                        class="absolute inset-0 size-full opacity-0 cursor-pointer"
                 />
-                <span class="text-xs font-mono font-bold pr-2 uppercase opacity-70">{themeManager.accentColor}</span>
-            </div>
+                {#if !isPreset && accent}
+                    <Check class="size-4 text-white drop-shadow pointer-events-none" strokeWidth={3} />
+                {/if}
+            </label>
 
-            <div class="h-8 w-px bg-border/40 mx-2 hidden sm:block"></div>
-
-            <div class="flex flex-wrap gap-2">
-                {#each colorPresets as preset}
-                    <button
-                            type="button"
-                            onclick={() => setPresetColor(preset.value)}
-                            class="size-10 rounded-full border-2 border-background shadow-sm transition-transform active:scale-90 flex items-center justify-center"
-                            style="background-color: {preset.value}"
-                            title={preset.name}
-                    >
-                        {#if themeManager.accentColor?.toLowerCase() === preset.value.toLowerCase()}
-                            <Check class="size-5 text-white drop-shadow-md" />
-                        {/if}
-                    </button>
-                {/each}
-            </div>
+            <span class="text-xs font-mono font-semibold uppercase tracking-wide text-muted-foreground tabular-nums">{accent}</span>
         </div>
-    </div>
+    </SettingRow>
 
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-        <div class="space-y-1 pr-4">
-            <Label class="text-base font-bold">{i18n.t('settings.ui_section.title_language')}</Label>
-            <p class="text-sm text-muted-foreground">{i18n.t('settings.ui_section.title_language_desc')}</p>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-5 border-b border-border/40">
+        <div class="space-y-0.5 pr-4">
+            <Label class="text-[15px] font-semibold leading-snug">{i18n.t('settings.ui_section.title_language')}</Label>
+            <p class="text-sm text-muted-foreground leading-snug">{i18n.t('settings.ui_section.title_language_desc')}</p>
         </div>
         <ResponsiveSelect
                 bind:value={config.titleLanguage}
                 items={titleLanguageItems}
-                class="rounded-sm h-11 w-full sm:max-w-md capitalize"
+                class="rounded-sm h-11 w-full sm:max-w-65 capitalize"
                 onValueChange={onSave}
         />
     </div>
 
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-        <div class="space-y-1 pr-4">
-            <Label class="text-base font-bold">{i18n.t('settings.ui_section.default_home')}</Label>
-            <p class="text-sm text-muted-foreground">{i18n.t('settings.ui_section.default_home_desc')}</p>
-        </div>
-        <ResponsiveSelect
+    <SettingRow
+            label={i18n.t('settings.ui_section.default_home')}
+            description={i18n.t('settings.ui_section.default_home_desc')}
+    >
+        <SegmentedControl
+                label={i18n.t('settings.ui_section.default_home')}
                 bind:value={config.defaultHomeSection}
-                items={homeSectionItems}
-                class="rounded-sm h-11 w-full sm:max-w-md capitalize"
-                onValueChange={onSave}
+                options={homeSectionItems}
+                onValueChange={() => onSave()}
+                class="capitalize"
         />
-    </div>
+    </SettingRow>
 
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-        <div class="space-y-1 pr-4">
-            <Label class="text-base font-bold" for="disableCardTrailers">{i18n.t('settings.ui_section.disable_card_trailers')}</Label>
-            <p class="text-sm text-muted-foreground">{i18n.t('settings.ui_section.disable_card_trailers_desc')}</p>
-        </div>
-        <Switch id="disableCardTrailers" bind:checked={config.disableCardTrailers} onCheckedChange={onSave} class="shrink-0" />
-    </div>
-</section>
+    <SettingRow
+            inline
+            for="disableCardTrailers"
+            label={i18n.t('settings.ui_section.disable_card_trailers')}
+            description={i18n.t('settings.ui_section.disable_card_trailers_desc')}
+    >
+        <Switch id="disableCardTrailers" bind:checked={config.disableCardTrailers} onCheckedChange={onSave} />
+    </SettingRow>
+</SettingsSection>

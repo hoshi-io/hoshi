@@ -1,6 +1,5 @@
 use serde_json::Value;
-use tracing::{info, instrument, warn};
-
+use tracing::{instrument, warn, debug};
 use crate::config::model::UserConfig;
 use crate::config::repository::ConfigRepository;
 use crate::error::{CoreError, CoreResult};
@@ -22,7 +21,7 @@ impl ConfigService {
 
         let new_config = ConfigRepository::patch_config(&state.pool, user_id, &patch).await?;
         state.torrent.update_config(new_config.torrent.clone()).await;
-        info!("User configuration updated");
+        debug!("User configuration updated");
         Ok(new_config)
     }
 }

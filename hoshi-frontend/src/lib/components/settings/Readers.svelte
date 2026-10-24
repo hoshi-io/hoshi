@@ -1,6 +1,9 @@
 <script lang="ts">
     import * as Tabs from "$lib/components/ui/tabs";
     import { i18n } from "@/stores/i18n.svelte.js";
+    import { fly } from "svelte/transition";
+    import { cubicOut } from "svelte/easing";
+    import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
     import MangaReader from "./MangaReader.svelte";
     import NovelReader from "./NovelReader.svelte";
     import type { MangaConfig, NovelConfig } from "@/api/config/types";
@@ -15,30 +18,50 @@
         novelConfig: NovelConfig,
         onSave: () => Promise<void> | void
     } = $props();
+
+    let activeTab = $state("manga_sub");
+
+    const tabs = [
+        { id: "manga_sub", label: () => i18n.t("settings.manga"), icon: BookOpen },
+        { id: "novel_sub", label: () => i18n.t("settings.novel"), icon: BookOpenText }
+    ];
 </script>
 
-<div class="space-y-6">
-    <div>
-        <h2 class="text-2xl font-bold tracking-tight">{i18n.t('settings.readers')}</h2>
-        <p class="text-sm text-muted-foreground mt-1">{i18n.t('settings.readers_desc')}</p>
-    </div>
-
-    <Tabs.Root value="manga_sub" class="w-full">
-        <Tabs.List class="grid w-full max-w-[400px] grid-cols-2 rounded-xl h-11 p-1 bg-muted/50 mb-8">
-            <Tabs.Trigger value="manga_sub" class="rounded-lg font-bold flex items-center gap-2">
-                <BookOpen class="size-4" /> {i18n.t('settings.manga')}
-            </Tabs.Trigger>
-            <Tabs.Trigger value="novel_sub" class="rounded-lg font-bold flex items-center gap-2">
-                <BookOpenText class="size-4" /> {i18n.t('settings.novel')}
-            </Tabs.Trigger>
-        </Tabs.List>
+<SettingsSection variant="bare" title={i18n.t('settings.readers')} description={i18n.t('settings.readers_desc')}>
+    <Tabs.Root bind:value={activeTab} class="w-full">
+        <div class="pt-1 pb-4">
+            <Tabs.List class="flex w-full sm:inline-flex sm:w-auto h-auto gap-1 p-1 rounded-lg bg-muted/50">
+                {#each tabs as tab (tab.id)}
+                    {@const Icon = tab.icon}
+                    <Tabs.Trigger
+                            value={tab.id}
+                            class="flex-1 sm:flex-none h-9 min-w-0 gap-2 px-5 rounded-md text-sm font-semibold text-muted-foreground
+                                   transition-all duration-200 hover:text-foreground
+                                   data-[state=active]:bg-background data-[state=active]:text-foreground
+                                   data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-border/60
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    >
+                        <Icon class="size-4 shrink-0" />
+                        <span class="truncate">{tab.label()}</span>
+                    </Tabs.Trigger>
+                {/each}
+            </Tabs.List>
+        </div>
 
         <Tabs.Content value="manga_sub" class="focus-visible:outline-none mt-0">
-            <MangaReader bind:config={mangaConfig} {onSave} />
+            {#if activeTab === "manga_sub"}
+                <div in:fly={{ y: 8, duration: 220, easing: cubicOut }}>
+                    <MangaReader bind:config={mangaConfig} {onSave} />
+                </div>
+            {/if}
         </Tabs.Content>
 
         <Tabs.Content value="novel_sub" class="focus-visible:outline-none mt-0">
-            <NovelReader bind:config={novelConfig} {onSave} />
+            {#if activeTab === "novel_sub"}
+                <div in:fly={{ y: 8, duration: 220, easing: cubicOut }}>
+                    <NovelReader bind:config={novelConfig} {onSave} />
+                </div>
+            {/if}
         </Tabs.Content>
     </Tabs.Root>
-</div>
+</SettingsSection>

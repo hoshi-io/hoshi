@@ -1,11 +1,10 @@
 <script lang="ts">
-    import * as Tabs from "$lib/components/ui/tabs";
-    import { Button } from "$lib/components/ui/button";
     import { Label } from "$lib/components/ui/label";
-    import { Slider } from "$lib/components/ui/slider";
+    import SettingSlider from "@/components/settings/parts/SettingSlider.svelte";
+    import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
     import { fade } from "svelte/transition";
     import {
-        BookOpen, Maximize,
+        BookOpen, MoveHorizontal, MoveVertical,
         GalleryVertical, ChevronLeft, ChevronRight,
         Monitor, Info
     } from "lucide-svelte";
@@ -40,10 +39,40 @@
         onSave();
     }
 
-    const pagesPerViewItems = [
-        { value: 1, label: i18n.t('reader.single_page') },
-        { value: 2, label: i18n.t('reader.double_page') },
+    const layoutOptions = [
+        { value: "scroll", label: i18n.t('reader.scroll'), icon: GalleryVertical },
+        { value: "paged", label: i18n.t('reader.paged'), icon: BookOpen }
     ];
+
+    const directionOptions = [
+        { value: "ltr", label: "LTR" },
+        { value: "rtl", label: "RTL" }
+    ];
+
+    const pagesPerViewOptions = [
+        { value: "1", label: i18n.t('reader.single_page') },
+        { value: "2", label: i18n.t('reader.double_page') }
+    ];
+
+    const fitOptions = [
+        { value: "width", label: i18n.t('reader.fit_width'), icon: MoveHorizontal },
+        { value: "height", label: i18n.t('reader.fit_height'), icon: MoveVertical }
+    ];
+
+    function changeDirection(v: string) {
+        config.direction = v as MangaConfig['direction'];
+        onSave();
+    }
+
+    function changePagesPerView(v: string) {
+        config.pagesPerView = Number(v) as MangaConfig['pagesPerView'];
+        onSave();
+    }
+
+    function changeFitMode(v: string) {
+        config.fitMode = v as MangaConfig['fitMode'];
+        onSave();
+    }
 
     const readerShortcuts = $derived([
         {
@@ -134,54 +163,58 @@
     <div class="flex-1 w-full space-y-8">
         <div class="grid gap-8">
 
-            <div class="space-y-4">
+            <div class="space-y-3">
                 <div class="space-y-1">
                     <Label class="text-base font-bold">{i18n.t('reader.reading_mode')}</Label>
                     <p class="text-sm text-muted-foreground">{i18n.t('settings.readers_section.reading_mode_desc')}</p>
                 </div>
-                <Tabs.Root value={config.layout} onValueChange={changeLayout} class="w-full">
-                    <Tabs.List class="grid w-full grid-cols-2 rounded-sm h-12 p-1 bg-muted/50">
-                        <Tabs.Trigger value="scroll" class="rounded-lg gap-2 font-bold">
-                            <GalleryVertical class="size-4"/> {i18n.t('reader.scroll')}
-                        </Tabs.Trigger>
-                        <Tabs.Trigger value="paged" class="rounded-lg gap-2 font-bold">
-                            <BookOpen class="size-4"/> {i18n.t('reader.paged')}
-                        </Tabs.Trigger>
-                    </Tabs.List>
-                </Tabs.Root>
+                <SegmentedControl
+                        fluid
+                        label={i18n.t('reader.reading_mode')}
+                        value={config.layout}
+                        options={layoutOptions}
+                        onValueChange={changeLayout}
+                />
             </div>
 
             <div class="grid sm:grid-cols-2 gap-6">
                 <div class="space-y-3">
                     <Label class="font-bold">{i18n.t('settings.readers_section.direction')}</Label>
-                    <div class="flex bg-muted/50 p-1 rounded-sm h-11">
-                        <Button variant={config.direction === 'ltr' ? 'secondary' : 'ghost'} class="flex-1 rounded-lg font-bold" onclick={() => { config.direction = 'ltr'; onSave(); }}>LTR</Button>
-                        <Button variant={config.direction === 'rtl' ? 'secondary' : 'ghost'} class="flex-1 rounded-lg font-bold" onclick={() => { config.direction = 'rtl'; onSave(); }}>RTL</Button>
+                    <div>
+                        <SegmentedControl
+                                fluid
+                                label={i18n.t('settings.readers_section.direction')}
+                                value={config.direction}
+                                options={directionOptions}
+                                onValueChange={changeDirection}
+                        />
                     </div>
                 </div>
 
                 <div class="space-y-3">
                     <Label class="font-bold">{i18n.t('settings.readers_section.pages_per_view')}</Label>
-                    <div class="flex bg-muted/50 p-1 rounded-sm h-11">
-                        <Button variant={config.pagesPerView === 1 ? 'secondary' : 'ghost'} class="flex-1 rounded-lg font-bold" onclick={() => { config.pagesPerView = 1; onSave(); }}>
-                            {i18n.t('reader.single_page')}
-                        </Button>
-                        <Button variant={config.pagesPerView === 2 ? 'secondary' : 'ghost'} class="flex-1 rounded-lg font-bold" onclick={() => { config.pagesPerView = 2; onSave(); }}>
-                            {i18n.t('reader.double_page')}
-                        </Button>
+                    <div>
+                        <SegmentedControl
+                                fluid
+                                label={i18n.t('settings.readers_section.pages_per_view')}
+                                value={String(config.pagesPerView)}
+                                options={pagesPerViewOptions}
+                                onValueChange={changePagesPerView}
+                        />
                     </div>
                 </div>
             </div>
 
             <div class="space-y-3">
                 <Label class="font-bold">{i18n.t('reader.image_fit')}</Label>
-                <div class="grid grid-cols-2 gap-2">
-                    <Button variant={config.fitMode === 'width' ? 'secondary' : 'outline'} class="h-12 rounded-sm gap-2 font-bold" onclick={() => { config.fitMode = 'width'; onSave(); }}>
-                        <Maximize class="size-4 rotate-90"/> {i18n.t('reader.fit_width')}
-                    </Button>
-                    <Button variant={config.fitMode === 'height' ? 'secondary' : 'outline'} class="h-12 rounded-sm gap-2 font-bold" onclick={() => { config.fitMode = 'height'; onSave(); }}>
-                        <Maximize class="size-4"/> {i18n.t('reader.fit_height')}
-                    </Button>
+                <div>
+                    <SegmentedControl
+                            fluid
+                            label={i18n.t('reader.image_fit')}
+                            value={config.fitMode}
+                            options={fitOptions}
+                            onValueChange={changeFitMode}
+                    />
                 </div>
             </div>
 
@@ -191,7 +224,7 @@
                         <Label class="font-bold text-sm">{i18n.t('reader.gap_x')}</Label>
                         <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{localGapX}px</span>
                     </div>
-                    <Slider type="single" bind:value={localGapX} max={100} step={2} onValueCommit={handleCommitX} />
+                    <SettingSlider fluid showValue={false} bind:value={localGapX} max={100} step={2} oncommit={handleCommitX} />
                 </div>
 
                 {#if config.layout === 'scroll'}
@@ -200,7 +233,7 @@
                             <Label class="font-bold text-sm">{i18n.t('reader.gap_y')}</Label>
                             <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{localGapY}px</span>
                         </div>
-                        <Slider type="single" bind:value={localGapY} max={100} step={2} onValueCommit={handleCommitY} />
+                        <SettingSlider fluid showValue={false} bind:value={localGapY} max={100} step={2} oncommit={handleCommitY} />
                     </div>
                 {/if}
             </div>
