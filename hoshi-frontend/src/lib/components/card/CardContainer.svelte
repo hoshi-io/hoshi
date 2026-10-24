@@ -81,7 +81,6 @@
         font-size: 0.65rem; font-weight: 700;
         padding: 0.2rem 0.45rem;
         border-radius: 0.25rem;
-        z-index: 10;
         letter-spacing: 0.05em;
     }
 
