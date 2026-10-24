@@ -54,7 +54,7 @@
         <Button
                 variant="ghost"
                 size="icon"
-                class="h-10 w-10 rounded-full hover:bg-muted/50 {scheduleStore.myListOnly ? 'text-primary bg-primary/10 hover:bg-primary/15' : ''}"
+                class="h-10 w-10 rounded-sm hover:bg-muted/50 {scheduleStore.myListOnly ? 'text-primary bg-primary/10 hover:bg-primary/15' : ''}"
                 onclick={() => scheduleStore.toggleMyList()}
                 title={scheduleStore.myListOnly ? i18n.t('schedule.showing_my_list') : i18n.t('schedule.show_my_list')}
         >
@@ -64,7 +64,7 @@
         <Button
                 variant="ghost"
                 size="icon"
-                class="h-10 w-10 rounded-full hover:bg-muted/50"
+                class="h-10 w-10 rounded-sm hover:bg-muted/50"
                 onclick={() => scheduleStore.load(true)}
                 disabled={scheduleStore.isLoading}
         >
@@ -124,10 +124,7 @@
         {:else}
             {#each visibleGroups as group, gi (group.key)}
                 <div class="relative z-10" in:fade={{ duration: 400 }}>
-                    <div class="flex items-center gap-4 mb-6 top-9 bg-background/95 backdrop-blur-md py-4 z-20 lg:-ml-[5px]">
-                        <div class="hidden lg:flex h-12 w-12 rounded-full border-4 border-background items-center justify-center shrink-0 shadow-sm z-10 {group.isToday ? 'bg-primary border-primary/20 text-primary-foreground' : 'bg-muted text-muted-foreground'}">
-                            <CalendarIcon class="h-5 w-5" />
-                        </div>
+                    <div class="flex items-center gap-4 mb-6 top-9 bg-background/95 backdrop-blur-md pt-10 px-14 z-20 lg:-ml-[5px]">
                         <h2 class="text-2xl font-black tracking-tight {group.isToday ? 'text-primary' : 'text-foreground'}">
                             {group.header}
                         </h2>
@@ -151,11 +148,11 @@
                             <CardWrapper {...item.card} disablePreview={true}>
                                 {#snippet overlay()}
                                     <div class="flex items-end justify-between px-2 pb-2 w-full"
-                                         style="background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%); padding-top: 2rem;">
+                                         style="padding-top: 2rem;">
                                             <span class="text-[10px] font-black uppercase tracking-wider text-white">
                                                 {i18n.t("schedule.episode_number", { num: item.episode })}
                                             </span>
-                                        <span class="bg-primary/90 backdrop-blur-sm text-primary-foreground text-[10px] font-bold px-2 py-1 rounded-md">
+                                        <span class="bg-primary/90 backdrop-blur-sm text-primary-foreground text-[10px] font-bold px-2 py-1 rounded-sm">
                                                 {new Date(getMs(item.airingAt)).toLocaleTimeString(i18n.locale, { hour: "2-digit", minute: "2-digit", hour12: false })}
                                             </span>
                                     </div>
