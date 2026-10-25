@@ -1,175 +1,221 @@
 <script lang="ts">
+    import { onDestroy } from "svelte";
     import { Badge } from "$lib/components/ui/badge";
     import { Button } from "$lib/components/ui/button";
-    import * as Avatar from "$lib/components/ui/avatar";
     import * as Drawer from "$lib/components/ui/drawer";
     import { Spinner } from "@/components/ui/spinner";
-    import { Settings2, X, Trash2, Download, RefreshCw } from "lucide-svelte";
+    import { Settings2, X, Trash2, Download, RefreshCw, Check, ArrowRight } from "lucide-svelte";
     import { i18n } from "@/stores/i18n.svelte.js";
+    import {
+        SOURCE_LABELS,
+        buildDraftSettings,
+        toneOf,
+        type CardExt,
+        type Tone,
+        type Source
+    } from "@/app/marketplace.svelte.js";
     import Form from "./Form.svelte";
 
     let {
         ext,
-        source,
+        source = "native",
         mode = "installed",
-        isActionLoading = false,
-        isMarketplaceInstalled = false,
-        isSaving = false,
+        busy = false,
+        saving = false,
+        installed = false,
         hasUpdate = false,
-        onAction,
+        fromVersion = null,
+        onInstall,
         onUpdate,
+        onUninstall,
         onSave
     }: {
-        ext: any;
-        source?: string;
+        ext: CardExt;
+        source?: Source;
         mode?: "installed" | "marketplace";
-        isActionLoading?: boolean;
-        isMarketplaceInstalled?: boolean;
-        isSaving?: boolean;
+        /** An install / update / uninstall is running */
+        busy?: boolean;
+        /** Settings are being saved */
+        saving?: boolean;
+        /** Marketplace: this entry is already installed */
+        installed?: boolean;
+        /** Marketplace: a newer version than the installed one exists */
         hasUpdate?: boolean;
-        onAction?: (ext: any) => void;
-        onUpdate?: (ext: any) => void;
-        onSave?: (id: string, settings: Record<string, any>) => Promise<boolean>;
+        /** Marketplace + update: the version currently installed */
+        fromVersion?: string | null;
+        onInstall?: () => void;
+        onUpdate?: () => void;
+        onUninstall?: () => void;
+        onSave?: (settings: Record<string, any>) => Promise<boolean>;
     } = $props();
 
-    let isExpanded = $state(false);
-    let isDrawerOpen = $state(false);
-    let draftSettings = $state<Record<string, any>>({});
-    let hasInitializedSettings = $state(false);
+    const TONES: Record<Tone, string> = {
+        anime: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+        manga: "bg-green-500/10 text-green-500 border-green-500/20",
+        novel: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+        movie: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+        other: "bg-muted text-muted-foreground border-border"
+    };
 
-    $effect(() => {
-        if (mode === "installed" && (isExpanded || isDrawerOpen) && !hasInitializedSettings) {
-            const initialSettings: Record<string, any> = { ...ext.settings };
-            if (ext.setting_definitions) {
-                ext.setting_definitions.forEach((def: any) => {
-                    if (initialSettings[def.key] === undefined) {
-                        initialSettings[def.key] = Array.isArray(def.default)
-                            ? [...def.default]
-                            : def.default;
-                    }
-                });
-            }
-            draftSettings = initialSettings;
-            hasInitializedSettings = true;
-        }
-    });
+    const hasSettings = $derived(mode === "installed" && (ext.setting_definitions?.length ?? 0) > 0);
 
-    async function handleSave() {
-        if (!onSave) return;
-        const success = await onSave(ext.id, draftSettings);
-        if (success) {
-            isExpanded = false;
-            isDrawerOpen = false;
-        }
+    let iconStatus = $state<"loading" | "loaded" | "error">("loading");
+    const showIcon = $derived(!!ext.icon && iconStatus !== "error");
+
+    let expanded = $state(false);
+    let drawerOpen = $state(false);
+    let draft = $state<Record<string, any>>({});
+    let draftReady = $state(false);
+
+    function ensureDraft() {
+        if (draftReady) return;
+        draft = buildDraftSettings(ext);
+        draftReady = true;
     }
 
-    function getTypeColor(type: string) {
-        const t = (type || "").toLowerCase();
-        switch(t) {
-            case 'anime': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-            case 'manga': return 'bg-green-500/10 text-green-500 border-green-500/20';
-            case 'novel': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
-            default: return 'bg-muted text-muted-foreground border-border';
-        }
+    function toggleExpanded() {
+        ensureDraft();
+        expanded = !expanded;
     }
+
+    function setDrawer(open: boolean) {
+        if (open) ensureDraft();
+        drawerOpen = open;
+    }
+
+    async function handleChange() {
+        if (draftReady) await onSave?.($state.snapshot(draft));
+    }
+
+    let confirming = $state(false);
+    let confirmTimer: ReturnType<typeof setTimeout> | undefined;
+
+    function askUninstall() {
+        if (!confirming) {
+            confirming = true;
+            confirmTimer = setTimeout(() => (confirming = false), 3000);
+            return;
+        }
+        clearTimeout(confirmTimer);
+        confirming = false;
+        onUninstall?.();
+    }
+
+    onDestroy(() => clearTimeout(confirmTimer));
 </script>
 
-<div class="flex flex-col rounded-sm border {ext.nsfw ? 'border-destructive/60 shadow-destructive/10' : 'border-border/60'} bg-card overflow-hidden transition-all shadow-sm {mode === 'marketplace' ? 'hover:border-primary/40' : ''}">
-    <div class="flex items-center p-3 gap-3">
-        <Avatar.Root class="relative h-10 w-10 rounded-lg border border-border/50 shrink-0 bg-muted/30 overflow-hidden flex items-center justify-center">
-            <div data-fallback class="bg-primary/10 text-primary font-black rounded-lg text-xs w-full h-full flex items-center justify-center absolute inset-0 z-0">
-                {ext.name.slice(0, 2).toUpperCase()}
-            </div>
-            {#if ext.icon}
+<div
+        class="flex flex-col overflow-hidden rounded-sm border bg-card shadow-sm transition-colors
+               {ext.nsfw ? 'border-destructive/50'
+                   : hasUpdate ? 'border-primary/50'
+                   : expanded ? 'border-primary/30'
+                   : 'border-border/60'}
+               {mode === 'marketplace' && !ext.nsfw ? 'hover:border-primary/40' : ''}"
+>
+    <div class="flex items-center gap-3 p-3.5">
+        <!-- Icon (initials sit underneath until the image has loaded) -->
+        <div class="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-border/50 bg-muted/30">
+            {#if !(showIcon && iconStatus === "loaded")}
+                <span class="select-none text-xs font-black text-primary">{ext.name.slice(0, 2).toUpperCase()}</span>
+            {/if}
+            {#if showIcon}
                 <img
                         src={ext.icon}
-                        alt={ext.name}
-                        class="object-cover w-full h-full absolute inset-0 z-10"
-                        onload={(e) => {
-                        const fallback = e.currentTarget.parentElement?.querySelector('[data-fallback]');
-                        if (fallback) fallback.style.display = 'none';
-                    }}
-                        onerror={(e) => {
-                        e.currentTarget.style.display = 'none';
-                    }}
+                        alt=""
+                        class="absolute inset-0 size-full object-cover"
+                        onload={() => (iconStatus = "loaded")}
+                        onerror={() => (iconStatus = "error")}
                 />
             {/if}
-        </Avatar.Root>
+        </div>
 
-        <div class="space-y-1 flex-1 min-w-0">
+        <!-- Info -->
+        <div class="min-w-0 flex-1 space-y-1">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <h3 class="font-bold text-sm truncate max-w-[140px] sm:max-w-none">{ext.name}</h3>
+                <h4 class="truncate text-sm font-bold">{ext.name}</h4>
 
-                <div class="flex items-center gap-1 shrink-0">
-                    <Badge variant="outline" class="text-[9px] px-1 uppercase font-black tracking-wider h-4 {getTypeColor(ext.ext_type)}">
+                {#if ext.ext_type}
+                    <Badge variant="outline" class="h-4 px-1.5 text-[9px] font-black uppercase tracking-wider {TONES[toneOf(ext.ext_type)]}">
                         {ext.ext_type}
                     </Badge>
+                {/if}
 
-                    {#if ext.nsfw}
-                        <Badge variant="outline" class="text-[9px] px-1 uppercase font-black tracking-wider h-4 border-destructive text-destructive bg-destructive/10">
-                            NSFW
-                        </Badge>
-                    {/if}
-                </div>
+                {#if ext.nsfw}
+                    <Badge variant="outline" class="h-4 border-destructive bg-destructive/10 px-1.5 text-[9px] font-black uppercase tracking-wider text-destructive">
+                        NSFW
+                    </Badge>
+                {/if}
             </div>
 
             <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] font-semibold text-muted-foreground/80">
-                <span>v{ext.version}</span>
+                {#if hasUpdate && fromVersion}
+                    <span class="flex items-center gap-1 text-primary">
+                        v{fromVersion}<ArrowRight class="size-3" />v{ext.version}
+                    </span>
+                {:else}
+                    <span>v{ext.version}</span>
+                {/if}
 
                 {#if ext.author}
                     <span class="opacity-40">•</span>
-                    <span class="truncate max-w-[80px] sm:max-w-[120px]">{ext.author}</span>
+                    <span class="max-w-[140px] truncate">{ext.author}</span>
                 {/if}
 
                 {#if ext.language}
                     <span class="opacity-40">•</span>
-                    <span class="uppercase text-[10px] tracking-wider font-bold text-muted-foreground/70 bg-muted px-1 rounded-sm">
+                    <span class="rounded-sm bg-muted px-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
                         {ext.language}
                     </span>
                 {/if}
 
-                {#if source === 'lnreader' || source === 'tachiyomi'}
+                {#if source !== "native"}
                     <span class="opacity-40">•</span>
-                    <span class="text-[10px] font-bold tracking-wide {source === 'lnreader' ? 'text-orange-500' : 'text-blue-500'}">
-                        {source === 'lnreader' ? 'LNR' : 'Tachiyomi'}
-                    </span>
+                    <span class="text-[10px] font-bold tracking-wide text-muted-foreground">{SOURCE_LABELS[source]}</span>
                 {/if}
             </div>
         </div>
 
-        <div class="flex gap-1.5 shrink-0 items-center">
+        <!-- Actions -->
+        <div class="flex shrink-0 items-center gap-1.5">
             {#if mode === "installed"}
-                {#if ext.setting_definitions && ext.setting_definitions.length > 0}
+                {#if hasSettings}
+                    <!-- Desktop: toggles the inline panel -->
                     <Button
-                            variant={isExpanded ? "default" : "secondary"}
+                            variant={expanded ? "default" : "secondary"}
                             size="sm"
-                            class="h-8 w-8 p-0 rounded-sm hidden md:flex"
-                            onclick={() => isExpanded = !isExpanded}
+                            class="hidden size-8 rounded-lg p-0 md:flex"
+                            aria-label={i18n.t('settings.extension_section.extension_config', { name: ext.name })}
+                            aria-expanded={expanded}
+                            onclick={toggleExpanded}
                     >
-                        {#if isExpanded}<X class="h-4 w-4" />{:else}<Settings2 class="h-4 w-4" />{/if}
+                        {#if expanded}<X class="size-4" />{:else}<Settings2 class="size-4" />{/if}
                     </Button>
 
+                    <!-- Small screens: drawer -->
                     <div class="md:hidden">
-                        <Drawer.Root open={isDrawerOpen} onOpenChange={(v) => isDrawerOpen = v}>
+                        <Drawer.Root open={drawerOpen} onOpenChange={setDrawer}>
                             <Drawer.Trigger>
                                 {#snippet child({ props })}
-                                    <Button {...props} variant="secondary" size="sm" class="h-8 w-8 p-0 rounded-sm">
-                                        <Settings2 class="h-4 w-4" />
+                                    <Button
+                                            {...props}
+                                            variant="secondary"
+                                            size="sm"
+                                            class="size-8 rounded-lg p-0"
+                                            aria-label={i18n.t('settings.extension_section.extension_config', { name: ext.name })}
+                                    >
+                                        <Settings2 class="size-4" />
                                     </Button>
                                 {/snippet}
                             </Drawer.Trigger>
                             <Drawer.Content class="h-[85vh] rounded-t-2xl border-border/50">
-                                <div class="p-5 overflow-y-auto hide-scrollbar">
-                                    <h3 class="font-black text-lg mb-6 tracking-tight flex items-center gap-2 border-b border-border/40 pb-4">
-                                        <Settings2 class="w-5 h-5 text-primary" />
-                                        {i18n.t('settings.extension_section.extension_config', { name: ext.name})}
+                                <div class="hide-scrollbar overflow-y-auto p-5">
+                                    <h3 class="mb-6 flex items-center gap-2 border-b border-border/40 pb-4 text-lg font-black tracking-tight">
+                                        <Settings2 class="size-5 text-primary" />
+                                        {i18n.t('settings.extension_section.extension_config', { name: ext.name })}
                                     </h3>
-                                    <Form
-                                            {ext}
-                                            bind:settings={draftSettings}
-                                            {isSaving}
-                                            onSave={handleSave}
-                                    />
+                                    {#if draftReady}
+                                        <Form {ext} bind:settings={draft} isSaving={saving} onChange={handleChange} />
+                                    {/if}
                                 </div>
                             </Drawer.Content>
                         </Drawer.Root>
@@ -179,54 +225,48 @@
                 <Button
                         variant="destructive"
                         size="sm"
-                        class="h-8 w-8 p-0 rounded-sm bg-destructive/10 text-destructive hover:bg-destructive hover:text-white"
-                        onclick={() => onAction?.(ext.id)}
-                        disabled={isActionLoading}
+                        class="h-8 rounded-sm text-xs font-bold transition-all
+                               {confirming
+                            ? 'px-3'
+                            : 'w-8 bg-destructive/10 p-0 text-destructive hover:bg-destructive hover:text-white'}"
+                        aria-label={i18n.t('settings.extension_section.uninstall', { default: 'Uninstall' })}
+                        onclick={askUninstall}
+                        onblur={() => (confirming = false)}
+                        disabled={busy}
                 >
-                    {#if isActionLoading}<Spinner class="h-4 w-4 animate-spin" />{:else}<Trash2 class="h-4 w-4" />{/if}
-                </Button>
-            {:else if mode === "marketplace"}
-                {#if isMarketplaceInstalled}
-                    {#if hasUpdate}
-                        <Button
-                                size="sm"
-                                class="rounded-sm h-8 px-4 text-xs font-bold shadow-sm bg-primary/90 hover:bg-primary"
-                                onclick={() => onUpdate?.(ext)}
-                                disabled={isActionLoading}
-                        >
-                            {#if isActionLoading}
-                                <Spinner class="h-3 w-3 animate-spin" />
-                            {:else}
-                                <RefreshCw class="h-3 w-3" />
-                            {/if}
-                        </Button>
+                    {#if busy}
+                        <Spinner class="size-4 animate-spin" />
+                    {:else if confirming}
+                        {i18n.t('settings.extension_section.confirm_uninstall', { default: 'Remove?' })}
                     {:else}
-                        <Button variant="secondary" size="sm" class="rounded-sm h-8 px-4 text-xs font-bold bg-muted/40 text-muted-foreground" disabled>
-                            {i18n.t('marketplace.installed')}
-                        </Button>
+                        <Trash2 class="size-4" />
                     {/if}
-                {:else}
-                    <Button size="sm" class="rounded-sm h-8 px-4 text-xs font-bold shadow-sm" onclick={() => onAction?.(ext)} disabled={isActionLoading}>
-                        {#if isActionLoading}
-                            <Spinner class="h-3 w-3 mr-1.5 animate-spin" />
-                        {:else}
-                            <Download class="h-3 w-3 mr-1.5" />
-                        {/if}
-                        {i18n.t('marketplace.install')}
-                    </Button>
-                {/if}
+                </Button>
+
+            {:else if installed && !hasUpdate}
+                <Button variant="ghost" size="sm" class="h-8 gap-1.5 rounded-sm px-3 text-xs font-bold text-muted-foreground" disabled>
+                    <Check class="size-3.5" />
+                    {i18n.t('marketplace.installed')}
+                </Button>
+
+            {:else if hasUpdate}
+                <Button size="sm" class="h-8 gap-1.5 rounded-sm px-3 text-xs font-bold shadow-sm" onclick={onUpdate} disabled={busy}>
+                    {#if busy}<Spinner class="size-3.5 animate-spin" />{:else}<RefreshCw class="size-3.5" />{/if}
+                    {i18n.t('marketplace.update', { default: 'Update' })}
+                </Button>
+
+            {:else}
+                <Button size="sm" class="h-8 gap-1.5 rounded-sm px-3 text-xs font-bold shadow-sm" onclick={onInstall} disabled={busy}>
+                    {#if busy}<Spinner class="size-3.5 animate-spin" />{:else}<Download class="size-3.5" />{/if}
+                    {i18n.t('marketplace.install')}
+                </Button>
             {/if}
         </div>
     </div>
 
-    {#if mode === "installed" && isExpanded}
-        <div class="p-4 border-t border-border/40 bg-muted/10 hidden md:block">
-            <Form
-                    {ext}
-                    bind:settings={draftSettings}
-                    {isSaving}
-                    onSave={handleSave}
-            />
+    {#if expanded && draftReady}
+        <div class="hidden border-t border-border/40 bg-muted/10 p-4 md:block">
+            <Form {ext} bind:settings={draft} isSaving={saving} onChange={handleChange} />
         </div>
     {/if}
 </div>

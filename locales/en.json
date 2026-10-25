@@ -287,7 +287,11 @@
     "no_repo": "No Repository Connected",
     "no_repo_desc": "Enter a repository URL above to discover and install community extensions.",
     "empty": "Repository is Empty",
-    "empty_desc": "This repository was successfully loaded, but it doesn't contain any extensions."
+    "empty_desc": "This repository was successfully loaded, but it doesn't contain any extensions.",
+    "manage_repos": "Manage repositories",
+    "all_languages": "All languages",
+    "add_repo": "Add repo",
+    "repositories": "Repositories"
   },
   "reader": {
     "loading": "loading",
@@ -768,7 +772,9 @@
       "close": "Close",
       "enabled": "Enabled",
       "unsupported_type": "Unsupported Type",
-      "extension_config": "{{name}} Settings"
+      "extension_config": "{{name}} Settings",
+      "all_sources": "All sources",
+      "confirm_uninstall": "Confirm"
     },
 
     "player_section": {
