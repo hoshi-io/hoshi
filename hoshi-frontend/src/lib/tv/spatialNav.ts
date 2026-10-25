@@ -23,6 +23,45 @@ function center(el: HTMLElement) {
     return { x: r.left + r.width / 2, y: r.top + r.height / 2, rect: r };
 }
 
+// Opt-in row-based navigation. Put data-sn-rows on a container whose focusables form visual
+// rows of different lengths (filter chips above a card grid). Inside it, Up/Down go to the
+// nearest row below/above and pick the closest item in that row, and Left/Right stay on the
+// current row. The default 45-degree cone skips short rows and strands partial grid rows.
+const ROW_TOL = 12;
+
+function findInRows(
+    current: HTMLElement,
+    candidates: HTMLElement[],
+    direction: 'up' | 'down' | 'left' | 'right'
+): HTMLElement | null {
+    const from = center(current);
+    const vertical = direction === 'up' || direction === 'down';
+    const pool: { el: HTMLElement; primary: number; cross: number }[] = [];
+
+    for (const el of candidates) {
+        if (el === current) continue;
+        const to = center(el);
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        if (vertical) {
+            if (direction === 'down' ? dy <= ROW_TOL : dy >= -ROW_TOL) continue;
+            pool.push({ el, primary: Math.abs(dy), cross: Math.abs(dx) });
+        } else {
+            if (Math.abs(dy) > ROW_TOL) continue;
+            if (direction === 'right' ? dx <= 1 : dx >= -1) continue;
+            pool.push({ el, primary: Math.abs(dx), cross: Math.abs(dy) });
+        }
+    }
+    if (!pool.length) return null;
+
+    if (vertical) {
+        const minPrimary = Math.min(...pool.map(p => p.primary));
+        const row = pool.filter(p => p.primary <= minPrimary + ROW_TOL);
+        return row.reduce((a, b) => (b.cross < a.cross ? b : a)).el;
+    }
+    return pool.reduce((a, b) => (b.primary < a.primary ? b : a)).el;
+}
+
 function findNext(direction: 'up' | 'down' | 'left' | 'right'): HTMLElement | null {
     const active = document.activeElement as HTMLElement | null;
     const candidates = getFocusables();
@@ -34,6 +73,13 @@ function findNext(direction: 'up' | 'down' | 'left' | 'right'): HTMLElement | nu
     }
     if (!candidates.includes(current)) {
         return candidates[0] ?? null;
+    }
+
+    const rowsScope = current.closest<HTMLElement>('[data-sn-rows]');
+    if (rowsScope) {
+        const hit = findInRows(current, candidates.filter(el => rowsScope.contains(el)), direction);
+        // Vertical edges stay put; horizontal edges fall through (e.g. toward the sidebar).
+        if (hit || direction === 'up' || direction === 'down') return hit;
     }
 
     const from = center(current);
