@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { onDestroy } from 'svelte';
+    import { onDestroy, untrack } from 'svelte';
+    import { invoke } from '@tauri-apps/api/core';
     import type { WatchState } from '@/app/watch.svelte.js';
     import { appConfig } from '@/stores/config.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
-    import {formatTime} from "@/tv/components/watch/TvPlayerUtils.js";
+    import { formatTime } from '@/tv/components/watch/TvPlayerUtils.js';
 
     let { pageState }: { pageState: WatchState } = $props();
 
@@ -20,6 +21,61 @@
     const chapterTitle = $derived(
         pageState.chapters.find((c) => position >= c.start && position < c.end)?.title ?? ''
     );
+
+    // Thumbnail configuration and states
+    const player = $derived(appConfig.data?.player);
+    const thumbInterval = $derived(Math.max(1, player?.thumbnailIntervalSeconds ?? 10));
+    const thumbWidth = $derived(player?.thumbnailWidth ?? 240);
+    const thumbsOn = $derived(
+        !!player?.thumbnailsEnabled && pageState.isStreamLoaded && duration > 0
+    );
+
+    const thumbBucket = $derived(pending !== null ? Math.floor(position / thumbInterval) : null);
+
+    let thumbUrl = $state<string | null>(null);
+    let thumbReq = 0;
+    const thumbCache = new Map<number, string>(); // bucket -> blob URL
+    const MAX_FRONT_CACHE = 120;
+
+    function clearThumbs() {
+        thumbReq++;
+        for (const url of thumbCache.values()) URL.revokeObjectURL(url);
+        thumbCache.clear();
+        thumbUrl = null;
+    }
+
+    $effect(() => {
+        pageState.cid; pageState.epNumber; pageState.isStreamLoaded;
+        untrack(clearThumbs);
+    });
+
+    $effect(() => {
+        const bucket = thumbBucket;
+        const stepSec = thumbInterval;
+        const on = thumbsOn;
+        const id = ++thumbReq;
+        if (!on || bucket === null) return;
+
+        const cached = thumbCache.get(bucket);
+        if (cached) { thumbUrl = cached; return; }
+
+        const timer = setTimeout(async () => {
+            try {
+                const buf = await invoke<ArrayBuffer>("get_thumbnail", { time: bucket * stepSec });
+                if (id !== thumbReq || buf.byteLength === 0) return; // stale or "no thumbnail"
+                const url = URL.createObjectURL(new Blob([buf], { type: "image/jpeg" }));
+                if (thumbCache.size >= MAX_FRONT_CACHE) {
+                    const oldest = thumbCache.keys().next().value!;
+                    URL.revokeObjectURL(thumbCache.get(oldest)!);
+                    thumbCache.delete(oldest);
+                }
+                thumbCache.set(bucket, url);
+                thumbUrl = url;
+            } catch { /* ignore: no thumbnail */ }
+        }, 150);
+
+        return () => clearTimeout(timer);
+    });
 
     // Chapter segments with gaps filled, same idea as the desktop TimeBar.
     const segments = $derived.by(() => {
@@ -51,6 +107,7 @@
         if (commitTimer) clearTimeout(commitTimer);
         if (settleTimer) clearTimeout(settleTimer);
         pageState.isScrubbing = false;
+        clearThumbs();
     });
 
     function nudge(dir: 1 | -1) {
@@ -109,8 +166,32 @@
         aria-valuenow={position}
         onkeydown={onKeydown}
         onblur={commit}
-        class="w-full rounded-lg px-3 py-4 outline-none focus:bg-white/10 focus:ring-4 focus:ring-primary"
+        class="relative w-full rounded-lg px-3 py-4 outline-none focus:bg-white/10 focus:ring-4 focus:ring-primary"
 >
+    <!-- Thumbnail Preview Tooltip (Shown when scrubbing via TV remote Left/Right) -->
+    {#if pending !== null && thumbsOn}
+        <div
+                class="absolute bottom-full mb-4 flex flex-col items-center gap-1.5 pointer-events-none z-[100] -translate-x-1/2"
+                style="left: {frac * 100}%"
+        >
+            {#if thumbUrl}
+                <img
+                        src={thumbUrl}
+                        alt=""
+                        draggable="false"
+                        class="rounded-lg object-cover shadow-2xl ring-2 ring-white/20"
+                        style="width: {thumbWidth}px"
+                />
+            {/if}
+            <div class="flex flex-col items-center px-3 py-1 rounded-md bg-black/80 backdrop-blur-md text-white whitespace-nowrap shadow-lg">
+                {#if chapterTitle}
+                    <span class="text-xs font-medium text-white/70 leading-tight">{chapterTitle}</span>
+                {/if}
+                <span class="text-sm font-bold tabular-nums leading-tight">{formatTime(position)}</span>
+            </div>
+        </div>
+    {/if}
+
     <div class="relative flex h-3 items-center gap-0.5">
         {#each segments as seg (seg.start)}
             <div class="relative h-2 overflow-hidden rounded-sm bg-white/20" style="width: {seg.width}%">
