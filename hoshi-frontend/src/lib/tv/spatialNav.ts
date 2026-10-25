@@ -1,7 +1,13 @@
 let enabled = false;
 
+// When a [data-sn-trap] container exists (modal, side panel), navigation is limited to it.
+function scopeRoot(): ParentNode {
+    const traps = document.querySelectorAll<HTMLElement>('[data-sn-trap]');
+    return traps.length ? traps[traps.length - 1] : document;
+}
+
 function getFocusables(): HTMLElement[] {
-    return Array.from(document.querySelectorAll<HTMLElement>('[data-sn]'))
+    return Array.from(scopeRoot().querySelectorAll<HTMLElement>('[data-sn]'))
         .filter(el => {
             const rect = el.getBoundingClientRect();
             const style = getComputedStyle(el);
