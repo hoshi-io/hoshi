@@ -5,7 +5,7 @@
     import { cubicOut } from "svelte/easing";
     import { goto } from '$app/navigation';
     import {
-        User, Link2, Settings, MonitorPlay, Puzzle, BookOpen, LayoutTemplate, Database,
+        User, Link2, Settings, MonitorPlay, Puzzle, BookOpen, LayoutTemplate,
         MessageSquare, ChevronRight, Terminal, Globe
     } from "lucide-svelte";
     import { Spinner } from "$lib/components/ui/spinner";

@@ -16,13 +16,10 @@
     let { characters, staff }: { characters: Character[], staff: StaffMember[] } = $props();
 
     const CHAR_LIMIT = 12;
-    const STAFF_LIMIT = 12;
 
     let showAllChars = $state(false);
-    let showAllStaff = $state(false);
 
     const visibleCharacters = $derived(showAllChars ? characters : characters.slice(0, CHAR_LIMIT));
-    const visibleStaff = $derived(showAllStaff ? staff : staff.slice(0, STAFF_LIMIT));
 </script>
 
 <div class="space-y-8">

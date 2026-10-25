@@ -2,7 +2,6 @@
     import { MangaReaderState } from "@/app/manga.svelte";
     import Reader from "@/components/layout/Reader.svelte";
     import { Slider } from "@/components/ui/slider";
-    import { i18n } from "@/stores/i18n.svelte";
     import { fly } from "svelte/transition";
     import ReaderImage from "@/components/readers/ReaderImage.svelte";
     import MangaReaderSettings from "@/components/readers/MangaReaderSettings.svelte";

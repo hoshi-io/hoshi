@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Star, Play, Plus } from 'lucide-svelte';
+    import { Star, Play } from 'lucide-svelte';
     import { fade } from 'svelte/transition';
     import ListEditorButton from "@/components/ListEditorButton.svelte";
     import {i18n} from "@/stores/i18n.svelte";

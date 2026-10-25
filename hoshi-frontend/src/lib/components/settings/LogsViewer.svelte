@@ -1,15 +1,12 @@
 <script lang="ts">
-    import { i18n } from "@/stores/i18n.svelte.js";
-    import { invoke } from "@tauri-apps/api/core";
-    import { toast } from "svelte-sonner";
-    import { Button } from "$lib/components/ui/button";
-    import {
-        RefreshCw, Trash2, Search, Terminal,
-        FileText, Download, ArrowLeft, Copy, Check
-    } from "lucide-svelte";
-    import { onMount } from "svelte";
-    import { fly } from "svelte/transition";
-    import { cubicOut } from "svelte/easing";
+    import {i18n} from "@/stores/i18n.svelte.js";
+    import {invoke} from "@tauri-apps/api/core";
+    import {toast} from "svelte-sonner";
+    import {Button} from "$lib/components/ui/button";
+    import {ArrowLeft, Check, Copy, Download, FileText, RefreshCw, Search, Terminal, Trash2} from "lucide-svelte";
+    import {onMount} from "svelte";
+    import {fly} from "svelte/transition";
+    import {cubicOut} from "svelte/easing";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
 
     interface LogEntry {
@@ -93,8 +90,7 @@
     async function viewLogFile(name: string) {
         isFileLoading = true;
         try {
-            const content = await invoke<string>("get_log_file", { name });
-            selectedFileContent = content;
+            selectedFileContent = await invoke<string>("get_log_file", {name});
             selectedFileName = name;
         } catch (e: any) {
             toast.error(i18n.t('errors.file_read_failed'));

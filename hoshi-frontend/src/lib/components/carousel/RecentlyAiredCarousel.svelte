@@ -11,8 +11,8 @@
     let visibleItems = $derived(
         scheduleStore.recentlyAired.filter(item => {
             if (item.card.nsfw && !appConfig.data?.general?.showAdultContent) return false;
-            if (item.card.score == null || item.card.score < 6) return false;
-            return true;
+            return !(item.card.score == null || item.card.score < 6);
+
         })
     );
 

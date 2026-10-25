@@ -1,7 +1,7 @@
 <script lang="ts">
     import * as Dialog from '$lib/components/ui/dialog/index.js';
     import { Button } from '$lib/components/ui/button';
-    import { Network, Loader2, X } from 'lucide-svelte';
+    import { Network, Loader2 } from 'lucide-svelte';
     import type { RelationGraph } from "@/api/content/types";
     import { contentApi } from "@/api/content/content";
     import RelationMap from "@/components/content/RelationMap.svelte";

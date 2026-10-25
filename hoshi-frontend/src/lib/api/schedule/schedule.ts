@@ -1,5 +1,5 @@
 import { call } from "@/api/client";
-import type {AiringEntry, ScheduleQuery, ScheduleResponse} from "./types";
+import type {AiringEntry, ScheduleQuery} from "./types";
 
 export const scheduleApi = {
     get(window?: ScheduleQuery) {

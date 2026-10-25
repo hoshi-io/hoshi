@@ -1,6 +1,5 @@
 <script lang="ts">
     import { importStatuses } from "@/stores/importStatus.svelte";
-    import { Spinner } from "$lib/components/ui/spinner";
     import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-svelte";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { fade, fly } from "svelte/transition";

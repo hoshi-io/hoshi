@@ -7,8 +7,6 @@ import type {
     TorrentFilters,
     TorrentLiveStats,
     TorrentSearchResult,
-    RankedTorrent,
-    TorrentTargetSummary,
     TorrentStorageStats,
     TorrentStreamInfo,
 } from "./types";

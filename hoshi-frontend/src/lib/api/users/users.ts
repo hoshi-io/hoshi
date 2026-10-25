@@ -1,6 +1,5 @@
 import { call, isTauri } from "@/api/client";
 import type {
-    UserPublic,
     UserPrivate,
     UpdateUserBody,
     ChangePasswordBody,

@@ -13,8 +13,8 @@
         scheduleStore.recentlyAired
             .filter((item) => {
                 if (shouldHideNsfw(item.card.nsfw)) return false;
-                if (item.card.score == null || item.card.score < 6) return false;
-                return true;
+                return !(item.card.score == null || item.card.score < 6);
+
             })
             .slice(0, TV_ROW_MAX)
     );

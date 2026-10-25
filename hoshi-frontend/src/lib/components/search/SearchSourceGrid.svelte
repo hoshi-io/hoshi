@@ -1,8 +1,6 @@
 <script lang="ts">
     import { Plug, Database, Blocks, ChevronRight } from "lucide-svelte";
     import { searchState } from "@/app/search.svelte.js";
-    import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
-    import {extensionsApi} from "@/api/extensions/extensions";
 
     let {
         isMobile = false,

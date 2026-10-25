@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
     import { AlertCircle, ArrowLeft, Magnet, RefreshCw } from 'lucide-svelte';
     import type { WatchState } from '@/app/watch.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';

@@ -31,8 +31,3 @@ export function openListEditor(payload: ListEditorPayload) {
     layoutState.listEditor = payload;
     layoutState.listEditorOpen = true;
 }
-
-export function closeListEditor() {
-    layoutState.listEditorOpen = false;
-    setTimeout(() => { layoutState.listEditor = null; }, 300);
-}

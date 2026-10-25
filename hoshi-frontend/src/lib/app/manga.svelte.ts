@@ -205,10 +205,6 @@ export class MangaReaderState extends BaseReaderState {
         this.imageStatus[id] = status;
     }
 
-    handleImgMount(node: HTMLImageElement, id: string) {
-        if (node.complete) this.setImgStatus(id, "loaded");
-        return {};
-    }
 
     async resolveImageUrl(img: ImageEntry): Promise<string> {
         if (!isTauri() || !img.proxyParams) return img.url;
@@ -218,19 +214,6 @@ export class MangaReaderState extends BaseReaderState {
         const blobUrl = URL.createObjectURL(blob);
         this.blobCache.set(key, blobUrl);
         return blobUrl;
-    }
-
-    resolveBlobSrc(node: HTMLImageElement, img: ImageEntry) {
-        if (isTauri() && img.proxyParams) {
-            this.resolveImageUrl(img).then(url => { node.src = url; });
-        }
-        return {
-            update: (newImg: ImageEntry) => {
-                if (isTauri() && newImg.proxyParams) {
-                    this.resolveImageUrl(newImg).then(url => { node.src = url; });
-                }
-            },
-        };
     }
 
     private revokeBlobs() {

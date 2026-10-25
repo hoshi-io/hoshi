@@ -4,7 +4,7 @@
     import { Input } from '@/components/ui/input';
     import { Spinner } from "@/components/ui/spinner";
     import * as Dialog from '@/components/ui/dialog';
-    import { GitMerge, Search, AlertTriangle, X, Check } from 'lucide-svelte';
+    import { GitMerge, Search, AlertTriangle, Check } from 'lucide-svelte';
     import { toast } from "svelte-sonner";
     import { i18n } from "@/stores/i18n.svelte.js";
     import type { CoreError } from "@/api/client";

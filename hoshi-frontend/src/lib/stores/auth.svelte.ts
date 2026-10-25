@@ -1,9 +1,9 @@
-import type { RegisterRequest, UserInfo } from "@/api/auth/types";
-import { authApi } from "@/api/auth/auth";
-import { usersApi } from "@/api/users/users";
-import { appConfig } from "@/stores/config.svelte.js";
-import { call } from "@/api/client";
-import type { CoreError } from "@/api/client";
+import type {RegisterRequest, UserInfo} from "@/api/auth/types";
+import {authApi} from "@/api/auth/auth";
+import {usersApi} from "@/api/users/users";
+import {appConfig} from "@/stores/config.svelte.js";
+import type {CoreError} from "@/api/client";
+import {call} from "@/api/client";
 
 class AuthStore {
     user = $state<UserInfo | null>(null);
@@ -35,8 +35,7 @@ class AuthStore {
 
             if (avatarFile) {
                 await usersApi.uploadAvatar(avatarFile);
-                const updatedUser = await usersApi.getMe();
-                this.user = updatedUser;
+                this.user = await usersApi.getMe();
             }
 
             await appConfig.load();

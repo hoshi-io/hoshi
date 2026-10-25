@@ -80,46 +80,6 @@ class ExtensionsStore {
         }
     }
 
-    async playWithMpv(
-        cid: string,
-        epNumber: number,
-        extId: string,
-        opts: {
-            server?: string;
-            isDub?: boolean;
-            animeTitle: string;
-            episodeTitle: string;
-            totalEpisodes: number;
-            isNsfw: boolean;
-            coverImage?: string | null;
-            startTime?: number;
-            autoUpdateProgress: boolean;
-            use_hoshi_config: boolean;
-        }
-    ) {
-        const ext = this.installed.find(e => e.id === extId);
-        if (!ext) throw new Error("Extension not found");
-
-        await invoke("launch_mpv", {
-            opts: {
-                extension: extId,
-                server: opts.server ?? "",
-                category: opts.isDub ? "dub" : "sub",
-                startTime: opts.startTime ?? 0,
-                cid,
-                epNumber,
-                totalEpisodes: opts.totalEpisodes,
-                animeTitle: opts.animeTitle,
-                episodeTitle: opts.episodeTitle,
-                isNsfw: opts.isNsfw,
-                coverImage: opts.coverImage ?? null,
-                autoUpdateProgress: opts.autoUpdateProgress,
-                userId: 0,
-                useHoshiMpvConfig: opts.use_hoshi_config,
-            },
-        });
-    }
-
     isTachiyomi(extId: string): boolean {
         return this.installed.find(e => e.id === extId)?.source === "tachiyomi";
     }

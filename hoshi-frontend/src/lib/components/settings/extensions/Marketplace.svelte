@@ -249,10 +249,6 @@
         }
     }
 
-    function slugify(name: string): string {
-        return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-    }
-
     function getItemId(item: AnyMarketplaceEntry): string {
         return item.id;
     }
@@ -264,11 +260,6 @@
     function isLNReader(item: AnyMarketplaceEntry): item is LNReaderMarketplaceEntry {
         return "url" in item && "iconUrl" in item;
     }
-
-    function getRepoBaseUrl(url: string): string {
-        return url.replace(/\/(index(\.min)?\.json)?$/, "");
-    }
-
 
     function getExpectedId(item: AnyMarketplaceEntry): string {
         if (isLNReader(item)) return `lnr_${item.id}`;

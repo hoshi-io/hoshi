@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {getCardScore, getCardScoreIsStars, type NormalizedCard} from '@/utils/normalize';
+    import {getCardScore, type NormalizedCard} from '@/utils/normalize';
     import { getCardTitle, getCardShouldBlur, getCardTrailerUrl } from '@/utils/normalize';
     import {Play, Clock, Star} from 'lucide-svelte';
     import { fade, fly } from 'svelte/transition';

@@ -1,4 +1,3 @@
-import { goto } from "$app/navigation";
 import { appConfig } from "@/stores/config.svelte";
 import { progressApi } from "@/api/progress/progress";
 import { contentApi } from "@/api/content/content";

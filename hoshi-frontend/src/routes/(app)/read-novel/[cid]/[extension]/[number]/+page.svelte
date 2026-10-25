@@ -1,13 +1,6 @@
 <script lang="ts">
-    import { NovelReaderState, NOVEL_THEMES } from "@/app/novel.svelte";
+    import { NovelReaderState } from "@/app/novel.svelte";
     import Reader from "@/components/layout/Reader.svelte";
-    import { Button } from "@/components/ui/button";
-    import { Slider } from "@/components/ui/slider";
-    import { Label } from "@/components/ui/label";
-    import * as Tabs from "$lib/components/ui/tabs";
-    import { Type, AlignLeft, AlignJustify, Palette, Expand, Baseline, Space } from "lucide-svelte";
-    import { i18n } from "@/stores/i18n.svelte.js";
-    import type { NovelTheme, FontFamily } from "@/api/config/types";
     import NovelReaderSettings from "@/components/readers/NovelReaderSettings.svelte";
 
     const readerState = new NovelReaderState();

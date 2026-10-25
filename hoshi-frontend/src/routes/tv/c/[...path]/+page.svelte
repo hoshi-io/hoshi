@@ -1,16 +1,13 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
     import { fade } from 'svelte/transition';
     import {
-        AlertCircle, BookMarked, Building2, Calendar, Check, CheckCircle2, ChevronDown,
-        ChevronUp, Clock, Play, Plus, RefreshCw, Star, Tv
+        AlertCircle, BookMarked, Building2, Calendar, CheckCircle2, ChevronDown,
+        ChevronUp, Clock, Play, RefreshCw, Star, Tv
     } from 'lucide-svelte';
 
     import { ContentDetailState } from '@/app/content.svelte';
     import { listStore } from '@/app/list.svelte.js';
     import { scheduleStore } from '@/app/schedule.svelte.js';
-    import { listApi } from '@/api/list/list';
-    import type { UpsertEntryBody } from '@/api/list/types';
     import { progressApi } from '@/api/progress/progress';
     import type { AnimeProgress } from '@/api/progress/types';
     import { primaryMetadata } from '@/api/content/types';

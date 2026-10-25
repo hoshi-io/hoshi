@@ -7,7 +7,6 @@
     import { Settings2, X, Trash2, Download, RefreshCw } from "lucide-svelte";
     import { i18n } from "@/stores/i18n.svelte.js";
     import Form from "./Form.svelte";
-    import type { Extension } from "@/api/extensions/types";
 
     let {
         ext,

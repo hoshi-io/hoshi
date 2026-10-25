@@ -12,7 +12,7 @@
     import * as Drawer from "$lib/components/ui/drawer";
     import { Input } from "$lib/components/ui/input";
     import { Button } from "$lib/components/ui/button";
-    import { Search, SearchX, ListFilter, X, AlertCircle, Tv, Book, BookOpen } from "lucide-svelte";
+    import { Search, SearchX, ListFilter, X, Tv, Book, BookOpen } from "lucide-svelte";
     import CardWrapper from "@/components/card/CardWrapper.svelte";
     import LazyCardGrid from "@/components/card/LazyCardGrid.svelte";
 
