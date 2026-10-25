@@ -25,7 +25,9 @@
 
     const pathname = $derived(page.url.pathname);
     const isSetup = $derived(pathname.startsWith('/tv/setup'));
-    const showNav = $derived(auth.user !== null && !isSetup);
+
+    const isWatch = $derived(pathname.startsWith('/tv/watch'));
+    const showNav = $derived(auth.user !== null && !isSetup && !isWatch);
 
     // Top-level screens: Back on these goes to the sidebar / exits, not to the previous page.
     const isSection = $derived([...mainRoutes, ...profileRoutes].some((r) => r.path === pathname));
@@ -80,7 +82,7 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<div class="h-dvh w-full bg-background text-foreground relative overflow-hidden select-none">
+<div class="h-dvh w-full text-foreground relative overflow-hidden select-none {isWatch ? '' : 'bg-background'}">
     {#if showNav}
         <TvSidebar {mainRoutes} {profileRoutes} />
     {/if}
@@ -89,9 +91,8 @@
             bind:this={mainElement}
             class="h-full w-full overflow-y-auto overflow-x-hidden {showNav ? 'pl-20' : ''}"
     >
-        {#key pathname}
-            <!-- px/py = overscan-safe margins -->
-            <div class="min-h-full px-12 py-8" in:fade={{ duration: 120 }}>
+        {#key isWatch ? '/tv/watch' : pathname}
+            <div class="min-h-full {isWatch ? '' : 'px-12 py-8'}" in:fade={{ duration: 120 }}>
                 {@render children()}
             </div>
         {/key}

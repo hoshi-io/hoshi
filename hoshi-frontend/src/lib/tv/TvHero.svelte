@@ -31,12 +31,20 @@
     function revealTop(e: FocusEvent) {
         (e.currentTarget as HTMLElement).closest('main')?.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    let paused = $state(false);
+
+    $effect(() => {
+        if (items.length <= 1 || paused) return;
+        const t = setInterval(() => (index = (index + 1) % items.length), DURATION);
+        return () => clearInterval(t);
+    });
 </script>
 
 {#if current}
     <!-- -mx/-mt cancel the layout's overscan padding so the backdrop bleeds to the edges.
          No trailer iframe, no blur filters: too heavy for TV SoCs. -->
-    <div class="relative -mx-12 -mt-8 h-[60dvh] min-h-[300px] select-none overflow-hidden bg-background">
+    <div class="relative -mx-12 -mt-8 h-[60dvh] min-h-[300px] select-none overflow-hidden bg-background"onfocusin={() => (paused = true)} onfocusout={() => (paused = false)}>
         {#key current.href}
             <div class="absolute inset-0" in:fade={{ duration: 500 }} out:fade={{ duration: 400 }}>
                 {#if current.bannerImage}
