@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Snippet } from 'svelte';
     import { Star } from 'lucide-svelte';
     import SmartImage from '@/components/SmartImage.svelte';
     import {
@@ -10,7 +11,17 @@
         type NormalizedCard
     } from '@/utils/normalize';
 
-    let { card }: { card: NormalizedCard } = $props();
+    let {
+        card,
+        widthClass = 'w-36',
+        overlay
+    }: {
+        card: NormalizedCard;
+        /** Width class. Rows keep the fixed default; grids pass 'w-full'. */
+        widthClass?: string;
+        /** Optional content pinned to the bottom of the poster (episode / time, etc). */
+        overlay?: Snippet;
+    } = $props();
 
     const title = $derived(getCardTitle(card));
     const shouldBlur = $derived(getCardShouldBlur(card));
@@ -23,7 +34,7 @@
 <a
         href={card.href}
         data-sn
-        class="group block w-36 shrink-0 scroll-my-16 outline-none"
+        class="group block {widthClass} shrink-0 scroll-my-16 outline-none"
 >
     <div
             class="relative aspect-[2/3] overflow-hidden rounded-md bg-secondary
@@ -46,6 +57,12 @@
                     <Star class="size-3 fill-yellow-400 text-yellow-400" />
                 {/if}
                 <span class={isStars ? 'text-amber-400' : ''}>{score}</span>
+            </div>
+        {/if}
+
+        {#if overlay}
+            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent px-2 pb-2 pt-8">
+                {@render overlay()}
             </div>
         {/if}
     </div>

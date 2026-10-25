@@ -1,10 +1,8 @@
 <script lang="ts">
-    import { auth } from "@/stores/auth.svelte.js";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { scheduleStore } from "@/app/schedule.svelte.js";
     import { untrack } from "svelte";
 
-    import * as Avatar from "$lib/components/ui/avatar";
     import { Skeleton } from "$lib/components/ui/skeleton";
     import { Badge } from "$lib/components/ui/badge";
     import { Calendar as CalendarIcon, AlertCircle, RefreshCw, ListFilter } from "lucide-svelte";

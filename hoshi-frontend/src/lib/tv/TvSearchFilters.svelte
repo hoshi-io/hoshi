@@ -3,7 +3,7 @@
     import { searchState } from '@/app/search.svelte.js';
     import TvChoice from '@/tv/TvChoice.svelte';
     import TvToggle from '@/tv/TvToggle.svelte';
-    import {formatLabel, MANGA_FORMATS, type TRACKER_FILTERS} from "@/app/SearchFilters.js";
+    import {formatLabel, MANGA_FORMATS, TRACKER_FILTERS} from "@/utils/SearchFilters.js";
 
     let {
         extFiltersSchema,
