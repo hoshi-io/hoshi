@@ -29,13 +29,13 @@
     import {appConfig} from "@/stores/config.svelte";
     import type {ScoreFormat} from "@/api/config/types";
     import { layoutState } from "@/stores/layout.svelte.js";
-    import TvDialog from "@/tv/TvDialog.svelte";
-    import TvChoice from "@/tv/TvChoice.svelte";
-    import TvSegmented from "@/tv/TvSegmented.svelte";
-    import TvSlider from "@/tv/TvSlider.svelte";
-    import TvSwitch from "@/tv/TvSwitch.svelte";
-    import TvSettingRow from "@/tv/TvSettingRow.svelte";
-    import TvStepper from "@/tv/TvStepper.svelte";
+    import TvDialog from "@/tv/components/TvDialog.svelte";
+    import TvChoice from "@/tv/components/TvChoice.svelte";
+    import TvSegmented from "@/tv/components/TvSegmented.svelte";
+    import TvSlider from "@/tv/components/TvSlider.svelte";
+    import TvSwitch from "@/tv/components/TvSwitch.svelte";
+    import TvSettingRow from "@/tv/components/TvSettingRow.svelte";
+    import TvStepper from "@/tv/components/TvStepper.svelte";
 
     let {
         open = $bindable(false),

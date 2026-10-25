@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18n } from '@/stores/i18n.svelte.js';
     import { scheduleStore, type RecentlyAiredItem } from '@/app/schedule.svelte.js';
-    import TvRow, { TV_ROW_MAX } from '@/tv/TvRow.svelte';
+    import TvRow, { TV_ROW_MAX } from '@/tv/components/TvRow.svelte';
     import TvEpisodeCard from '@/tv/components/card/TvEpisodeCard.svelte';
     import { wideImage, displayTitle, shouldHideNsfw, shouldBlurNsfw } from '@/tv/helpers.js';
 

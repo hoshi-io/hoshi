@@ -11,8 +11,8 @@
     import { completeSetup, DEFAULT_SETUP_PREFS, type SetupPrefs } from '@/utils/setup.js';
     import type { CoreError } from '@/api/client';
     import LanguageSelector from '@/components/LanguageSelector.svelte';
-    import TvChoice from '@/tv/TvChoice.svelte';
-    import TvSettingRow from '@/tv/TvSettingRow.svelte';
+    import TvChoice from '@/tv/components/TvChoice.svelte';
+    import TvSettingRow from '@/tv/components/TvSettingRow.svelte';
 
     // Typing on a TV is painful, so the whole flow works with OK presses on the defaults.
     const DEFAULT_USERNAME = 'Guest';

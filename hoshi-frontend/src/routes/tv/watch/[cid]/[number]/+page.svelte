@@ -8,13 +8,13 @@
     import { appConfig } from '@/stores/config.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import TorrentBanner from '@/components/player/TorrentBanner.svelte';
-    import {baseTrackLabel, buildTrackLabels, qualityLabel, type TvPanelId} from "@/tv/watch/TvPlayerUtils.js";
-    import TvPlayerStatus from "@/tv/watch/TvPlayerStatus.svelte";
-    import TvPlayerControls from "@/tv/watch/TvPlayerControls.svelte";
-    import TvEpisodePanel from "@/tv/watch/TvEpisodePanel.svelte";
-    import TvSidePanel from "@/tv/watch/TvSidePanel.svelte";
-    import TvOptionList from "@/tv/watch/TvOptionList.svelte";
-    import TvTorrentPicker from "@/tv/watch/TvTorrentPicker.svelte";
+    import {baseTrackLabel, buildTrackLabels, qualityLabel, type TvPanelId} from "@/tv/components/watch/TvPlayerUtils.js";
+    import TvPlayerStatus from "@/tv/components/watch/TvPlayerStatus.svelte";
+    import TvPlayerControls from "@/tv/components/watch/TvPlayerControls.svelte";
+    import TvEpisodePanel from "@/tv/components/watch/TvEpisodePanel.svelte";
+    import TvSidePanel from "@/tv/components/watch/TvSidePanel.svelte";
+    import TvOptionList from "@/tv/components/watch/TvOptionList.svelte";
+    import TvTorrentPicker from "@/tv/components/watch/TvTorrentPicker.svelte";
 
     const ps = new WatchState();
 

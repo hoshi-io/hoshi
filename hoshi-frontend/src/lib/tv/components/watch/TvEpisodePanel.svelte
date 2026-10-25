@@ -1,9 +1,9 @@
 <script lang="ts">
     import { CheckCircle2 } from 'lucide-svelte';
     import type { WatchState } from '@/app/watch.svelte.js';
-    import { progressApi } from '@/api/progress/progress';
-    import type { AnimeProgress } from '@/api/progress/types';
-    import { primaryMetadata } from '@/api/content/types';
+    import { progressApi } from '@/api/progress/progress.ts';
+    import type { AnimeProgress } from '@/api/progress/types.ts';
+    import { primaryMetadata } from '@/api/content/types.ts';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { appConfig } from '@/stores/config.svelte.js';
     import SmartImage from '@/components/SmartImage.svelte';

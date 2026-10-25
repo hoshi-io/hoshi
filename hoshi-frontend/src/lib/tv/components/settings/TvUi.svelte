@@ -3,9 +3,9 @@
     import type { UiConfig } from '@/api/config/types.ts';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { themeManager } from '@/stores/theme.svelte.js';
-    import TvSettingRow from '@/tv/TvSettingRow.svelte';
-    import TvSegmented from '@/tv/TvSegmented.svelte';
-    import TvColorSwatches from '@/tv/TvColorSwatches.svelte';
+    import TvSettingRow from '@/tv/components/TvSettingRow.svelte';
+    import TvSegmented from '@/tv/components/TvSegmented.svelte';
+    import TvColorSwatches from '@/tv/components/TvColorSwatches.svelte';
 
     let {
         config = $bindable(),

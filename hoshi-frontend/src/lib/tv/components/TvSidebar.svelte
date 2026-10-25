@@ -2,9 +2,9 @@
     import { goto } from '$app/navigation';
     import { page } from '$app/state';
     import { Users, Monitor } from 'lucide-svelte';
-    import * as Avatar from '$lib/components/ui/avatar';
+    import * as Avatar from '@/components/ui/avatar';
     import { auth } from '@/stores/auth.svelte.js';
-    import { layoutState } from '@/stores/layout.svelte';
+    import { layoutState } from '@/stores/layout.svelte.js';
 
     let { mainRoutes, profileRoutes } = $props();
 

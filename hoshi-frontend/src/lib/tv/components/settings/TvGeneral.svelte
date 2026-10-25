@@ -2,9 +2,9 @@
     import { i18n } from '@/stores/i18n.svelte.js';
     import type { ContentConfig, GeneralConfig } from '@/api/config/types.ts';
     import LanguageSelector from '@/components/LanguageSelector.svelte';
-    import TvSettingRow from '@/tv/TvSettingRow.svelte';
-    import TvSwitch from '@/tv/TvSwitch.svelte';
-    import TvSegmented from '@/tv/TvSegmented.svelte';
+    import TvSettingRow from '@/tv/components/TvSettingRow.svelte';
+    import TvSwitch from '@/tv/components/TvSwitch.svelte';
+    import TvSegmented from '@/tv/components/TvSegmented.svelte';
 
     let {
         config = $bindable(),

@@ -3,7 +3,7 @@
     import type { WatchState } from '@/app/watch.svelte.js';
     import { appConfig } from '@/stores/config.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
-    import {formatTime} from "@/tv/watch/TvPlayerUtils.js";
+    import {formatTime} from "@/tv/components/watch/TvPlayerUtils.js";
 
     let { pageState }: { pageState: WatchState } = $props();
 

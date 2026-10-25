@@ -5,8 +5,8 @@
     } from 'lucide-svelte';
     import type { WatchState } from '@/app/watch.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
-    import TvSeekBar from "@/tv/watch/TvSeekBar.svelte";
-    import {baseTrackLabel, buildTrackLabels, qualityLabel, type TvPanelId} from "@/tv/watch/TvPlayerUtils.js";
+    import TvSeekBar from "@/tv/components/watch/TvSeekBar.svelte";
+    import {baseTrackLabel, buildTrackLabels, qualityLabel, type TvPanelId} from "@/tv/components/watch/TvPlayerUtils.js";
 
     let {
         pageState,

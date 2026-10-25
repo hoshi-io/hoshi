@@ -11,10 +11,10 @@
     import type { ListConfig, MergeStrategy } from '@/api/config/types.ts';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { Spinner } from '@/components/ui/spinner';
-    import TvSettingRow from '@/tv/TvSettingRow.svelte';
-    import TvSwitch from '@/tv/TvSwitch.svelte';
-    import TvSegmented from '@/tv/TvSegmented.svelte';
-    import TvDialog from '@/tv/TvDialog.svelte';
+    import TvSettingRow from '@/tv/components/TvSettingRow.svelte';
+    import TvSwitch from '@/tv/components/TvSwitch.svelte';
+    import TvSegmented from '@/tv/components/TvSegmented.svelte';
+    import TvDialog from '@/tv/components/TvDialog.svelte';
 
     let {
         config = $bindable(),

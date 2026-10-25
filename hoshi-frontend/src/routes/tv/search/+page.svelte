@@ -7,7 +7,7 @@
 
     import LazyCardGrid from '@/components/card/LazyCardGrid.svelte';
     import TvCard from '@/tv/components/card/TvCard.svelte';
-    import TvPanel from '@/tv/TvPanel.svelte';
+    import TvPanel from '@/tv/components/TvPanel.svelte';
     import TvSearchSources, { TRACKERS, type Tracker } from '@/tv/components/search/TvSearchSources.svelte';
     import TvSearchFilters from '@/tv/components/search/TvSearchFilters.svelte';
 

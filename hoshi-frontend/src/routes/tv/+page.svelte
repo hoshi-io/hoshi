@@ -5,8 +5,8 @@
     import { auth } from '@/stores/auth.svelte.js';
     import { homeState } from '@/app/home.svelte.js';
     import type { NormalizedCard } from '@/utils/normalize';
-    import TvHero from '@/tv/TvHero.svelte';
-    import TvRow, { TV_ROW_MAX } from '@/tv/TvRow.svelte';
+    import TvHero from '@/tv/components/TvHero.svelte';
+    import TvRow, { TV_ROW_MAX } from '@/tv/components/TvRow.svelte';
     import TvCard from '@/tv/components/card/TvCard.svelte';
     import TvContinueRow from '@/tv/components/card/TvContinueRow.svelte';
     import TvRecentlyAiredRow from '@/tv/components/card/TvRecentlyAiredRow.svelte';

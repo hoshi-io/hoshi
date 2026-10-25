@@ -16,7 +16,7 @@
     import { fly } from 'svelte/transition';
     import { cubicOut } from 'svelte/easing';
     import type { CoreError } from "@/api/client";
-    import TvDialog from '@/tv/TvDialog.svelte';
+    import TvDialog from '@/tv/components/TvDialog.svelte';
 
     let { open = $bindable(false) } = $props();
 

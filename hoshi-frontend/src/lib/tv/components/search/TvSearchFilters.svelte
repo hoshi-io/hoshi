@@ -1,8 +1,8 @@
 <script lang="ts">
     import { i18n } from '@/stores/i18n.svelte.js';
     import { searchState } from '@/app/search.svelte.js';
-    import TvChoice from '@/tv/TvChoice.svelte';
-    import TvToggle from '@/tv/TvToggle.svelte';
+    import TvChoice from '@/tv/components/TvChoice.svelte';
+    import TvToggle from '@/tv/components/TvToggle.svelte';
     import {formatLabel, MANGA_FORMATS, TRACKER_FILTERS} from "@/utils/SearchFilters.js";
 
     let {

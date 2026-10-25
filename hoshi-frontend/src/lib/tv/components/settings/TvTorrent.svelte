@@ -8,10 +8,10 @@
     import type { TorrentCacheEntry, TorrentStorageStats } from '@/api/torrent/types.ts';
     import { torrentApi } from '@/api/torrent/torrent.ts';
     import { i18n } from '@/stores/i18n.svelte.js';
-    import TvSettingRow from '@/tv/TvSettingRow.svelte';
-    import TvSwitch from '@/tv/TvSwitch.svelte';
-    import TvSegmented from '@/tv/TvSegmented.svelte';
-    import TvSlider from '@/tv/TvSlider.svelte';
+    import TvSettingRow from '@/tv/components/TvSettingRow.svelte';
+    import TvSwitch from '@/tv/components/TvSwitch.svelte';
+    import TvSegmented from '@/tv/components/TvSegmented.svelte';
+    import TvSlider from '@/tv/components/TvSlider.svelte';
 
     let {
         torrentConfig = $bindable(),

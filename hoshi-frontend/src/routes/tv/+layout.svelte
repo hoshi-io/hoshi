@@ -8,7 +8,7 @@
     import { auth } from '@/stores/auth.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { enableSpatialNav, disableSpatialNav, focusFirstIn } from '@/tv/spatialNav';
-    import TvSidebar from '@/tv/TvSidebar.svelte';
+    import TvSidebar from '@/tv/components/TvSidebar.svelte';
 
     let { children } = $props();
 
