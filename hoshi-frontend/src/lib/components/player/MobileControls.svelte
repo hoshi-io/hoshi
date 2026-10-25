@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Play, Pause, SkipBack, SkipForward } from "lucide-svelte";
-    import TimeBar from "@/components/player/TimeBar.svelte";
     import EpisodeList from "@/components/player/EpisodeList.svelte";
+    import SeekBar from "@/components/player/SeekBar.svelte";
 
     let {
         pageState,
@@ -70,7 +70,7 @@
                 <span class="mx-1.5 text-white/40 font-normal">/</span>
                 <span class="text-white/70">{formatTime(pageState.currentDuration)}</span>
             </div>
-            <TimeBar {pageState} buffered={pageState.bufferedFraction} />
+            <SeekBar {pageState} buffered={pageState.bufferedFraction} />
         </div>
     </div>
 </div>

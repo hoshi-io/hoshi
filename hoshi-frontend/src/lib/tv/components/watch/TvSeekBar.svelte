@@ -1,14 +1,12 @@
 <script lang="ts">
-    import { onDestroy, untrack } from 'svelte';
-    import { invoke } from '@tauri-apps/api/core';
+    import { onDestroy } from 'svelte';
     import type { WatchState } from '@/app/watch.svelte.js';
+    import { buildSegments, createThumbnails, formatTime, segmentFill } from '@/utils/SeekBar.svelte.js';
     import { appConfig } from '@/stores/config.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
-    import { formatTime } from '@/tv/components/watch/TvPlayerUtils.js';
 
     let { pageState }: { pageState: WatchState } = $props();
 
-    // Left/Right accumulate into `pending`; the real seek is sent once the user pauses.
     let pending = $state<number | null>(null);
     let commitTimer: ReturnType<typeof setTimeout> | null = null;
     let settleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -18,86 +16,13 @@
     const position = $derived(pending ?? pageState.currentTime);
     const frac = $derived(duration > 0 ? Math.min(1, position / duration) : 0);
 
+    const segments = $derived(buildSegments(pageState.chapters, duration));
     const chapterTitle = $derived(
-        pageState.chapters.find((c) => position >= c.start && position < c.end)?.title ?? ''
+        segments.find((s) => position >= s.start && position < s.end)?.title ?? ''
     );
 
-    // Thumbnail configuration and states
-    const player = $derived(appConfig.data?.player);
-    const thumbInterval = $derived(Math.max(1, player?.thumbnailIntervalSeconds ?? 10));
-    const thumbWidth = $derived(player?.thumbnailWidth ?? 240);
-    const thumbsOn = $derived(
-        !!player?.thumbnailsEnabled && pageState.isStreamLoaded && duration > 0
-    );
-
-    const thumbBucket = $derived(pending !== null ? Math.floor(position / thumbInterval) : null);
-
-    let thumbUrl = $state<string | null>(null);
-    let thumbReq = 0;
-    const thumbCache = new Map<number, string>(); // bucket -> blob URL
-    const MAX_FRONT_CACHE = 120;
-
-    function clearThumbs() {
-        thumbReq++;
-        for (const url of thumbCache.values()) URL.revokeObjectURL(url);
-        thumbCache.clear();
-        thumbUrl = null;
-    }
-
-    $effect(() => {
-        pageState.cid; pageState.epNumber; pageState.isStreamLoaded;
-        untrack(clearThumbs);
-    });
-
-    $effect(() => {
-        const bucket = thumbBucket;
-        const stepSec = thumbInterval;
-        const on = thumbsOn;
-        const id = ++thumbReq;
-        if (!on || bucket === null) return;
-
-        const cached = thumbCache.get(bucket);
-        if (cached) { thumbUrl = cached; return; }
-
-        const timer = setTimeout(async () => {
-            try {
-                const buf = await invoke<ArrayBuffer>("get_thumbnail", { time: bucket * stepSec });
-                if (id !== thumbReq || buf.byteLength === 0) return; // stale or "no thumbnail"
-                const url = URL.createObjectURL(new Blob([buf], { type: "image/jpeg" }));
-                if (thumbCache.size >= MAX_FRONT_CACHE) {
-                    const oldest = thumbCache.keys().next().value!;
-                    URL.revokeObjectURL(thumbCache.get(oldest)!);
-                    thumbCache.delete(oldest);
-                }
-                thumbCache.set(bucket, url);
-                thumbUrl = url;
-            } catch { /* ignore: no thumbnail */ }
-        }, 150);
-
-        return () => clearTimeout(timer);
-    });
-
-    // Chapter segments with gaps filled, same idea as the desktop TimeBar.
-    const segments = $derived.by(() => {
-        if (duration <= 0) return [{ start: 0, end: 1, width: 100 }];
-        const sorted = [...pageState.chapters].sort((a, b) => a.start - b.start);
-        const out: { start: number; end: number }[] = [];
-        let cursor = 0;
-        for (const ch of sorted) {
-            if (ch.end <= ch.start || ch.end <= cursor) continue;
-            if (ch.start > cursor) out.push({ start: cursor, end: ch.start });
-            out.push({ start: Math.max(cursor, ch.start), end: ch.end });
-            cursor = ch.end;
-        }
-        if (cursor < duration) out.push({ start: cursor, end: duration });
-        return out.map((s) => ({ ...s, width: ((s.end - s.start) / duration) * 100 }));
-    });
-
-    function fill(start: number, end: number, t: number): number {
-        if (t <= start) return 0;
-        if (t >= end) return 100;
-        return ((t - start) / (end - start)) * 100;
-    }
+    // Preview thumbnails only while a seek is pending.
+    const thumbs = createThumbnails(pageState, () => (pending !== null ? position : null));
 
     $effect(() => {
         pageState.isScrubbing = pending !== null;
@@ -107,7 +32,6 @@
         if (commitTimer) clearTimeout(commitTimer);
         if (settleTimer) clearTimeout(settleTimer);
         pageState.isScrubbing = false;
-        clearThumbs();
     });
 
     function nudge(dir: 1 | -1) {
@@ -129,7 +53,6 @@
         }
         if (pending === null) return;
         const target = pending;
-        // Keep showing the target until mpv reports the new position, so the bar doesn't jump back.
         pageState.seek(target, false).finally(() => {
             settleTimer = setTimeout(() => {
                 pending = null;
@@ -169,18 +92,18 @@
         class="relative w-full rounded-lg px-3 py-4 outline-none focus:bg-white/10 focus:ring-4 focus:ring-primary"
 >
     <!-- Thumbnail Preview Tooltip (Shown when scrubbing via TV remote Left/Right) -->
-    {#if pending !== null && thumbsOn}
+    {#if pending !== null && thumbs.enabled}
         <div
                 class="absolute bottom-full mb-4 flex flex-col items-center gap-1.5 pointer-events-none z-[100] -translate-x-1/2"
                 style="left: {frac * 100}%"
         >
-            {#if thumbUrl}
+            {#if thumbs.url}
                 <img
-                        src={thumbUrl}
+                        src={thumbs.url}
                         alt=""
                         draggable="false"
                         class="rounded-lg object-cover shadow-2xl ring-2 ring-white/20"
-                        style="width: {thumbWidth}px"
+                        style="width: {thumbs.width}px"
                 />
             {/if}
             <div class="flex flex-col items-center px-3 py-1 rounded-md bg-black/80 backdrop-blur-md text-white whitespace-nowrap shadow-lg">
@@ -197,11 +120,11 @@
             <div class="relative h-2 overflow-hidden rounded-sm bg-white/20" style="width: {seg.width}%">
                 <div
                         class="absolute inset-y-0 left-0 bg-white/30"
-                        style="width: {fill(seg.start, seg.end, pageState.bufferedTime)}%"
+                        style="width: {segmentFill(seg.start, seg.end, pageState.bufferedTime)}%"
                 ></div>
                 <div
                         class="absolute inset-y-0 left-0 bg-white"
-                        style="width: {fill(seg.start, seg.end, position)}%"
+                        style="width: {segmentFill(seg.start, seg.end, position)}%"
                 ></div>
             </div>
         {/each}

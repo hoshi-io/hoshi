@@ -1,7 +1,7 @@
 <script lang="ts">
     import { fade } from 'svelte/transition';
     import {
-        AlertCircle, BookMarked, Building2, Calendar, CheckCircle2, ChevronDown,
+        AlertCircle, BookMarked, Building2, Calendar, ChevronDown,
         ChevronUp, Clock, Play, RefreshCw, Star, Tv
     } from 'lucide-svelte';
 
@@ -17,9 +17,9 @@
     import { Spinner } from '@/components/ui/spinner';
     import SmartImage from '@/components/SmartImage.svelte';
     import TvCard from '@/tv/components/card/TvCard.svelte';
+    import TvEpisodeCard from '@/tv/components/card/TvEpisodeCard.svelte';
     import ListEditorButton from "@/components/ListEditorButton.svelte";
-
-    const WATCH = '/tv/watch';
+    import {isInProgress, useEpisodeList} from "@/utils/episode-grid.svelte.js";
 
     const detail = new ContentDetailState();
 
@@ -69,86 +69,20 @@
             });
     });
 
-    const progressMap = $derived(new Map(animeProgress.map((p) => [p.episode, p])));
-
-    // ---------------------------------------------------------------- episodes
-    const ARC_SIZE = 24; // bigger than the web's 12: fewer chips to scroll through on a remote
-
-    const episodes = $derived.by(() => {
-        if (!full || !isAnime || isMovie) return [];
-        const enriched = (full.contentUnits ?? [])
-            .filter((u) => u.contentType === 'episode' && u.title)
-            .sort((a, b) => a.unitNumber - b.unitNumber);
-
-        if (enriched.length > 0) {
-            return enriched.map((u) => ({
-                number: u.unitNumber,
-                title: u.title as string | null,
-                thumbnail: u.thumbnailUrl?.replace('_m.', '_w.') ?? '',
-                duration: (meta?.episodeDuration ?? null) as number | null
-            }));
-        }
-
-        const total = meta?.epsOrChapters && meta.epsOrChapters > 0 ? meta.epsOrChapters : 12;
-        return Array.from({ length: total }, (_, i) => ({
-            number: i + 1,
-            title: null as string | null,
-            thumbnail: '',
-            duration: null as number | null
-        }));
+    const list = useEpisodeList({
+        cid: () => cid,
+        units: () => full?.contentUnits,
+        total: () => meta?.epsOrChapters,
+        duration: () => meta?.episodeDuration,
+        progress: () => animeProgress,
+        enabled: () => !!full && isAnime && !isMovie,
+        arcSize: 24, // bigger than the web's 12: fewer chips to scroll through on a remote
+        watchBase: '/tv'
     });
 
-    const resumeEpisode = $derived.by(() => {
-        if (isMovie) return 1;
-        const inProgress = animeProgress
-            .filter((p) => !p.completed && p.timestampSeconds && p.timestampSeconds > 0)
-            .sort((a, b) => b.lastAccessed - a.lastAccessed)[0];
-        if (inProgress) return inProgress.episode;
-
-        const done = new Set(animeProgress.filter((p) => p.completed).map((p) => p.episode));
-        return episodes.find((ep) => !done.has(ep.number))?.number ?? episodes[0]?.number ?? 1;
-    });
-
-    const resumeProgress = $derived(progressMap.get(resumeEpisode));
-    const resumeInProgress = $derived(
-        !!resumeProgress && !resumeProgress.completed && (resumeProgress.timestampSeconds ?? 0) > 0
-    );
-
-    function watchHref(ep: number, prog?: AnimeProgress) {
-        const inProg = prog && !prog.completed && (prog.timestampSeconds ?? 0) > 0;
-        return inProg ? `${WATCH}/${cid}/${ep}?t=${prog!.timestampSeconds}` : `${WATCH}/${cid}/${ep}`;
-    }
-
-    const arcs = $derived.by(() => {
-        if (episodes.length <= ARC_SIZE) return null;
-        const out: { start: number; end: number; label: string }[] = [];
-        for (let i = 0; i < episodes.length; i += ARC_SIZE) {
-            const slice = episodes.slice(i, i + ARC_SIZE);
-            const start = slice[0].number;
-            const end = slice[slice.length - 1].number;
-            out.push({ start, end, label: `${start}–${end}` });
-        }
-        return out;
-    });
-
-    const resumeArcIndex = $derived.by(() => {
-        if (!arcs) return 0;
-        const idx = arcs.findIndex((a) => resumeEpisode >= a.start && resumeEpisode <= a.end);
-        return idx >= 0 ? idx : 0;
-    });
-
-    let selectedArc = $state(0);
-    $effect(() => {
-        selectedArc = resumeArcIndex;
-    });
-
-    const visibleEpisodes = $derived.by(() => {
-        if (!arcs) return episodes;
-        const arc = arcs[selectedArc] ?? arcs[0];
-        return episodes.filter((ep) => ep.number >= arc.start && ep.number <= arc.end);
-    });
-
-    const isRich = $derived(episodes.some((e) => e.title));
+    const resumeEpisode = $derived(isMovie ? 1 : list.resumeEpisode);
+    const resumeProgress = $derived(list.progressFor(resumeEpisode));
+    const resumeInProgress = $derived(isInProgress(resumeProgress));
 
     // ---------------------------------------------------------------- list button
     const listEntry = $derived(listStore.entries.find((e) => e.cid === cid) ?? null);
@@ -196,14 +130,6 @@
             canTruncate = synopsisEl.scrollHeight > synopsisEl.clientHeight;
         }
     });
-
-    const formatDuration = (minutes: number | null) => {
-        if (!minutes || minutes <= 0) return '';
-        if (minutes < 60) return `${minutes}m`;
-        const h = Math.floor(minutes / 60);
-        const m = minutes % 60;
-        return m > 0 ? `${h}h ${m}m` : `${h}h`;
-    };
 
     function formatRelationType(type: string) {
         if (!type) return '';
@@ -334,7 +260,7 @@
                 <div class="flex flex-wrap items-center gap-3 py-1">
                     {#if isAnime}
                         <a
-                                href={watchHref(resumeEpisode, resumeProgress)}
+                                href={list.watchHref(resumeEpisode, resumeProgress)}
                                 data-sn
                                 use:takeFocus
                                 class="flex h-14 scroll-my-24 items-center gap-3 rounded-lg bg-primary px-8 text-lg font-black text-primary-foreground outline-none
@@ -391,18 +317,18 @@
                     {/if}
                 </h2>
 
-                {#if arcs}
+                {#if list.arcs}
                     <!-- One scrollable line; focus scrolls it sideways -->
                     <div class="-mx-3 flex gap-2 overflow-x-auto px-3 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                        {#each arcs as arc, i (arc.start)}
+                        {#each list.arcs as arc, i (arc.start)}
                             <button
                                     type="button"
                                     data-sn
-                                    aria-pressed={selectedArc === i}
-                                    onclick={() => (selectedArc = i)}
+                                    aria-pressed={list.selectedArc === i}
+                                    onclick={() => (list.selectedArc = i)}
                                     class="h-11 shrink-0 scroll-my-24 rounded-lg border-2 px-4 text-sm font-bold tabular-nums outline-none
                                            transition-transform duration-150 focus:scale-105 focus:ring-4 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
-                                           {selectedArc === i
+                                           {list.selectedArc === i
                                     ? 'border-primary bg-primary text-primary-foreground'
                                     : 'border-border/60 bg-card text-foreground'}"
                             >
@@ -413,66 +339,21 @@
                 {/if}
 
                 <div class="grid grid-cols-4 gap-x-5 gap-y-7 p-3">
-                    {#each visibleEpisodes as ep (ep.number)}
-                        {@const prog = progressMap.get(ep.number)}
-                        {@const isCompleted = prog?.completed ?? false}
-                        {@const isInProgress = !isCompleted && (prog?.timestampSeconds ?? 0) > 0}
-                        {@const isResume = ep.number === resumeEpisode}
-                        {@const pct =
-                            isInProgress && prog?.episodeDurationSeconds && prog.episodeDurationSeconds > 0
-                                ? Math.min(100, Math.round((prog.timestampSeconds! / prog.episodeDurationSeconds) * 100))
-                                : null}
-
-                        <a href={watchHref(ep.number, prog)} data-sn class="group block scroll-my-24 outline-none">
-                            <div
-                                    class="relative aspect-video overflow-hidden rounded-md bg-muted/20 transition-transform duration-150
-                                           group-focus:scale-105 group-focus:ring-4 group-focus:ring-primary
-                                           {isResume ? 'ring-2 ring-primary/50' : ''}"
-                            >
-                                {#if ep.thumbnail}
-                                    <img
-                                            src={ep.thumbnail}
-                                            alt={ep.title ?? `EP ${ep.number}`}
-                                            loading="lazy"
-                                            class="size-full object-cover {isCompleted ? 'opacity-40' : ''}"
-                                    />
-                                {:else}
-                                    <div class="flex size-full items-center justify-center bg-muted/10">
-                                        <span class="text-4xl font-black text-white/10">{ep.number}</span>
-                                    </div>
-                                {/if}
-
-                                {#if ep.duration}
-                                    <div class="absolute left-2 top-1.5 text-xs font-bold text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
-                                        {formatDuration(ep.duration)}
-                                    </div>
-                                {/if}
-
-                                {#if isCompleted}
-                                    <div class="absolute inset-0 flex items-center justify-center">
-                                        <CheckCircle2 class="size-9 text-primary/80" />
-                                    </div>
-                                {/if}
-
-                                {#if pct !== null}
-                                    <div class="absolute inset-x-0 bottom-0 h-1.5 bg-white/20">
-                                        <div class="h-full bg-primary" style="width: {pct}%"></div>
-                                    </div>
-                                {/if}
-                            </div>
-
-                            <div class="space-y-0.5 pt-2">
-                                <p class="text-xs font-bold uppercase tracking-wide text-muted-foreground/70">
-                                    {i18n.t('content.episode_title', { num: ep.number })}
-                                    {#if isResume && !isCompleted}
-                                        <span class="text-primary">· {isInProgress ? i18n.t('content.resume') : i18n.t('home.hero.watch')}</span>
-                                    {/if}
-                                </p>
-                                {#if isRich && ep.title}
-                                    <p class="line-clamp-2 text-sm font-semibold leading-snug group-focus:text-primary">{ep.title}</p>
-                                {/if}
-                            </div>
-                        </a>
+                    {#each list.visible as row (row.number)}
+                        <TvEpisodeCard
+                                stacked
+                                href={row.href}
+                                image={row.thumbnail}
+                                alt={row.title ?? row.label}
+                                episode={row.label}
+                                episodeTitle={row.title}
+                                tag={row.tag}
+                                badge={row.duration}
+                                progress={row.pct ?? 0}
+                                completed={row.completed}
+                                highlight={row.isResume}
+                                placeholder={String(row.number)}
+                        />
                     {/each}
                 </div>
             </section>

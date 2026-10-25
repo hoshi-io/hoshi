@@ -37,7 +37,6 @@
         if (started) return;
         started = true;
         untrack(boot);
-        console.log(layoutState.isAndroidTv)
     });
 
     async function boot() {

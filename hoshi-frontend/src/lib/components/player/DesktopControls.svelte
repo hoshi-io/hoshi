@@ -3,11 +3,11 @@
         Play, Pause, RotateCw, SkipBack, SkipForward,
         Settings, Maximize, Minimize
     } from "lucide-svelte";
-    import TimeBar from "@/components/player/TimeBar.svelte";
     import VolumeControl from "@/components/player/VolumeControl.svelte";
     import SettingsMenu from "@/components/player/settings/SettingsMenu.svelte";
     import EpisodesButton from "@/components/player/EpisodesButton.svelte";
     import { appConfig } from "@/stores/config.svelte.js";
+    import SeekBar from "@/components/player/SeekBar.svelte";
 
     let {
         pageState,
@@ -29,7 +29,7 @@
 </script>
 
 <div class="z-20 px-6 pb-5 pt-2 flex flex-col gap-0.5">
-    <TimeBar {pageState} buffered={pageState.bufferedFraction} />
+    <SeekBar {pageState} buffered={pageState.bufferedFraction} />
     <div class="flex items-center justify-between text-white mt-0.5">
         <div class="flex items-center gap-1">
             <button onclick={() => pageState.togglePlay()} class="p-2 rounded-lg hover:bg-white/10 transition text-white">
