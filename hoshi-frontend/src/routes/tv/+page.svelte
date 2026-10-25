@@ -7,9 +7,9 @@
     import type { NormalizedCard } from '@/utils/normalize';
     import TvHero from '@/tv/TvHero.svelte';
     import TvRow, { TV_ROW_MAX } from '@/tv/TvRow.svelte';
-    import TvCard from '@/tv/TvCard.svelte';
-    import TvContinueRow from '@/tv/TvContinueRow.svelte';
-    import TvRecentlyAiredRow from '@/tv/TvRecentlyAiredRow.svelte';
+    import TvCard from '@/tv/components/card/TvCard.svelte';
+    import TvContinueRow from '@/tv/components/card/TvContinueRow.svelte';
+    import TvRecentlyAiredRow from '@/tv/components/card/TvRecentlyAiredRow.svelte';
 
     // TV is anime-only for now.
     const section = $derived(homeState.getSection('anime'));

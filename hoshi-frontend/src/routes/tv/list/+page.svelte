@@ -8,7 +8,7 @@
     import { i18n } from '@/stores/i18n.svelte.js';
     import { Skeleton } from '$lib/components/ui/skeleton';
     import LazyCardGrid from '@/components/card/LazyCardGrid.svelte';
-    import TvCard from '@/tv/TvCard.svelte';
+    import TvCard from '@/tv/components/card/TvCard.svelte';
 
     onMount(() => {
         listStore.loadData(); // no-op when the list is already loaded

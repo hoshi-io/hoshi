@@ -19,7 +19,7 @@
     import { formatScore } from '@/utils/normalize';
     import { Spinner } from '@/components/ui/spinner';
     import SmartImage from '@/components/SmartImage.svelte';
-    import TvCard from '@/tv/TvCard.svelte';
+    import TvCard from '@/tv/components/card/TvCard.svelte';
 
     const WATCH = '/tv/watch';
 

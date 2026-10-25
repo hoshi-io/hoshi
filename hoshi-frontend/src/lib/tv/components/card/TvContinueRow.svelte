@@ -1,9 +1,9 @@
 <script lang="ts">
     import { i18n } from '@/stores/i18n.svelte.js';
-    import type { ContinueItem } from '@/api/progress/types';
+    import type { ContinueItem } from '@/api/progress/types.ts';
     import TvRow, { TV_ROW_MAX } from '@/tv/TvRow.svelte';
-    import TvEpisodeCard from '@/tv/TvEpisodeCard.svelte';
-    import { wideImage, displayTitle, shouldHideNsfw, shouldBlurNsfw } from '@/tv/helpers';
+    import TvEpisodeCard from '@/tv/components/card/TvEpisodeCard.svelte';
+    import { wideImage, displayTitle, shouldHideNsfw, shouldBlurNsfw } from '@/tv/helpers.ts';
 
     // TV is anime-only, so callers pass homeState.getContinueItems('anime').
     let { items }: { items: ContinueItem[] } = $props();

@@ -7,7 +7,7 @@
     import { scheduleStore } from '@/app/schedule.svelte.js';
     import { Skeleton } from '$lib/components/ui/skeleton';
     import LazyCardGrid from '@/components/card/LazyCardGrid.svelte';
-    import TvCard from '@/tv/TvCard.svelte';
+    import TvCard from '@/tv/components/card/TvCard.svelte';
 
     onMount(() => {
         scheduleStore.load();

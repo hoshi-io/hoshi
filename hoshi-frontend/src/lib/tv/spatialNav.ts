@@ -114,6 +114,8 @@ function findNext(direction: 'up' | 'down' | 'left' | 'right'): HTMLElement | nu
     return best;
 }
 
+const TEXT_INPUT_TYPES = new Set(['text', 'password', 'search', 'email', 'url', 'tel']);
+
 function onKeydown(e: KeyboardEvent) {
     const map: Record<string, 'up' | 'down' | 'left' | 'right'> = {
         ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
@@ -121,14 +123,22 @@ function onKeydown(e: KeyboardEvent) {
     const dir = map[e.key];
     if (!dir) return;
 
-    // don't hijack arrow keys inside text inputs / selects / sliders
     const active = document.activeElement as HTMLElement | null;
+
+    // Native popups (select / combobox listboxes, menus) handle their own arrow keys.
+    if (active?.closest('[role="listbox"], [role="menu"]')) return;
+
+    // Sliders (data-sn-lr) change their value with Left/Right; Up/Down still navigate.
+    if ((dir === 'left' || dir === 'right') && active?.closest('[data-sn-lr]')) return;
+
+    // Don't hijack arrow keys inside inputs / selects / sliders. Exceptions: a color swatch,
+    // and single-line text fields, which only use Left/Right (caret), so Up/Down may leave them.
     if (active && ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName)) {
-        if (active.tagName === 'INPUT' && (active as HTMLInputElement).type === 'color') {
-            // fine to navigate away from a color swatch
-        } else {
-            return;
-        }
+        const type = active.tagName === 'INPUT' ? (active as HTMLInputElement).type : '';
+        const isColor = type === 'color';
+        const singleLineText = active.tagName === 'INPUT' && TEXT_INPUT_TYPES.has(type);
+        const leaves = isColor || (singleLineText && (dir === 'up' || dir === 'down'));
+        if (!leaves) return;
     }
 
     const next = findNext(dir);

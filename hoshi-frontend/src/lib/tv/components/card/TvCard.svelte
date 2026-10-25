@@ -9,7 +9,7 @@
         getCardScoreIsStars,
         getCardContentTypeLabel,
         type NormalizedCard
-    } from '@/utils/normalize';
+    } from '@/utils/normalize.ts';
 
     let {
         card,

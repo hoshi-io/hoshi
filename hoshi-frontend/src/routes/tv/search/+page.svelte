@@ -6,10 +6,10 @@
     import { searchState } from '@/app/search.svelte.js';
 
     import LazyCardGrid from '@/components/card/LazyCardGrid.svelte';
-    import TvCard from '@/tv/TvCard.svelte';
+    import TvCard from '@/tv/components/card/TvCard.svelte';
     import TvPanel from '@/tv/TvPanel.svelte';
-    import TvSearchSources, { TRACKERS, type Tracker } from '@/tv/TvSearchSources.svelte';
-    import TvSearchFilters from '@/tv/TvSearchFilters.svelte';
+    import TvSearchSources, { TRACKERS, type Tracker } from '@/tv/components/search/TvSearchSources.svelte';
+    import TvSearchFilters from '@/tv/components/search/TvSearchFilters.svelte';
 
     // Fixed 9rem columns (= TvCard width), spread evenly across the row.
     const TV_GRID = 'grid grid-cols-[repeat(auto-fill,9rem)] justify-between gap-x-4 gap-y-6';
