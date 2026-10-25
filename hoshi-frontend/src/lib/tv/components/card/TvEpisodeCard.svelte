@@ -17,7 +17,8 @@
         stacked = false,
         tag = null,
         completed = false,
-        highlight = false
+        highlight = false,
+        nativeImg = false
     }: {
         href: string;
         image?: string | null;
@@ -40,9 +41,13 @@
         completed?: boolean;
         /** Ring around the thumbnail (e.g. the episode to resume) */
         highlight?: boolean;
+        /** Plain lazy <img> instead of SmartImage (used by the episode grid) */
+        nativeImg?: boolean;
     } = $props();
 </script>
 
+<!-- Landscape (16:9) card. Default: fixed-width card for rows ("continue watching", "recently aired").
+     `stacked`: fills its grid cell (episode grids on the content page). -->
 <a {href} data-sn class="group block scroll-my-16 outline-none {stacked ? 'w-full' : 'w-64 shrink-0'}">
     <div
             class="relative aspect-video overflow-hidden rounded-md border border-border/30 bg-muted/20
@@ -51,14 +56,23 @@
                {highlight ? 'ring-2 ring-primary/50' : ''}"
     >
         {#if image}
-            <div class="absolute inset-0">
-                <SmartImage
+            {#if nativeImg}
+                <img
                         src={image}
                         {alt}
-                        shouldBlur={blur}
+                        loading="lazy"
                         class="size-full object-cover {completed ? 'opacity-40' : ''}"
                 />
-            </div>
+            {:else}
+                <div class="absolute inset-0">
+                    <SmartImage
+                            src={image}
+                            {alt}
+                            shouldBlur={blur}
+                            class="size-full object-cover {completed ? 'opacity-40' : ''}"
+                    />
+                </div>
+            {/if}
         {:else}
             <div class="flex size-full items-center justify-center">
                 <span class="select-none text-5xl font-black text-muted-foreground/10">{placeholder}</span>

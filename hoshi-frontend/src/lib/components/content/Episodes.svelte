@@ -3,8 +3,8 @@
     import type { AnimeProgress } from "@/api/progress/types";
     import { i18n } from "@/stores/i18n.svelte.js";
     import ResponsiveSelect from "$lib/components/ResponsiveSelect.svelte";
-    import EpisodeCard from "@/components/card/EpisodeCard.svelte";
     import {scrollIfResume, useEpisodeList} from "@/utils/episode-grid.svelte.js";
+    import EpisodeCard from "@/components/card/EpisodeCard.svelte";
 
     let { cid, epsOrChapters, contentUnits = [], duration, progress = [] }: {
         cid: string,
@@ -51,6 +51,7 @@
             <div use:scrollIfResume={row.isResume}>
                 <EpisodeCard
                         stacked
+                        nativeImg
                         playOnHover
                         href={row.href}
                         image={row.thumbnail}

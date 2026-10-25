@@ -19,7 +19,8 @@
         subtext = null,
         completed = false,
         highlight = false,
-        playOnHover = false
+        playOnHover = false,
+        nativeImg = false
     }: {
         href: string;
         image: string | null;
@@ -48,18 +49,28 @@
         highlight?: boolean;
         /** Shows a play button on hover */
         playOnHover?: boolean;
+        /** Plain <img> instead of SmartImage (used by the episode grid) */
+        nativeImg?: boolean;
     } = $props();
 </script>
 
 <a {href} class="group flex flex-col focus-visible:outline-none {stacked ? 'gap-2.5' : 'anime-card gap-4'}">
     <div class="relative w-full aspect-video overflow-hidden bg-muted/20 border border-border/30 rounded-sm {highlight ? 'ring-1 ring-primary/60' : ''}">
         {#if image}
-            <SmartImage
-                    src={image}
-                    {alt}
-                    shouldBlur={blur}
-                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03] {completed ? 'opacity-40' : ''}"
-            />
+            {#if nativeImg}
+                <img
+                        src={image}
+                        {alt}
+                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03] {completed ? 'opacity-40' : ''} {blur ? 'blur-xl scale-110' : ''}"
+                />
+            {:else}
+                <SmartImage
+                        src={image}
+                        {alt}
+                        shouldBlur={blur}
+                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03] {completed ? 'opacity-40' : ''}"
+                />
+            {/if}
         {:else}
             <div class="w-full h-full flex items-center justify-center">
                 <span class="text-6xl font-black text-muted-foreground/10 select-none">

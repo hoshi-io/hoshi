@@ -342,6 +342,7 @@
                     {#each list.visible as row (row.number)}
                         <TvEpisodeCard
                                 stacked
+                                nativeImg
                                 href={row.href}
                                 image={row.thumbnail}
                                 alt={row.title ?? row.label}
