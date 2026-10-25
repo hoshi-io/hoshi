@@ -311,7 +311,7 @@
         {#if isAnime && !isMovie}
             <section class="relative space-y-4">
                 <h2 class="text-2xl font-black tracking-tight">
-                    {i18n.t('content.episodes_title', { default: 'Episodes' })}
+                    {i18n.t('content.episodes_title')}
                     {#if meta?.epsOrChapters}
                         <span class="font-medium text-muted-foreground/50">· {meta.epsOrChapters}</span>
                     {/if}

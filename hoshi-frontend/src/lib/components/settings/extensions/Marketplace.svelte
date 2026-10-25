@@ -82,7 +82,7 @@
                     variant={managing ? "secondary" : "outline"}
                     size="sm"
                     class="size-9 shrink-0 rounded-md p-0"
-                    aria-label={i18n.t('marketplace.manage_repos', { default: 'Manage repositories' })}
+                    aria-label={i18n.t('marketplace.manage_repos')}
                     aria-expanded={managing}
                     onclick={() => (managing = !managing)}
             >
@@ -96,14 +96,14 @@
         <div class="space-y-3 rounded-xl border border-border/60 bg-muted/20 p-4" transition:slide={{ duration: 250 }}>
             <div class="flex items-start justify-between gap-3">
                 <div>
-                    <h4 class="text-sm font-bold">{i18n.t('marketplace.repositories', { default: 'Repositories' })}</h4>
+                    <h4 class="text-sm font-bold">{i18n.t('marketplace.repositories')}</h4>
                     <p class="text-xs text-muted-foreground">
-                        {i18n.t('marketplace.repositories_desc', { default: 'Links to extension index files. Press Enter to apply.' })}
+                        {i18n.t('marketplace.repositories_desc')}
                     </p>
                 </div>
                 <Button variant="outline" size="sm" class="h-8 shrink-0 gap-1.5 rounded-lg text-xs font-bold" onclick={market.addRepo}>
                     <Plus class="size-3.5" />
-                    {i18n.t('marketplace.add_repo', { default: 'Add' })}
+                    {i18n.t('marketplace.add_repo')}
                 </Button>
             </div>
 
@@ -117,7 +117,7 @@
                                        {i === market.activeIndex
                                     ? 'border-primary bg-primary/10 text-primary'
                                     : 'border-border/60 text-muted-foreground hover:bg-muted'}"
-                                aria-label={i18n.t('marketplace.use_repo', { default: 'Use this repository' })}
+                                aria-label={i18n.t('marketplace.use_repo')}
                                 aria-pressed={i === market.activeIndex}
                                 onclick={() => market.selectRepo(i)}
                         >
@@ -139,7 +139,7 @@
                                 variant="ghost"
                                 size="sm"
                                 class="size-8 shrink-0 rounded-lg p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                aria-label={i18n.t('marketplace.remove_repo', { default: 'Remove repository' })}
+                                aria-label={i18n.t('marketplace.remove_repo')}
                                 onclick={() => market.removeRepo(i)}
                         >
                             <Trash2 class="size-4" />
@@ -159,15 +159,15 @@
         >
             <Button variant="outline" class="gap-2 rounded-lg" onclick={() => (managing = true)}>
                 <Plus class="size-4" />
-                {i18n.t('marketplace.add_repo', { default: 'Add' })}
+                {i18n.t('marketplace.add_repo')}
             </Button>
         </EmptyState>
 
     {:else if market.view === "invalid"}
         <EmptyState
                 icon={AlertTriangle}
-                title={i18n.t('marketplace.invalid_url', { default: 'This doesn’t look like a valid link' })}
-                description={i18n.t('marketplace.invalid_url_desc', { default: 'Use a full http(s) link to an extension index.' })}
+                title={i18n.t('marketplace.invalid_url')}
+                description={i18n.t('marketplace.invalid_url_desc')}
         />
 
     {:else if market.view === "loading"}

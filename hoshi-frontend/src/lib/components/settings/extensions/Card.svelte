@@ -49,12 +49,11 @@
         onSave?: (settings: Record<string, any>) => Promise<boolean>;
     } = $props();
 
-    const TONES: Record<Tone, string> = {
-        anime: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-        manga: "bg-green-500/10 text-green-500 border-green-500/20",
-        novel: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-        movie: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-        other: "bg-muted text-muted-foreground border-border"
+    const TONES: Record<string, string> = {
+        anime: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+        manga: 'bg-green-500/10 text-green-400 border-green-500/30',
+        novel: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+        torrent: 'bg-amber-500/10 text-amber-400 border-amber-500/30'
     };
 
     const hasSettings = $derived(mode === "installed" && (ext.setting_definitions?.length ?? 0) > 0);
@@ -229,7 +228,7 @@
                                {confirming
                             ? 'px-3'
                             : 'w-8 bg-destructive/10 p-0 text-destructive hover:bg-destructive hover:text-white'}"
-                        aria-label={i18n.t('settings.extension_section.uninstall', { default: 'Uninstall' })}
+                        aria-label={i18n.t('settings.extension_section.uninstall')}
                         onclick={askUninstall}
                         onblur={() => (confirming = false)}
                         disabled={busy}
@@ -237,7 +236,7 @@
                     {#if busy}
                         <Spinner class="size-4 animate-spin" />
                     {:else if confirming}
-                        {i18n.t('settings.extension_section.confirm_uninstall', { default: 'Remove?' })}
+                        {i18n.t('settings.extension_section.confirm_uninstall')}
                     {:else}
                         <Trash2 class="size-4" />
                     {/if}
@@ -252,7 +251,7 @@
             {:else if hasUpdate}
                 <Button size="sm" class="h-8 gap-1.5 rounded-sm px-3 text-xs font-bold shadow-sm" onclick={onUpdate} disabled={busy}>
                     {#if busy}<Spinner class="size-3.5 animate-spin" />{:else}<RefreshCw class="size-3.5" />{/if}
-                    {i18n.t('marketplace.update', { default: 'Update' })}
+                    {i18n.t('marketplace.update')}
                 </Button>
 
             {:else}

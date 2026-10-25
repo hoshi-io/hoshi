@@ -30,7 +30,7 @@
 <div class="space-y-4">
     <div class="flex items-center justify-between gap-3">
         <h2 class="text-base md:text-lg font-bold tracking-tight">
-            {i18n.t('content.episodes_title', { default: 'Episodes' })}
+            {i18n.t('content.episodes_title')}
             {#if epsOrChapters}
                 <span class="text-muted-foreground/50 font-medium">· {epsOrChapters}</span>
             {/if}

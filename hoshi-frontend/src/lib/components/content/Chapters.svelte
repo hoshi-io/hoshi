@@ -150,7 +150,7 @@
 <div class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h2 class="text-base md:text-lg font-bold tracking-tight">
-            {i18n.t('content.chapters_title', { default: 'Chapters' })}
+            {i18n.t('content.chapters_title')}
             {#if chapters.length > 0}
                 <span class="text-muted-foreground/50 font-medium">· {chapters.length}</span>
             {/if}

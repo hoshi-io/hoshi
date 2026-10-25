@@ -73,7 +73,7 @@
                     {#if market.updateCount > 0}
                         <span
                                 class="rounded-full bg-primary px-1.5 text-[10px] font-bold tabular-nums text-primary-foreground"
-                                title={i18n.t('marketplace.updates_available', { default: 'Updates available' })}
+                                title={i18n.t('marketplace.updates_available')}
                         >
                             {market.updateCount}
                         </span>

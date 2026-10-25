@@ -74,7 +74,7 @@ export function buildDraftSettings(ext: CardExt): Record<string, any> {
 
 export function sourceFilterItems() {
     return [
-        { value: 'all', label: i18n.t('settings.extension_section.all_sources', { default: 'All sources' }) },
+        { value: 'all', label: i18n.t('settings.extension_section.all_sources') },
         ...(Object.entries(SOURCE_LABELS) as [Source, string][]).map(([value, label]) => ({ value, label }))
     ];
 }
@@ -274,7 +274,7 @@ function isNewerVersion(repoVer: string | undefined, installedVer: string): bool
 }
 
 function repoLabel(url: string, index: number): string {
-    if (!url) return i18n.t('marketplace.new_repo', { default: 'New repository' });
+    if (!url) return i18n.t('marketplace.new_repo');
     try {
         const u = new URL(url);
         if (u.hostname === 'raw.githubusercontent.com') {
@@ -323,7 +323,7 @@ export function useMarketplace(opts: MarketplaceOptions) {
     );
 
     const langItems = $derived([
-        { value: 'All', label: i18n.t('marketplace.all_languages', { default: 'All languages' }) },
+        { value: 'All', label: i18n.t('marketplace.all_languages') },
         ...languages.map((l) => ({ value: l, label: l }))
     ]);
 

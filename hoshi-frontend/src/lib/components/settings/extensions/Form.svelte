@@ -124,7 +124,7 @@
         <div class="flex h-4 items-center justify-end gap-1.5 text-xs text-muted-foreground">
             {#if isSaving}
                 <Spinner class="h-3 w-3 animate-spin" />
-                {i18n.t('settings.extension_section.saving', { default: 'Saving changes…' })}
+                {i18n.t('settings.extension_section.saving')}
             {/if}
         </div>
     </div>

@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import { fade } from 'svelte/transition';
     import { toast } from 'svelte-sonner';
-    import {Globe, LayoutTemplate, Link2, MonitorPlay, Settings, User} from 'lucide-svelte';
+    import {Globe, LayoutTemplate, Link2, MonitorPlay, Puzzle, Settings, User} from 'lucide-svelte';
     import { getVersion } from '@tauri-apps/api/app';
 
     import { auth } from '@/stores/auth.svelte.js';
@@ -17,8 +17,9 @@
     import TvTorrent from "@/tv/components/settings/TvTorrent.svelte";
     import SwitchProfile from "@/components/modals/SwitchProfile.svelte";
     import Account from "@/components/settings/Account.svelte";
+    import TvExtensions from "@/tv/components/settings/TvExtensions.svelte";
 
-    type SectionId = 'account' | 'general' | 'ui' | 'player' | 'tracking' | 'torrent';
+    type SectionId = 'account' | 'general' | 'ui' | 'player' | 'tracking' | 'torrent' | 'extensions';
 
     const sections = $derived<{ id: SectionId; label: string; icon: typeof User }[]>([
         { id: 'account', label: i18n.t('settings.account'), icon: User },
@@ -26,6 +27,7 @@
         { id: 'ui', label: i18n.t('settings.interface'), icon: LayoutTemplate },
         { id: 'player', label: i18n.t('settings.player'), icon: MonitorPlay },
         { id: 'tracking', label: i18n.t('settings.tracking'), icon: Link2 },
+        { id: 'extensions', label: i18n.t('settings.extensions'), icon: Puzzle },
         { id: 'torrent', label: i18n.t('settings.torrent'), icon: Globe }
     ]);
 
@@ -139,6 +141,8 @@
                             />
                         {:else if active === 'tracking'}
                             <TvTracker bind:config={appConfig.data.list} onSave={handleSaveConfig} />
+                        {:else if active === 'extensions'}
+                            <TvExtensions bind:config={appConfig.data.extensions} onSave={handleSaveConfig} />
                         {:else if active === 'torrent'}
                             <TvTorrent bind:torrentConfig={appConfig.data.torrent} onSave={handleSaveConfig} />
                         {/if}

@@ -44,7 +44,7 @@
 
     const panelTitle = $derived.by(() => {
         switch (panel) {
-            case 'episodes': return i18n.t('content.episodes_title', { default: 'Episodes' });
+            case 'episodes': return i18n.t('content.episodes_title');
             case 'audio': return i18n.t('watch.settings.audio_track');
             case 'subtitles': return i18n.t('watch.settings.subtitles');
             case 'quality': return i18n.t('watch.settings.quality');

@@ -86,7 +86,7 @@
 
     <div class="flex items-center justify-end gap-3">
         {#if pageState.animeData}
-            {@render btn(List, i18n.t('content.episodes_title', { default: 'Episodes' }), i18n.t('content.episodes_title', { default: 'Episodes' }), () => onopen('episodes'))}
+            {@render btn(List, i18n.t('content.episodes_title'), i18n.t('content.episodes_title'), () => onopen('episodes'))}
         {/if}
         {#if pageState.supportsDub}
             {@render btn(Mic2, i18n.t('watch.settings.dub_audio'), i18n.t('watch.settings.dub_audio'), () => pageState.toggleDub(), { pressed: pageState.isDub })}
