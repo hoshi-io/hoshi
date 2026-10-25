@@ -28,6 +28,14 @@
     import SmartImage from "@/components/SmartImage.svelte";
     import {appConfig} from "@/stores/config.svelte";
     import type {ScoreFormat} from "@/api/config/types";
+    import { layoutState } from "@/stores/layout.svelte.js";
+    import TvDialog from "@/tv/TvDialog.svelte";
+    import TvChoice from "@/tv/TvChoice.svelte";
+    import TvSegmented from "@/tv/TvSegmented.svelte";
+    import TvSlider from "@/tv/TvSlider.svelte";
+    import TvSwitch from "@/tv/TvSwitch.svelte";
+    import TvSettingRow from "@/tv/TvSettingRow.svelte";
+    import TvStepper from "@/tv/TvStepper.svelte";
 
     let {
         open = $bindable(false),
@@ -240,7 +248,7 @@
                 cid,
                 status,
                 progress: progress || 0,
-                score: typeof score === 'number' ? score : (parseFloat(score) || undefined),
+                score: toStoredScore(score),
                 startDate: startValue?.toString(),
                 endDate: endValue?.toString(),
                 repeatCount: repeatCount || 0,
@@ -283,6 +291,20 @@
         }
     }
 
+    let confirmDelete = $state(false);
+    $effect(() => { if (!open) confirmDelete = false; });
+
+    const starItems = [0, 1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: n === 0 ? '—' : `${n}★` }));
+
+    function fmtDate(d?: CalendarDate): string {
+        return d ? df.format(d.toDate(getLocalTimeZone())) : '—';
+    }
+
+    function fmtScore(v: number): string {
+        if (v === 0) return '—';
+        return scoreFormat === 'point10Decimal' ? v.toFixed(1) : String(v);
+    }
+
     function formatChangeField(field: string): string {
         return field.replace(/_/g, ' ');
     }
@@ -312,340 +334,453 @@
     }
 </script>
 
-<Dialog.Root bind:open={open}>
-    <Dialog.Content class="w-[95vw] sm:max-w-2xl lg:max-w-3xl bg-background border-border p-0 overflow-hidden sm:rounded-sm shadow-lg z-[100] flex flex-col max-h-[95dvh] sm:max-h-[90dvh]">
+{#if layoutState.isTV}
+    {#if open}
+        <TvDialog
+                title={title}
+                description={isNew ? i18n.t('list.add_to_list') : i18n.t('list.modal.edit')}
+                onclose={() => (open = false)}
+        >
+            {#if loading}
+                <div class="flex h-40 items-center justify-center">
+                    <Spinner class="size-10 animate-spin text-primary" />
+                </div>
+            {:else}
+                <div>
+                    <TvSettingRow label={i18n.t('list.modal.status')} stacked>
+                        <TvChoice bind:value={status} items={statusOptions} label={i18n.t('list.modal.status')} size="sm" />
+                    </TvSettingRow>
 
-        {#if loading}
-            <div class="h-64 flex flex-col items-center justify-center gap-4 text-muted-foreground">
-                <Spinner class="h-8 w-8 animate-spin text-primary" />
-                <p class="font-bold">{i18n.t('list.modal.loading')}</p>
-            </div>
-        {:else}
-            <div class="relative z-10 px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-1 flex items-center gap-5 w-full">
-                {#if coverImage}
-                    <div class="aspect-auto w-30 object-cover">
-                        <SmartImage
-                                src={coverImage}
-                                alt={title}
-                                imageHeaders={headers}
-                                class="md:w-20 md:h-28 rounded-sm shadow-lg border border-border/50 hidden sm:block"
+                    <TvSettingRow label={i18n.t('list.modal.score')} stacked={scoreFormat === 'point5Stars'}>
+                        {#if scoreFormat === 'point5Stars'}
+                            <TvSegmented
+                                    bind:value={() => String(Number(score) || 0), (v) => (score = v === '0' ? '' : Number(v))}
+                                    options={starItems}
+                                    label={i18n.t('list.modal.score')}
+                            />
+                        {:else}
+                            <TvSlider
+                                    bind:value={() => Number(score) || 0, (v) => (score = v === 0 ? '' : v)}
+                                    min={0}
+                                    max={scoreMax()}
+                                    step={scoreStep()}
+                                    label={i18n.t('list.modal.score')}
+                                    format={fmtScore}
+                            />
+                        {/if}
+                    </TvSettingRow>
+
+                    <TvSettingRow label={progressLabel}>
+                        <TvStepper
+                                bind:value={progress}
+                                min={0}
+                                max={totalUnits ?? Infinity}
+                                label={progressLabel}
                         />
-                    </div>
-                {/if}
-                <div class="min-w-0">
-                    <h2 class="text-xl md:text-2xl font-black text-foreground line-clamp-2 leading-tight drop-shadow-md tracking-tight">{title}</h2>
-                    <p class="text-sm text-muted-foreground font-bold mt-1.5 uppercase tracking-wider">{isNew ? i18n.t('list.add_to_list') : i18n.t('list.modal.edit')}</p>
+                    </TvSettingRow>
 
-                    {#if sources.length > 0}
-                        <div class="flex items-center gap-2 mt-2 flex-wrap">
-                            {#each sources as source}
-                                {@const icon = trackerIcon(source.tracker)}
-                                {@const label = trackerLabel(source.tracker)}
-                                <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-sm bg-black/30">
-                                    {#if icon}
-                                        <img src={icon} alt={label} class="w-5.5 h-5.5" />
-                                    {/if}
-                                    {#if source.syncedAt}
-                                        <span class="text-[10px] text-white">· {formatChangeDate(source.syncedAt)}</span>
+                    <TvSettingRow label={isAnime ? i18n.t('list.modal.times_rewatched') : i18n.t('list.modal.times_reread')}>
+                        <TvStepper bind:value={repeatCount} min={0} label={i18n.t('list.modal.times_rewatched')} />
+                    </TvSettingRow>
+
+                    <TvSettingRow label={i18n.t('list.modal.private')}>
+                        <TvSwitch bind:checked={isPrivate} label={i18n.t('list.modal.private')} />
+                    </TvSettingRow>
+
+                    <TvSettingRow label={i18n.t('list.modal.start_date')}>
+                        <span class="text-lg font-semibold text-muted-foreground">{fmtDate(startValue)}</span>
+                    </TvSettingRow>
+
+                    <TvSettingRow label={i18n.t('list.modal.end_date')}>
+                        <span class="text-lg font-semibold text-muted-foreground">{fmtDate(endValue)}</span>
+                    </TvSettingRow>
+                </div>
+
+                <div class="flex items-center justify-between gap-3 pt-2">
+                    {#if !isNew}
+                        <button
+                                type="button"
+                                data-sn
+                                disabled={submitting}
+                                onclick={() => (confirmDelete ? handleDelete() : (confirmDelete = true))}
+                                onblur={() => (confirmDelete = false)}
+                                class="flex h-12 items-center gap-2 rounded-md bg-destructive/20 px-5 text-lg font-bold text-destructive outline-none
+                                       focus:scale-105 focus:bg-destructive focus:text-destructive-foreground focus:ring-4 focus:ring-destructive/50"
+                        >
+                            <Trash2 class="size-5" />
+                            {confirmDelete ? 'Press again to confirm' : ''}
+                        </button>
+                    {:else}
+                        <span></span>
+                    {/if}
+
+                    <div class="flex gap-3">
+                        <button
+                                type="button"
+                                data-sn
+                                disabled={submitting}
+                                onclick={() => (open = false)}
+                                class="h-12 rounded-md bg-muted/30 px-6 text-lg font-semibold outline-none
+                                       focus:scale-105 focus:ring-4 focus:ring-primary/70"
+                        >
+                            {i18n.t('list.modal.cancel')}
+                        </button>
+                        <button
+                                type="button"
+                                data-sn
+                                disabled={submitting}
+                                onclick={handleSubmit}
+                                class="flex h-12 items-center gap-2 rounded-md bg-primary px-6 text-lg font-bold text-primary-foreground outline-none
+                                       focus:scale-105 focus:ring-4 focus:ring-primary/70"
+                        >
+                            {#if submitting}
+                                <Spinner class="size-5 animate-spin" />
+                            {:else}
+                                <Save class="size-5" />
+                            {/if}
+                            {isNew ? i18n.t('list.modal.save') : i18n.t('list.modal.update')}
+                        </button>
+                    </div>
+                </div>
+            {/if}
+        </TvDialog>
+    {/if}
+{:else}
+    <Dialog.Root bind:open={open}>
+        <Dialog.Content class="w-[95vw] sm:max-w-2xl lg:max-w-3xl bg-background border-border p-0 overflow-hidden sm:rounded-sm shadow-lg z-[100] flex flex-col max-h-[95dvh] sm:max-h-[90dvh]">
+
+            {#if loading}
+                <div class="h-64 flex flex-col items-center justify-center gap-4 text-muted-foreground">
+                    <Spinner class="h-8 w-8 animate-spin text-primary" />
+                    <p class="font-bold">{i18n.t('list.modal.loading')}</p>
+                </div>
+            {:else}
+                <div class="relative z-10 px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-1 flex items-center gap-5 w-full">
+                    {#if coverImage}
+                        <div class="aspect-auto w-30 object-cover">
+                            <SmartImage
+                                    src={coverImage}
+                                    alt={title}
+                                    imageHeaders={headers}
+                                    class="md:w-20 md:h-28 rounded-sm shadow-lg border border-border/50 hidden sm:block"
+                            />
+                        </div>
+                    {/if}
+                    <div class="min-w-0">
+                        <h2 class="text-xl md:text-2xl font-black text-foreground line-clamp-2 leading-tight drop-shadow-md tracking-tight">{title}</h2>
+                        <p class="text-sm text-muted-foreground font-bold mt-1.5 uppercase tracking-wider">{isNew ? i18n.t('list.add_to_list') : i18n.t('list.modal.edit')}</p>
+
+                        {#if sources.length > 0}
+                            <div class="flex items-center gap-2 mt-2 flex-wrap">
+                                {#each sources as source}
+                                    {@const icon = trackerIcon(source.tracker)}
+                                    {@const label = trackerLabel(source.tracker)}
+                                    <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-sm bg-black/30">
+                                        {#if icon}
+                                            <img src={icon} alt={label} class="w-5.5 h-5.5" />
+                                        {/if}
+                                        {#if source.syncedAt}
+                                            <span class="text-[10px] text-white">· {formatChangeDate(source.syncedAt)}</span>
+                                        {/if}
+                                    </div>
+                                {/each}
+                                {#if hasConflicts}
+                                    <div class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-yellow-500/15 border border-yellow-500/30">
+                                        <AlertTriangle class="w-3 h-3 text-yellow-500" />
+                                        <span class="text-[11px] font-bold text-yellow-500">Conflicts</span>
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+
+                <form onsubmit={handleSubmit} class="flex-1 p-6 pt-4 space-y-6 overflow-y-auto hide-scrollbar">
+                    <div class="grid grid-cols-2 gap-5">
+                        <div class="col-span-2 space-y-2">
+                            <Label for="status" class="font-bold text-foreground/90">{i18n.t('list.modal.status')}</Label>
+                            <ResponsiveSelect
+                                    bind:value={status}
+                                    items={statusOptions}
+                                    label={i18n.t('list.modal.status')}
+                            />
+                        </div>
+
+                        <div class="col-span-1 space-y-2">
+                            <Label for="score" class="font-bold text-foreground/90">{i18n.t('list.modal.score')}</Label>
+                            {#if scoreFormat === 'point5Stars'}
+                                <div class="flex items-center gap-1 h-11">
+                                    {#each [1, 2, 3, 4, 5] as star}
+                                        <button
+                                                type="button"
+                                                class="text-2xl transition-colors {Number(score) >= star ? 'text-amber-400' : 'text-muted-foreground/30'} hover:text-amber-300"
+                                                onclick={() => score = score === star ? "" : star}
+                                        >★</button>
+                                    {/each}
+                                    {#if score !== ""}
+                                        <button type="button" class="text-xs text-muted-foreground ml-1 hover:text-foreground" onclick={() => score = ""}>✕</button>
                                     {/if}
                                 </div>
-                            {/each}
-                            {#if hasConflicts}
-                                <div class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-yellow-500/15 border border-yellow-500/30">
-                                    <AlertTriangle class="w-3 h-3 text-yellow-500" />
-                                    <span class="text-[11px] font-bold text-yellow-500">Conflicts</span>
+                            {:else}
+                                <div class="relative flex items-center">
+                                    <Star class="absolute left-3.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                            id="score"
+                                            type="number"
+                                            step={scoreStep()}
+                                            min="0"
+                                            max={scoreMax()}
+                                            bind:value={score}
+                                            class="pl-10 h-11 rounded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-semibold"
+                                    />
+                                </div>
+                            {/if}
+                        </div>
+
+                        <div class="col-span-1 space-y-2">
+                            <Label for="progress" class="font-bold text-foreground/90 truncate">{progressLabel}</Label>
+                            <div class="relative flex items-center">
+                                <CheckCircle class="absolute left-3.5 h-4 w-4 text-muted-foreground" />
+                                <Input id="progress" type="number" min="0" bind:value={progress} class="pl-10 h-11 rounded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-semibold" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-5">
+                        <div class="col-span-1 flex flex-col gap-2">
+                            <Label class="font-bold text-foreground/90 px-1 truncate">{i18n.t('list.modal.start_date')}</Label>
+                            {#if isTouchDevice}
+                                <div class="relative flex items-center">
+                                    <CalendarIcon class="absolute left-3.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                    <Input type="date" value={startValue ? startValue.toString() : ""} onchange={handleStartNativeChange} class={cn("pl-10 h-11 w-full font-semibold rounded-sm bg-muted/10 border-border/50 text-xs", !startValue && "text-muted-foreground font-medium")} />
+                                </div>
+                            {:else}
+                                <Popover.Root>
+                                    <Popover.Trigger>
+                                        {#snippet child({ props })}
+                                            <Button variant="outline" class={cn("w-full justify-start text-left font-semibold h-11 rounded-sm bg-muted/10 border-border/50 hover:bg-muted/20 px-2", !startValue && "text-muted-foreground font-medium")} {...props}>
+                                                <CalendarIcon class="mr-1 h-4 w-4 shrink-0" />
+                                                <span class="truncate text-xs">{startValue ? df.format(startValue.toDate(getLocalTimeZone())) : i18n.t('list.modal.select_date')}</span>
+                                            </Button>
+                                        {/snippet}
+                                    </Popover.Trigger>
+                                    <Popover.Content class="w-auto p-0 rounded-sm z-[110]" align="start">
+                                        <Calendar type="single" bind:value={startValue} initialFocus captionLayout="dropdown" />
+                                    </Popover.Content>
+                                </Popover.Root>
+                            {/if}
+                        </div>
+
+                        <div class="col-span-1 flex flex-col gap-2">
+                            <Label class="font-bold text-foreground/90 px-1 truncate">{i18n.t('list.modal.end_date')}</Label>
+                            {#if isTouchDevice}
+                                <div class="relative flex items-center">
+                                    <CalendarIcon class="absolute left-3.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                    <Input type="date" value={endValue ? endValue.toString() : ""} onchange={handleEndNativeChange} class={cn("pl-10 h-11 w-full font-semibold rounded-sm bg-muted/10 border-border/50 text-xs", !endValue && "text-muted-foreground font-medium")} />
+                                </div>
+                            {:else}
+                                <Popover.Root>
+                                    <Popover.Trigger>
+                                        {#snippet child({ props })}
+                                            <Button variant="outline" class={cn("w-full justify-start text-left font-semibold h-11 rounded-sm bg-muted/10 border-border/50 hover:bg-muted/20 px-2", !endValue && "text-muted-foreground font-medium")} {...props}>
+                                                <CalendarIcon class="mr-1 h-4 w-4 shrink-0" />
+                                                <span class="truncate text-xs">{endValue ? df.format(endValue.toDate(getLocalTimeZone())) : i18n.t('list.modal.select_date')}</span>
+                                            </Button>
+                                        {/snippet}
+                                    </Popover.Trigger>
+                                    <Popover.Content class="w-auto p-0 rounded-sm z-[110]" align="start">
+                                        <Calendar type="single" bind:value={endValue} initialFocus captionLayout="dropdown" />
+                                    </Popover.Content>
+                                </Popover.Root>
+                            {/if}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-5">
+                        <div class="col-span-1 space-y-2">
+                            <Label for="repeat" class="font-bold text-foreground/90 truncate">{isAnime ? i18n.t('list.modal.times_rewatched') : i18n.t('list.modal.times_reread')}</Label>
+                            <Input id="repeat" type="number" min="0" bind:value={repeatCount} class="h-11 rounded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-semibold" />
+                        </div>
+
+                        <div class="col-span-1 flex items-end">
+                            <div class="flex items-center space-x-3 bg-muted/10 p-3 rounded-sm border border-border/50 w-full h-11">
+                                <Checkbox id="isPrivate" bind:checked={isPrivate} />
+                                <Label for="isPrivate" class="font-bold cursor-pointer text-sm truncate">{i18n.t('list.modal.private')}</Label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <Label for="notes" class="font-bold text-foreground/90">{i18n.t('list.modal.notes')}</Label>
+                        <Textarea id="notes" bind:value={notes} class="min-h-[100px] rounded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-medium resize-none" />
+                    </div>
+
+                    {#if !isNew && sources.length > 1}
+                        <div class="border-t border-border/40 pt-4 space-y-2">
+                            <button
+                                    type="button"
+                                    class="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors w-full"
+                                    onclick={() => showSources = !showSources}
+                            >
+                                <GitMerge class="h-3.5 w-3.5 shrink-0" />
+                                <span>{i18n.t("list.modal.merge")}</span>
+                                {#if hasConflicts}
+                                <span class="inline-flex items-center gap-0.5 text-[10px] font-bold text-yellow-500">
+                                    <AlertTriangle class="w-3 h-3" /> {i18n.t("list.modal.conflict")}
+                                </span>
+                                {/if}
+                                <span class="ml-auto opacity-50 text-[10px]">{showSources ? '▲' : '▼'}</span>
+                            </button>
+
+                            {#if showSources}
+                                <div class="rounded-md border border-border/40 overflow-hidden text-xs">
+                                    <div class="grid bg-muted/20 border-b border-border/40 font-bold text-muted-foreground"
+                                         style="grid-template-columns: 90px repeat({sources.length + 1}, 1fr)">
+                                        <div class="px-3 py-2">Field</div>
+                                        <div class="px-3 py-2 flex items-center gap-1.5">
+                                            <span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+                                            Merged
+                                        </div>
+                                        {#each sources as source}
+                                            {@const icon = trackerIcon(source.tracker)}
+                                            {@const label = trackerLabel(source.tracker)}
+                                            <div class="px-3 py-2 flex items-center gap-1.5">
+                                                {#if icon}
+                                                    <img src={icon} alt={label} class="w-3.5 h-3.5 rounded-sm shrink-0" />
+                                                {/if}
+                                                <span class="truncate">{label}</span>
+                                            </div>
+                                        {/each}
+                                    </div>
+
+                                    {#each COMPARE_FIELDS as field}
+                                        {@const conflict = fieldHasConflict(field.key)}
+                                        <div class="grid border-b border-border/30 last:border-0 {conflict ? 'bg-yellow-500/5' : ''}"
+                                             style="grid-template-columns: 90px repeat({sources.length + 1}, 1fr)">
+                                            <div class="px-3 py-2 font-bold text-muted-foreground flex items-center gap-1">
+                                                {#if conflict}
+                                                    <AlertTriangle class="w-3 h-3 text-yellow-500 shrink-0" />
+                                                {/if}
+                                                {field.label}
+                                            </div>
+                                            <div class="px-3 py-2 font-semibold text-foreground">
+                                                {localValueFor(field.key)}
+                                            </div>
+                                            {#each sources as source}
+                                                {@const val = source[field.key]}
+                                                {@const displayVal = val != null ?
+                                                    (field.key === 'status' ? String(val).toLowerCase() : String(val))
+                                                    : "—"}
+                                                {@const isWinner = String(val ?? "").toUpperCase() === localValueFor(field.key).toUpperCase()}
+                                                <div class="px-3 py-2 {isWinner ? 'text-foreground' : 'text-muted-foreground'}">
+                                                    {displayVal}
+                                                    {#if isWinner && conflict}
+                                                        <span class="text-[9px] text-primary font-bold ml-1 uppercase">used</span>
+                                                    {/if}
+                                                </div>
+                                            {/each}
+                                        </div>
+                                    {/each}
                                 </div>
                             {/if}
                         </div>
                     {/if}
-                </div>
-            </div>
 
-            <form onsubmit={handleSubmit} class="flex-1 p-6 pt-4 space-y-6 overflow-y-auto hide-scrollbar">
-                <div class="grid grid-cols-2 gap-5">
-                    <div class="col-span-2 space-y-2">
-                        <Label for="status" class="font-bold text-foreground/90">{i18n.t('list.modal.status')}</Label>
-                        <ResponsiveSelect
-                                bind:value={status}
-                                items={statusOptions}
-                                label={i18n.t('list.modal.status')}
-                        />
-                    </div>
+                    {#if !isNew}
+                        <div class="border-t border-border/40 pt-4 space-y-2">
+                            <button
+                                    type="button"
+                                    class="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors w-full"
+                                    onclick={() => showHistory = !showHistory}
+                            >
+                                <Clock class="h-3.5 w-3.5 shrink-0" />
+                                <span>{i18n.t('list.modal.history')}</span>
+                                <span class="ml-auto opacity-50 text-[10px]">{showHistory ? '▲' : '▼'}</span>
+                            </button>
 
-                    <div class="col-span-1 space-y-2">
-                        <Label for="score" class="font-bold text-foreground/90">{i18n.t('list.modal.score')}</Label>
-                        {#if scoreFormat === 'point5Stars'}
-                            <div class="flex items-center gap-1 h-11">
-                                {#each [1, 2, 3, 4, 5] as star}
-                                    <button
-                                            type="button"
-                                            class="text-2xl transition-colors {Number(score) >= star ? 'text-amber-400' : 'text-muted-foreground/30'} hover:text-amber-300"
-                                            onclick={() => score = score === star ? "" : star}
-                                    >★</button>
-                                {/each}
-                                {#if score !== ""}
-                                    <button type="button" class="text-xs text-muted-foreground ml-1 hover:text-foreground" onclick={() => score = ""}>✕</button>
-                                {/if}
-                            </div>
-                        {:else}
-                            <div class="relative flex items-center">
-                                <Star class="absolute left-3.5 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                        id="score"
-                                        type="number"
-                                        step={scoreStep()}
-                                        min="0"
-                                        max={scoreMax()}
-                                        bind:value={score}
-                                        class="pl-10 h-11 rounded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-semibold"
-                                />
-                            </div>
-                        {/if}
-                    </div>
-
-                    <div class="col-span-1 space-y-2">
-                        <Label for="progress" class="font-bold text-foreground/90 truncate">{progressLabel}</Label>
-                        <div class="relative flex items-center">
-                            <CheckCircle class="absolute left-3.5 h-4 w-4 text-muted-foreground" />
-                            <Input id="progress" type="number" min="0" bind:value={progress} class="pl-10 h-11 rounded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-semibold" />
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-5">
-                    <div class="col-span-1 flex flex-col gap-2">
-                        <Label class="font-bold text-foreground/90 px-1 truncate">{i18n.t('list.modal.start_date')}</Label>
-                        {#if isTouchDevice}
-                            <div class="relative flex items-center">
-                                <CalendarIcon class="absolute left-3.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-                                <Input type="date" value={startValue ? startValue.toString() : ""} onchange={handleStartNativeChange} class={cn("pl-10 h-11 w-full font-semibold rounded-sm bg-muted/10 border-border/50 text-xs", !startValue && "text-muted-foreground font-medium")} />
-                            </div>
-                        {:else}
-                            <Popover.Root>
-                                <Popover.Trigger>
-                                    {#snippet child({ props })}
-                                        <Button variant="outline" class={cn("w-full justify-start text-left font-semibold h-11 rounded-sm bg-muted/10 border-border/50 hover:bg-muted/20 px-2", !startValue && "text-muted-foreground font-medium")} {...props}>
-                                            <CalendarIcon class="mr-1 h-4 w-4 shrink-0" />
-                                            <span class="truncate text-xs">{startValue ? df.format(startValue.toDate(getLocalTimeZone())) : i18n.t('list.modal.select_date')}</span>
-                                        </Button>
-                                    {/snippet}
-                                </Popover.Trigger>
-                                <Popover.Content class="w-auto p-0 rounded-sm z-[110]" align="start">
-                                    <Calendar type="single" bind:value={startValue} initialFocus captionLayout="dropdown" />
-                                </Popover.Content>
-                            </Popover.Root>
-                        {/if}
-                    </div>
-
-                    <div class="col-span-1 flex flex-col gap-2">
-                        <Label class="font-bold text-foreground/90 px-1 truncate">{i18n.t('list.modal.end_date')}</Label>
-                        {#if isTouchDevice}
-                            <div class="relative flex items-center">
-                                <CalendarIcon class="absolute left-3.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-                                <Input type="date" value={endValue ? endValue.toString() : ""} onchange={handleEndNativeChange} class={cn("pl-10 h-11 w-full font-semibold rounded-sm bg-muted/10 border-border/50 text-xs", !endValue && "text-muted-foreground font-medium")} />
-                            </div>
-                        {:else}
-                            <Popover.Root>
-                                <Popover.Trigger>
-                                    {#snippet child({ props })}
-                                        <Button variant="outline" class={cn("w-full justify-start text-left font-semibold h-11 rounded-sm bg-muted/10 border-border/50 hover:bg-muted/20 px-2", !endValue && "text-muted-foreground font-medium")} {...props}>
-                                            <CalendarIcon class="mr-1 h-4 w-4 shrink-0" />
-                                            <span class="truncate text-xs">{endValue ? df.format(endValue.toDate(getLocalTimeZone())) : i18n.t('list.modal.select_date')}</span>
-                                        </Button>
-                                    {/snippet}
-                                </Popover.Trigger>
-                                <Popover.Content class="w-auto p-0 rounded-sm z-[110]" align="start">
-                                    <Calendar type="single" bind:value={endValue} initialFocus captionLayout="dropdown" />
-                                </Popover.Content>
-                            </Popover.Root>
-                        {/if}
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-5">
-                    <div class="col-span-1 space-y-2">
-                        <Label for="repeat" class="font-bold text-foreground/90 truncate">{isAnime ? i18n.t('list.modal.times_rewatched') : i18n.t('list.modal.times_reread')}</Label>
-                        <Input id="repeat" type="number" min="0" bind:value={repeatCount} class="h-11 rounded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-semibold" />
-                    </div>
-
-                    <div class="col-span-1 flex items-end">
-                        <div class="flex items-center space-x-3 bg-muted/10 p-3 rounded-sm border border-border/50 w-full h-11">
-                            <Checkbox id="isPrivate" bind:checked={isPrivate} />
-                            <Label for="isPrivate" class="font-bold cursor-pointer text-sm truncate">{i18n.t('list.modal.private')}</Label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <Label for="notes" class="font-bold text-foreground/90">{i18n.t('list.modal.notes')}</Label>
-                    <Textarea id="notes" bind:value={notes} class="min-h-[100px] rounded-sm bg-muted/10 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 font-medium resize-none" />
-                </div>
-
-                {#if !isNew && sources.length > 1}
-                    <div class="border-t border-border/40 pt-4 space-y-2">
-                        <button
-                                type="button"
-                                class="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors w-full"
-                                onclick={() => showSources = !showSources}
-                        >
-                            <GitMerge class="h-3.5 w-3.5 shrink-0" />
-                            <span>{i18n.t("list.modal.merge")}</span>
-                            {#if hasConflicts}
-                                <span class="inline-flex items-center gap-0.5 text-[10px] font-bold text-yellow-500">
-                                    <AlertTriangle class="w-3 h-3" /> {i18n.t("list.modal.conflict")}
-                                </span>
-                            {/if}
-                            <span class="ml-auto opacity-50 text-[10px]">{showSources ? '▲' : '▼'}</span>
-                        </button>
-
-                        {#if showSources}
-                            <div class="rounded-md border border-border/40 overflow-hidden text-xs">
-                                <div class="grid bg-muted/20 border-b border-border/40 font-bold text-muted-foreground"
-                                     style="grid-template-columns: 90px repeat({sources.length + 1}, 1fr)">
-                                    <div class="px-3 py-2">Field</div>
-                                    <div class="px-3 py-2 flex items-center gap-1.5">
-                                        <span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
-                                        Merged
+                            {#if showHistory}
+                                {#if historyLoading}
+                                    <div class="flex justify-center py-4">
+                                        <Spinner class="h-4 w-4 animate-spin text-muted-foreground" />
                                     </div>
-                                    {#each sources as source}
-                                        {@const icon = trackerIcon(source.tracker)}
-                                        {@const label = trackerLabel(source.tracker)}
-                                        <div class="px-3 py-2 flex items-center gap-1.5">
-                                            {#if icon}
-                                                <img src={icon} alt={label} class="w-3.5 h-3.5 rounded-sm shrink-0" />
-                                            {/if}
-                                            <span class="truncate">{label}</span>
-                                        </div>
-                                    {/each}
-                                </div>
-
-                                {#each COMPARE_FIELDS as field}
-                                    {@const conflict = fieldHasConflict(field.key)}
-                                    <div class="grid border-b border-border/30 last:border-0 {conflict ? 'bg-yellow-500/5' : ''}"
-                                         style="grid-template-columns: 90px repeat({sources.length + 1}, 1fr)">
-                                        <div class="px-3 py-2 font-bold text-muted-foreground flex items-center gap-1">
-                                            {#if conflict}
-                                                <AlertTriangle class="w-3 h-3 text-yellow-500 shrink-0" />
-                                            {/if}
-                                            {field.label}
-                                        </div>
-                                        <div class="px-3 py-2 font-semibold text-foreground">
-                                            {localValueFor(field.key)}
-                                        </div>
-                                        {#each sources as source}
-                                            {@const val = source[field.key]}
-                                            {@const displayVal = val != null ?
-                                                (field.key === 'status' ? String(val).toLowerCase() : String(val))
-                                                : "—"}
-                                            {@const isWinner = String(val ?? "").toUpperCase() === localValueFor(field.key).toUpperCase()}
-                                            <div class="px-3 py-2 {isWinner ? 'text-foreground' : 'text-muted-foreground'}">
-                                                {displayVal}
-                                                {#if isWinner && conflict}
-                                                    <span class="text-[9px] text-primary font-bold ml-1 uppercase">used</span>
-                                                {/if}
+                                {:else if history.length === 0}
+                                    <p class="text-xs text-muted-foreground text-center py-3">{i18n.t('list.modal.no_history')}</p>
+                                {:else}
+                                    <div class="space-y-0.5 max-h-48 overflow-y-auto hide-scrollbar">
+                                        {#each history as change}
+                                            <div class="flex items-center justify-between gap-3 px-2 py-1.5 rounded-md hover:bg-muted/20 text-xs">
+                                                <div class="flex items-center gap-2 min-w-0">
+                                                    <span class="font-bold text-foreground/60 capitalize shrink-0">{formatChangeField(change.field)}</span>
+                                                    {#if change.oldValue}
+                                                        <span class="text-muted-foreground line-through truncate max-w-[60px]">{change.oldValue}</span>
+                                                        <span class="text-muted-foreground shrink-0">→</span>
+                                                    {/if}
+                                                    <span class="text-foreground font-semibold truncate">{change.newValue}</span>
+                                                </div>
+                                                <div class="flex items-center gap-1.5 shrink-0 text-muted-foreground/50 text-[10px]">
+                                                    {#if change.tracker}
+                                                        {@const icon = trackerIcon(change.tracker)}
+                                                        {#if icon}
+                                                            <img src={icon} alt={change.tracker} class="w-3 h-3 rounded-sm opacity-60" />
+                                                        {:else}
+                                                            <span class="uppercase font-bold text-primary/60">{change.tracker}</span>
+                                                        {/if}
+                                                        <span>·</span>
+                                                    {/if}
+                                                    <span>{formatChangeDate(change.changedAt)}</span>
+                                                </div>
                                             </div>
                                         {/each}
                                     </div>
-                                {/each}
-                            </div>
-                        {/if}
-                    </div>
-                {/if}
-
-                {#if !isNew}
-                    <div class="border-t border-border/40 pt-4 space-y-2">
-                        <button
-                                type="button"
-                                class="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors w-full"
-                                onclick={() => showHistory = !showHistory}
-                        >
-                            <Clock class="h-3.5 w-3.5 shrink-0" />
-                            <span>{i18n.t('list.modal.history')}</span>
-                            <span class="ml-auto opacity-50 text-[10px]">{showHistory ? '▲' : '▼'}</span>
-                        </button>
-
-                        {#if showHistory}
-                            {#if historyLoading}
-                                <div class="flex justify-center py-4">
-                                    <Spinner class="h-4 w-4 animate-spin text-muted-foreground" />
-                                </div>
-                            {:else if history.length === 0}
-                                <p class="text-xs text-muted-foreground text-center py-3">{i18n.t('list.modal.no_history')}</p>
-                            {:else}
-                                <div class="space-y-0.5 max-h-48 overflow-y-auto hide-scrollbar">
-                                    {#each history as change}
-                                        <div class="flex items-center justify-between gap-3 px-2 py-1.5 rounded-md hover:bg-muted/20 text-xs">
-                                            <div class="flex items-center gap-2 min-w-0">
-                                                <span class="font-bold text-foreground/60 capitalize shrink-0">{formatChangeField(change.field)}</span>
-                                                {#if change.oldValue}
-                                                    <span class="text-muted-foreground line-through truncate max-w-[60px]">{change.oldValue}</span>
-                                                    <span class="text-muted-foreground shrink-0">→</span>
-                                                {/if}
-                                                <span class="text-foreground font-semibold truncate">{change.newValue}</span>
-                                            </div>
-                                            <div class="flex items-center gap-1.5 shrink-0 text-muted-foreground/50 text-[10px]">
-                                                {#if change.tracker}
-                                                    {@const icon = trackerIcon(change.tracker)}
-                                                    {#if icon}
-                                                        <img src={icon} alt={change.tracker} class="w-3 h-3 rounded-sm opacity-60" />
-                                                    {:else}
-                                                        <span class="uppercase font-bold text-primary/60">{change.tracker}</span>
-                                                    {/if}
-                                                    <span>·</span>
-                                                {/if}
-                                                <span>{formatChangeDate(change.changedAt)}</span>
-                                            </div>
-                                        </div>
-                                    {/each}
-                                </div>
+                                {/if}
                             {/if}
-                        {/if}
-                    </div>
-                {/if}
-            </form>
+                        </div>
+                    {/if}
+                </form>
 
-            <Dialog.Footer class="px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] border-t border-border bg-muted/10">
-                <div class="flex items-center justify-between w-full gap-3">
-                    <div class="flex shrink-0">
-                        {#if !isNew}
-                            <Button type="button" variant="destructive" size="icon" class="h-11 w-11 rounded-sm shadow-sm" onclick={handleDelete} disabled={submitting}>
-                                <Trash2 class="h-5 w-5" />
+                <Dialog.Footer class="px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] border-t border-border bg-muted/10">
+                    <div class="flex items-center justify-between w-full gap-3">
+                        <div class="flex shrink-0">
+                            {#if !isNew}
+                                <Button type="button" variant="destructive" size="icon" class="h-11 w-11 rounded-sm shadow-sm" onclick={handleDelete} disabled={submitting}>
+                                    <Trash2 class="h-5 w-5" />
+                                </Button>
+                            {:else}
+                                <div class="w-0 sm:w-11"></div>
+                            {/if}
+                        </div>
+
+                        <div class="flex items-center gap-3 flex-1 sm:flex-initial justify-end">
+                            <Button
+                                    type="button"
+                                    variant="outline"
+                                    class="flex-1 sm:w-32 h-11 rounded-sm font-bold border-border/50 hover:bg-muted/20"
+                                    disabled={submitting}
+                                    onclick={() => open = false}
+                            >
+                                {i18n.t('list.modal.cancel')}
                             </Button>
-                        {:else}
-                            <div class="w-0 sm:w-11"></div>
-                        {/if}
+                            <Button
+                                    type="submit"
+                                    onclick={handleSubmit}
+                                    class="flex-1 sm:w-32 h-11 rounded-sm font-bold shadow-sm"
+                                    disabled={submitting}
+                            >
+                                {#if submitting}
+                                    <Spinner class="h-4 w-4 mr-2 animate-spin" />
+                                    <span class="truncate">{i18n.t('list.modal.saving')}</span>
+                                {:else}
+                                    <Save class="h-4 w-4 mr-2" />
+                                    <span class="truncate">{isNew ? i18n.t('list.modal.save') : i18n.t('list.modal.update')}</span>
+                                {/if}
+                            </Button>
+                        </div>
                     </div>
-
-                    <div class="flex items-center gap-3 flex-1 sm:flex-initial justify-end">
-                        <Button
-                                type="button"
-                                variant="outline"
-                                class="flex-1 sm:w-32 h-11 rounded-sm font-bold border-border/50 hover:bg-muted/20"
-                                disabled={submitting}
-                                onclick={() => open = false}
-                        >
-                            {i18n.t('list.modal.cancel')}
-                        </Button>
-                        <Button
-                                type="submit"
-                                onclick={handleSubmit}
-                                class="flex-1 sm:w-32 h-11 rounded-sm font-bold shadow-sm"
-                                disabled={submitting}
-                        >
-                            {#if submitting}
-                                <Spinner class="h-4 w-4 mr-2 animate-spin" />
-                                <span class="truncate">{i18n.t('list.modal.saving')}</span>
-                            {:else}
-                                <Save class="h-4 w-4 mr-2" />
-                                <span class="truncate">{isNew ? i18n.t('list.modal.save') : i18n.t('list.modal.update')}</span>
-                            {/if}
-                        </Button>
-                    </div>
-                </div>
-            </Dialog.Footer>
-        {/if}
-    </Dialog.Content>
-</Dialog.Root>
+                </Dialog.Footer>
+            {/if}
+        </Dialog.Content>
+    </Dialog.Root>
+{/if}
 
 <style>
     :global([data-dialog-close]) {
