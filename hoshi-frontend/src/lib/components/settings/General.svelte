@@ -42,13 +42,7 @@
             description={i18n.t('settings.general_section.language_desc')}
     >
         <div class="w-full sm:w-52">
-            <LanguageSelector
-                    class="w-full h-10 rounded-md bg-muted/40 border-transparent hover:bg-muted/60 transition-colors"
-                    onLanguageChange={(code) => {
-                        config.language = code;
-                        onSave();
-                    }}
-            />
+            <LanguageSelector class="w-full h-10 rounded-md bg-muted/40 border-transparent hover:bg-muted/60 transition-colors"/>
         </div>
     </SettingRow>
 

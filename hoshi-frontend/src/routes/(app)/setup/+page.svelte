@@ -243,10 +243,7 @@
 
                             <div class="space-y-3 pt-2 border-t border-border/40">
                                 <Label class="text-sm font-bold">{i18n.t('setup.appearance.language')}</Label>
-                                <LanguageSelector
-                                        class="w-full h-12 rounded-sm bg-muted/20"
-                                        onLanguageChange={(code) => { language = code; i18n.setLocale(code); }}
-                                />
+                                <LanguageSelector class="w-full h-12 rounded-sm bg-muted/20"/>
                             </div>
                         </div>
                     {/if}

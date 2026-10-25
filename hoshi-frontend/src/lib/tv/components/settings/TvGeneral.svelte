@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18n } from '@/stores/i18n.svelte.js';
-    import type { ContentConfig, GeneralConfig } from '@/api/config/types.ts';
+    import type { ContentConfig, GeneralConfig } from '@/api/config/types.js';
     import LanguageSelector from '@/components/LanguageSelector.svelte';
     import TvSettingRow from '@/tv/components/TvSettingRow.svelte';
     import TvSwitch from '@/tv/components/TvSwitch.svelte';
@@ -30,20 +30,6 @@
         { value: 'point5Stars', label: '★★★★★' }
     ];
 
-    // LanguageSelector is a desktop select and is not TV-adapted yet. This wrapper only makes it
-    // reachable with a remote: OK on the wrapper focuses the trigger and opens it.
-    function openLanguage(e: KeyboardEvent) {
-        if (e.key !== 'Enter') return;
-        e.preventDefault();
-        const trigger = (e.currentTarget as HTMLElement).querySelector<HTMLElement>(
-            'button, [role="combobox"]'
-        );
-        if (!trigger) return;
-        trigger.focus();
-        // Some selects open on pointerdown rather than click.
-        trigger.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' }));
-        trigger.click();
-    }
 </script>
 
 <div>
@@ -53,25 +39,11 @@
     </header>
 
     <TvSettingRow
+            stacked
             label={i18n.t('settings.general_section.language')}
             description={i18n.t('settings.general_section.language_desc')}
     >
-        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-        <div
-                data-sn
-                tabindex="0"
-                role="button"
-                onkeydown={openLanguage}
-                class="w-56 scroll-my-24 rounded-md outline-none focus:ring-4 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-        >
-            <LanguageSelector
-                    class="h-11 w-full rounded-md border-transparent bg-muted/40"
-                    onLanguageChange={(code) => {
-                        config.language = code;
-                        onSave();
-                    }}
-            />
-        </div>
+        <LanguageSelector />
     </TvSettingRow>
 
     <TvSettingRow

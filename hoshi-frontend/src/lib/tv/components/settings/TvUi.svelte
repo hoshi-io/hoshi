@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Check } from 'lucide-svelte';
-    import type { UiConfig } from '@/api/config/types.ts';
+    import type { UiConfig } from '@/api/config/types.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { themeManager } from '@/stores/theme.svelte.js';
     import TvSettingRow from '@/tv/components/TvSettingRow.svelte';

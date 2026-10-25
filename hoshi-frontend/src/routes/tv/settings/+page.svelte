@@ -15,6 +15,8 @@
     import TvPlayer from '@/tv/components/settings/TvPlayer.svelte';
     import TvTracker from "@/tv/components/settings/TvTracker.svelte";
     import TvTorrent from "@/tv/components/settings/TvTorrent.svelte";
+    import SwitchProfile from "@/components/modals/SwitchProfile.svelte";
+    import Account from "@/components/settings/Account.svelte";
 
     type SectionId = 'account' | 'general' | 'ui' | 'player' | 'tracking' | 'torrent';
 
@@ -31,6 +33,7 @@
     let navEl = $state<HTMLElement | null>(null);
     let contentEl = $state<HTMLElement | null>(null);
     let appVersion = $state('');
+    let showSwitchProfile = $state(false);
 
     onMount(() => {
         getVersion()
@@ -119,7 +122,7 @@
                 {#key active}
                     <div in:fade={{ duration: 120 }}>
                         {#if active === 'account' && auth.user}
-                            <TvAccount user={auth.user} onUpdate={() => auth.restore(true)} />
+                            <TvAccount user={auth.user} onUpdate={() => auth.restore(true)} onDeleted={() => showSwitchProfile = true}/>
                         {:else if active === 'general'}
                             <TvGeneral
                                     bind:config={appConfig.data.general}
@@ -145,3 +148,4 @@
         </div>
     {/if}
 </div>
+<SwitchProfile bind:open={showSwitchProfile} />
