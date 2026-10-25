@@ -105,6 +105,7 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .plugin(orientation_plugin_init())
             .plugin(immersive_plugin_init())
             .plugin(player_surface::android_plugin::init())
+            .plugin(tauri_plugin_android_tv_check::init())
             .plugin(intent_plugin_init());
     }
 

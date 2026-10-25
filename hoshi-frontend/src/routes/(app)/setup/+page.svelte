@@ -6,8 +6,6 @@
     import { Label } from "$lib/components/ui/label";
     import { Switch } from "$lib/components/ui/switch";
     import LanguageSelector from "@/components/LanguageSelector.svelte";
-    import { auth } from "@/stores/auth.svelte.js";
-    import { appConfig } from "@/stores/config.svelte.js";
     import {Check, ChevronRight, ChevronLeft, UserCircle2, Camera, User} from "lucide-svelte";
     import { Spinner } from "$lib/components/ui/spinner";
     import { fly } from "svelte/transition";
@@ -16,6 +14,7 @@
     import { goto } from "$app/navigation";
     import { layoutState } from "@/stores/layout.svelte.js";
     import type { CoreError } from "@/api/client";
+    import { completeSetup } from "$lib/app/setup";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import StarBackground from "@/components/StarBackground.svelte";
 
@@ -34,8 +33,6 @@
     let preferredMetadataProvider = $state<'anilist' | 'myanimelist' | 'kitsu'>('anilist');
     let titleLanguage = $state<'romaji' | 'english' | 'native'>('romaji');
     let defaultHomeSection = $state<'anime' | 'manga' | 'novel'>('anime');
-
-    let extConfig = $state({ repoUrls: appConfig.data?.extensions?.repoUrls || [] });
 
     const themes = [
         { id: 'light', label: 'Light', classes: 'bg-zinc-50 text-zinc-950 border-zinc-200' },
@@ -144,27 +141,16 @@
 
         isSaving = true;
         try {
-            const registerData = { username };
-            await auth.register(registerData, avatarFile);
-
-            await appConfig.update({
-                general: {
+            await completeSetup({
+                username,
+                avatarFile,
+                prefs: {
                     showAdultContent,
                     blurAdultContent,
-                    needSetup: false
-                },
-                ui: {
-                    sidebarCollapsed: appConfig.data?.ui?.sidebarCollapsed ?? false,
-                    disableCardTrailers: appConfig.data?.ui?.disableCardTrailers ?? false,
-                    defaultHomeSection,
-                    titleLanguage
-                },
-                content: {
                     preferredMetadataProvider,
-                    autoUpdateProgress: appConfig.data?.content?.autoUpdateProgress ?? true,
-                    scoreFormat: "point10"
-                },
-                extensions: extConfig,
+                    titleLanguage,
+                    defaultHomeSection
+                }
             });
 
             goto("/");

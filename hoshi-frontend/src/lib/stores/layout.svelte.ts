@@ -14,10 +14,17 @@ export const layoutState = $state({
     showBack: false,
     backUrl: null as string | null,
     headerAction: undefined as Snippet | undefined,
+
+    // layout / device
     isMobile: false,
+    isTouchDevice: false,   // set by the initApp callback (root layout)
+    isAndroidTv: false,     // the physical device is an Android TV (plugin check)
+    isTV: false,            // the TV layout is showing (derived from the /tv route in root)
+
+    // modals
+    switchProfileOpen: false,
     listEditor: null as ListEditorPayload | null,
     listEditorOpen: false,
-    isTV: false,
 });
 
 export function openListEditor(payload: ListEditorPayload) {
