@@ -2,7 +2,12 @@ import type { ContentType, ExtensionSearchResult, FullContent, TrackerMedia } fr
 import { primaryMetadata } from "@/api/content/types";
 import { appConfig } from "@/stores/config.svelte.js";
 import { i18n } from "@/stores/i18n.svelte.js";
+import { layoutState } from "@/stores/layout.svelte.js";
 import type { EnrichedListEntry } from "@/api/list/types";
+
+function contentBase(): string {
+    return layoutState.isTV ? "/tv/c" : "/c";
+}
 
 export type NormalizedCard = {
     cid: string;
@@ -100,7 +105,7 @@ export function normalizeFullContent(item: FullContent): NormalizedCard {
         trailerUrlRaw: meta?.trailerUrl ?? null,
         episodeCount: meta?.epsOrChapters ?? null,
         contentType: item.content.contentType,
-        href: `/c/${item.content.cid}`,
+        href: `${contentBase()}/${item.content.cid}`,
         anilistId: item.trackerMappings.find(e => e.trackerName === "anilist")?.trackerId
     };
 }
@@ -128,7 +133,7 @@ export function normalizeTrackerMedia(item: TrackerMedia, tracker: string): Norm
         trailerUrlRaw: item.trailerUrl ?? null,
         episodeCount: item.episodeCount ?? item.chapterCount ?? null,
         contentType: item.contentType,
-        href: `/c/${tracker}/${btoa(item.trackerId)}`,
+        href: `${contentBase()}/${tracker}/${btoa(item.trackerId)}`,
     };
 }
 
@@ -158,7 +163,7 @@ export function normalizeExtensionResult(
         trailerUrlRaw: null,
         episodeCount: null,
         contentType,
-        href: `/c/${extensionId}/${btoa(item.id)}`,
+        href: `${contentBase()}/${extensionId}/${btoa(item.id)}`,
         imageHeaders: undefined,
     };
 }
@@ -180,7 +185,7 @@ export function normalizeListEntry(entry: EnrichedListEntry): NormalizedCard {
         trailerUrlRaw: null,
         episodeCount: entry.totalUnits ?? null,
         contentType: entry.contentType,
-        href: `/c/${entry.cid}`,
+        href: `${contentBase()}/${entry.cid}`,
     };
 }
 
@@ -200,8 +205,8 @@ export function normalizeRelationCard(relation: {
     targetCoverImage?: string | null;
 }): NormalizedCard {
     const href = relation.targetCid
-        ? `/c/${relation.targetCid}`
-        : `/c/${relation.targetTrackerName}/${btoa(relation.targetTrackerId)}`;
+        ? `${contentBase()}/${relation.targetCid}`
+        : `${contentBase()}/${relation.targetTrackerName}/${btoa(relation.targetTrackerId)}`;
 
     return {
         cid: relation.targetCid ?? "",

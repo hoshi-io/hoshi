@@ -52,28 +52,6 @@
         });
     });
 
-    // Compute the Watch Now / Resume URL based on progress
-    const watchUrl = $derived.by(() => {
-        const cid = detail.fullContent?.content.cid;
-        if (!cid) return null;
-
-        // Find the most recently accessed in-progress episode
-        const inProgress = animeProgress
-            .filter(p => !p.completed && (p.timestampSeconds ?? 0) > 0)
-            .sort((a, b) => b.lastAccessed - a.lastAccessed)[0];
-
-        if (inProgress) {
-            return `/watch/${cid}/${inProgress.episode}?t=${inProgress.timestampSeconds}`;
-        }
-
-        // Otherwise first unwatched episode
-        const completedNums = new Set(animeProgress.filter(p => p.completed).map(p => p.episode));
-        const firstEp = animeProgress.length > 0
-            ? (animeProgress.filter(p => !completedNums.has(p.episode)).sort((a, b) => a.episode - b.episode)[0]?.episode ?? 1)
-            : 1;
-
-        return `/watch/${cid}/${firstEp}`;
-    });
 </script>
 
 {#snippet headerAction()}
