@@ -1,5 +1,5 @@
 export type HomeSection = 'anime' | 'manga' | 'novel';
-export type MetadataProvider = 'anilist' | 'myanimelist' | 'kitsu';
+export type MetadataProvider = 'anilist' | 'myanimelist' | 'kitsu' | 'simkl';
 
 export type TitleLanguage = 'native' | 'romaji' | 'english' | 'chinese';
 export type MangaLayout = 'scroll' | 'paged';

@@ -4,8 +4,8 @@ import { appConfig } from '@/stores/config.svelte.js';
 export type SetupPrefs = {
     showAdultContent: boolean;
     blurAdultContent: boolean;
-    preferredMetadataProvider: 'anilist' | 'myanimelist' | 'kitsu';
-    titleLanguage: 'romaji' | 'english' | 'native';
+    preferredMetadataProvider: 'anilist' | 'myanimelist' | 'kitsu' | 'simkl';
+    titleLanguage: 'romaji' | 'english' | 'native' | 'chinese';
     defaultHomeSection: 'anime' | 'manga' | 'novel';
 };
 

@@ -8,9 +8,11 @@
 
     import { i18n } from '@/stores/i18n.svelte.js';
     import { themeManager } from '@/stores/theme.svelte.js';
-    import { completeSetup, DEFAULT_SETUP_PREFS, type SetupPrefs } from '$lib/app/setup';
+    import { completeSetup, DEFAULT_SETUP_PREFS, type SetupPrefs } from '@/utils/setup.js';
     import type { CoreError } from '@/api/client';
+    import LanguageSelector from '@/components/LanguageSelector.svelte';
     import TvChoice from '@/tv/TvChoice.svelte';
+    import TvSettingRow from '@/tv/TvSettingRow.svelte';
 
     // Typing on a TV is painful, so the whole flow works with OK presses on the defaults.
     const DEFAULT_USERNAME = 'Guest';
@@ -53,13 +55,15 @@
     const metadataOptions: { value: SetupPrefs['preferredMetadataProvider']; label: string }[] = [
         { value: 'anilist', label: 'AniList' },
         { value: 'myanimelist', label: 'MyAnimeList' },
-        { value: 'kitsu', label: 'Kitsu' }
+        { value: 'kitsu', label: 'Kitsu' },
+        { value: 'simkl', label: 'Simkl' }
     ];
 
     const languageOptions = $derived<{ value: SetupPrefs['titleLanguage']; label: string }[]>([
         { value: 'romaji', label: i18n.t('setup.content.romaji') },
         { value: 'english', label: i18n.t('setup.content.english') },
-        { value: 'native', label: i18n.t('setup.content.native') }
+        { value: 'native', label: i18n.t('setup.content.native') },
+        { value: 'chinese', label: i18n.t('setup.content.chinese') }
     ]);
 
     const sectionOptions = $derived<{ value: SetupPrefs['defaultHomeSection']; label: string }[]>([
@@ -152,31 +156,43 @@
     }
 
     const navButton =
-        'flex h-12 items-center gap-2 rounded-md px-8 text-lg font-bold outline-none ' +
+        'flex h-14 items-center gap-2 rounded-lg px-9 text-lg font-bold outline-none ' +
         'transition-[transform,background-color] duration-150 focus:scale-105 focus:ring-4 focus:ring-primary/70';
 </script>
 
 <svelte:head><title>{i18n.t('setup.title')}</title></svelte:head>
 <svelte:window onkeydown={onWindowKeydown} />
 
-<div class="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-4xl flex-col">
-    <header class="mb-6 shrink-0 text-center">
-        <h1 class="mb-4 text-3xl font-extrabold tracking-tight">{i18n.t('setup.welcome_app')}</h1>
+<div class="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-5xl flex-col">
+    <header class="mb-6 flex shrink-0 items-end justify-between gap-6">
+        <div class="space-y-1">
+            <h1 class="text-4xl font-black tracking-tight">{i18n.t('setup.welcome_app')}</h1>
+            {#if currentStepId === 'appearance'}
+                <p class="text-lg text-muted-foreground">{i18n.t('setup.appearance.description')}</p>
+            {:else if currentStepId === 'content'}
+                <p class="text-lg text-muted-foreground">{i18n.t('setup.content.description')}</p>
+            {/if}
+        </div>
+
         <!-- Indicator only; steps are not clickable on TV -->
-        <div class="flex items-center justify-center gap-2" aria-hidden="true">
-            {#each availableSteps as _, i}
-                <span class="block h-2 rounded-sm transition-all duration-300 {currentIndex >= i ? 'w-10 bg-primary' : 'w-3 bg-muted'}"></span>
-            {/each}
+        <div class="flex shrink-0 items-center gap-4" aria-hidden="true">
+            <div class="flex items-center gap-2">
+                {#each availableSteps as _, i}
+                    <span class="block h-2 rounded-sm transition-all duration-300 {currentIndex >= i ? 'w-10 bg-primary' : 'w-3 bg-muted'}"></span>
+                {/each}
+            </div>
+            <span class="text-base font-bold tabular-nums text-muted-foreground">{currentIndex + 1} / {availableSteps.length}</span>
         </div>
     </header>
 
     <main class="flex-1">
         {#key currentStepId}
-            <div class="space-y-6" in:fade={{ duration: 120 }}>
+            <div
+                    class="rounded-xl border border-border/40 bg-card/40 px-8 [&>div:last-child]:border-b-0"
+                    in:fade={{ duration: 120 }}
+            >
                 {#if currentStepId === 'profile'}
-                    <div class="space-y-3">
-                        <p class="text-xl font-bold">{i18n.t('setup.profile.username')}</p>
-
+                    <TvSettingRow label={i18n.t('setup.profile.username')}>
                         {#if editing}
                             <input
                                     bind:this={nameInput}
@@ -184,43 +200,41 @@
                                     data-sn
                                     onkeydown={onNameKeydown}
                                     onblur={stopEdit}
-                                    class="h-14 w-full max-w-md rounded-md border-2 border-primary bg-secondary/50 px-4 text-xl outline-none"
+                                    class="h-14 w-80 rounded-lg border-2 border-primary bg-secondary/50 px-4 text-xl outline-none"
                                     placeholder={i18n.t('setup.profile.username_placeholder')}
                             />
                         {:else}
                             <button
                                     bind:this={nameButton}
+                                    type="button"
                                     data-sn
                                     onclick={startEdit}
-                                    class="flex h-14 w-full max-w-md items-center justify-between rounded-md bg-secondary/50 px-4 text-xl font-semibold outline-none
-                                       transition-[transform] duration-150 focus:scale-[1.03] focus:ring-4 focus:ring-primary/70"
+                                    class="flex h-14 w-80 items-center justify-between rounded-lg bg-secondary/50 px-4 text-xl font-semibold outline-none
+                                           transition-transform duration-150 focus:scale-105 focus:ring-4 focus:ring-primary/70"
                             >
-                                {username}
-                                <Pencil class="size-5 opacity-60" />
+                                <span class="truncate">{username}</span>
+                                <Pencil class="size-5 shrink-0 opacity-60" />
                             </button>
                         {/if}
-                    </div>
+                    </TvSettingRow>
+
+                    <TvSettingRow label={i18n.t('setup.appearance.language')} stacked>
+                        <LanguageSelector />
+                    </TvSettingRow>
                 {/if}
 
                 {#if currentStepId === 'appearance'}
-                    <div class="space-y-1 text-center">
-                        <h2 class="text-2xl font-bold">{i18n.t('setup.appearance.title')}</h2>
-                        <p class="text-muted-foreground">{i18n.t('setup.appearance.description')}</p>
-                    </div>
-
-                    <div class="space-y-3">
-                        <p class="text-xl font-bold">{i18n.t('setup.appearance.theme')}</p>
+                    <TvSettingRow label={i18n.t('setup.appearance.theme')} stacked>
                         <TvChoice
                                 items={themes}
                                 value={themeManager.theme}
                                 label={i18n.t('setup.appearance.theme')}
                                 onselect={(v) => themeManager.setTheme(v)}
                         />
-                    </div>
+                    </TvSettingRow>
 
-                    <div class="space-y-3">
-                        <p class="text-xl font-bold">{i18n.t('setup.appearance.accent_color')}</p>
-                        <div class="flex flex-wrap gap-4">
+                    <TvSettingRow label={i18n.t('setup.appearance.accent_color')} stacked>
+                        <div class="flex flex-wrap gap-4 py-1">
                             {#each colorPresets as preset}
                                 <button
                                         type="button"
@@ -228,7 +242,7 @@
                                         aria-label={preset.name}
                                         onclick={() => themeManager.setAccentColor(preset.value)}
                                         class="flex size-12 items-center justify-center rounded-full outline-none
-                                           transition-transform duration-150 focus:scale-125 focus:ring-4 focus:ring-foreground/80"
+                                               transition-transform duration-150 focus:scale-125 focus:ring-4 focus:ring-foreground/80"
                                         style="background-color: {preset.value}"
                                 >
                                     {#if themeManager.accentColor?.toLowerCase() === preset.value.toLowerCase()}
@@ -237,35 +251,27 @@
                                 </button>
                             {/each}
                         </div>
-                    </div>
+                    </TvSettingRow>
                 {/if}
 
                 {#if currentStepId === 'content'}
-                    <div class="space-y-1 text-center">
-                        <h2 class="text-2xl font-bold">{i18n.t('setup.content.title')}</h2>
-                        <p class="text-muted-foreground">{i18n.t('setup.content.description')}</p>
-                    </div>
-
-                    <div class="space-y-3">
-                        <p class="text-xl font-bold">{i18n.t('setup.content.metadata_provider')}</p>
+                    <TvSettingRow label={i18n.t('setup.content.metadata_provider')} stacked>
                         <TvChoice items={metadataOptions} bind:value={preferredMetadataProvider} label={i18n.t('setup.content.metadata_provider')} />
-                    </div>
+                    </TvSettingRow>
 
-                    <div class="space-y-3">
-                        <p class="text-xl font-bold">{i18n.t('setup.content.title_language')}</p>
+                    <TvSettingRow label={i18n.t('setup.content.title_language')} stacked>
                         <TvChoice items={languageOptions} bind:value={titleLanguage} label={i18n.t('setup.content.title_language')} />
-                    </div>
+                    </TvSettingRow>
 
-                    <div class="space-y-3">
-                        <p class="text-xl font-bold">{i18n.t('setup.content.default_home_section')}</p>
+                    <TvSettingRow label={i18n.t('setup.content.default_home_section')} stacked>
                         <TvChoice items={sectionOptions} bind:value={defaultHomeSection} label={i18n.t('setup.content.default_home_section')} />
-                    </div>
+                    </TvSettingRow>
                 {/if}
             </div>
         {/key}
     </main>
 
-    <footer class="mt-auto flex shrink-0 items-center justify-between border-t border-border/30 pt-5">
+    <footer class="mt-6 flex shrink-0 items-center justify-between">
         <div>
             {#if currentIndex > 0}
                 <button data-sn type="button" onclick={prevStep} class="{navButton} bg-muted/30 text-foreground">

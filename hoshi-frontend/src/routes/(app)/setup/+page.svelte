@@ -14,7 +14,7 @@
     import { goto } from "$app/navigation";
     import { layoutState } from "@/stores/layout.svelte.js";
     import type { CoreError } from "@/api/client";
-    import { completeSetup } from "$lib/app/setup";
+    import { completeSetup } from "@/utils/setup.ts";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import StarBackground from "@/components/StarBackground.svelte";
 
