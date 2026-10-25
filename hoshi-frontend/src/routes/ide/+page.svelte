@@ -13,7 +13,7 @@
     import NewExtensionDialog from '@/components/ide/NewExtensionDialog.svelte';
     import { sortedFunctions } from '@/components/ide/function-signatures';
     import Card from '$lib/components/settings/extensions/Card.svelte';
-    import {ideState} from "@/app/idle-state.svelte.js";
+    import {ideState} from "@/app/ide.svelte.js";
 
     let newExtOpen = $state(false);
     let deleteTarget = $state<string | null>(null);

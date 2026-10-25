@@ -4,7 +4,7 @@
     import { Button } from '$lib/components/ui/button';
     import { Input } from '$lib/components/ui/input';
     import { Label } from '$lib/components/ui/label';
-    import {ideState} from "@/app/idle-state.svelte.js";
+    import {ideState} from "@/app/ide.svelte.js";
 
     let { open = $bindable(false) }: { open: boolean } = $props();
 
