@@ -8,6 +8,7 @@
         getCardScore,
         type NormalizedCard
     } from '@/utils/normalize';
+    import ListEditorButton from "@/components/ListEditorButton.svelte";
 
     let { items = [] }: { items: NormalizedCard[] } = $props();
 
@@ -86,18 +87,28 @@
                         <p class="mb-4 line-clamp-3 text-sm font-medium leading-relaxed text-muted-foreground">
                             {current.synopsis || i18n.t('home.hero.no_synopsis')}
                         </p>
-
-                        <a
-                                href={current.href}
-                                data-sn
-                                data-autofocus
-                                onfocus={revealTop}
-                                class="flex h-11 items-center gap-2 rounded-md bg-primary px-7 text-sm font-bold text-primary-foreground outline-none
+                        <div class="flex items-center gap-3">
+                            <a
+                                    href={current.href}
+                                    data-sn
+                                    data-autofocus
+                                    onfocus={revealTop}
+                                    class="flex h-11 items-center gap-2 rounded-md bg-primary px-7 text-sm font-bold text-primary-foreground outline-none
                                    transition-transform duration-150 focus:scale-105 focus:ring-4 focus:ring-primary/60"
-                        >
-                            <Play class="size-4 fill-current" />
-                            {i18n.t('home.hero.watch')}
-                        </a>
+                            >
+                                <Play class="size-4 fill-current" />
+                                {i18n.t('home.hero.watch')}
+                            </a>
+
+                            <ListEditorButton
+                                    cid={current.cid}
+                                    title={title}
+                                    contentType="anime"
+                                    coverImage={current.cover}
+                                    class="h-11 px-5 text-sm"
+                            />
+                        </div>
+
                     </div>
                 </div>
             </div>

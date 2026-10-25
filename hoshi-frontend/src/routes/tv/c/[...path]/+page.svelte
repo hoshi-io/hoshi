@@ -20,6 +20,7 @@
     import { Spinner } from '@/components/ui/spinner';
     import SmartImage from '@/components/SmartImage.svelte';
     import TvCard from '@/tv/components/card/TvCard.svelte';
+    import ListEditorButton from "@/components/ListEditorButton.svelte";
 
     const WATCH = '/tv/watch';
 
@@ -159,27 +160,6 @@
         DROPPED: i18n.t('list.dropped')
     });
 
-    async function onListButton() {
-        if (!cid || listBusy) return;
-        if (listEntry) {
-            listStore.openEdit(listEntry); // TODO(tv): the TV list modal renders this
-            return;
-        }
-        listBusy = true;
-        try {
-            const body = { cid, status: 'PLANNING', progress: 0 } as UpsertEntryBody;
-            await listApi.upsert(body);
-            listStore.kickSync();
-            const res = await listApi.getEntry(cid);
-            if (res.found && res.entry) listStore.upsertLocal(body, res.entry);
-        } catch (e) {
-            console.error('Failed to add to list:', e);
-        } finally {
-            listBusy = false;
-        }
-    }
-
-    // ---------------------------------------------------------------- airing countdown
     const getMs = (ts: number) => (ts > 1e11 ? ts : ts * 1000);
 
     const airingEntry = $derived(
@@ -367,23 +347,14 @@
                         </a>
                     {/if}
 
-                    <button
-                            type="button"
-                            data-sn
-                            onclick={onListButton}
-                            disabled={listBusy}
-                            class="flex h-14 scroll-my-24 items-center gap-2 rounded-lg border-2 px-6 text-base font-bold outline-none
-                                   transition-transform duration-150 focus:scale-105 focus:ring-4 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
-                                   {listEntry ? 'border-primary bg-primary/15 text-primary' : 'border-border/60 bg-card text-foreground'}"
-                    >
-                        {#if listEntry}
-                            <Check class="size-5" />
-                            {STATUS_LABELS[listEntry.status] ?? listEntry.status}
-                        {:else}
-                            <Plus class="size-5" />
-                            {i18n.t('list.planning')}
-                        {/if}
-                    </button>
+                    <ListEditorButton
+                            {cid}
+                            title={displayTitle}
+                            contentType={full.content.contentType}
+                            coverImage={meta?.coverImage}
+                            headers={detail.headers}
+                            label={listEntry ? (STATUS_LABELS[listEntry.status] ?? listEntry.status) : i18n.t('list.planning')}
+                    />
                 </div>
 
                 {#if meta?.synopsis}
