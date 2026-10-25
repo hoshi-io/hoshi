@@ -38,8 +38,11 @@
             .catch(() => {});
     });
 
-    // The nav only exists once auth + config are loaded, which can be after the layout's
-    // autofocus ran, so take focus when it appears (never stealing it from the user).
+    $effect(() => {
+        void active;
+        contentEl?.closest('main')?.scrollTo({ top: 0 });
+    });
+
     function focusNavOnMount(node: HTMLElement) {
         const a = document.activeElement;
         if (!a || a === document.body || a.closest('[data-tv-sidebar]')) {
@@ -112,7 +115,7 @@
             </nav>
 
             <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div bind:this={contentEl} onkeydown={onContentKeydown} class="min-w-0 flex-1">
+            <div bind:this={contentEl} onkeydown={onContentKeydown} data-sn-rows class="min-w-0 flex-1">
                 {#key active}
                     <div in:fade={{ duration: 120 }}>
                         {#if active === 'account' && auth.user}

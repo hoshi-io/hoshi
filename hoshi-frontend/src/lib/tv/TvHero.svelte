@@ -29,7 +29,8 @@
 
     // Bring the whole hero back into view when its button gets focus.
     function revealTop(e: FocusEvent) {
-        (e.currentTarget as HTMLElement).closest('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+        const main = (e.currentTarget as HTMLElement).closest('main');
+        requestAnimationFrame(() => main?.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
     let paused = $state(false);

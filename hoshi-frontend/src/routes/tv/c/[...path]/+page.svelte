@@ -51,6 +51,11 @@
         })
     );
 
+    function revealTop(e: FocusEvent) {
+        const main = (e.currentTarget as HTMLElement).closest('main');
+        requestAnimationFrame(() => main?.scrollTo({ top: 0, behavior: 'smooth' }));
+    }
+
     // ---------------------------------------------------------------- progress
     let animeProgress = $state<AnimeProgress[]>([]);
     let progressFor = '';
@@ -150,7 +155,6 @@
 
     // ---------------------------------------------------------------- list button
     const listEntry = $derived(listStore.entries.find((e) => e.cid === cid) ?? null);
-    let listBusy = $state(false);
 
     const STATUS_LABELS = $derived<Record<string, string>>({
         CURRENT: i18n.t('list.current'),
@@ -266,8 +270,8 @@
         </div>
 
         <!-- ------------------------------------------------------------ hero -->
-        <section class="relative flex gap-8 pt-6">
-            <div class="w-40 shrink-0">
+        <section class="relative flex gap-8 pt-2" onfocusin={revealTop}>
+            <div class="w-50 shrink-0">
                 <div class="aspect-[2/3] overflow-hidden rounded-md bg-muted shadow-[0_12px_50px_rgba(0,0,0,0.7)] ring-1 ring-white/10">
                     <SmartImage
                             src={meta?.coverImage}
@@ -358,10 +362,10 @@
                 </div>
 
                 {#if meta?.synopsis}
-                    <div class="max-w-3xl space-y-1">
+                    <div class="mt-6 max-w-4xl space-y-1">
                         <p
                                 bind:this={synopsisEl}
-                                class="text-base leading-relaxed text-muted-foreground {synopsisExpanded ? '' : 'line-clamp-4'}"
+                                class="text-base leading-relaxed text-muted-foreground {synopsisExpanded ? '' : 'line-clamp-3'}"
                         >
                             {@html meta.synopsis.replace(/<[^>]*>?/gm, '')}
                         </p>

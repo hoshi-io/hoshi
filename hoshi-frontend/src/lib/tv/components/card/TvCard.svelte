@@ -9,19 +9,26 @@
         getCardScoreIsStars,
         getCardContentTypeLabel,
         type NormalizedCard
-    } from '@/utils/normalize.ts';
+    } from '@/utils/normalize.js';
 
     let {
         card,
         widthClass = 'w-36',
-        overlay
+        overlay,
+        onselect
     }: {
         card: NormalizedCard;
-        /** Width class. Rows keep the fixed default; grids pass 'w-full'. */
         widthClass?: string;
-        /** Optional content pinned to the bottom of the poster (episode / time, etc). */
         overlay?: Snippet;
+        /** When set, OK runs this instead of following the link. */
+        onselect?: () => void;
     } = $props();
+
+    function onClick(e: MouseEvent) {
+        if (!onselect) return;
+        e.preventDefault();
+        onselect();
+    }
 
     const title = $derived(getCardTitle(card));
     const shouldBlur = $derived(getCardShouldBlur(card));
@@ -34,6 +41,7 @@
 <a
         href={card.href}
         data-sn
+        onclick={onClick}
         class="group block {widthClass} shrink-0 scroll-my-16 outline-none"
 >
     <div

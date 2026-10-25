@@ -9,6 +9,8 @@
     import { Skeleton } from '$lib/components/ui/skeleton';
     import LazyCardGrid from '@/components/card/LazyCardGrid.svelte';
     import TvCard from '@/tv/components/card/TvCard.svelte';
+    import {openListEditor} from "@/stores/layout.svelte.ts";
+    import {getCardTitle} from "@/utils/normalize.ts";
 
     onMount(() => {
         listStore.loadData(); // no-op when the list is already loaded
@@ -226,7 +228,18 @@
             {#snippet cardContent(item)}
                 {@const total = item.original.totalUnits || 0}
                 {@const pct = total > 0 ? Math.min(100, ((item.original.progress || 0) / total) * 100) : 0}
-                <TvCard card={item.card} widthClass="w-full">
+                <TvCard
+                        card={item.card}
+                        widthClass="w-full"
+                        onselect={() =>
+            openListEditor({
+                cid: item.original.cid,
+                title: getCardTitle(item.card),
+                contentType: String((item.original as any).contentType ?? (item.card as any).contentType ?? 'anime').toLowerCase(),
+                coverImage: item.card.cover,
+                headers: item.card.imageHeaders
+            })}
+                >
                     {#snippet overlay()}
                         <div class="space-y-1">
                             <div class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-zinc-200">
