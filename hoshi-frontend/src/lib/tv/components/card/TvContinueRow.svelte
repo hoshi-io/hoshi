@@ -1,22 +1,20 @@
 <script lang="ts">
     import { i18n } from '@/stores/i18n.svelte.js';
-    import type { ContinueItem } from '@/api/progress/types.ts';
+    import type { ContinueItem } from '@/api/progress/types.js';
     import TvRow, { TV_ROW_MAX } from '@/tv/TvRow.svelte';
     import TvEpisodeCard from '@/tv/components/card/TvEpisodeCard.svelte';
-    import { wideImage, displayTitle, shouldHideNsfw, shouldBlurNsfw } from '@/tv/helpers.ts';
+    import { wideImage, displayTitle, shouldHideNsfw, shouldBlurNsfw } from '@/tv/helpers.js';
 
-    // TV is anime-only, so callers pass homeState.getContinueItems('anime').
     let { items }: { items: ContinueItem[] } = $props();
 
     const visibleItems = $derived(items.filter((item) => !shouldHideNsfw(item.nsfw)).slice(0, TV_ROW_MAX));
 
-    // NOTE: /watch is still the desktop player. Swap the prefix here once /tv/watch exists.
     function continueUrl(item: ContinueItem) {
         if (item.contentType === 'anime' && item.episode) {
-            const base = `/watch/${item.cid}/${item.episode}`;
+            const base = `/tv/watch/${item.cid}/${item.episode}`;
             return item.timestampSeconds && item.timestampSeconds > 0 ? `${base}?t=${item.timestampSeconds}` : base;
         }
-        return `/c/${item.cid}`;
+        return `/tv/c/${item.cid}`;
     }
 
     function progressPercent(item: ContinueItem) {

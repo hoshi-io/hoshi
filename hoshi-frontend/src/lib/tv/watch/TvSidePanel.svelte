@@ -42,7 +42,8 @@
                {wide ? 'w-[36rem]' : 'w-[26rem]'}"
 >
     <h2 class="shrink-0 px-8 pb-4 pt-8 text-2xl font-black tracking-tight">{title}</h2>
-    <div class="min-h-0 flex-1 overflow-y-auto px-5 pb-8">
+    <!-- data-sn-rows: Up/Down pick the nearest row (e.g. from the range tabs into the list). -->
+    <div data-sn-rows class="min-h-0 flex-1 overflow-y-auto px-5 pb-8">
         {@render children()}
     </div>
 </aside>

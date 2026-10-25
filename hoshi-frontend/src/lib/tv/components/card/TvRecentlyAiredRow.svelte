@@ -3,7 +3,7 @@
     import { scheduleStore, type RecentlyAiredItem } from '@/app/schedule.svelte.js';
     import TvRow, { TV_ROW_MAX } from '@/tv/TvRow.svelte';
     import TvEpisodeCard from '@/tv/components/card/TvEpisodeCard.svelte';
-    import { wideImage, displayTitle, shouldHideNsfw, shouldBlurNsfw } from '@/tv/helpers.ts';
+    import { wideImage, displayTitle, shouldHideNsfw, shouldBlurNsfw } from '@/tv/helpers.js';
 
     $effect(() => {
         scheduleStore.load();
@@ -19,9 +19,8 @@
             .slice(0, TV_ROW_MAX)
     );
 
-    // NOTE: /watch is still the desktop player. Swap the prefix here once /tv/watch exists.
     function watchUrl(item: RecentlyAiredItem) {
-        return `/watch/${item.card.cid}/${item.episode}`;
+        return `/tv/watch/${item.card.cid}/${item.episode}`;
     }
 
     function toMs(ts: number) {

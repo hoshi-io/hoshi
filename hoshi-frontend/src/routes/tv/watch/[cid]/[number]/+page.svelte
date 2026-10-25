@@ -158,9 +158,19 @@
         goto(`/tv/c/${ps.cid}`);
     }
 
+    const isBackKey = (e: KeyboardEvent) =>
+        e.key === 'Escape' || e.key === 'GoBack' || e.key === 'BrowserBack' || e.keyCode === 4;
+
+    // Swallow the matching key-up too, so a handled Back can't still reach the system on release.
+    function onKeyup(e: KeyboardEvent) {
+        if (!isBackKey(e)) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+    }
+
     function onKeydown(e: KeyboardEvent) {
         const k = e.key;
-        const isBack = k === 'Escape' || k === 'GoBack' || k === 'BrowserBack' || e.keyCode === 4;
+        const isBack = isBackKey(e);
         // stopImmediatePropagation also keeps the layout's Back handler and spatialNav out of it.
         const consume = () => {
             e.preventDefault();
@@ -168,6 +178,8 @@
         };
 
         if (isBack) {
+            // Temporary: if this never prints when you press Back, the key isn't reaching the page.
+            console.debug('[tv-watch] back', { key: k, keyCode: e.keyCode, panel, showControls });
             consume();
             if (panel) closePanel();
             else if (ps.error) leave();
@@ -229,7 +241,11 @@
 
     onMount(() => {
         window.addEventListener('keydown', onKeydown, true);
-        return () => window.removeEventListener('keydown', onKeydown, true);
+        window.addEventListener('keyup', onKeyup, true);
+        return () => {
+            window.removeEventListener('keydown', onKeydown, true);
+            window.removeEventListener('keyup', onKeyup, true);
+        };
     });
 
     const skipLabel = $derived(ps.currentSkippable?.type === 'outro' ? 'Skip outro' : 'Skip intro');
@@ -282,11 +298,11 @@
     {#if ps.manualSkipChapter}
         <button
                 type="button"
-                data-sn
+                data-sn={showControls ? '' : undefined}
                 onclick={() => ps.executeSkip(ps.manualSkipChapter)}
-                class="absolute bottom-56 right-12 z-40 flex h-14 items-center gap-3 rounded-lg border-2 border-white/30 bg-black/70 px-7 text-lg font-bold outline-none
+                class="absolute bottom-64 right-12 z-40 flex h-14 items-center gap-3 rounded-lg border-2 border-white/30 bg-black/70 px-7 text-lg font-bold outline-none
                        focus:scale-105 focus:bg-white focus:text-black focus:ring-4 focus:ring-primary/60
-                       {showControls ? '' : 'translate-y-40'}"
+                       {showControls ? '' : 'translate-y-48'}"
         >
             {skipLabel}
             {#if !showControls}<span class="rounded bg-white/20 px-2 py-0.5 text-xs">OK</span>{/if}
@@ -298,8 +314,8 @@
             bind:this={controlsEl}
             inert={!showControls}
             data-sn-rows
-            class="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-12 pb-10 pt-28
-                   transition-opacity duration-300 {showControls ? 'opacity-100' : 'opacity-0'}"
+            class="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-12 pb-12 pt-28
+                   transition-[opacity,visibility] duration-300 {showControls ? 'opacity-100' : 'invisible opacity-0'}"
     >
         <TvPlayerControls pageState={ps} onopen={openPanel} />
     </div>
