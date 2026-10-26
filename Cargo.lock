@@ -2337,7 +2337,7 @@ dependencies = [
 
 [[package]]
 name = "hoshi-app"
-version = "1.2.1"
+version = "1.2.2"
 dependencies = [
  "async-trait",
  "futures",
@@ -2370,7 +2370,7 @@ dependencies = [
 
 [[package]]
 name = "hoshi-core"
-version = "1.0.1"
+version = "1.2.2"
 dependencies = [
  "aead 0.6.1",
  "aes",
