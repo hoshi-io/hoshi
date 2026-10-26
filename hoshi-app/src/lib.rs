@@ -12,6 +12,7 @@ pub mod headless;
 pub mod orientation;
 pub mod intent;
 pub mod immersive;
+pub mod auth_webview;
 pub mod player_surface;
 pub mod anime4k;
 pub mod proxy_protocol;
@@ -21,7 +22,8 @@ use crate::{
     headless::headless_plugin::{init as headless_plugin_init},
     orientation::orientation_plugin::{init as orientation_plugin_init},
     intent::intent_plugin::{init as intent_plugin_init},
-    immersive::immersive_plugin::{init as immersive_plugin_init}
+    immersive::immersive_plugin::{init as immersive_plugin_init},
+    auth_webview::auth_webview::{init as auth_webview_init},
 };
 
 #[derive(Default)]
@@ -104,6 +106,7 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .plugin(headless_plugin_init())
             .plugin(orientation_plugin_init())
             .plugin(immersive_plugin_init())
+            .plugin(auth_webview_init())
             .plugin(player_surface::android_plugin::init())
             .plugin(tauri_plugin_android_tv_check::init())
             .plugin(intent_plugin_init());

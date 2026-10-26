@@ -711,7 +711,8 @@
       "conflict_updated": "Keep Latest Updated",
       "conflict_anilist": "Prioritize Anilist",
       "conflict_mal": "Prioritize MyAnimeList",
-      "conflict_kitsu": "Prioritize Kitsu"
+      "conflict_kitsu": "Prioritize Kitsu",
+      "conflict_simkl": "Prioritize Simkl"
     },
 
     "general_section": {

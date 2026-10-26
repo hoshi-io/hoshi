@@ -37,6 +37,10 @@ pub fn generate_handlers() -> impl Fn(tauri::ipc::Invoke) -> bool {
         #[cfg(feature = "discord-rpc")]
         discord::clear_activity,
         #[cfg(mobile)]
+        crate::auth_webview::auth_webview::auth_webview_open,
+        #[cfg(mobile)]
+        crate::auth_webview::auth_webview::auth_webview_close,
+        #[cfg(mobile)]
         crate::headless::headless_plugin::notify_done,
         #[cfg(mobile)]
         crate::orientation::orientation_plugin::lock_orientation,

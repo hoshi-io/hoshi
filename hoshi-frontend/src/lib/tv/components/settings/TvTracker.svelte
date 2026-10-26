@@ -3,12 +3,12 @@
     import { fade } from 'svelte/transition';
     import { toast } from 'svelte-sonner';
     import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
-    import { openUrl } from '@tauri-apps/plugin-opener';
+    import { invoke } from '@tauri-apps/api/core';
     import { BarChart2, Calendar, Plus, Trash2, User } from 'lucide-svelte';
 
-    import { integrationsApi } from '@/api/tracker/tracker.ts';
-    import type { TrackerInfo } from '@/api/tracker/types.ts';
-    import type { ListConfig, MergeStrategy } from '@/api/config/types.ts';
+    import { integrationsApi } from '@/api/tracker/tracker.js';
+    import type { TrackerInfo } from '@/api/tracker/types.js';
+    import type { ListConfig, MergeStrategy } from '@/api/config/types.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { Spinner } from '@/components/ui/spinner';
     import TvSettingRow from '@/tv/components/TvSettingRow.svelte';
@@ -61,6 +61,16 @@
     const secondaryBtn =
         'flex h-12 w-full items-center justify-center rounded-lg border-2 border-border/60 px-6 text-base font-bold outline-none ' +
         'focus:border-primary focus:ring-4 focus:ring-primary/40';
+
+    // Client IDs of the TV-specific clients, whose redirect URL is hoshi://auth (implicit grant).
+    const TV_CLIENT_IDS: Record<string, string> = {
+        anilist: '55029'
+    };
+
+    // Flows where the WebView catches the redirect itself: one login button, no token field.
+    const autoLogin = $derived(
+        newTrackerAuth?.oauthFlow === 'pkce' || !!TV_CLIENT_IDS[newTrackerName.toLowerCase()]
+    );
 
     function generateVerifier() {
         const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
@@ -148,9 +158,50 @@
                 code_challenge_method: 'plain',
                 redirect_uri: 'hoshi://auth'
             });
-            await openUrl(`${newTrackerAuth.authUrl}?${params.toString()}`);
+            const authUrl = `${newTrackerAuth.authUrl}?${params.toString()}`;
+
+            // TV has no browser: log in inside the in-app WebView (AuthWebViewPlugin) and let it
+            // catch the hoshi://auth redirect instead of relying on the deep link.
+            let result: string | null;
+            try {
+                result = await invoke<string | null>('auth_webview_open', {
+                    url: authUrl,
+                    redirectPrefixes: ['hoshi://auth']
+                });
+            } catch (error: any) {
+                toast.error(typeof error === 'string' ? error : i18n.t('errors.auth_error'));
+                console.log(error);
+                return;
+            }
+
+            if (!result) {
+                localStorage.removeItem(`${newTrackerName}_verifier`);
+                return;
+            }
+
+            const code = new URL(result).searchParams.get('code');
+            if (code) await finalizeAuth(code);
+            else toast.error(i18n.t('errors.auth_error'));
         } else {
-            await openUrl(`${newTrackerAuth.authUrl}?client_id=${newTrackerAuth.clientId}&response_type=token`);
+            // Token flow (AniList, Simkl). With a TV client whose redirect is hoshi://auth the token
+            // is caught automatically; without one the person copies it and pastes it in the field.
+            const tvClientId = TV_CLIENT_IDS[newTrackerName.toLowerCase()];
+            try {
+                const result = await invoke<string | null>('auth_webview_open', {
+                    url: `${newTrackerAuth.authUrl}?client_id=${tvClientId || newTrackerAuth.clientId}&response_type=token`,
+                    redirectPrefixes: tvClientId ? ['hoshi://auth'] : []
+                });
+
+                if (tvClientId && result) {
+                    // Implicit grant: hoshi://auth#access_token=...&token_type=Bearer&...
+                    const token = new URLSearchParams(new URL(result).hash.slice(1)).get('access_token');
+                    if (token) await finalizeAuth(token);
+                    else toast.error(i18n.t('errors.auth_error'));
+                }
+            } catch (error: any) {
+                toast.error(typeof error === 'string' ? error : i18n.t('errors.auth_error'));
+                console.log(error);
+            }
         }
     }
 
@@ -364,7 +415,7 @@
             description={i18n.t('settings.trackers_section.connect_tracker_desc', { name: newTrackerDisplayName })}
             onclose={() => (showAddTrackerDialog = false)}
     >
-        {#if newTrackerAuth?.oauthFlow === 'pkce'}
+        {#if autoLogin}
             <div class="space-y-4">
                 <p class="text-center text-sm text-muted-foreground">
                     {i18n.t('settings.trackers_section.pkce_redirect_notice')}
