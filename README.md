@@ -5,12 +5,12 @@
 <h1 align="center">Hoshi ⭐</h1>
 
 <p align="center">
-  A clean, lightweight, and cross-platform tracker for anime, manga, and light novels. <br>
+  A clean, lightweight tracker for anime, manga, and light novels — across desktop, mobile, and Android TV. <br>
   Built to be <strong>potato-proof</strong>.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Platforms-Win_%7C_Mac_%7C_Linux_%7C_Android-2a2a2a?style=for-the-badge&logo=github" alt="Platforms" />
+  <img src="https://img.shields.io/badge/Platforms-Win_%7C_Mac_%7C_Linux_%7C_Android_%7C_Android_TV-2a2a2a?style=for-the-badge&logo=github" alt="Platforms" />
   <a href="https://github.com/hoshi-io/hoshi/releases">
     <img src="https://img.shields.io/github/v/release/hoshi-io/hoshi?style=for-the-badge&color=2a2a2a" alt="Latest Release" />
   </a>
@@ -26,7 +26,8 @@
 ---
 ## Features
 
--  **Smart Tracking:** Sync your library with AniList, MAL, Simkl or Kitsu. You can keep everything local if you prefer. Duplicate entries are automatically detected and merged into a single item.
+-  **Smart Tracking:** Sync your library with AniList, MAL, Simkl or Kitsu. You can keep everything local if you prefer.
+-  **Powerful List Management:** Keep your library organized with advanced tools, including list merging and batch actions for managing multiple entries at once. Duplicate entries can be detected and merged into a single item.
 -  **BYOC Extensions:** Bring your own content by adding marketplace URLs. Browse and install extensions directly from the app.
 -  **Compatibility Layers (experimental):** Run LNReader and Sora extensions natively inside Hoshi, no extra installation required.
 -  **Advanced Readers & Player:** Includes a libmpv based player with Anime4k integrations, along with custom, highly configurable readers for manga and light novels.
