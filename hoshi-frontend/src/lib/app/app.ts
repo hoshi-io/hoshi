@@ -2,15 +2,21 @@ import { goto } from '$app/navigation';
 import { auth } from '@/stores/auth.svelte.js';
 import { extensions } from '@/stores/extensions.svelte.js';
 import { discordApi } from "@/api/discord/discord";
-import {listStore} from "@/app/list.svelte.js";
-import {i18n} from "@/stores/i18n.svelte";
-import {scheduleStore} from "@/app/schedule.svelte.js";
-import {layoutState} from "@/stores/layout.svelte.js";
+import { listStore } from "@/app/list.svelte.js";
+import { i18n } from "@/stores/i18n.svelte";
+import { scheduleStore } from "@/app/schedule.svelte.js";
+import { layoutState } from "@/stores/layout.svelte.js";
+
+const DEFAULT_USERNAME = 'User';
 
 export async function initApp(setTouchDevice: (v: boolean) => void) {
     setTouchDevice(window.matchMedia('(pointer: coarse)').matches);
 
     await auth.restore();
+
+    if (!auth.isAuthenticated) {
+        await auth.register({ username: DEFAULT_USERNAME }, null);
+    }
 
     if (auth.isAuthenticated) {
         extensions.load();
@@ -23,15 +29,10 @@ export async function initApp(setTouchDevice: (v: boolean) => void) {
 export function handleNavigation(pathname: string) {
     if (!auth.initialized) return;
 
-    const isTvRoute = pathname.startsWith('/tv');
-    const isSetup = pathname.startsWith('/setup') || pathname.startsWith('/tv/setup');
-    
-    const useTv = isTvRoute || layoutState.isAndroidTv;
-
-    if (!auth.user && !isSetup) {
-        goto(useTv ? '/tv/setup' : '/setup');
-    } else if (auth.user && isSetup) {
-        goto(isTvRoute ? '/tv' : '/');
+    if (pathname.startsWith('/setup') || pathname.startsWith('/tv/setup')) {
+        const useTv = pathname.startsWith('/tv') || layoutState.isAndroidTv;
+        goto(useTv ? '/tv' : '/', { replaceState: true });
+        return;
     }
 
     if (auth.user) {

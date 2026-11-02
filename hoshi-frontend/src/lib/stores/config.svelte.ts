@@ -1,6 +1,5 @@
 import { configApi, type ConfigSection } from "@/api/config/config";
 import type { AppConfig } from "@/api/config/types";
-import { goto } from "$app/navigation";
 import type { CoreError } from "@/api/client";
 
 class ConfigStore {
@@ -14,10 +13,6 @@ class ConfigStore {
 
         try {
             this.data = await configApi.getConfig();
-
-            if (this.data?.general?.needSetup) {
-                goto("/setup");
-            }
         } catch (err) {
             this.error = err as CoreError;
             this.data = null;

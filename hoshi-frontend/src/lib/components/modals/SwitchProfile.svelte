@@ -107,10 +107,22 @@
         }
     }
 
-    async function goToSetup() {
-        open = false;
-        await auth.logout();
-        goto(layoutState.isTV ? '/tv/setup' : '/setup');
+    async function addProfile() {
+        loginLoading = true;
+        error = null;
+        try {
+            const taken = new Set(users.map((u) => u.username.toLowerCase()));
+            let n = users.length + 1;
+            while (taken.has(`user ${n}`)) n++;
+
+            await auth.register({ username: `User ${n}` }, null);
+            open = false;
+            location.reload();
+        } catch (err) {
+            error = err as CoreError;
+        } finally {
+            loginLoading = false;
+        }
     }
 
     // TV: Back on the password step returns to the list; on the list it closes the dialog.
@@ -186,7 +198,7 @@
 
                         <div class="my-1 h-px w-full bg-border/40"></div>
 
-                        <button type="button" data-sn class={tvRowClass} disabled={loginLoading} onclick={goToSetup}>
+                        <button type="button" data-sn class={tvRowClass} disabled={loginLoading} onclick={addProfile}>
                             <div class="flex size-14 shrink-0 items-center justify-center rounded-full border border-dashed border-muted-foreground/50">
                                 <Plus class="size-6 text-muted-foreground" />
                             </div>
@@ -291,7 +303,7 @@
 
                             <div class="h-px w-full bg-border/40 my-1"></div>
 
-                            <button class={rowClass} disabled={loginLoading} onclick={goToSetup}>
+                            <button class={rowClass} disabled={loginLoading} onclick={addProfile}>
                                 <div class="size-11 rounded-full border border-dashed border-muted-foreground/50 flex items-center justify-center group-hover:border-primary/50 group-hover:bg-primary/5 transition-colors shrink-0">
                                     <Plus class="size-5 text-muted-foreground group-hover:text-primary transition-colors" />
                                 </div>

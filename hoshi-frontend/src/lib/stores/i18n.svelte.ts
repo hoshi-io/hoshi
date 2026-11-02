@@ -21,11 +21,50 @@ async function getTauriStore(): Promise<Store> {
     return tauriStoreInstance as Store;
 }
 
+import { locale as osLocale } from '@tauri-apps/plugin-os';
+
+function matchSupported(tag: string | null | undefined): Language | null {
+    if (!tag) return null;
+
+    const norm = tag.replace('_', '-');
+    if (VALID_LANGS.has(norm as Language)) return norm as Language;
+
+    const [primary, ...rest] = norm.split('-');
+    const lower = primary.toLowerCase();
+    const parts = rest.map((p) => p.toLowerCase());
+
+    switch (lower) {
+        case 'zh':
+            // Traditional: script Hant, or regions TW/HK/MO. Everything else is Simplified.
+            return parts.some((p) => ['hant', 'tw', 'hk', 'mo'].includes(p)) ? 'zh-TW' : 'zh-CN';
+        case 'ko': return 'ko-KR';
+        case 'pt': return 'pt-PT';      // also covers pt-BR, since there's no Brazilian file
+        case 'fil': return 'tl';        // Filipino
+        case 'in': return 'id';         // legacy Indonesian code
+        default:
+            return VALID_LANGS.has(lower as Language) ? (lower as Language) : null;
+    }
+}
+
+async function detectSystemLanguage(): Promise<Language> {
+    try {
+        const match = matchSupported(await osLocale());
+        if (match) return match;
+    } catch (err) {
+        console.warn("[i18n] Error reading system locale:", err);
+    }
+    return matchSupported(navigator.language) ?? 'en';
+}
+
 async function loadSavedLanguage(): Promise<Language> {
     try {
         const store = await getTauriStore();
         const saved = await store.get<string>('app_lang');
         if (saved && VALID_LANGS.has(saved as Language)) return saved as Language;
+
+        const detected = await detectSystemLanguage();
+        await store.set('app_lang', detected);
+        return detected;
     } catch (err) {
         console.warn("[i18n] Error loading saved language:", err);
     }
