@@ -15,6 +15,7 @@ use hoshi_core::content::services::mapping::MappingService;
 use hoshi_core::content::services::search::SearchService;
 use hoshi_core::content::types::{ContentListResponse, HomeView, RelationGraph, SearchParams, SearchResult, UpdateExtensionMappingRequest, UpdateTrackerMappingRequest};
 use hoshi_core::extensions::types::{ContentItems, ExtensionSearchResult, PlayContentResult};
+use hoshi_core::tracker::provider::TagInfo;
 use hoshi_core::tracker::types::TrackerMapping;
 
 #[tauri::command(rename_all = "snake_case")]
@@ -95,6 +96,14 @@ pub async fn search(
         limit,
         offset,
     })
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn get_tracker_tags(
+    state: State<'_, Arc<AppState>>,
+    tracker: String,
+) -> Result<Vec<TagInfo>, CoreError> {
+    SearchService::list_tags(state.inner(), &tracker).await
 }
 
 #[tauri::command(rename_all = "snake_case")]

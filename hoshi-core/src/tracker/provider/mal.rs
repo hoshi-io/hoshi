@@ -560,6 +560,7 @@ impl TrackerProvider for MalProvider {
         format: Option<&str>,
         nsfw: Option<bool>,
         status: Option<&str>,
+        _tags: Option<&[String]>,
     ) -> CoreResult<Vec<TrackerMedia>> {
         let is_manga = matches!(content_type, ContentType::Manga | ContentType::Novel);
         let kind = if is_manga { "manga" } else { "anime" };

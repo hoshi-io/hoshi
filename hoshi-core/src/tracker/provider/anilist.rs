@@ -9,7 +9,7 @@ use crate::content::models::{Character, ContentType, EpisodeData, Metadata, Staf
 use crate::error::{CoreError, CoreResult};
 use crate::schedule::types::AiringEpisode;
 
-pub(crate) use super::{TokenData, TrackerMedia, TrackerProvider, UpdateEntryParams, UserListEntry};
+pub(crate) use super::{TagInfo, TokenData, TrackerMedia, TrackerProvider, UpdateEntryParams, UserListEntry};
 
 const MEDIA_FRAGMENT: &str = r#"
 fragment mediaFields on Media {
@@ -82,10 +82,12 @@ query ($from: Int, $to: Int, $page: Int) {
 const SEARCH_QUERY: &str = r#"
 query ($search: String, $page: Int, $perPage: Int, $type: MediaType,
        $sort: [MediaSort], $status: MediaStatus, $genre: String, $format: MediaFormat,
-       $formatIn: [MediaFormat], $formatNotIn: [MediaFormat], $isAdult: Boolean) {
+       $formatIn: [MediaFormat], $formatNotIn: [MediaFormat], $isAdult: Boolean,
+       $tagIn: [String]) {
   Page(page: $page, perPage: $perPage) {
     media(search: $search, type: $type, sort: $sort, status: $status,
-          genre: $genre, format: $format, format_in: $formatIn, format_not_in: $formatNotIn, isAdult: $isAdult) {
+          genre: $genre, format: $format, format_in: $formatIn, format_not_in: $formatNotIn, isAdult: $isAdult,
+          tag_in: $tagIn) {
       ...mediaFields
     }
   }
@@ -623,6 +625,28 @@ impl TrackerProvider for AniListProvider {
         })
     }
 
+    fn supports_tags(&self) -> bool { true }
+
+    async fn list_tags(&self) -> CoreResult<Vec<TagInfo>> {
+        let res = self.graphql(None, &json!({
+            "query": "query { MediaTagCollection { name description category isAdult } }"
+        })).await?;
+
+        let tags = res.get("data")
+            .and_then(|d| d.get("MediaTagCollection"))
+            .and_then(|v| v.as_array())
+            .ok_or_else(|| CoreError::NotFound("No tags from AniList".into()))?;
+
+        Ok(tags.iter().filter_map(|t| {
+            Some(TagInfo {
+                name:        t.get("name")?.as_str()?.to_string(),
+                category:    t.get("category").and_then(|v| v.as_str()).map(String::from),
+                description: t.get("description").and_then(|v| v.as_str()).map(String::from),
+                is_adult:    t.get("isAdult").and_then(|v| v.as_bool()).unwrap_or(false),
+            })
+        }).collect())
+    }
+
     async fn search(
         &self,
         query: Option<&str>,
@@ -634,6 +658,7 @@ impl TrackerProvider for AniListProvider {
         format: Option<&str>,
         nsfw: Option<bool>,
         status: Option<&str>,
+        tags: Option<&[String]>,
     ) -> CoreResult<Vec<TrackerMedia>> {
         let al_type = match content_type {
             ContentType::Manga | ContentType::Novel => "MANGA",
@@ -667,6 +692,7 @@ impl TrackerProvider for AniListProvider {
         if let Some(g) = genre     { variables["genre"]  = json!(g); }
         if let Some(f) = format    { variables["format"] = json!(f); }
         if let Some(s) = al_status { variables["status"] = json!(s); }
+        if let Some(t) = tags.filter(|t| !t.is_empty()) { variables["tagIn"] = json!(t); }
 
         let full_query = format!("{}\n{}", SEARCH_QUERY, MEDIA_FRAGMENT);
         let res = self.graphql(None, &json!({ "query": full_query, "variables": variables })).await?;

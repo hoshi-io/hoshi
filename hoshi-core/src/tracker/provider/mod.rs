@@ -99,6 +99,15 @@ pub struct UpdateEntryParams {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct TagInfo {
+    pub name: String,
+    pub category: Option<String>,
+    pub description: Option<String>,
+    pub is_adult: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TrackerAuthConfig {
     pub oauth_flow: String,
     pub auth_url: String,
@@ -149,7 +158,16 @@ pub trait TrackerProvider: Send + Sync {
         format: Option<&str>,
         nsfw: Option<bool>,
         status: Option<&str>,
+        tags: Option<&[String]>,
     ) -> CoreResult<Vec<TrackerMedia>>;
+
+    fn supports_tags(&self) -> bool {
+        false
+    }
+
+    async fn list_tags(&self) -> CoreResult<Vec<TagInfo>> {
+        Ok(vec![])
+    }
 
     async fn get_by_id(&self, tracker_id: &str) -> CoreResult<Option<TrackerMedia>>;
 

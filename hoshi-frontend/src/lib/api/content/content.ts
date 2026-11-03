@@ -52,6 +52,12 @@ export const contentApi = {
         });
     },
 
+    getTags(tracker: string) {
+        return call<{ name: string; category?: string | null; description?: string | null; isAdult: boolean }[]>({
+            tauri: { cmd: "get_tracker_tags", args: { tracker } },
+        });
+    },
+
     getItems(cid: string, extName: string) {
         return call<unknown>({
             tauri: { cmd: "get_content_items", args: { cid, ext_name: extName } },

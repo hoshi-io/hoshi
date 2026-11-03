@@ -295,7 +295,7 @@ impl ContentResolverService {
     ) -> CoreResult<Vec<TrackerMedia>> {
         match state.tracker_registry.get(tracker) {
             Some(provider) => provider.search(
-                Some(query), content_type.clone(), 10, 1, None, None, None, None, None,
+                Some(query), content_type.clone(), 10, 1, None, None, None, None, None, None
             ).await,
             None => Ok(vec![]),
         }

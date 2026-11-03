@@ -357,6 +357,7 @@
   },
   "search": {
     "title": "Search",
+    "filter_tags": "Filter tags",
     "placeholder": "search...",
     "any_format": "Any format",
     "enter_filter": "Enter filter",

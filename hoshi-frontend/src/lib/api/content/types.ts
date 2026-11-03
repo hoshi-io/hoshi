@@ -138,6 +138,7 @@ export interface SearchQuery {
     format?: string;
     tracker?: "anilist" | "mal" | "kitsu" | "simkl";
     extensionFilters?: string;
+    tags?: string[];
 }
 
 export interface ContentListResponse {

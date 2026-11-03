@@ -493,6 +493,7 @@ impl TrackerProvider for SimklProvider {
         _format: Option<&str>,
         _nsfw: Option<bool>,
         _status: Option<&str>,
+        _tags: Option<&[String]>,
     ) -> CoreResult<Vec<TrackerMedia>> {
         let query = query.unwrap_or_default();
 

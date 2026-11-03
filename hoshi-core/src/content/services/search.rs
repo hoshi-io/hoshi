@@ -8,7 +8,7 @@ use crate::content::utils::show_adult;
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::types::ExtensionSearchResult;
 use crate::state::AppState;
-use crate::tracker::provider::TrackerMedia;
+use crate::tracker::provider::{TagInfo, TrackerMedia};
 
 pub struct SearchService;
 
@@ -55,6 +55,7 @@ impl SearchService {
             params.format.as_deref(),
             params.nsfw,
             params.status.as_deref(),
+            params.tags.as_deref(),
         ).await?;
 
         if !show_adult {
@@ -62,6 +63,23 @@ impl SearchService {
         }
 
         Ok(results)
+    }
+
+    pub async fn list_tags(
+        state: &Arc<AppState>,
+        tracker: &str,
+    ) -> CoreResult<Vec<TagInfo>> {
+        let provider = state.tracker_registry.get(tracker)
+            .ok_or_else(|| {
+                error!(tracker = %tracker, "No suitable tracker provider found");
+                CoreError::Internal("error.tracker.no_provider_available".into())
+            })?;
+
+        if !provider.supports_tags() {
+            return Ok(vec![]);
+        }
+
+        provider.list_tags().await
     }
 
     pub async fn search_extension(

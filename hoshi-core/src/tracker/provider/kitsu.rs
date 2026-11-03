@@ -606,6 +606,7 @@ impl TrackerProvider for KitsuProvider {
         format: Option<&str>,
         _nsfw: Option<bool>,
         status: Option<&str>,
+        _tags: Option<&[String]>
     ) -> CoreResult<Vec<TrackerMedia>> {
         let endpoint   = match content_type { ContentType::Anime => "anime", _ => "manga" };
         let page_limit = limit.min(20);

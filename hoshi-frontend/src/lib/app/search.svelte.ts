@@ -26,10 +26,28 @@ class SearchState {
     genre = $state<string>("");
     format = $state<string>("");
     nsfw = $state<boolean>(false);
+    tags = $state<string[]>([]);
     sort = $state<string>("");
     tracker = $state<"anilist" | "mal" | "kitsu" | "simkl">("anilist");
 
     extFilterValues = $state<Record<string, any>>({});
+
+    availableTags = $state<{ name: string; category?: string | null; description?: string | null; isAdult: boolean }[]>([]);
+    private tagsLoadedFor = "";
+
+    async loadTags() {
+        if (this.tagsLoadedFor === this.tracker) return;
+        const tracker = this.tracker;
+        try {
+            const tags = await contentApi.getTags(tracker);
+            if (tracker !== this.tracker) return;
+            this.availableTags = tags ?? [];
+            this.tagsLoadedFor = tracker;
+        } catch (e) {
+            console.warn("Could not load tags", e);
+            this.availableTags = [];
+        }
+    }
 
     results = $state<NormalizedCard[]>([]);
 
@@ -48,7 +66,8 @@ class SearchState {
             !this.status &&
             !this.genre &&
             !this.format &&
-            !this.nsfw;
+            !this.nsfw &&
+            this.tags.length === 0;
 
         if (isTrending) return;
 
@@ -74,6 +93,7 @@ class SearchState {
         this.status = "";
         this.genre = "";
         this.format = "";
+        this.tags = [];
         this.extFilterValues = {};
     }
 
@@ -87,7 +107,7 @@ class SearchState {
             this.hasMore = true;
         }
 
-        if (!this.query.trim() && !this.status && !this.genre && !this.format && !this.nsfw) {
+        if (!this.query.trim() && !this.status && !this.genre && !this.format && !this.nsfw && this.tags.length === 0) {
             try {
                 const res = await contentApi.getTrending(this.contentType);
                 if (token !== this.searchToken) return; // a newer search has since started, drop this
@@ -114,6 +134,7 @@ class SearchState {
                 format: this.format || undefined,
                 sort: this.sort || undefined,
                 tracker: this.tracker,
+                tags: this.tags.length > 0 ? this.tags : undefined,
             });
 
             if (token !== this.searchToken) return; // a newer search has since started, drop this

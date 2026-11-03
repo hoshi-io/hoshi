@@ -72,14 +72,43 @@
         handleFilterChange();
     };
 
+    let tagFilter = $state("");
+
+    let supportsTags = $derived(tracker === "anilist");
+
+    let tags = $derived(searchState.tags);
+
+    let visibleTags = $derived.by(() => {
+        const needle = tagFilter.trim().toLowerCase();
+        const pool = searchState.availableTags.filter(t =>
+            (nsfw || !t.isAdult || tags.includes(t.name)) &&
+            (needle === "" || t.name.toLowerCase().includes(needle))
+        );
+        const selected = pool.filter(t => tags.includes(t.name));
+        const rest = pool.filter(t => !tags.includes(t.name));
+        return [...selected, ...rest];
+    });
+
+    const toggleTag = (name: string) => {
+        searchState.tags = tags.includes(name)
+            ? tags.filter(t => t !== name)
+            : [...tags, name];
+        handleFilterChange();
+    };
+
     $effect(() => {
         const _t = tracker;
         status = "";
         genre = "";
         format = "";
+        tagFilter = "";
 
         if (tracker == "kitsu") {
             nsfw = false;
+        }
+
+        if (tracker === "anilist") {
+            searchState.loadTags();
         }
     });
 </script>
@@ -128,6 +157,37 @@
                         class="bg-muted/20 border-none h-11 rounded-sm font-semibold"
                 />
             </div>
+
+            {#if supportsTags}
+                <div class="space-y-2.5">
+                    <Label class="text-sm font-bold text-foreground/90">{i18n.t('content.tags')}</Label>
+                    <input
+                            type="text"
+                            bind:value={tagFilter}
+                            placeholder={i18n.t('search.filter_tags')}
+                            class="w-full bg-muted/20 border-none h-11 rounded-sm px-3 text-sm font-semibold outline-none focus:ring-1 focus:ring-border"
+                    />
+                    <div class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-2 rounded-sm border border-border/40 bg-muted/5 [scrollbar-width:thin]">
+                        {#each visibleTags as tag (tag.name)}
+                            {@const isSelected = tags.includes(tag.name)}
+                            <button
+                                    type="button"
+                                    title={tag.description ?? ""}
+                                    class="px-3 py-1.5 rounded-sm text-xs font-bold transition-all border
+{isSelected
+    ? 'bg-primary text-primary-foreground border-primary'
+    : 'bg-muted/20 text-foreground/70 border-transparent hover:border-border'}"
+                                    onclick={() => toggleTag(tag.name)}
+                            >
+                                {tag.name}
+                                {#if isSelected}
+                                    <span class="ml-1 opacity-70">✕</span>
+                                {/if}
+                            </button>
+                        {/each}
+                    </div>
+                </div>
+            {/if}
 
             {#if tracker === 'anilist' || tracker === 'mal'}
                 <div class="flex items-center space-x-3 pt-2">

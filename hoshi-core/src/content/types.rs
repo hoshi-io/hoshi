@@ -16,6 +16,7 @@ pub struct SearchParams {
     pub tracker: Option<String>,
     pub extension_filters: Option<String>,
     pub page: Option<u32>,
+    pub tags: Option<Vec<String>>
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]

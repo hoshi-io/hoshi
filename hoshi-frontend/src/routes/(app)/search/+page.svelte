@@ -90,7 +90,11 @@
     const selectSource = (mode: "tracker" | "extension", extId: string = "", tracker: "anilist" | "mal" | "kitsu" | "simkl" = "anilist", isMobile = false) => {
         searchState.searchMode = mode;
         if (mode === "extension") searchState.selectedExtension = extId;
-        else searchState.tracker = tracker;
+        else {
+            // tags belong to one tracker, so drop them before the search runs on the new one
+            if (searchState.tracker !== tracker) searchState.tags = [];
+            searchState.tracker = tracker;
+        }
 
         if (!isMobile) {
             handleSearch();
@@ -140,7 +144,7 @@
             <Drawer.Root bind:open={isDrawerOpen}>
                 <Drawer.Trigger>
                     <Button variant="ghost" size="icon" class="h-10 w-10 rounded-full hover:bg-muted/50 relative">
-                        {#if searchState.searchMode === 'extension' || searchState.status || searchState.genre}
+                        {#if searchState.searchMode === 'extension' || searchState.status || searchState.genre || searchState.tags.length > 0}
                             <div class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></div>
                         {/if}
                         <ListFilter class="w-[22px] h-[22px]" />
