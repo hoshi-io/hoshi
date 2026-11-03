@@ -535,6 +535,15 @@ export class WatchState {
                 await extensionsStore.load();
             }
 
+            if (extensionsStore.anime.length + extensionsStore.torrent.length === 0) {
+                this.currentLoadedCid = targetCid;
+                this.extensions = [];
+                this.error = { key: "watch.no_extensions" };
+                this.isLoadingMeta = false;
+                this.isLoadingPlay = false;
+                return;
+            }
+
             if (targetCid !== this.currentLoadedCid) {
                 this.isLoadingMeta = true;
                 const contentRes = await contentApi.get_by_cid(targetCid);
