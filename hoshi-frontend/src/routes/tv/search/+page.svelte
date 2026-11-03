@@ -11,7 +11,6 @@
     import TvSearchSources, { TRACKERS, type Tracker } from '@/tv/components/search/TvSearchSources.svelte';
     import TvSearchFilters from '@/tv/components/search/TvSearchFilters.svelte';
 
-    // Fixed 9rem columns (= TvCard width), spread evenly across the row.
     const TV_GRID = 'grid grid-cols-[repeat(auto-fill,9rem)] justify-between gap-x-4 gap-y-6';
 
     let panel = $state<'source' | 'filters' | null>(null);
@@ -23,15 +22,12 @@
     let queryButton: HTMLButtonElement | null = $state(null);
     let queryInput: HTMLInputElement | null = $state(null);
 
-    // ---- search plumbing (same behaviour as the desktop page, minus debounce/mobile) ----
-
     function handleSearch() {
         searchState.page = 1;
         if (searchState.searchMode === 'tracker') searchState.search();
         else searchState.extensionSearch();
     }
 
-    // searchState is a singleton shared with the desktop UI: make sure it's in anime mode.
     onMount(() => {
         if (searchState.contentType !== 'anime') {
             searchState.searchMode = 'tracker';
@@ -81,8 +77,6 @@
         }
     });
 
-    // ---- sources ----
-
     function selectSource(mode: 'tracker' | 'extension', extId = '', tracker: Tracker = 'anilist') {
         if (mode === 'extension') {
             // A different extension has a different filter schema.
@@ -95,6 +89,7 @@
                 searchState.status = '';
                 searchState.genre = '';
                 searchState.format = '';
+                searchState.tags = [];
                 if (tracker === 'kitsu') searchState.nsfw = false;
             }
             searchState.tracker = tracker;
@@ -116,6 +111,7 @@
 
     const hasActiveFilters = $derived(
         !!(searchState.status || searchState.genre || searchState.format || searchState.nsfw) ||
+        searchState.tags.length > 0 ||
         Object.values(searchState.extFilterValues).some((v) => (Array.isArray(v) ? v.length > 0 : !!v))
     );
 

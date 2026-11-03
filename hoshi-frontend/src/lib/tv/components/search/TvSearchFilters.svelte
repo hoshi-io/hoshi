@@ -31,6 +31,33 @@
         ...mapOptions(activeFilters.formats.filter((f: { value: string }) => !MANGA_FORMATS.includes(f.value)))
     ]);
 
+    // Tags are AniList-only for now (see supports_tags on the Rust side).
+    const showTags = $derived(searchState.searchMode === 'tracker' && searchState.tracker === 'anilist');
+
+    $effect(() => {
+        if (showTags) searchState.loadTags();
+    });
+
+    // Grouped by category so D-pad navigation moves through short rows instead of one giant block.
+    const tagGroups = $derived.by(() => {
+        const groups = new Map<string, typeof searchState.availableTags>();
+        for (const t of searchState.availableTags) {
+            if (t.isAdult && !searchState.nsfw && !searchState.tags.includes(t.name)) continue;
+            const key = t.category ?? '';
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key)!.push(t);
+        }
+        return [...groups.entries()];
+    });
+
+    function toggleTag(name: string) {
+        const current = searchState.tags;
+        searchState.tags = current.includes(name)
+            ? current.filter((t) => t !== name)
+            : [...current, name];
+        changed();
+    }
+
     const showTrackerFilters = $derived(searchState.searchMode === 'tracker' && searchState.tracker !== 'simkl');
     const showExtFilters = $derived(searchState.searchMode === 'extension' && Object.keys(extFiltersSchema).length > 0);
 
@@ -76,6 +103,32 @@
                     changed();
                 }}
             />
+        {/if}
+
+        {#if showTags && tagGroups.length > 0}
+            <div>
+                <h3 class={heading}>{i18n.t('content.tags')}</h3>
+                <div class="space-y-4">
+                    {#each tagGroups as [category, list] (category)}
+                        <div>
+                            {#if category}
+                                <h4 class="mb-1.5 text-sm font-semibold text-muted-foreground">
+                                    {category.replace('-', ' · ')}
+                                </h4>
+                            {/if}
+                            <div class="flex flex-wrap gap-2">
+                                {#each list as tag (tag.name)}
+                                    <TvToggle
+                                            label={tag.name}
+                                            pressed={searchState.tags.includes(tag.name)}
+                                            onclick={() => toggleTag(tag.name)}
+                                    />
+                                {/each}
+                            </div>
+                        </div>
+                    {/each}
+                </div>
+            </div>
         {/if}
     {:else if showExtFilters}
         {#each Object.entries(extFiltersSchema) as [key, def] (key)}
