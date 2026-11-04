@@ -18,7 +18,8 @@ export type MergeStrategy =
     | 'anilistFirst'
     | 'malFirst'
     | 'kitsuFirst'
-    | 'simklFirst';
+    | 'simklFirst'
+    | 'mangabakaFirst';
 
 export type ScoreFormat =
     | 'point10'

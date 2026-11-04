@@ -371,7 +371,8 @@ pub enum MergeStrategy {
     AnilistFirst,
     MalFirst,
     KitsuFirst,
-    SimklFirst
+    SimklFirst,
+    MangabakaFirst
 }
 
 impl Default for ListConfig {

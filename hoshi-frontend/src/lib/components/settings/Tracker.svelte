@@ -52,7 +52,8 @@
         { value: 'anilistFirst', label: i18n.t("settings.trackers_section.conflict_anilist") },
         { value: 'malFirst', label: i18n.t("settings.trackers_section.conflict_mal") },
         { value: 'kitsuFirst', label: i18n.t("settings.trackers_section.conflict_kitsu") },
-        { value: 'simklFirst', label: i18n.t("settings.trackers_section.conflict_simkl") }
+        { value: 'simklFirst', label: i18n.t("settings.trackers_section.conflict_simkl") },
+        { value: 'mangabakaFirst', label: i18n.t("settings.trackers_section.conflict_mangabaka") },
     ];
 
     function generateVerifier() {
