@@ -9,7 +9,7 @@
     }: {
         isMobile?: boolean;
         availableExtensions: any[];
-        onSelectSource: (mode: "tracker" | "extension", extId: string, tracker: "anilist" | "mal" | "kitsu" | "simkl", isMobile: boolean) => void;
+        onSelectSource: (mode: "tracker" | "extension", extId: string, tracker: "anilist" | "mal" | "kitsu" | "simkl" | "mangabaka", isMobile: boolean) => void;
     } = $props();
 
     let trackersOpen = $state(true);
@@ -40,7 +40,8 @@
             'anilist': 'anilist.co',
             'mal': 'myanimelist.net',
             'kitsu': 'kitsu.io',
-            'simkl': 'simkl.com'
+            'simkl': 'simkl.com',
+            'mangabaka': 'mangabaka.org'
         };
 
         const domain = domains[trackerName.toLowerCase()] || 'google.com';
@@ -93,6 +94,17 @@
                     <img src={getTrackerFavicon('kitsu')} alt="Kitsu" class="w-5 h-5 rounded-sm object-contain {searchState.searchMode === 'tracker' && searchState.tracker === 'kitsu' ? '' : 'grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100'}" />
                     <span class="truncate">Kitsu</span>
                 </button>
+
+                {#if searchState.contentType !== "anime"}
+                    <button
+                            type="button"
+                            onclick={() => onSelectSource('tracker', '', 'mangabaka', isMobile)}
+                            class="{rowClasses} {searchState.searchMode === 'tracker' && searchState.tracker === 'mangabaka' ? activeRow : inactiveRow}"
+                    >
+                        <img src={getTrackerFavicon('mangabaka')} alt="MangaBaka" class="w-5 h-5 rounded-sm object-contain {searchState.searchMode === 'tracker' && searchState.tracker === 'mangabaka' ? '' : 'grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100'}" />
+                        <span class="truncate">MangaBaka</span>
+                    </button>
+                {/if}
 
                 {#if searchState.contentType === "anime"}
                     <button

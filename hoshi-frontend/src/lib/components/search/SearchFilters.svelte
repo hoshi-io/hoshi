@@ -20,7 +20,7 @@
         onClear
     }: {
         searchMode: "tracker" | "extension";
-        tracker: "anilist" | "mal" | "kitsu" | "simkl";
+        tracker: "anilist" | "mal" | "kitsu" | "simkl" | "mangabaka";
         status: string;
         genre: string;
         format: string;
@@ -74,7 +74,7 @@
 
     let tagFilter = $state("");
 
-    let supportsTags = $derived(tracker === "anilist");
+    let supportsTags = $derived(tracker === "anilist" || tracker === "mangabaka");
 
     let tags = $derived(searchState.tags);
 
@@ -86,7 +86,8 @@
         );
         const selected = pool.filter(t => tags.includes(t.name));
         const rest = pool.filter(t => !tags.includes(t.name));
-        return [...selected, ...rest];
+        // Thousands of tags exist on some trackers; cap what is rendered.
+        return [...selected, ...rest.slice(0, 300)];
     });
 
     const toggleTag = (name: string) => {
@@ -107,7 +108,7 @@
             nsfw = false;
         }
 
-        if (tracker === "anilist") {
+        if (tracker === "anilist" || tracker === "mangabaka") {
             searchState.loadTags();
         }
     });
@@ -130,19 +131,21 @@
                 />
             </div>
 
-            <div class="space-y-2.5">
-                <Label class="text-sm font-bold text-foreground/90">{i18n.t('search.genre')}</Label>
-                <ResponsiveSelect
-                        bind:value={genre}
-                        items={[
+            {#if tracker !== "mangabaka"}
+                <div class="space-y-2.5">
+                    <Label class="text-sm font-bold text-foreground/90">{i18n.t('search.genre')}</Label>
+                    <ResponsiveSelect
+                            bind:value={genre}
+                            items={[
             { value: "", label: i18n.t('search.any_genre') },
             ...activeFilters.genres.map((gen: { value: any; label: string; }) => ({ value: gen.value, label: i18n.t(gen.label) }))
         ]}
-                        onValueChange={handleFilterChange}
-                        placeholder={i18n.t('search.any_genre')}
-                        class="bg-muted/20 border-none h-11 rounded-sm font-semibold"
-                />
-            </div>
+                            onValueChange={handleFilterChange}
+                            placeholder={i18n.t('search.any_genre')}
+                            class="bg-muted/20 border-none h-11 rounded-sm font-semibold"
+                    />
+                </div>
+            {/if}
 
             <div class="space-y-2.5">
                 <Label class="text-sm font-bold text-foreground/90">{i18n.t('search.format')}</Label>
@@ -168,7 +171,7 @@
                             class="w-full bg-muted/20 border-none h-11 rounded-sm px-3 text-sm font-semibold outline-none focus:ring-1 focus:ring-border"
                     />
                     <div class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-2 rounded-sm border border-border/40 bg-muted/5 [scrollbar-width:thin]">
-                        {#each visibleTags as tag (tag.name)}
+                        {#each visibleTags as tag, i (tag.name + "|" + i)}
                             {@const isSelected = tags.includes(tag.name)}
                             <button
                                     type="button"
@@ -189,7 +192,7 @@
                 </div>
             {/if}
 
-            {#if tracker === 'anilist' || tracker === 'mal'}
+            {#if tracker === 'anilist' || tracker === 'mal' || tracker === 'mangabaka'}
                 <div class="flex items-center space-x-3 pt-2">
                     <Switch id="nsfw-mode" bind:checked={nsfw} onCheckedChange={handleFilterChange} />
                     <Label for="nsfw-mode" class="text-sm font-bold text-foreground/90">{i18n.t('search.nsfw_only')}</Label>

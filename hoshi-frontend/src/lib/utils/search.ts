@@ -105,5 +105,23 @@ export const TRACKER_FILTERS = {
             { value: "adventure", label: "search.adventure" },
             { value: "comedy", label: "search.comedy" },
         ],
-    }
+    },
+    mangabaka: {
+        status: [
+            { value: "releasing", label: "search.ongoing" },
+            { value: "completed", label: "search.completed" },
+            { value: "upcoming",  label: "search.upcoming" },
+            { value: "hiatus",    label: "search.hiatus" },
+            { value: "cancelled", label: "search.cancelled" },
+        ],
+        genres: [],
+        formats: [
+            { value: "manga",   label: "search.manga" },
+            { value: "novel",   label: "search.novel" },
+            { value: "manhwa",  label: "search.manhwa" },
+            { value: "manhua",  label: "search.manhua" },
+            { value: "oel",     label: "OEL" },
+            { value: "other",   label: "search.other" },
+        ],
+    },
 };

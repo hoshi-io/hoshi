@@ -572,12 +572,28 @@ impl TrackerProvider for MangaBakaProvider {
     }
 
     async fn list_tags(&self) -> CoreResult<Vec<TagInfo>> {
-        Ok(self
-            .tag_table()
-            .await?
-            .iter()
-            .map(|t| TagInfo {
-                name: t.name.clone(),
+        let table = self.tag_table().await?;
+
+        let mut counts: HashMap<String, usize> = HashMap::new();
+        for t in table.iter() {
+            *counts.entry(t.name.to_lowercase()).or_default() += 1;
+        }
+
+        let mut seen = std::collections::HashSet::new();
+        let mut out = Vec::with_capacity(table.len());
+        for t in table.iter() {
+            let name = if counts.get(&t.name.to_lowercase()).copied().unwrap_or(0) > 1
+                && !t.name_path.is_empty()
+            {
+                t.name_path.clone()
+            } else {
+                t.name.clone()
+            };
+            if !seen.insert(name.to_lowercase()) {
+                continue;
+            }
+            out.push(TagInfo {
+                name,
                 category: t
                     .name_path
                     .split_once(" > ")
@@ -587,8 +603,9 @@ impl TrackerProvider for MangaBakaProvider {
                     t.content_rating.as_deref(),
                     Some("erotica") | Some("pornographic")
                 ),
-            })
-            .collect())
+            });
+        }
+        Ok(out)
     }
 
     async fn get_by_id(&self, tracker_id: &str) -> CoreResult<Option<TrackerMedia>> {

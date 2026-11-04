@@ -28,7 +28,7 @@ class SearchState {
     nsfw = $state<boolean>(false);
     tags = $state<string[]>([]);
     sort = $state<string>("");
-    tracker = $state<"anilist" | "mal" | "kitsu" | "simkl">("anilist");
+    tracker = $state<"anilist" | "mal" | "kitsu" | "simkl" | "mangabaka">("anilist");
 
     extFilterValues = $state<Record<string, any>>({});
 
