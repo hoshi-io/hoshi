@@ -2,6 +2,7 @@ pub mod anilist;
 pub mod mal;
 pub mod kitsu;
 pub mod simkl;
+pub mod mangabaka;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -242,5 +243,6 @@ pub fn build_registry(client: Client) -> TrackerRegistry {
     registry.register(Arc::new(kitsu::KitsuProvider::new(client.clone())));
     registry.register(Arc::new(mal::MalProvider::new(client.clone())));
     registry.register(Arc::new(simkl::SimklProvider::new(client.clone())));
+    registry.register(Arc::new(mangabaka::MangaBakaProvider::new(client.clone())));
     registry
 }

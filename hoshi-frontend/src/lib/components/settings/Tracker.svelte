@@ -66,6 +66,13 @@
         return res;
     }
 
+    async function sha256Challenge(verifier: string): Promise<string> {
+        const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+        let bin = '';
+        new Uint8Array(digest).forEach((b) => (bin += String.fromCharCode(b)));
+        return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
     onMount(() => {
         loadTrackers();
 
@@ -97,7 +104,7 @@
     async function loadTrackers() {
         loading = true;
         try {
-            const TRACKER_ORDER = ['anilist', 'mal', 'kitsu'];
+            const TRACKER_ORDER = ['anilist', 'mal', 'kitsu', 'mangabaka'];
             const allTrackers = await integrationsApi.getAll() || [];
 
             trackers = allTrackers
@@ -144,13 +151,18 @@
             const verifier = generateVerifier();
             localStorage.setItem(`${newTrackerName}_verifier`, verifier);
 
+            // MangaBaka requires S256 and an explicit scope list; the others keep `plain`.
+            const useS256 = newTrackerName === 'mangabaka';
             const params = new URLSearchParams({
                 client_id: newTrackerAuth.clientId,
                 response_type: 'code',
-                code_challenge: verifier,
-                code_challenge_method: 'plain',
+                code_challenge: useS256 ? await sha256Challenge(verifier) : verifier,
+                code_challenge_method: useS256 ? 'S256' : 'plain',
                 redirect_uri: 'hoshi://auth'
             });
+            if (useS256 && newTrackerAuth.scopes?.length) {
+                params.set('scope', newTrackerAuth.scopes.join(' '));
+            }
 
             const url = `${newTrackerAuth.authUrl}?${params.toString()}`;
             await openUrl(url);
