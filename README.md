@@ -26,7 +26,7 @@
 ---
 ## Features
 
--  **Smart Tracking:** Sync your library with AniList, MAL, Simkl or Kitsu. You can keep everything local if you prefer.
+-  **Smart Tracking:** Sync your library with AniList, MAL, Simkl, Kitsu, MangaBaka or Shikimori. You can keep everything local if you prefer.
 -  **Powerful List Management:** Keep your library organized with advanced tools, including list merging and batch actions for managing multiple entries at once. Duplicate entries can be detected and merged into a single item.
 -  **BYOC Extensions:** Bring your own content by adding marketplace URLs. Browse and install extensions directly from the app.
 -  **Compatibility Layers (experimental):** Run LNReader and Sora extensions natively inside Hoshi, no extra installation required.

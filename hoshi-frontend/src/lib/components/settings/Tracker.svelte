@@ -82,8 +82,6 @@
 
         const setupAuthListener = async () => {
             unlistenAuth = await onOpenUrl((urls) => {
-                console.log("Deep links recibidos:", urls);
-
                 for (const url of urls) {
                     if (url.startsWith("hoshi://auth")) {
                         const code = new URL(url).searchParams.get("code");
@@ -267,34 +265,6 @@
         <Switch id="syncOnStartup" bind:checked={config.syncOnStartup} onCheckedChange={onSave} />
     </SettingRow>
 
-    <!--
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-        <div class="space-y-1 pr-4">
-            <Label class="text-base font-bold cursor-pointer" for="privateByDefault">{i18n.t("settings.trackers_section.private")}</Label>
-            <p class="text-sm text-muted-foreground">{i18n.t("settings.trackers_section.private_desc")}</p>
-        </div>
-        <Switch id="privateByDefault" bind:checked={config.privateByDefault} onCheckedChange={onSave} class="shrink-0 scale-125" />
-    </div>
-
-
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 border-b border-border/40">
-        <div class="space-y-1 pr-4 flex-1">
-            <Label class="text-base font-bold" for="syncIntervalSeconds">{i18n.t("settings.trackers_section.sync_interval")}</Label>
-            <p class="text-sm text-muted-foreground">{i18n.t("settings.trackers_section.sync_interval_desc")}</p>
-        </div>
-        <div class="w-full sm:max-w-[200px]">
-            <Input
-                    id="syncIntervalSeconds"
-                    type="number"
-                    min="60"
-                    bind:value={config.syncIntervalSeconds}
-                    onchange={onSave}
-                    class="rounded-sm h-11 text-right w-full"
-            />
-        </div>
-    </div>
-            -->
-
     <SettingRow
             label={i18n.t("settings.trackers_section.conflict_strategy")}
             description={i18n.t("settings.trackers_section.conflict_strategy_desc")}
@@ -365,16 +335,18 @@
                                         {/if}
 
                                         {#if tracker.syncEnabled !== null}
-                                <span class="inline-flex items-center gap-1.5 ml-1 px-2 py-0.5 rounded-lg text-[11px] text-foreground font-medium">
-                                    <Settings2 class="h-3 w-3 text-muted-foreground/80" />
-                                    <span>Sync</span>
-                                    <Switch
-                                            id={`sync-${tracker.name}`}
-                                            checked={tracker.syncEnabled}
-                                            onCheckedChange={(v) => handleToggleSync(tracker.name, v)}
-                                            class="scale-125 origin-center h-4 w-7"
-                                    />
-                                </span>
+                                            <span class="inline-flex items-center gap-2.5 ml-1 px-2 py-0.5 rounded-lg text-[11px] text-foreground font-medium">
+                                                <Settings2 class="h-3 w-3 text-muted-foreground/80" />
+                                                <span>Sync</span>
+                                                <div class="ml-1 flex items-center">
+                                                    <Switch
+                                                            id={`sync-${tracker.name}`}
+                                                            checked={tracker.syncEnabled}
+                                                            onCheckedChange={(v) => handleToggleSync(tracker.name, v)}
+                                                            class="scale-125 origin-center h-4 w-7"
+                                                    />
+                                                </div>
+                                            </span>
                                         {/if}
                                     {/if}
                                 </div>
