@@ -328,6 +328,32 @@ impl TrackerRepository {
         Ok(())
     }
 
+    pub async fn update_tokens(
+        pool: &SqlitePool,
+        user_id: i32,
+        tracker_name: &str,
+        access_token: &str,
+        refresh_token: Option<&str>,
+        expires_at: i64,
+    ) -> CoreResult<()> {
+        sqlx::query(
+            "UPDATE UserIntegration
+         SET access_token  = ?,
+             refresh_token = ?,
+             expires_at    = ?,
+             updated_at    = strftime('%s', 'now')
+         WHERE user_id = ? AND tracker_name = ?",
+        )
+            .bind(access_token)
+            .bind(refresh_token)
+            .bind(expires_at)
+            .bind(user_id)
+            .bind(tracker_name)
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
+
     pub async fn update_score_format(
         pool: &SqlitePool,
         user_id: i32,

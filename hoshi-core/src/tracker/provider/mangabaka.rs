@@ -436,7 +436,12 @@ impl TrackerProvider for MangaBakaProvider {
             auth_url: format!("{OAUTH}/authorize"),
             token_url: Some(format!("{OAUTH}/token")),
             client_id: Some(MANGABAKA_CLIENT_ID.to_string()),
-            scopes: vec![]
+            scopes: vec![
+                "openid".to_string(),
+                "profile".to_string(),
+                "library.read".to_string(),
+                "offline_access".to_string(),
+            ],
         }
     }
 

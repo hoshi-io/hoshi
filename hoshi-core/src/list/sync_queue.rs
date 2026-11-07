@@ -14,6 +14,7 @@ use crate::list::types::{BatchHandle, BatchIssue, BatchStatus, DeleteTarget, Syn
 use crate::state::AppState;
 use crate::tracker::provider::UpdateEntryParams;
 use crate::tracker::repository::TrackerRepository;
+use crate::tracker::service::TrackerService;
 use crate::tracker::types::TrackerIntegration;
 
 const MAX_ATTEMPTS: i32 = 5;
@@ -594,17 +595,23 @@ impl SyncQueue {
             None => return Ok(Outcome::Skipped("unknown_tracker")),
         };
 
+        let access_token = match TrackerService::ensure_fresh_token(
+            state, job.user_id, &job.tracker, &provider,
+        ).await {
+            Ok(t) => t,
+            Err(CoreError::AuthError(_)) => return Ok(Outcome::AuthExpired),
+            Err(e) => return Err(e),
+        };
+
         if job.op == SyncOp::Delete.as_str() {
             let remote_id = match job.remote_id.as_deref() {
                 Some(id) => id,
                 None => return Ok(Outcome::Skipped("no_remote_id")),
             };
-            // `false` = already gone remotely; that's the desired end state.
-            provider.delete_entry(&integration.access_token, remote_id).await?;
+            provider.delete_entry(&access_token, remote_id).await?;
             return Ok(Outcome::Done);
         }
 
-        // UPSERT: read the *current* entry; this is what makes coalescing safe.
         let remote_id = TrackerRepository::get_mappings_by_cid(&state.pool, &job.cid)
             .await?
             .into_iter()
@@ -643,7 +650,7 @@ impl SyncQueue {
             score_format: integration.score_format.clone(),
         };
 
-        provider.update_entry(&integration.access_token, params).await?;
+        provider.update_entry(&access_token, params).await?;
 
         if let Some(entry_id) = entry_id {
             if let Err(e) = ListRepository::upsert_entry_source(

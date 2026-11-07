@@ -1,5 +1,7 @@
-use std::sync::Arc;
+use std::collections::HashMap;
+use std::sync::{Arc, OnceLock};
 use std::sync::atomic::{AtomicBool, Ordering};
+use tokio::sync::Mutex;
 use tracing::{error, info, instrument, warn};
 
 use crate::content::services::enrichment::EnrichmentService;
@@ -10,6 +12,25 @@ use crate::state::AppState;
 use crate::tracker::provider::{TrackerProvider};
 use crate::tracker::repository::TrackerRepository;
 use crate::tracker::types::{AddIntegrationRequest, ImportEvent, IntegrationsResponse, SuccessResponse, TrackerInfoResponse, TrackerIntegration};
+
+#[derive(serde::Deserialize)]
+struct TokenResponse {
+    access_token: String,
+    refresh_token: Option<String>,
+    expires_in: Option<i64>,
+}
+const REFRESH_SKEW_SECS: i64 = 300;
+
+fn refresh_lock(user_id: i32, tracker_name: &str) -> Arc<Mutex<()>> {
+    static LOCKS: OnceLock<std::sync::Mutex<HashMap<(i32, String), Arc<Mutex<()>>>>> = OnceLock::new();
+    let mut map = LOCKS
+        .get_or_init(|| std::sync::Mutex::new(HashMap::new()))
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    map.entry((user_id, tracker_name.to_string()))
+        .or_insert_with(|| Arc::new(Mutex::new(())))
+        .clone()
+}
 
 pub struct TrackerService;
 
@@ -70,7 +91,7 @@ impl TrackerService {
             .ok_or_else(|| CoreError::NotFound("error.tracker.unknown_tracker".into()))?;
         let auth_config = provider.auth_config();
 
-        let access_token = if auth_config.oauth_flow == "pkce" {
+        let token_resp: TokenResponse = if auth_config.oauth_flow == "pkce" {
             let code     = body.access_token.ok_or_else(|| CoreError::AuthError("error.tracker.missing_auth_code".into()))?;
             let verifier = body.code_verifier.ok_or_else(|| CoreError::AuthError("error.tracker.missing_code_verifier".into()))?;
             let token_url = auth_config.token_url.as_ref()
@@ -93,12 +114,11 @@ impl TrackerService {
             if !res.status().is_success() {
                 return Err(CoreError::AuthError("error.tracker.token_exchange_failed".into()));
             }
-            #[derive(serde::Deserialize)] struct R { access_token: String }
-            res.json::<R>().await
-                .map_err(|e| core_err!(Parse, "error.system.serialization", e))?.access_token
+            res.json::<TokenResponse>().await
+                .map_err(|e| core_err!(Parse, "error.system.serialization", e))?
 
         } else if let Some(token) = body.access_token {
-            token
+            TokenResponse { access_token: token, refresh_token: None, expires_in: None }
         } else if let (Some(username), Some(password)) = (body.username, body.password) {
             if auth_config.oauth_flow != "password" {
                 return Err(CoreError::AuthError("error.tracker.password_login_unsupported".into()));
@@ -121,17 +141,21 @@ impl TrackerService {
             if !res.status().is_success() {
                 return Err(CoreError::AuthError("error.tracker.invalid_credentials".into()));
             }
-            #[derive(serde::Deserialize)] struct R { access_token: String }
-            res.json::<R>().await
-                .map_err(|e| core_err!(Parse, "error.system.serialization", e))?.access_token
+            res.json::<TokenResponse>().await
+                .map_err(|e| core_err!(Parse, "error.system.serialization", e))?
         } else {
             return Err(CoreError::AuthError("error.tracker.missing_credentials".into()));
         };
 
-        let token_data = provider.validate_and_store_token(&access_token, "Bearer").await?;
-        let expires_at = chrono::DateTime::parse_from_rfc3339(&token_data.expires_at)
-            .map(|dt| dt.timestamp())
-            .unwrap_or_else(|_| chrono::Utc::now().timestamp() + 31_536_000);
+        let mut token_data = provider.validate_and_store_token(&token_resp.access_token, "Bearer").await?;
+        // Prefer what the server actually told us over the provider's guessed lifetime.
+        token_data.refresh_token = token_resp.refresh_token;
+        let expires_at = match token_resp.expires_in {
+            Some(secs) if secs > 0 => chrono::Utc::now().timestamp() + secs,
+            _ => chrono::DateTime::parse_from_rfc3339(&token_data.expires_at)
+                .map(|dt| dt.timestamp())
+                .unwrap_or_else(|_| chrono::Utc::now().timestamp() + 31_536_000),
+        };
 
         let pool = state.pool();
         TrackerRepository::save_integration(
@@ -147,6 +171,71 @@ impl TrackerService {
 
         info!("Integration saved, returning. Caller is responsible for spawning the import.");
         Ok(SuccessResponse { success: true })
+    }
+
+    pub async fn ensure_fresh_token(
+        state: &AppState,
+        user_id: i32,
+        tracker_name: &str,
+        provider: &Arc<dyn TrackerProvider>,
+    ) -> CoreResult<String> {
+        let lock = refresh_lock(user_id, tracker_name);
+        let _guard = lock.lock().await;
+
+        let integration = TrackerRepository::get_user_integrations(state.pool(), user_id)
+            .await?
+            .into_iter()
+            .find(|i| i.tracker_name == tracker_name)
+            .ok_or_else(|| CoreError::NotFound("error.tracker.integration_not_found".into()))?;
+
+        let now = chrono::Utc::now().timestamp();
+        let Some(refresh) = integration.refresh_token.as_deref().filter(|r| !r.is_empty()) else {
+            return Ok(integration.access_token);
+        };
+        if integration.expires_at - now > REFRESH_SKEW_SECS {
+            return Ok(integration.access_token);
+        }
+
+        let cfg = provider.auth_config();
+        let token_url = cfg.token_url.as_ref()
+            .ok_or_else(|| CoreError::Internal("error.tracker.missing_token_url".into()))?;
+        let client_id = cfg.client_id.as_deref().unwrap_or_default();
+
+        info!(tracker = %tracker_name, "Refreshing access token");
+
+        let res = state.http_client
+            .post(token_url)
+            .form(&[
+                ("grant_type", "refresh_token"),
+                ("refresh_token", refresh),
+                ("client_id", client_id),
+            ])
+            .send().await
+            .map_err(|e| core_err!(Network, "error.tracker.token_exchange_network_error", e))?;
+
+        if !res.status().is_success() {
+            let status = res.status();
+            let body = res.text().await.unwrap_or_default();
+            warn!(tracker = %tracker_name, %status, "Token refresh failed");
+            // invalid_grant means the refresh token is gone: the user must sign in again.
+            if body.contains("invalid_grant") || status == reqwest::StatusCode::UNAUTHORIZED {
+                return Err(CoreError::AuthError("error.tracker.reauth_required".into()));
+            }
+            return Err(CoreError::AuthError("error.tracker.refresh_failed".into()));
+        }
+
+        let tr: TokenResponse = res.json().await
+            .map_err(|e| core_err!(Parse, "error.system.serialization", e))?;
+
+        let new_refresh = tr.refresh_token.as_deref().unwrap_or(refresh);
+        let new_expires_at = now + tr.expires_in.filter(|s| *s > 0).unwrap_or(3600);
+
+        TrackerRepository::update_tokens(
+            state.pool(), user_id, tracker_name,
+            &tr.access_token, Some(new_refresh), new_expires_at,
+        ).await?;
+
+        Ok(tr.access_token)
     }
 
     pub async fn remove_integration(
@@ -213,8 +302,12 @@ async fn import_from_tracker(
 ) -> CoreResult<i32> {
     let pool = state.pool();
 
+    let access_token = TrackerService::ensure_fresh_token(
+        state, user_id, &integration.tracker_name, provider,
+    ).await?;
+
     let remote_entries = provider
-        .get_user_list(&integration.access_token, &integration.tracker_user_id, integration.score_format.as_deref())
+        .get_user_list(&access_token, &integration.tracker_user_id, integration.score_format.as_deref())
         .await?;
 
     let total = remote_entries.len();
