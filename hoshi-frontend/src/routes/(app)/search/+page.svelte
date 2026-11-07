@@ -97,7 +97,7 @@
         handleSearch();
     };
 
-    const selectSource = (mode: "tracker" | "extension", extId: string = "", tracker: "anilist" | "mal" | "kitsu" | "simkl" | "mangabaka" = "anilist", isMobile = false) => {
+    const selectSource = (mode: "tracker" | "extension", extId: string = "", tracker: "anilist" | "mal" | "kitsu" | "simkl" | "shikimori" | "mangabaka" = "anilist", isMobile = false) => {
         searchState.searchMode = mode;
         if (mode === "extension") searchState.selectedExtension = extId;
         else {

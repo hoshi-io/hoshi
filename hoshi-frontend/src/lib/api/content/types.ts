@@ -136,7 +136,7 @@ export interface SearchQuery {
     sort?: string;
     genre?: string;
     format?: string;
-    tracker?: "anilist" | "mal" | "kitsu" | "simkl";
+    tracker?: "anilist" | "mal" | "kitsu" | "simkl" | "mangabaka" | "shikimori";
     extensionFilters?: string;
     tags?: string[];
 }

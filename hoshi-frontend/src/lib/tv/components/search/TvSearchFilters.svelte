@@ -94,7 +94,7 @@
             <TvChoice size="sm" items={genreItems} bind:value={searchState.genre} onselect={changed} />
         </div>
 
-        {#if searchState.tracker === 'anilist' || searchState.tracker === 'mal'}
+        {#if searchState.tracker === 'anilist' || searchState.tracker === 'mal' || searchState.tracker === 'shikimori'}
             <TvToggle
                     label={i18n.t('search.nsfw_only')}
                     pressed={searchState.nsfw}

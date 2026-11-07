@@ -20,7 +20,7 @@
         onClear
     }: {
         searchMode: "tracker" | "extension";
-        tracker: "anilist" | "mal" | "kitsu" | "simkl" | "mangabaka";
+        tracker: "anilist" | "mal" | "kitsu" | "simkl" | "shikimori" | "mangabaka";
         status: string;
         genre: string;
         format: string;
@@ -192,7 +192,7 @@
                 </div>
             {/if}
 
-            {#if tracker === 'anilist' || tracker === 'mal' || tracker === 'mangabaka'}
+            {#if tracker === 'anilist' || tracker === 'mal' || tracker === 'shikimori' || tracker === 'mangabaka'}
                 <div class="flex items-center space-x-3 pt-2">
                     <Switch id="nsfw-mode" bind:checked={nsfw} onCheckedChange={handleFilterChange} />
                     <Label for="nsfw-mode" class="text-sm font-bold text-foreground/90">{i18n.t('search.nsfw_only')}</Label>

@@ -1,10 +1,11 @@
 <script lang="ts" module>
-    export type Tracker = 'anilist' | 'mal' | 'kitsu' | 'simkl';
+    export type Tracker = 'anilist' | 'mal' | 'kitsu' | 'simkl' | 'shikimori';
 
     export const TRACKERS: { id: Tracker; label: string; domain: string }[] = [
         { id: 'anilist', label: 'AniList', domain: 'anilist.co' },
         { id: 'mal', label: 'MyAnimeList', domain: 'myanimelist.net' },
         { id: 'kitsu', label: 'Kitsu', domain: 'kitsu.io' },
+        { id: 'shikimori', label: 'Shikimori', domain: 'shikimori.io' },
         { id: 'simkl', label: 'SIMKL', domain: 'simkl.com' }
     ];
 </script>
