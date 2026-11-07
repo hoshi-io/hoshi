@@ -1,6 +1,5 @@
 import { goto } from "$app/navigation";
 import { buildTauriProxyUrl, proxyApi } from "@/api/proxy";
-import { isTauri } from "@/api/client";
 import { appConfig } from "@/stores/config.svelte.js";
 import { progressApi } from "@/api/progress/progress";
 import { contentApi } from "@/api/content/content";
@@ -142,7 +141,6 @@ export class MangaReaderState extends BaseReaderState {
             const data: any = playRes.data;
             const rawImages = Array.isArray(data) ? data : (data.pages || data.images || []);
             const globalHeaders = data.headers ?? {};
-
             let tachiyomiHeaders: Record<string, string> = {};
             if (extensions.isTachiyomi(currentExt) && rawImages.length > 0) {
                 const firstUrl = typeof rawImages[0] === "string" ? rawImages[0] : rawImages[0].url;
@@ -163,12 +161,14 @@ export class MangaReaderState extends BaseReaderState {
                     };
                     const proxyParams = { url: rawUrl, ...this.extractHeaders(headers) };
                     return {
-                        url: isTauri() ? "" : buildTauriProxyUrl(proxyParams),
+                        url: buildTauriProxyUrl(proxyParams),
                         id: rawUrl,
                         proxyParams,
                     };
                 }
             );
+
+            console.log(this.images)
 
             if (this.images.length === 0) {
                 throw { key: "reader.no_images" } as import("@/api/client").CoreError;
@@ -207,7 +207,7 @@ export class MangaReaderState extends BaseReaderState {
 
 
     async resolveImageUrl(img: ImageEntry): Promise<string> {
-        if (!isTauri() || !img.proxyParams) return img.url;
+        if (!img.proxyParams) return img.url;
         const key = img.proxyParams.url;
         if (this.blobCache.has(key)) return this.blobCache.get(key)!;
         const blob = await proxyApi.fetch(img.proxyParams);
@@ -227,7 +227,7 @@ export class MangaReaderState extends BaseReaderState {
             if (!group) continue;
             group.forEach(img => {
                 if (!img) return;
-                if (isTauri() && img.proxyParams) {
+                if (img.proxyParams) {
                     this.resolveImageUrl(img).catch(() => {});
                 } else {
                     const imgEl = new Image();

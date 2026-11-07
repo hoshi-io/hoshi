@@ -257,6 +257,8 @@ pub struct EpisodeChapter {
 pub struct Page {
     pub url: String,
     pub index: Option<f64>,
+    #[serde(default)]
+    pub headers: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

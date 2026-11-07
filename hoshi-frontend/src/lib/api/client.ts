@@ -1,9 +1,5 @@
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-export function isTauri(): boolean {
-    return typeof window !== "undefined" && "__TAURI__" in window;
-}
-
 export interface CoreError {
     key: string;
     message: string;
@@ -83,20 +79,8 @@ export interface DualEndpoint<TResult, TBody = unknown, TParams = unknown, TArgs
 export async function call<TResult, TBody = unknown, TParams = unknown, TArgs = unknown>(
     endpoint: DualEndpoint<TResult, TBody, TParams, TArgs>
 ): Promise<TResult> {
-    if (isTauri()) {
-        return tauriInvoke<TResult>(
-            endpoint.tauri.cmd,
-            endpoint.tauri.args as Record<string, unknown>
-        );
-    }
-
-    if (!endpoint.http) {
-        throw new Error(`Command "${endpoint.tauri.cmd}" is only available in the desktop app.`);
-    }
-
-    return httpRequest<TResult>(endpoint.http.path, endpoint.http.method, {
-        body: endpoint.http.body,
-        params: endpoint.http.params as Record<string, unknown>,
-        headers: endpoint.http.headers,
-    });
+    return tauriInvoke<TResult>(
+        endpoint.tauri.cmd,
+        endpoint.tauri.args as Record<string, unknown>
+    );
 }

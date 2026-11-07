@@ -1,4 +1,4 @@
-import { call, isTauri } from "@/api/client";
+import { call } from "@/api/client";
 import type {
     UserPrivate,
     UpdateUserBody,
@@ -39,15 +39,9 @@ export const usersApi = {
     },
 
     async uploadAvatar(file: File) {
-        if (isTauri()) {
-            const { invoke } = await import("@tauri-apps/api/core");
-            const data = Array.from(new Uint8Array(await file.arrayBuffer()));
-            return invoke<void>("upload_avatar", { data, contentType: file.type });
-        }
-
-        return call<void>({
-            tauri: { cmd: "upload_avatar" }, // never reached
-        });
+        const { invoke } = await import("@tauri-apps/api/core");
+        const data = Array.from(new Uint8Array(await file.arrayBuffer()));
+        return invoke<void>("upload_avatar", { data, contentType: file.type });
     },
 
     deleteAvatar() {
