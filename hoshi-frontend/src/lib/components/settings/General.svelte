@@ -22,7 +22,9 @@
         { value: "anilist", label: "AniList" },
         { value: "myanimelist", label: "MyAnimeList" },
         { value: "kitsu", label: "Kitsu" },
-        { value: "simkl", label: "Simkl" }
+        { value: "simkl", label: "Simkl" },
+        { value: "shikimori", label: "Shikimori" },
+        { value: "mangabaka", label: "Mangabaka" },
     ];
 
     const scoreFormats = [

@@ -1,5 +1,5 @@
 export type HomeSection = 'anime' | 'manga' | 'novel';
-export type MetadataProvider = 'anilist' | 'myanimelist' | 'kitsu' | 'simkl';
+export type MetadataProvider = 'anilist' | 'myanimelist' | 'kitsu' | 'simkl' | 'shikimori' | 'mangabaka';
 
 export type TitleLanguage = 'native' | 'romaji' | 'english' | 'chinese';
 export type MangaLayout = 'scroll' | 'paged';
@@ -19,7 +19,8 @@ export type MergeStrategy =
     | 'malFirst'
     | 'kitsuFirst'
     | 'simklFirst'
-    | 'mangabakaFirst';
+    | 'mangabakaFirst'
+    | 'shikimoriFirst';
 
 export type ScoreFormat =
     | 'point10'

@@ -713,7 +713,9 @@
       "conflict_anilist": "Prioritize Anilist",
       "conflict_mal": "Prioritize MyAnimeList",
       "conflict_kitsu": "Prioritize Kitsu",
-      "conflict_simkl": "Prioritize Simkl"
+      "conflict_simkl": "Prioritize Simkl",
+      "conflict_shikimori": "Prioritize Shikimori",
+      "conflict_mangabaka": "Prioritize Mangabaka"
     },
 
     "general_section": {

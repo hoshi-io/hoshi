@@ -54,6 +54,7 @@
         { value: 'kitsuFirst', label: i18n.t("settings.trackers_section.conflict_kitsu") },
         { value: 'simklFirst', label: i18n.t("settings.trackers_section.conflict_simkl") },
         { value: 'mangabakaFirst', label: i18n.t("settings.trackers_section.conflict_mangabaka") },
+        { value: 'shikimoriFirst', label: i18n.t("settings.trackers_section.conflict_shikimori") },
     ];
 
     function generateVerifier() {
