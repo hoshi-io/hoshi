@@ -105,7 +105,7 @@
     async function loadTrackers() {
         loading = true;
         try {
-            const TRACKER_ORDER = ['anilist', 'mal', 'kitsu', 'mangabaka'];
+            const TRACKER_ORDER = ['anilist', 'mal', 'kitsu', 'shikimori', 'mangabaka'];
             const allTrackers = await integrationsApi.getAll() || [];
 
             trackers = allTrackers
@@ -167,6 +167,16 @@
 
             const url = `${newTrackerAuth.authUrl}?${params.toString()}`;
             await openUrl(url);
+        } else if (newTrackerAuth?.oauthFlow === 'code') {
+            const params = new URLSearchParams({
+                client_id: newTrackerAuth.clientId,
+                response_type: 'code',
+                redirect_uri: 'hoshi://auth'
+            });
+            if (newTrackerAuth.scopes?.length) {
+                params.set('scope', newTrackerAuth.scopes.join(' '));
+            }
+            await openUrl(`${newTrackerAuth.authUrl}?${params.toString()}`);
         } else {
             const url = `${newTrackerAuth.authUrl}?client_id=${newTrackerAuth.clientId}&response_type=token`;
             await openUrl(url);
@@ -417,7 +427,7 @@
         </Dialog.Header>
 
         <div class="py-4">
-            {#if newTrackerAuth?.oauthFlow === 'pkce'}
+            {#if newTrackerAuth?.oauthFlow === 'pkce' || newTrackerAuth?.oauthFlow === 'code'}
                 <div class="flex flex-col items-center space-y-4">
                     <p class="text-sm text-center text-muted-foreground">
                         {i18n.t('settings.trackers_section.pkce_redirect_notice')}

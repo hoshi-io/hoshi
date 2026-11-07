@@ -69,7 +69,9 @@
 
     // Flows where the WebView catches the redirect itself: one login button, no token field.
     const autoLogin = $derived(
-        newTrackerAuth?.oauthFlow === 'pkce' || !!TV_CLIENT_IDS[newTrackerName.toLowerCase()]
+        newTrackerAuth?.oauthFlow === 'pkce' ||
+        newTrackerAuth?.oauthFlow === 'code' ||
+        !!TV_CLIENT_IDS[newTrackerName.toLowerCase()]
     );
 
     function generateVerifier() {
@@ -107,7 +109,7 @@
     async function loadTrackers() {
         loading = true;
         try {
-            const TRACKER_ORDER = ['anilist', 'mal', 'kitsu'];
+            const TRACKER_ORDER = ['anilist', 'mal', 'kitsu', 'shikimori'];
             const all = (await integrationsApi.getAll()) || [];
 
             trackers = all
@@ -147,7 +149,33 @@
     }
 
     async function handleAuthStart() {
-        if (newTrackerAuth?.oauthFlow === 'pkce') {
+        if (newTrackerAuth?.oauthFlow === 'code') {
+            const params = new URLSearchParams({
+                client_id: newTrackerAuth.clientId,
+                response_type: 'code',
+                redirect_uri: 'hoshi://auth'
+            });
+            if (newTrackerAuth.scopes?.length) {
+                params.set('scope', newTrackerAuth.scopes.join(' '));
+            }
+
+            let result: string | null;
+            try {
+                result = await invoke<string | null>('auth_webview_open', {
+                    url: `${newTrackerAuth.authUrl}?${params.toString()}`,
+                    redirectPrefixes: ['hoshi://auth']
+                });
+            } catch (error: any) {
+                toast.error(typeof error === 'string' ? error : i18n.t('errors.auth_error'));
+                console.log(error);
+                return;
+            }
+
+            if (!result) return;
+            const code = new URL(result).searchParams.get('code');
+            if (code) await finalizeAuth(code);
+            else toast.error(i18n.t('errors.auth_error'));
+        } else if (newTrackerAuth?.oauthFlow === 'pkce') {
             const verifier = generateVerifier();
             localStorage.setItem(`${newTrackerName}_verifier`, verifier);
 

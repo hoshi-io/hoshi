@@ -6,7 +6,7 @@ use chrono::Utc;
 use serde_json::json;
 use sqlx::{SqliteConnection, SqlitePool};
 use tokio::sync::{broadcast, Notify};
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 
 use crate::error::{CoreError, CoreResult};
 use crate::list::repository::ListRepository;
@@ -162,7 +162,7 @@ impl SyncQueue {
                 if has_mapping || only_tracker.is_some() {
                     jobs.push((cid, integ.tracker_name.as_str()));
                 } else {
-                    warn!(
+                    debug!(
                         %cid,
                         tracker = %integ.tracker_name,
                         mappings = ?mappings.iter().map(|m| m.tracker_name.as_str()).collect::<Vec<_>>(),

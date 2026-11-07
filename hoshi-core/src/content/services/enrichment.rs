@@ -150,7 +150,7 @@ impl EnrichmentService {
             "kitsu" => format!("kitsu/{id}"),
             "animeplanet" | "anime-planet" => format!("anime-planet/{id}"),
             "mangaupdates" | "manga-updates" => format!("manga-updates/{id}"),
-            "mal" | "myanimelist" | "my-anime-list" => format!("my-anime-list/{id}"),
+            "mal" | "myanimelist" | "my-anime-list" | "shikimori" => format!("my-anime-list/{id}"),
             _ => return Err(CoreError::Internal("error.enrichment.unsupported_tracker".into())),
         };
         Ok(format!("https://api.mangabaka.org/v1/source/{path}"))

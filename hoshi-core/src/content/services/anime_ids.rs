@@ -64,7 +64,7 @@ impl AnimeIdIndex {
 
     pub fn lookup(&self, tracker: &str, id: &str) -> Option<HashMap<String, String>> {
         let tracker = match tracker.to_lowercase().as_str() {
-            "mal" | "myanimelist" => "mal",
+            "mal" | "myanimelist" | "shikimori" => "mal",
             "anilist" => "anilist",
             "kitsu" => "kitsu",
             "simkl" => "simkl",

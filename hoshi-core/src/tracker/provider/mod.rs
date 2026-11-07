@@ -3,6 +3,7 @@ pub mod mal;
 pub mod kitsu;
 pub mod simkl;
 pub mod mangabaka;
+pub mod shikimori;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -208,6 +209,13 @@ pub trait TrackerProvider: Send + Sync {
     async fn refresh_score_format(&self, _access_token: &str) -> CoreResult<Option<String>> {
         Ok(None)
     }
+
+    fn token_request_extras(&self) -> Vec<(&'static str, String)> {
+        Vec::new()
+    }
+    fn user_agent(&self) -> Option<&'static str> {
+        None
+    }
 }
 
 pub struct TrackerRegistry {
@@ -244,5 +252,6 @@ pub fn build_registry(client: Client) -> TrackerRegistry {
     registry.register(Arc::new(mal::MalProvider::new(client.clone())));
     registry.register(Arc::new(simkl::SimklProvider::new(client.clone())));
     registry.register(Arc::new(mangabaka::MangaBakaProvider::new(client.clone())));
+    registry.register(Arc::new(shikimori::ShikimoriProvider::new(client.clone())));
     registry
 }

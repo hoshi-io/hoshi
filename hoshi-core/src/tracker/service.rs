@@ -13,14 +13,19 @@ use crate::tracker::provider::{TrackerProvider};
 use crate::tracker::repository::TrackerRepository;
 use crate::tracker::types::{AddIntegrationRequest, ImportEvent, IntegrationsResponse, SuccessResponse, TrackerInfoResponse, TrackerIntegration};
 
+/// Standard OAuth2 token endpoint response (code exchange, password and refresh grants).
 #[derive(serde::Deserialize)]
 struct TokenResponse {
     access_token: String,
     refresh_token: Option<String>,
     expires_in: Option<i64>,
 }
+
+/// Refresh this many seconds before the access token actually expires.
 const REFRESH_SKEW_SECS: i64 = 300;
 
+/// One lock per (user, tracker). Providers that rotate refresh tokens (MangaBaka)
+/// revoke everything if a retired token is replayed, so refreshes must be serialized.
 fn refresh_lock(user_id: i32, tracker_name: &str) -> Arc<Mutex<()>> {
     static LOCKS: OnceLock<std::sync::Mutex<HashMap<(i32, String), Arc<Mutex<()>>>>> = OnceLock::new();
     let mut map = LOCKS
@@ -91,23 +96,30 @@ impl TrackerService {
             .ok_or_else(|| CoreError::NotFound("error.tracker.unknown_tracker".into()))?;
         let auth_config = provider.auth_config();
 
-        let token_resp: TokenResponse = if auth_config.oauth_flow == "pkce" {
+        let token_resp: TokenResponse = if matches!(auth_config.oauth_flow.as_str(), "pkce" | "code") {
             let code     = body.access_token.ok_or_else(|| CoreError::AuthError("error.tracker.missing_auth_code".into()))?;
-            let verifier = body.code_verifier.ok_or_else(|| CoreError::AuthError("error.tracker.missing_code_verifier".into()))?;
             let token_url = auth_config.token_url.as_ref()
                 .ok_or_else(|| CoreError::Internal("error.tracker.missing_token_url".into()))?;
             let client_id = auth_config.client_id.as_deref().unwrap_or_default();
 
-            let res = state
-                .http_client
-                .post(token_url)
-                .form(&[
-                    ("grant_type", "authorization_code"),
-                    ("client_id", client_id),
-                    ("code", &code),
-                    ("code_verifier", &verifier),
-                    ("redirect_uri", "hoshi://auth"),
-                ])
+            let mut form: Vec<(String, String)> = vec![
+                ("grant_type".into(), "authorization_code".into()),
+                ("client_id".into(), client_id.into()),
+                ("code".into(), code),
+                ("redirect_uri".into(), "hoshi://auth".into()),
+            ];
+            // PKCE needs the verifier; the plain "code" flow authenticates with the client secret instead.
+            if auth_config.oauth_flow == "pkce" {
+                let verifier = body.code_verifier.ok_or_else(|| CoreError::AuthError("error.tracker.missing_code_verifier".into()))?;
+                form.push(("code_verifier".into(), verifier));
+            }
+            form.extend(provider.token_request_extras().into_iter().map(|(k, v)| (k.to_string(), v)));
+
+            let mut req = state.http_client.post(token_url).form(&form);
+            if let Some(ua) = provider.user_agent() {
+                req = req.header("User-Agent", ua);
+            }
+            let res = req
                 .send().await
                 .map_err(|e| core_err!(Network, "error.tracker.token_exchange_network_error", e))?;
 
@@ -203,13 +215,18 @@ impl TrackerService {
 
         info!(tracker = %tracker_name, "Refreshing access token");
 
-        let res = state.http_client
-            .post(token_url)
-            .form(&[
-                ("grant_type", "refresh_token"),
-                ("refresh_token", refresh),
-                ("client_id", client_id),
-            ])
+        let mut form: Vec<(String, String)> = vec![
+            ("grant_type".into(), "refresh_token".into()),
+            ("refresh_token".into(), refresh.to_string()),
+            ("client_id".into(), client_id.to_string()),
+        ];
+        form.extend(provider.token_request_extras().into_iter().map(|(k, v)| (k.to_string(), v)));
+
+        let mut req = state.http_client.post(token_url).form(&form);
+        if let Some(ua) = provider.user_agent() {
+            req = req.header("User-Agent", ua);
+        }
+        let res = req
             .send().await
             .map_err(|e| core_err!(Network, "error.tracker.token_exchange_network_error", e))?;
 
