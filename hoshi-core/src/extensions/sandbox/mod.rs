@@ -22,18 +22,121 @@ const SCRIPT_DEADLINE: std::time::Duration = std::time::Duration::from_secs(25);
 const HEADLESS_FETCH_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(20);
 const MAX_SLEEP_MS: u64 = 30_000;
 
-pub(crate) struct HeadlessRequest {
-    url:     String,
-    options: HeadlessOptions,
-    reply:   std::sync::mpsc::SyncSender<String>,
+const FETCH_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(20);
+const REPLY_GRACE: std::time::Duration = std::time::Duration::from_secs(2);
+
+/// Lets the (synchronous) native JS functions run network work on the app's
+/// tokio runtime. Previously every extension call spun up two OS threads, each
+/// with its own multi-thread runtime, and served fetches one at a time; a timed
+/// out fetch kept that single worker busy and stalled every fetch behind it.
+#[derive(Clone)]
+pub(crate) struct NativeBridge {
+    rt: tokio::runtime::Handle,
+    http_client: reqwest::Client,
+    headless: HeadlessHandle,
+    deadline: std::time::Instant,
 }
 
-pub(crate) struct FetchRequest {
-    pub(crate) url:     String,
-    pub(crate) method:  String,
-    pub(crate) headers: HashMap<String, String>,
-    pub(crate) body:    Option<String>,
-    pub(crate) reply:   std::sync::mpsc::SyncSender<String>,
+impl NativeBridge {
+    /// Time left before the script deadline, capped at `cap`. None once it passed.
+    fn budget(&self, cap: std::time::Duration) -> Option<std::time::Duration> {
+        let left = self.deadline.checked_duration_since(std::time::Instant::now())?;
+        (!left.is_zero()).then(|| left.min(cap))
+    }
+
+    /// Blocking: runs `fut` on the app runtime and waits for it, at most `cap`
+    /// (and never past the script deadline). Called from the QuickJS thread,
+    /// which is not a runtime worker, so blocking here is fine.
+    fn run_blocking<F>(&self, cap: std::time::Duration, what: &str, fut: F) -> String
+    where
+        F: Future<Output = String> + Send + 'static,
+    {
+        let Some(wait) = self.budget(cap) else {
+            return error_json(format!("{what}: script deadline exceeded"));
+        };
+        let (tx, rx) = std::sync::mpsc::sync_channel::<String>(1);
+        let task = self.rt.spawn(async move {
+            let _ = tx.send(fut.await);
+        });
+        match rx.recv_timeout(wait) {
+            Ok(v) => v,
+            Err(_) => {
+                task.abort(); // nobody is waiting for it anymore
+                warn!("{what} timed out");
+                error_json(format!("{what} timeout"))
+            }
+        }
+    }
+
+    pub(crate) fn fetch(&self, url: String, method: String, headers: HashMap<String, String>, body: Option<String>) -> String {
+        let client = self.http_client.clone();
+        self.run_blocking(FETCH_TIMEOUT + REPLY_GRACE, "fetch", async move {
+            let mut r = match method.to_uppercase().as_str() {
+                "POST"   => client.post(&url),
+                "PUT"    => client.put(&url),
+                "DELETE" => client.delete(&url),
+                "PATCH"  => client.patch(&url),
+                _        => client.get(&url),
+            }
+            .timeout(FETCH_TIMEOUT);
+            for (k, v) in &headers {
+                r = r.header(k.as_str(), v.as_str());
+            }
+            if let Some(b) = body {
+                r = r.body(b);
+            }
+
+            match r.send().await {
+                Err(e) => error_json(e.to_string()),
+                Ok(resp) => {
+                    let status = resp.status().as_u16();
+                    let ok = resp.status().is_success();
+                    let cookies: HashMap<String, String> = resp.headers()
+                        .get_all("set-cookie")
+                        .iter()
+                        .filter_map(|v| v.to_str().ok())
+                        .filter_map(|s| {
+                            let pair = s.split(';').next()?;
+                            let mut kv = pair.splitn(2, '=');
+                            let k = kv.next()?.trim().to_string();
+                            let v = kv.next()?.trim().to_string();
+                            Some((k, v))
+                        })
+                        .collect();
+
+                    match resp.text().await {
+                        Err(e) => error_json(e.to_string()),
+                        Ok(text) => serde_json::json!({
+                            "ok": ok,
+                            "status": status,
+                            "body": text,
+                            "cookies": cookies,
+                        }).to_string(),
+                    }
+                }
+            }
+        })
+    }
+
+    pub(crate) fn headless(&self, url: String, options: HeadlessOptions) -> String {
+        let headless = self.headless.clone();
+        self.run_blocking(HEADLESS_FETCH_TIMEOUT + REPLY_GRACE, "headless fetch", async move {
+            match tokio::time::timeout(HEADLESS_FETCH_TIMEOUT, headless.fetch(&url, options)).await {
+                Ok(Ok(resp)) => serde_json::to_string(&resp)
+                    .unwrap_or_else(|e| error_json(e.to_string())),
+                Ok(Err(e)) => error_json(e.to_string()),
+                Err(_) => error_json("headless fetch timed out".into()),
+            }
+        })
+    }
+
+    /// Sleep, but never past the deadline.
+    pub(crate) fn sleep(&self, ms: u64) {
+        let cap = std::time::Duration::from_millis(ms.min(MAX_SLEEP_MS));
+        if let Some(d) = self.budget(cap) {
+            std::thread::sleep(d);
+        }
+    }
 }
 
 pub(crate) async fn execute_in_quickjs(
@@ -81,102 +184,15 @@ pub(crate) async fn execute_in_quickjs(
     );
 
     let headless_available = headless.is_available();
-    let (req_tx, req_rx) = std::sync::mpsc::sync_channel::<HeadlessRequest>(4);
-    let (fetch_tx, fetch_rx) = std::sync::mpsc::sync_channel::<FetchRequest>(8);
-
-    let fetch_thread = std::thread::spawn({
-        let http_client = http_client.clone();
-        move || {
-            let rt = tokio::runtime::Builder::new_multi_thread()
-                .worker_threads(2)
-                .enable_all()
-                .build()
-                .expect("fetch thread runtime");
-
-            while let Ok(req) = fetch_rx.recv() {
-                let client = http_client.clone();
-                let result = rt.block_on(async move {
-                    let mut r = match req.method.to_uppercase().as_str() {
-                        "POST"   => client.post(&req.url),
-                        "PUT"    => client.put(&req.url),
-                        "DELETE" => client.delete(&req.url),
-                        "PATCH"  => client.patch(&req.url),
-                        _        => client.get(&req.url),
-                    };
-                    for (k, v) in &req.headers {
-                        r = r.header(k.as_str(), v.as_str());
-                    }
-                    if let Some(b) = req.body {
-                        r = r.body(b);
-                    }
-
-                    match r.send().await {
-                        Err(e) => error_json(e.to_string()),
-                        Ok(resp) => {
-                            let status = resp.status().as_u16();
-                            let ok = resp.status().is_success();
-                            let cookies: HashMap<String, String> = resp.headers()
-                                .get_all("set-cookie")
-                                .iter()
-                                .filter_map(|v| v.to_str().ok())
-                                .filter_map(|s| {
-                                    let pair = s.split(';').next()?;
-                                    let mut kv = pair.splitn(2, '=');
-                                    let k = kv.next()?.trim().to_string();
-                                    let v = kv.next()?.trim().to_string();
-                                    Some((k, v))
-                                })
-                                .collect();
-
-                            match resp.text().await {
-                                Err(e) => error_json(e.to_string()),
-                                Ok(text) => serde_json::json!({
-                                    "ok": ok,
-                                    "status": status,
-                                    "body": text,
-                                    "cookies": cookies,
-                                }).to_string(),
-                            }
-                        }
-                    }
-                });
-                let _ = req.reply.send(result);
-            }
-        }
-    });
-
-    let headless_thread = std::thread::spawn(move || {
-        let rt = tokio::runtime::Builder::new_multi_thread()
-            .worker_threads(2)
-            .enable_all()
-            .build()
-            .expect("headless thread runtime");
-
-        while let Ok(req) = req_rx.recv() {
-            let headless = headless.clone();
-            let result = rt.block_on(async move {
-                match tokio::time::timeout(
-                    HEADLESS_FETCH_TIMEOUT,
-                    headless.fetch(&req.url, req.options),
-                )
-                    .await
-                {
-                    Ok(Ok(resp)) => serde_json::to_string(&resp)
-                        .unwrap_or_else(|e| error_json(e.to_string())),
-                    Ok(Err(e)) => error_json(e.to_string()),
-                    Err(_) => {
-                        warn!("Headless fetch exceeded internal deadline, aborting future");
-                        error_json("headless fetch timed out".into())
-                    }
-                }
-            });
-            let _ = req.reply.send(result);
-        }
-    });
+    let deadline = std::time::Instant::now() + SCRIPT_DEADLINE;
+    let bridge = NativeBridge {
+        rt: tokio::runtime::Handle::current(),
+        http_client,
+        headless,
+        deadline,
+    };
 
     let (json_str, updated_state_json) = tokio::task::spawn_blocking({
-        let req_tx = req_tx.clone();
-        let fetch_tx = fetch_tx.clone();
         let extension_id = extension_id.clone();
         let console_buffer = console_buffer.clone();
         move || {
@@ -189,7 +205,7 @@ pub(crate) async fn execute_in_quickjs(
                 })?;
             tokio::task::LocalSet::new().block_on(
                 &rt,
-                run_quickjs_local(full_script, extension_code, headless_available, req_tx, fetch_tx, state_json, extension_id, console_buffer),
+                run_quickjs_local(full_script, extension_code, headless_available, bridge, state_json, extension_id, console_buffer),
             )
         }
     })
@@ -199,16 +215,23 @@ pub(crate) async fn execute_in_quickjs(
             CoreError::Internal("error.sandbox.thread_panicked".into())
         })??;
 
-    drop(req_tx);
-    drop(fetch_tx);
-    let _ = headless_thread.join();
-    let _ = fetch_thread.join();
-
+    // Write back only what this call changed. Replacing the whole map made
+    // concurrent calls of the same extension overwrite each other's state.
     if let Ok(new_state) =
         serde_json::from_str::<HashMap<String, Value>>(&updated_state_json)
     {
         let mut store = state_store.lock().unwrap_or_else(|p| p.into_inner());
-        store.insert(extension_id, new_state);
+        let entry = store.entry(extension_id).or_default();
+        for (k, v) in &new_state {
+            if initial_state.get(k) != Some(v) {
+                entry.insert(k.clone(), v.clone());
+            }
+        }
+        for k in initial_state.keys() {
+            if !new_state.contains_key(k) {
+                entry.remove(k);
+            }
+        }
     }
 
     serde_json::from_str::<Value>(&json_str).map_err(|e| {
@@ -217,13 +240,12 @@ pub(crate) async fn execute_in_quickjs(
     })
 }
 
-#[instrument(skip(full_script, extension_code, req_tx, state_json))]
+#[instrument(skip(full_script, extension_code, bridge, state_json))]
 async fn run_quickjs_local(
     full_script: String,
     extension_code: String,
     headless_available: bool,
-    req_tx: std::sync::mpsc::SyncSender<HeadlessRequest>,
-    fetch_tx: std::sync::mpsc::SyncSender<FetchRequest>,
+    bridge: NativeBridge,
     state_json: String,
     extension_id: String,
     console_buffer: Option<ConsoleBuffer>,
@@ -241,7 +263,7 @@ async fn run_quickjs_local(
     rt.set_memory_limit(64 * 1024 * 1024).await;
     rt.set_max_stack_size(512 * 1024).await;
 
-    let deadline = std::time::Instant::now() + SCRIPT_DEADLINE;
+    let deadline = bridge.deadline;
     rt.set_interrupt_handler(Some(Box::new(move || {
         std::time::Instant::now() >= deadline
     })))
@@ -252,8 +274,6 @@ async fn run_quickjs_local(
         CoreError::Internal("error.sandbox.runtime_init_failed".into())
     })?;
 
-    let req_tx = Arc::new(req_tx);
-    let fetch_tx = Arc::new(fetch_tx);
     let state_map: Arc<Mutex<HashMap<String, Value>>> = Arc::new(Mutex::new(
         serde_json::from_str(&state_json).unwrap_or_default(),
     ));
@@ -262,7 +282,7 @@ async fn run_quickjs_local(
     let state_map_for_output = Arc::clone(&state_map);
 
     let result: Result<String, String> = async_with!(ctx => |ctx| {
-        register_native_apis(&ctx, headless_available, req_tx, fetch_tx, Arc::clone(&state_map), extension_id, console_buffer)
+        register_native_apis(&ctx, headless_available, bridge, Arc::clone(&state_map), extension_id, console_buffer)
             .catch(&ctx)
             .map_err(|e| e.to_string())?;
 

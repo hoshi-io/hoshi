@@ -122,6 +122,15 @@ impl ExtensionManager {
                 }
             };
 
+            // Installed manifests are untrusted input too: the id later picks folders
+            // and `main` picks a file to read/write. Skip anything that isn't plain.
+            if install::validate_extension_id(&manifest.id).is_err()
+                || install::validate_script_file(&manifest.main).is_err()
+            {
+                error!(path = %manifest_path.display(), "Skipping extension with an unsafe id or main script path");
+                continue;
+            }
+
             let script_path = path.join(&manifest.main);
             if !script_path.exists() {
                 error!(ext = %manifest.id, expected_path = %script_path.display(), "Main JS file declared in manifest is missing");

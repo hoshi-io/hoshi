@@ -90,6 +90,7 @@ impl ExtensionManager {
         if manifest.id != ext_id {
             return Err(CoreError::Internal("error.extension.id_mismatch".into()));
         }
+        super::install::validate_script_file(&manifest.main)?;
 
         let script_path = ext_dir.join(&manifest.main);
         if !script_path.exists() {

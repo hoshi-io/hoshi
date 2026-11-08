@@ -3,17 +3,15 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tracing::debug;
-use tracing::warn;
 
-use super::{error_json, FetchRequest, HeadlessRequest, MAX_SLEEP_MS};
+use super::{error_json, NativeBridge};
 use crate::extensions::html_query;
 pub(crate) type ConsoleBuffer = Arc<Mutex<Vec<String>>>;
 
 pub(super) fn register_native_apis(
     ctx: &rquickjs::Ctx<'_>,
     headless_available: bool,
-    req_tx: Arc<std::sync::mpsc::SyncSender<HeadlessRequest>>,
-    fetch_tx: Arc<std::sync::mpsc::SyncSender<FetchRequest>>,
+    bridge: NativeBridge,
     state_map: Arc<Mutex<HashMap<String, Value>>>,
     extension_id: String,
     console_buffer: Option<ConsoleBuffer>,
@@ -36,31 +34,21 @@ pub(super) fn register_native_apis(
     )?;
 
     globals.set("__native_fetch", Function::new(ctx.clone(), {
-        let fetch_tx = Arc::clone(&fetch_tx);
+        let bridge = bridge.clone();
         move |url: String, method: String, headers_json: String, body: String| -> rquickjs::Result<String> {
             let headers: HashMap<String, String> =
                 serde_json::from_str(&headers_json).unwrap_or_default();
             let body = if body.is_empty() { None } else { Some(body) };
-
-            let (reply_tx, reply_rx) = std::sync::mpsc::sync_channel::<String>(1);
-
-            if fetch_tx.send(FetchRequest { url, method, headers, body, reply: reply_tx }).is_err() {
-                warn!("Fetch channel closed unexpectedly");
-                return Ok(error_json("fetch channel closed".into()));
-            }
-
-            Ok(reply_rx
-                .recv_timeout(std::time::Duration::from_secs(30))
-                .unwrap_or_else(|_| {
-                    warn!("Fetch timed out");
-                    error_json("fetch timeout".into())
-                }))
+            Ok(bridge.fetch(url, method, headers, body))
         }
     })?)?;
 
-    globals.set("__native_sleep", Function::new(ctx.clone(), |ms: u64| {
-        std::thread::sleep(std::time::Duration::from_millis(ms.min(MAX_SLEEP_MS)));
-        Ok::<(), rquickjs::Error>(())
+    globals.set("__native_sleep", Function::new(ctx.clone(), {
+        let bridge = bridge.clone();
+        move |ms: u64| {
+            bridge.sleep(ms);
+            Ok::<(), rquickjs::Error>(())
+        }
     })?)?;
 
     globals.set("__native_html_query", Function::new(ctx.clone(),
@@ -82,30 +70,8 @@ pub(super) fn register_native_apis(
             ctx.clone(),
             move |url: String, options_json: String| -> rquickjs::Result<String> {
                 let options = serde_json::from_str(&options_json).unwrap_or_default();
-                let (reply_tx, reply_rx) = std::sync::mpsc::sync_channel::<String>(1);
-
                 debug!(url = %url, "Native headless sync called from sandbox");
-
-                if req_tx
-                    .send(HeadlessRequest {
-                        url,
-                        options,
-                        reply: reply_tx,
-                    })
-                    .is_err()
-                {
-                    warn!("Headless channel closed unexpectedly");
-                    return Ok(error_json("headless channel closed".into()));
-                }
-
-                Ok(
-                    reply_rx
-                        .recv_timeout(std::time::Duration::from_secs(15))
-                        .unwrap_or_else(|_| {
-                            warn!("Headless fetch timed out");
-                            error_json("headless timeout".into())
-                        }),
-                )
+                Ok(bridge.headless(url, options))
             },
         )?,
     )?;
