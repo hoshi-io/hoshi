@@ -110,7 +110,7 @@
         return TRACKER_META[tracker.toLowerCase()]?.label ?? tracker;
     }
 
-    const COMPARE_FIELDS = [
+    const COMPARE_FIELDS: { key: keyof EntrySource; label: string }[] = [
         { key: "status",      label: "Status" },
         { key: "progress",    label: "Progress" },
         { key: "score",       label: "Score" },

@@ -27,10 +27,13 @@ export type ChangeSource = "LOCAL" | "REMOTE_SYNC" | "IMPORT";
 export interface EntrySource {
     tracker: string;
     remoteId: string;
-    remoteStatus?: string | null;
-    remoteProgress?: number | null;
-    remoteScore?: number | null;
     syncedAt?: string | null;
+    status?: string | null;
+    progress?: number | null;
+    score?: number | null;
+    startDate?: string | null;
+    endDate?: string | null;
+    repeatCount?: number | null;
 }
 
 export interface ListEntryChange {

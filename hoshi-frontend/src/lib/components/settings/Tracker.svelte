@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { integrationsApi } from "@/api/tracker/tracker";
+    import { listStore } from "@/app/list.svelte.js";
     import type { TrackerInfo } from "@/api/tracker/types";
     import { toast } from "svelte-sonner";
     import { fade } from "svelte/transition";
@@ -106,6 +107,7 @@
         try {
             const TRACKER_ORDER = ['anilist', 'mal', 'kitsu', 'shikimori', 'mangabaka'];
             const allTrackers = await integrationsApi.getAll() || [];
+            listStore.updateConnectedTrackers(allTrackers);
 
             trackers = allTrackers
                 .filter(t => t.name.toLowerCase())

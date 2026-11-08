@@ -57,11 +57,11 @@ impl From<EntrySourceRow> for EntrySource {
             tracker: row.tracker,
             remote_id: row.remote_id,
             synced_at: row.synced_at,
-            status:       snap["status"].as_str().map(str::to_owned),
+            status:       snap["status"].as_str().map(crate::list::merge::MergeService::normalize_tracker_status),
             progress:     snap["progress"].as_i64().map(|v| v as i32),
             score:        snap["score"].as_f64(),
-            start_date:   snap["startDate"].as_str().map(str::to_owned),
-            end_date:     snap["endDate"].as_str().map(str::to_owned),
+            start_date:   snap["startDate"].as_str().map(|d| d.get(..10).unwrap_or(d).to_owned()),
+            end_date:     snap["endDate"].as_str().map(|d| d.get(..10).unwrap_or(d).to_owned()),
             repeat_count: snap["repeatCount"].as_i64().map(|v| v as i32),
         }
     }

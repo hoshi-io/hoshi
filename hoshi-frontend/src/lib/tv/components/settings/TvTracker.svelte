@@ -7,6 +7,7 @@
     import { BarChart2, Calendar, Plus, Trash2, User } from 'lucide-svelte';
 
     import { integrationsApi } from '@/api/tracker/tracker.js';
+    import { listStore } from '@/app/list.svelte.js';
     import type { TrackerInfo } from '@/api/tracker/types.js';
     import type { ListConfig, MergeStrategy } from '@/api/config/types.js';
     import { i18n } from '@/stores/i18n.svelte.js';
@@ -112,6 +113,7 @@
         try {
             const TRACKER_ORDER = ['anilist', 'mal', 'kitsu', 'shikimori'];
             const all = (await integrationsApi.getAll()) || [];
+            listStore.updateConnectedTrackers(all);
 
             trackers = all
                 .filter((t) => t.name.toLowerCase())

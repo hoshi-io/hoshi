@@ -11,13 +11,21 @@ import {integrationsApi} from "@/api/tracker/tracker";
 export type SortOption = "SCORE_DESC" | "TITLE_ASC" | "TITLE_DESC" | "PROGRESS_DESC" | "PROGRESS_ASC";
 export type StatusFilter = "ALL" | "CURRENT" | "COMPLETED" | "PLANNING" | "PAUSED" | "DROPPED";
 export type TypeFilter = "ALL" | "anime" | "manga" | "novel";
-export type MissingTrackerFilter = "ALL" | "anilist" | "mal" | "kitsu" | "simkl";
+export type MissingTrackerFilter = "ALL" | "anilist" | "mal" | "kitsu" | "simkl" | "mangabaka" | "shikimori";
 
 const TRACKER_LABELS: Record<string, string> = {
     anilist: "AniList",
     mal: "MyAnimeList",
     kitsu: "Kitsu",
     simkl: "Simkl",
+    mangabaka: "MangaBaka",
+    shikimori: "Shikimori",
+};
+
+/** Trackers that only list some content types (the "missing on" filter skips the rest). */
+const TRACKER_TYPES: Record<string, string[]> = {
+    simkl: ["ANIME"],
+    mangabaka: ["MANGA", "NOVEL"],
 };
 
 export const trackerLabel = (tracker: string) => TRACKER_LABELS[tracker] ?? tracker;
@@ -119,20 +127,13 @@ class ListStore {
                 if (sources.length <= 1) {
                     matchesConflicts = false;
                 } else {
-                    const first = sources[0] as any;
-
-                    matchesConflicts = sources.some((s: any) => {
+                    // Statuses arrive normalized from the backend (CURRENT, ...), so
+                    // MAL "watching" vs AniList "CURRENT" is no longer a false conflict.
+                    const first = sources[0];
+                    matchesConflicts = sources.some(s => {
                         if (s.tracker === first.tracker) return false;
-
-                        const sStatus = String(s.status || "").toUpperCase().trim();
-                        const fStatus = String(first.status || "").toUpperCase().trim();
-
-                        const statusConflict = (sStatus !== "" && fStatus !== "") && (sStatus !== fStatus);
-
-                        const sProg = Number(s.progress) || 0;
-                        const fProg = Number(first.progress) || 0;
-                        const progressConflict = sProg !== fProg;
-
+                        const statusConflict = !!s.status && !!first.status && s.status !== first.status;
+                        const progressConflict = (s.progress ?? 0) !== (first.progress ?? 0);
                         return statusConflict || progressConflict;
                     });
                 }
@@ -141,11 +142,8 @@ class ListStore {
             let matchesMissingTracker = true;
 
             if (this.missingOn !== "ALL") {
-                if (
-                    this.missingOn === "simkl" &&
-                    (item.card.contentType.toUpperCase() === "MANGA" ||
-                        item.card.contentType.toUpperCase() === "NOVEL")
-                ) {
+                const supported = TRACKER_TYPES[this.missingOn];
+                if (supported && !supported.includes(item.card.contentType.toUpperCase())) {
                     matchesMissingTracker = false;
                 } else {
                     const sources = item.original.sources || [];
@@ -256,18 +254,31 @@ class ListStore {
     }
 
     /** `silent` reloads without flipping `isLoading` (no skeleton/spinner flash). */
+    /** Bumped per load so an older, slower response can't overwrite a newer one. */
+    private loadToken = 0;
+
     async loadData(forceRefresh = false, silent = false) {
         if (this.isInitialized && !forceRefresh) return;
-        listStore.updateConnectedTrackers(await integrationsApi.getAll());
+        const token = ++this.loadToken;
 
         if (!silent) this.isLoading = true;
         this.error = null;
 
         try {
-            const [listRes, statsRes] = await Promise.all([
+            // Connected trackers only change on (dis)connect, not on every silent sync reload.
+            const trackersReq = silent && this.isInitialized
+                ? Promise.resolve(null)
+                : integrationsApi.getAll().catch(err => {
+                    console.error("Failed to load integrations:", err);
+                    return null;
+                });
+            const [listRes, statsRes, trackers] = await Promise.all([
                 listApi.getList({}),
-                listApi.getStats()
+                listApi.getStats(),
+                trackersReq,
             ]);
+            if (token !== this.loadToken) return;
+            if (trackers) this.updateConnectedTrackers(trackers);
 
             this.entries = listRes.results;
             this.normalized = listRes.results.map(entry => ({
@@ -278,9 +289,9 @@ class ListStore {
             this.isInitialized = true;
         } catch (err) {
             console.error("Failed to load collection data:", err);
-            this.error = err as CoreError;
+            if (token === this.loadToken) this.error = err as CoreError;
         } finally {
-            this.isLoading = false;
+            if (token === this.loadToken) this.isLoading = false;
         }
     }
 
