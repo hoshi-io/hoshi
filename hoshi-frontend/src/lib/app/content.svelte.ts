@@ -22,16 +22,20 @@ export class ContentDetailState {
     params = $derived(page.params as Record<string, string>);
     pathParts = $derived(this.params.path ? this.params.path.split('/') : []);
     source = $derived(this.pathParts.length === 2 ? this.pathParts[0] : "");
-    id = $derived(this.pathParts.length === 2 ? atob(this.pathParts[1]) : "");
-    cid = $derived(this.pathParts.length === 1 ? this.pathParts[0] : "");
-    headers: Record<string, string> | undefined;
+    id = $derived(this.pathParts.length === 2 ? safeAtob(this.pathParts[1]) : "");
+    private routeCid = $derived(this.pathParts.length === 1 ? this.pathParts[0] : "");
+    cid = $derived(this.routeCid || this.fullContent?.content.cid || "");
+    headers = $state<Record<string, string> | undefined>(undefined);
 
     isDerived = $derived(this.fullContent?.trackerMappings.length == 0)
 
+    /** Bumped per load so a slower, older response can't overwrite a newer page. */
+    private loadToken = 0;
+
     constructor() {
         $effect(() => {
-            if (this.cid) {
-                this.loadContentByCid(this.cid);
+            if (this.routeCid) {
+                this.loadContentByCid(this.routeCid);
             } else if (this.source && this.id) {
                 this.loadContent(this.source, this.id);
             }
@@ -39,39 +43,33 @@ export class ContentDetailState {
     }
 
     async loadContentByCid(cid: string) {
-        this.isLoading = true;
-        this.error = null;
-        this.fullContent = null;
-        this.relations = [];
-
-        try {
-            const res = await contentApi.get_by_cid(cid);
-            this.handleResponse(res);
-        } catch (e) {
-            this.handleError(e);
-        } finally {
-            this.isLoading = false;
-        }
+        await this.runLoad(() => contentApi.get_by_cid(cid));
     }
 
     async loadContent(src: string, entryId: string) {
+        await this.runLoad(() => contentApi.get(src, entryId));
+    }
+
+    private async runLoad(fetcher: () => Promise<FullContent>) {
+        const token = ++this.loadToken;
         this.isLoading = true;
         this.error = null;
         this.fullContent = null;
         this.relations = [];
+        this.headers = undefined;
 
         try {
-            const res = await contentApi.get(src, entryId);
-
-            this.handleResponse(res);
+            const res = await fetcher();
+            if (token !== this.loadToken) return;
+            this.handleResponse(res, token);
         } catch (e) {
-            this.handleError(e);
+            if (token === this.loadToken) this.handleError(e);
         } finally {
-            this.isLoading = false;
+            if (token === this.loadToken) this.isLoading = false;
         }
     }
 
-    private handleResponse(res: FullContent) {
+    private handleResponse(res: FullContent, token: number) {
         this.fullContent = res;
 
         const meta = primaryMetadata(res, appConfig.data?.content?.preferredMetadataProvider);
@@ -89,11 +87,9 @@ export class ContentDetailState {
 
         if (meta && extensions.isTachiyomi(meta.sourceName) && meta.coverImage) {
             extensionsApi.getImageRequestHeaders(meta.sourceName, meta.coverImage)
-                .then(headers => { this.headers = headers; })
+                .then(headers => { if (token === this.loadToken) this.headers = headers; })
                 .catch(e => console.warn("Could not fetch tachiyomi image headers", e));
         }
-
-        if(!this.cid) this.cid = res.content.cid;
 
         this.relations = (res.relations ?? []).map((relation) => ({
             targetCid: relation.targetCid,
@@ -106,7 +102,7 @@ export class ContentDetailState {
 
     private handleError(e: any) {
         this.error = e;
-        console.log(e);
+        console.error(e);
         layoutState.title = i18n.t('errors.error');
     }
 
@@ -122,5 +118,13 @@ export class ContentDetailState {
         } else if (this.source && this.id) {
             this.loadContent(this.source, this.id);
         }
+    }
+}
+
+function safeAtob(value: string): string {
+    try {
+        return atob(value);
+    } catch {
+        return "";
     }
 }
