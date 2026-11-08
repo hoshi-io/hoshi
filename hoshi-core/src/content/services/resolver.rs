@@ -813,11 +813,11 @@ impl ContentResolverService {
         let cross_ids: HashMap<String, String> = match full.content.content_type {
             ContentType::Anime => {
                 let raw = EnrichmentService::resolve_anime_cross_ids(state, tracker, tracker_id, None).await?;
-                EnrichmentService::normalize_mal_prefix(raw, "anime")
+                EnrichmentService::normalize_prefixed_ids(raw, "anime")
             }
             ContentType::Manga | ContentType::Novel => {
                 let raw = EnrichmentService::resolve_manga_cross_ids(state, tracker, tracker_id, None).await?;
-                EnrichmentService::normalize_mal_prefix(raw, "manga")
+                EnrichmentService::normalize_prefixed_ids(raw, "manga")
             }
         };
 

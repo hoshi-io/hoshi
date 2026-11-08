@@ -14,6 +14,21 @@ use crate::content::models::{Character, ContentType, Metadata, StaffMember};
 use crate::error::{CoreError, CoreResult};
 use crate::schedule::types::AiringEpisode;
 
+/// Maps a non-success HTTP status from a tracker API to the matching error
+/// variant. The sync queue classifies jobs by variant (auth / rate limit /
+/// offline / failed), so HTTP errors must never be reported as `Network`.
+pub(crate) fn http_status_error(provider: &str, status: reqwest::StatusCode, body: &str) -> CoreError {
+    let body: String = body.chars().take(300).collect();
+    tracing::warn!(provider, status = status.as_u16(), body = %body, "tracker API returned an error status");
+    match status.as_u16() {
+        401 => CoreError::AuthError("error.tracker.invalid_credentials".into()),
+        403 => CoreError::AuthError("error.tracker.insufficient_scope".into()),
+        404 => CoreError::NotFound("error.tracker.not_found".into()),
+        429 => CoreError::RateLimited("error.tracker.rate_limited".into()),
+        _ => CoreError::Internal("error.tracker.http_error".into()),
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TrackerMedia {

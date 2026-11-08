@@ -135,11 +135,12 @@ pub async fn get_batch_issues(
 /// "Retry now" for a paused lane (offline / auth expired / rate limited).
 #[tauri::command]
 pub async fn resume_sync_lane(
+    state: State<'_, Arc<AppState>>,
     session_state: State<'_, TauriSession>,
     tracker: String,
 ) -> Result<(), CoreError> {
-    require_auth(&session_state).await?;
-    SyncQueue::resume_lane(&tracker);
+    let user_id = require_auth(&session_state).await?;
+    SyncQueue::resume_lane(&state.pool, &tracker, user_id).await;
     Ok(())
 }
 

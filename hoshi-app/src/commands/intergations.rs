@@ -28,6 +28,8 @@ pub async fn add_integration(
     let user_id = require_auth(&session_state).await?;
 
     TrackerService::add_integration(Arc::clone(&state), user_id, body.clone()).await?;
+    // A (re)connect brings a fresh token: resume anything paused on auth_expired.
+    hoshi_core::list::sync_queue::SyncQueue::resume_lane(&state.pool, &body.tracker_name, user_id).await;
 
     let state_clone = Arc::clone(&state);
     let tracker_name = body.tracker_name.clone();

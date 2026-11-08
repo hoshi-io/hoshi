@@ -70,8 +70,8 @@ impl AnimeIdIndex {
             "simkl" => "simkl",
             _ => return None,
         };
-        // MAL IDs are stored as "anime:123" in the app
-        let id = if tracker == "mal" {
+        // MAL and Kitsu IDs are stored as "anime:123" in the app; the dump uses raw numbers.
+        let id = if tracker == "mal" || tracker == "kitsu" {
             id.split_once(':').map_or(id, |(_, raw)| raw)
         } else {
             id

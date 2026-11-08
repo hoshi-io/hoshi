@@ -147,7 +147,7 @@ impl ShikimoriProvider {
         }
     }
 
-    /// The messages deliberately contain "401"/"429": the sync queue classifies errors by text.
+    /// The sync queue classifies errors by variant (AuthError / RateLimited / Network).
     fn ensure_ok(res: Response) -> CoreResult<Response> {
         let status = res.status();
         if status.is_success() {
@@ -155,16 +155,19 @@ impl ShikimoriProvider {
         }
         Err(match status {
             StatusCode::UNAUTHORIZED => {
-                CoreError::AuthError("error.tracker.invalid_credentials: 401 unauthorized".into())
+                CoreError::AuthError("error.tracker.invalid_credentials".into())
             }
             StatusCode::FORBIDDEN => {
-                CoreError::AuthError("error.tracker.insufficient_scope: 403".into())
+                CoreError::AuthError("error.tracker.insufficient_scope".into())
             }
             StatusCode::NOT_FOUND => CoreError::NotFound("error.tracker.not_found".into()),
             StatusCode::TOO_MANY_REQUESTS => {
-                CoreError::Network("error.tracker.rate_limited: 429 too many requests".into())
+                CoreError::RateLimited("error.tracker.rate_limited".into())
             }
-            _ => CoreError::Network(format!("error.tracker.http_error: {}", status.as_u16())),
+            _ => {
+                tracing::warn!(status = status.as_u16(), "Shikimori returned an error status");
+                CoreError::Internal("error.tracker.http_error".into())
+            }
         })
     }
 
@@ -217,7 +220,7 @@ impl ShikimoriProvider {
             .pointer("/data/currentUser/id")
             .and_then(id_str)
             .ok_or_else(|| {
-                CoreError::AuthError("error.tracker.invalid_credentials: 401 unauthorized".into())
+                CoreError::AuthError("error.tracker.invalid_credentials".into())
             })?;
 
         {
@@ -1023,7 +1026,11 @@ impl TrackerProvider for ShikimoriProvider {
             access_token,
         );
         let res = Self::send(req).await?;
-        Ok(res.status().is_success() || res.status() == StatusCode::NOT_FOUND)
+        if res.status() == StatusCode::NOT_FOUND {
+            return Ok(false); // already gone
+        }
+        Self::ensure_ok(res)?;
+        Ok(true)
     }
 
     fn to_core_metadata(&self, cid: &str, media: &TrackerMedia) -> Metadata {

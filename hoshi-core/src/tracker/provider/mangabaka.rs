@@ -71,11 +71,11 @@ impl MangaBakaProvider {
             StatusCode::UNAUTHORIZED => core_err!(AuthError, "error.tracker.invalid_credentials"),
             StatusCode::FORBIDDEN => core_err!(AuthError, "error.tracker.insufficient_scope"),
             StatusCode::NOT_FOUND => core_err!(NotFound, "error.tracker.not_found"),
-            StatusCode::TOO_MANY_REQUESTS => core_err!(Network, "error.tracker.rate_limited"),
+            StatusCode::TOO_MANY_REQUESTS => core_err!(RateLimited, "error.tracker.rate_limited"),
             StatusCode::BAD_REQUEST => {
                 core_err!(BadRequest, "error.tracker.bad_request", status.as_u16())
             }
-            _ => core_err!(Network, "error.tracker.http_error", status.as_u16()),
+            _ => core_err!(Internal, "error.tracker.http_error", status.as_u16()),
         })
     }
 
@@ -337,7 +337,7 @@ impl MangaBakaProvider {
                 cross_ids.insert("mal".to_string(), format!("manga:{id}"));
             }
             if let Some(id) = Self::entry_id(&src.kitsu) {
-                cross_ids.insert("kitsu".to_string(), id);
+                cross_ids.insert("kitsu".to_string(), format!("manga:{id}"));
             }
             if let Some(id) = Self::entry_id(&src.manga_updates) {
                 cross_ids.insert("mangaupdates".to_string(), id);
@@ -747,8 +747,12 @@ impl TrackerProvider for MangaBakaProvider {
             .bearer_auth(access_token);
         let res = self.send(req).await?;
 
-        // Already gone counts as deleted (same as the MAL provider).
-        Ok(res.status().is_success() || res.status() == StatusCode::NOT_FOUND)
+        // Already gone: nothing to delete.
+        if res.status() == StatusCode::NOT_FOUND {
+            return Ok(false);
+        }
+        Self::ensure_ok(res)?;
+        Ok(true)
     }
 
     fn to_core_metadata(&self, cid: &str, media: &TrackerMedia) -> Metadata {

@@ -160,7 +160,7 @@ impl MergeService {
                 entry.start_date.clone(), entry.end_date.clone(),
                 entry.notes.clone(), entry.repeat_count,
             ),
-            MergeStrategy::MangabakaFirst if remote_wins("shikimori") => (
+            MergeStrategy::ShikimoriFirst if remote_wins("shikimori") => (
                 entry.progress, remote_status, entry.score,
                 entry.start_date.clone(), entry.end_date.clone(),
                 entry.notes.clone(), entry.repeat_count,
@@ -221,8 +221,38 @@ impl MergeService {
         let snapshot = snapshot.as_object()?;
         let current = Self::remote_snapshot(entry);
 
-        // Keys missing from older snapshots (e.g. "notes") are simply not compared.
-        Some(snapshot.iter().any(|(k, v)| current.get(k) != Some(v)))
+        // Snapshots are written in two formats: by a pull (raw remote values, e.g.
+        // MAL "watching") and by a push from the sync queue (local values, e.g.
+        // "CURRENT"). Compare normalized values so a push isn't mistaken for a
+        // remote change. Keys missing from a snapshot (e.g. "notes" after a push)
+        // are simply not compared.
+        Some(snapshot.iter().any(|(k, v)| {
+            Self::comparable(k, v) != Self::comparable(k, current.get(k).unwrap_or(&serde_json::Value::Null))
+        }))
+    }
+
+    /// One snapshot field in a format-independent form.
+    fn comparable(key: &str, v: &serde_json::Value) -> serde_json::Value {
+        use serde_json::Value;
+        match key {
+            "status" => Value::String(Self::normalize_tracker_status(v.as_str().unwrap_or("PLANNING"))),
+            // Unscored is 0 on some trackers and null on others; compare at 1 decimal.
+            "score" => match v.as_f64() {
+                Some(s) if s != 0.0 => serde_json::json!((s * 10.0).round() / 10.0),
+                _ => Value::Null,
+            },
+            "progress" | "repeatCount" => serde_json::json!(v.as_i64().unwrap_or(0)),
+            // Dates may come as "YYYY-MM-DD" or with a time part.
+            "startDate" | "endDate" | "notes" => match v.as_str().map(str::trim) {
+                Some(s) if !s.is_empty() => {
+                    let s = if key == "notes" { s } else { s.get(..10).unwrap_or(s) };
+                    Value::String(s.to_string())
+                }
+                _ => Value::Null,
+            },
+            "isPrivate" => Value::Bool(v.as_bool().unwrap_or(false)),
+            _ => v.clone(),
+        }
     }
 
     pub async fn merge_entry(

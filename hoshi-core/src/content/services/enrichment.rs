@@ -50,7 +50,7 @@ impl EnrichmentService {
 
         // Enrichment failure must not fail the import; backfill-on-open can retry later.
         let cross_ids = match resolved {
-            Ok(ids) => Self::normalize_mal_prefix(ids, prefix),
+            Ok(ids) => Self::normalize_prefixed_ids(ids, prefix),
             Err(e) => {
                 warn!(error = ?e, tracker = %tracker, id = %id, "Cross-ID resolution failed, importing without mappings");
                 HashMap::new()
@@ -117,8 +117,10 @@ impl EnrichmentService {
             return Self::link_tracker_and_load(state, &cid, tracker, id).await;
         }
 
-        let lookups = media
-            .cross_ids
+        let media_cross_ids = Self::normalize_prefixed_ids(
+            media.cross_ids.clone(), Self::id_prefix(&media.content_type),
+        );
+        let lookups = media_cross_ids
             .iter()
             .filter(|(cross_tracker, _)| !SHOW_LEVEL_KEYS.contains(&cross_tracker.as_str()))
             .map(|(cross_tracker, cross_id)| {
@@ -146,7 +148,10 @@ impl EnrichmentService {
                 let raw_id = id.split_once(':').map_or(id, |(_, id)| id);
                 format!("myanimelist/{raw_id}")
             }
-            "kitsu" => format!("kitsu/{id}"),
+            "kitsu" => {
+                let raw_id = id.split_once(':').map_or(id, |(_, id)| id);
+                format!("kitsu/{raw_id}")
+            }
             "simkl" => format!("simkl/{id}"),
             "trakt" => format!("trakt/show/{id}"),
             "annict" => format!("annict/{id}"),
@@ -249,10 +254,26 @@ impl EnrichmentService {
         Err(CoreError::Internal("error.enrichment.rate_limited".into()))
     }
 
-    pub fn normalize_mal_prefix(cross_ids: HashMap<String, String>, prefix: &str) -> HashMap<String, String> {
+    pub const PREFIXED_TRACKERS: &'static [&'static str] = &["mal", "kitsu"];
+    
+    pub fn normalize_prefixed_ids(cross_ids: HashMap<String, String>, prefix: &str) -> HashMap<String, String> {
         cross_ids.into_iter()
-            .map(|(k, v)| if k == "mal" { (k, format!("{prefix}:{v}")) } else { (k, v) })
+            .map(|(k, v)| {
+                if Self::PREFIXED_TRACKERS.contains(&k.as_str()) && !v.contains(':') {
+                    let prefixed = format!("{prefix}:{v}");
+                    (k, prefixed)
+                } else {
+                    (k, v)
+                }
+            })
             .collect()
+    }
+
+    pub fn id_prefix(c_type: &ContentType) -> &'static str {
+        match c_type {
+            ContentType::Anime => "anime",
+            ContentType::Manga | ContentType::Novel => "manga",
+        }
     }
 
     pub fn extract_anime_cross_ids(data: &serde_json::Value) -> HashMap<String, String> {

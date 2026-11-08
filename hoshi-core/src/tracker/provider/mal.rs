@@ -4,6 +4,7 @@ pub(crate) use super::{
 };
 use crate::content::models::{ContentType, EpisodeData, Metadata, StaffMember, Status};
 use crate::error::{CoreError, CoreResult};
+use super::http_status_error;
 use async_trait::async_trait;
 use chrono::Utc;
 use reqwest::Client;
@@ -349,7 +350,7 @@ impl MalProvider {
         if !res.status().is_success() {
             let status = res.status();
             let body = res.text().await.unwrap_or_default();
-            return Err(CoreError::Network(format!("Tenrai returned {status}: {body}")));
+            return Err(http_status_error("tenrai", status, &body));
         }
 
         let parsed = res.json::<T>().await
@@ -723,7 +724,9 @@ impl TrackerProvider for MalProvider {
         if res.status().is_success() {
             Ok(())
         } else {
-            Err(CoreError::Network(format!("error.tracker.update_failed: {}", res.status())))
+            let status = res.status();
+            let body = res.text().await.unwrap_or_default();
+            Err(http_status_error("mal", status, &body))
         }
     }
 
@@ -738,7 +741,14 @@ impl TrackerProvider for MalProvider {
             .await
             .map_err(|e| CoreError::Network(e.to_string()))?;
 
-        Ok(res.status().is_success() || res.status() == reqwest::StatusCode::NOT_FOUND)
+        match res.status() {
+            s if s.is_success() => Ok(true),
+            reqwest::StatusCode::NOT_FOUND => Ok(false), // already gone
+            s => {
+                let body = res.text().await.unwrap_or_default();
+                Err(http_status_error("mal", s, &body))
+            }
+        }
     }
 
     fn to_core_metadata(&self, cid: &str, media: &TrackerMedia) -> Metadata {

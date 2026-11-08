@@ -30,6 +30,10 @@ pub enum CoreError {
     #[error("Network error: {0}")]
     Network(String),
 
+    /// The remote asked us to slow down (HTTP 429).
+    #[error("Rate limited: {0}")]
+    RateLimited(String),
+
     #[error("Parse error: {0}")]
     Parse(String),
 
@@ -52,6 +56,7 @@ impl Serialize for CoreError {
             CoreError::BadRequest(key) => (key.as_str(), self.to_string()),
             CoreError::AuthError(key)  => (key.as_str(), self.to_string()),
             CoreError::Network(key)    => (key.as_str(), self.to_string()),
+            CoreError::RateLimited(key) => (key.as_str(), self.to_string()),
             CoreError::Parse(key)      => (key.as_str(), self.to_string()),
             CoreError::Validation(key) => (key.as_str(), self.to_string()),
         };

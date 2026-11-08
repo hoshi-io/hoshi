@@ -37,9 +37,29 @@ fn lane_notify(tracker: &str) -> Arc<Notify> {
         .clone()
 }
 
+/// Whole-lane pauses (offline / rate limited): these affect every user of a tracker.
 fn pauses() -> &'static Mutex<HashMap<String, (Instant, &'static str)>> {
     static P: OnceLock<Mutex<HashMap<String, (Instant, &'static str)>>> = OnceLock::new();
     P.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+/// Per-(tracker, user) pauses: an expired token only blocks that user's jobs.
+fn user_pauses() -> &'static Mutex<HashMap<(String, i32), Instant>> {
+    static P: OnceLock<Mutex<HashMap<(String, i32), Instant>>> = OnceLock::new();
+    P.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn user_pause_remaining(tracker: &str, user_id: i32) -> Option<Duration> {
+    let mut map = user_pauses().lock().unwrap();
+    let key = (tracker.to_string(), user_id);
+    let until = *map.get(&key)?;
+    let now = Instant::now();
+    if until > now {
+        Some(until - now)
+    } else {
+        map.remove(&key);
+        None
+    }
 }
 
 fn events() -> &'static broadcast::Sender<SyncEvent> {
@@ -98,8 +118,15 @@ impl SyncQueue {
     }
 
     /// Call after the user reconnects / re-authenticates a tracker so its lane resumes immediately.
-    pub fn resume_lane(tracker: &str) {
+    /// Clears the lane pause and this user's auth pause, and makes their auth-deferred jobs due now.
+    pub async fn resume_lane(pool: &SqlitePool, tracker: &str, user_id: i32) {
         pauses().lock().unwrap().remove(tracker);
+        user_pauses().lock().unwrap().remove(&(tracker.to_string(), user_id));
+        if let Err(e) = ListRepository::expedite_auth_deferred_sync_jobs(
+            pool, user_id, tracker, Utc::now().timestamp(),
+        ).await {
+            warn!(error = ?e, tracker, user_id, "Failed to expedite auth-deferred sync jobs");
+        }
         lane_notify(tracker).notify_one();
     }
 
@@ -348,6 +375,14 @@ impl SyncQueue {
         }
 
         let now = Instant::now();
+        for ((tracker, uid), until) in user_pauses().lock().unwrap().iter() {
+            if *uid == user_id && *until > now {
+                map.entry(tracker.clone())
+                    .or_insert_with(|| TrackerSyncStatus { tracker: tracker.clone(), ..Default::default() })
+                    .paused_reason = Some("auth_expired".to_string());
+            }
+        }
+        // Lane-wide pauses (offline / rate limited) take precedence in the UI.
         for (tracker, (until, reason)) in pauses().lock().unwrap().iter() {
             if *until > now {
                 map.entry(tracker.clone())
@@ -478,6 +513,17 @@ impl SyncQueue {
     }
 
     async fn process(state: &Arc<AppState>, job: &Job) {
+        // This user's token is known to be bad: don't hit the API again until the
+        // pause ends or they reconnect (resume_lane).
+        if let Some(wait) = user_pause_remaining(&job.tracker, job.user_id) {
+            let until = Utc::now().timestamp() + wait.as_secs() as i64 + 1;
+            if let Err(e) = Self::release(&state.pool, job.id, until, false, Some("auth_expired")).await {
+                error!(job_id = job.id, error = ?e, "Failed to defer sync job for auth-paused user");
+            }
+            emit(&job.tracker, job.batch_id.clone());
+            return;
+        }
+
         let outcome = match Self::execute(state, job).await {
             Ok(o) => o,
             Err(e) => {
@@ -515,9 +561,17 @@ impl SyncQueue {
                 Self::pause(&job.tracker, OFFLINE_PROBE, "offline");
                 Self::release(pool, job.id, now + OFFLINE_PROBE.as_secs() as i64, false, Some("offline")).await
             }
+            // Only this user's token is bad: pause them, not the whole tracker lane.
             Outcome::AuthExpired => {
-                Self::pause(&job.tracker, AUTH_PAUSE, "auth_expired");
-                Self::release(pool, job.id, now + AUTH_PAUSE.as_secs() as i64, false, Some("auth_expired")).await
+                let until = now + AUTH_PAUSE.as_secs() as i64;
+                user_pauses().lock().unwrap()
+                    .insert((job.tracker.clone(), job.user_id), Instant::now() + AUTH_PAUSE);
+                if let Err(e) = ListRepository::defer_pending_sync_jobs(
+                    pool, job.user_id, &job.tracker, until, "auth_expired",
+                ).await {
+                    warn!(error = ?e, "Failed to defer the user's other pending sync jobs");
+                }
+                Self::release(pool, job.id, until, false, Some("auth_expired")).await
             }
             Outcome::RateLimited => {
                 Self::pause(&job.tracker, RATE_LIMIT_PAUSE, "rate_limited");
@@ -553,26 +607,12 @@ impl SyncQueue {
     ) -> CoreResult<()> {
         ListRepository::release_sync_job(pool, id, next_run_at, burn_attempt, reason).await
     }
-
     fn classify(e: &CoreError) -> Outcome {
-        let msg = e.to_string();
-        let l = msg.to_lowercase();
-
-        if l.contains("429") || l.contains("rate limit") || l.contains("too many requests") {
-            Outcome::RateLimited
-        } else if l.contains("401") || l.contains("unauthorized") || l.contains("invalid token") || l.contains("token expired") {
-            Outcome::AuthExpired
-        } else if l.contains("error sending request")
-            || l.contains("dns")
-            || l.contains("connect")
-            || l.contains("timed out")
-            || l.contains("timeout")
-            || l.contains("network")
-            || l.contains("offline")
-        {
-            Outcome::Offline
-        } else {
-            Outcome::Failed(msg)
+        match e {
+            CoreError::RateLimited(_) => Outcome::RateLimited,
+            CoreError::AuthError(_) => Outcome::AuthExpired,
+            CoreError::Network(_) => Outcome::Offline,
+            other => Outcome::Failed(other.to_string()),
         }
     }
 
@@ -608,7 +648,11 @@ impl SyncQueue {
                 Some(id) => id,
                 None => return Ok(Outcome::Skipped("no_remote_id")),
             };
-            provider.delete_entry(&access_token, remote_id).await?;
+            // Ok(false) = it wasn't on the remote list; the goal state is reached either way.
+            // Failures come back as Err and are retried / classified.
+            if !provider.delete_entry(&access_token, remote_id).await? {
+                info!(tracker = %job.tracker, cid = %job.cid, remote_id, "Remote entry was already gone");
+            }
             return Ok(Outcome::Done);
         }
 

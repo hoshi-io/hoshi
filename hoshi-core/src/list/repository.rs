@@ -602,6 +602,50 @@ impl ListRepository {
         Ok(())
     }
 
+    /// Push every PENDING job of this user/tracker to at least `until`, tagging it with `reason`.
+    pub async fn defer_pending_sync_jobs(
+        pool: &SqlitePool,
+        user_id: i32,
+        tracker: &str,
+        until: i64,
+        reason: &str,
+    ) -> CoreResult<u64> {
+        Ok(sqlx::query(
+            "UPDATE TrackerSyncJob
+                SET next_run_at = MAX(next_run_at, ?), last_error = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE user_id = ? AND tracker_name = ? AND status = 'PENDING'",
+        )
+            .bind(until)
+            .bind(reason)
+            .bind(user_id)
+            .bind(tracker)
+            .execute(pool)
+            .await?
+            .rows_affected())
+    }
+
+    /// Make this user's auth-deferred PENDING jobs due now (after a reconnect).
+    pub async fn expedite_auth_deferred_sync_jobs(
+        pool: &SqlitePool,
+        user_id: i32,
+        tracker: &str,
+        now: i64,
+    ) -> CoreResult<u64> {
+        Ok(sqlx::query(
+            "UPDATE TrackerSyncJob
+                SET next_run_at = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE user_id = ? AND tracker_name = ? AND status = 'PENDING'
+                AND last_error = 'auth_expired' AND next_run_at > ?",
+        )
+            .bind(now)
+            .bind(user_id)
+            .bind(tracker)
+            .bind(now)
+            .execute(pool)
+            .await?
+            .rows_affected())
+    }
+
     /// RUNNING → PENDING for a later run. `burn_attempt = false` refunds the attempt
     /// taken at claim time. If a newer PENDING job exists for the same entry/tracker the
     /// unique index rejects the update; this job is superseded, so it is dropped.

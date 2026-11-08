@@ -220,11 +220,12 @@ impl AniListProvider {
 
         let req = req.json(body);
         let res = Self::with_retry(req).await
-            .map_err(|_| CoreError::Internal("error.tracker.auth_network_error".into()))?;
+            .map_err(|e| CoreError::Network(e.to_string()))?;
 
         if !res.status().is_success() {
-            println!("{:?}", res.text().await);
-            return Err(CoreError::Internal("error.tracker.token_exchange_failed".into()));
+            let status = res.status();
+            let body = res.text().await.unwrap_or_default();
+            return Err(super::http_status_error("anilist", status, &body));
         }
 
         let json: Value = res.json().await
@@ -885,13 +886,19 @@ impl TrackerProvider for AniListProvider {
 
         let mid: i64 = media_id.parse().unwrap_or(0);
 
-        let find = self.graphql(Some(access_token), &json!({
+        let find = match self.graphql(Some(access_token), &json!({
             "query": "query ($mediaId: Int, $userId: Int) { MediaList(mediaId: $mediaId, userId: $userId) { id } }",
             "variables": { "mediaId": mid, "userId": user_id }
-        })).await?;
+        })).await {
+            Ok(v) => v,
+            Err(CoreError::NotFound(_)) => return Ok(false), // not on the user's list
+            Err(e) => return Err(e),
+        };
 
-        let list_id = find.get("data").and_then(|d| d.get("MediaList")).and_then(|l| l.get("id"))
-            .ok_or_else(|| CoreError::NotFound("error.tracker.id_not_found".into()))?;
+        let Some(list_id) = find.get("data").and_then(|d| d.get("MediaList")).and_then(|l| l.get("id"))
+            .filter(|v| !v.is_null()) else {
+            return Ok(false); // not on the user's list: nothing to delete
+        };
 
         let del = self.graphql(Some(access_token), &json!({
             "query":     "mutation ($id: Int) { DeleteMediaListEntry(id: $id) { deleted } }",

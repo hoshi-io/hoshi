@@ -7,6 +7,7 @@ use crate::tracker::repository::TrackerRepository;
 use crate::users::repository::UserRepo;
 use crate::list::merge::MergeService;
 use crate::tracker::types::TrackerIntegration;
+use crate::tracker::service::TrackerService;
 
 const MANGA_RATE_LIMIT_MS: u64 = 500;
 
@@ -57,6 +58,19 @@ impl StartupSyncService {
             Some(p) => p,
             None => { warn!(tracker = %integration.tracker_name, "Not in registry, skipping"); return; }
         };
+
+        // Stored tokens may have expired since last launch (Shikimori: ~1 day,
+        // MAL/Kitsu: ~1 month). Refresh first, like the sync queue does.
+        let access_token = match TrackerService::ensure_fresh_token(
+            &state, integration.user_id, &integration.tracker_name, &provider,
+        ).await {
+            Ok(t) => t,
+            Err(e) => {
+                warn!(error = ?e, tracker = %integration.tracker_name, user_id = integration.user_id, "Token refresh failed, skipping startup sync");
+                return;
+            }
+        };
+        let integration = TrackerIntegration { access_token, ..integration };
 
         let score_format = Self::refresh_score_format(&state, &provider, &integration).await;
 

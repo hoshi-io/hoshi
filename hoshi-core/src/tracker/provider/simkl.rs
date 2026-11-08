@@ -379,9 +379,7 @@ impl SimklProvider {
             .map_err(|e| CoreError::Network(e.to_string()))?;
 
         if !status.is_success() {
-            return Err(CoreError::Network(format!(
-                "SIMKL request to {path} failed ({status}): {raw}"
-            )));
+            return Err(crate::tracker::provider::http_status_error("simkl", status, &raw));
         }
 
         Ok(raw)
@@ -516,9 +514,7 @@ impl TrackerProvider for SimklProvider {
             .map_err(|e| CoreError::Network(e.to_string()))?;
 
         if !status.is_success() {
-            return Err(CoreError::Network(format!(
-                "SIMKL search failed ({status}): {raw}"
-            )));
+            return Err(crate::tracker::provider::http_status_error("simkl", status, &raw));
         }
 
         let results: Vec<SimklMediaObject> = serde_json::from_str(&raw)
@@ -559,9 +555,7 @@ impl TrackerProvider for SimklProvider {
             .map_err(|e| CoreError::Network(e.to_string()))?;
 
         if !status.is_success() {
-            return Err(CoreError::Network(format!(
-                "SIMKL get_by_id failed ({status}) on /anime/{tracker_id}: {raw}"
-            )));
+            return Err(crate::tracker::provider::http_status_error("simkl", status, &raw));
         }
 
         let obj: SimklMediaObject = serde_json::from_str(&raw)
@@ -593,9 +587,7 @@ impl TrackerProvider for SimklProvider {
             .map_err(|e| CoreError::Network(e.to_string()))?;
 
         if !status.is_success() {
-            return Err(CoreError::Network(format!(
-                "SIMKL get_user_list failed ({status}) on /sync/all-items/anime: {raw}"
-            )));
+            return Err(crate::tracker::provider::http_status_error("simkl", status, &raw));
         }
 
         let parsed: SimklAllItemsResponse = serde_json::from_str(&raw).map_err(|e| {

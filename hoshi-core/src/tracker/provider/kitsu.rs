@@ -1,5 +1,6 @@
 use crate::content::models::{Character, ContentType, EpisodeData, Metadata, StaffMember, Status};
 use crate::error::{CoreError, CoreResult};
+use super::http_status_error;
 use async_trait::async_trait;
 use chrono::Utc;
 use reqwest::Client;
@@ -27,6 +28,59 @@ impl KitsuProvider {
         Self { client }
     }
 
+    fn split_media_id(id: &str) -> (&'static str, &str) {
+        if let Some(raw) = id.strip_prefix("anime:") {
+            ("anime", raw)
+        } else if let Some(raw) = id.strip_prefix("manga:") {
+            ("manga", raw)
+        } else {
+            ("anime", id)
+        }
+    }
+
+    fn kind_prefix(kitsu_type: &str) -> &'static str {
+        if kitsu_type == "manga" { "manga" } else { "anime" }
+    }
+
+    fn normalize_role(role: &str) -> String {
+        match role {
+            "sequel"                                       => "SEQUEL",
+            "prequel"                                      => "PREQUEL",
+            "side_story"                                   => "SIDE_STORY",
+            "spinoff"                                      => "SPIN_OFF",
+            "adaptation"                                   => "ADAPTATION",
+            "parent_story" | "full_story"                  => "PARENT",
+            "summary"                                      => "SUMMARY",
+            "alternative_setting" | "alternative_version"  => "ALTERNATIVE",
+            "character"                                    => "CHARACTER",
+            _                                              => "OTHER",
+        }.to_string()
+    }
+
+    async fn current_user_id(&self, access_token: &str) -> CoreResult<String> {
+        let user_res = self.get_auth("/users?filter[self]=true", access_token).await?;
+        user_res
+            .get("data").and_then(|d| d.as_array()).and_then(|arr| arr.first())
+            .and_then(|u| u.get("id")).and_then(|v| v.as_str())
+            .map(String::from)
+            .ok_or_else(|| CoreError::AuthError("error.tracker.invalid_credentials".into()))
+    }
+
+    /// The user's library entry id for a media, if it is on their list.
+    async fn find_library_entry(
+        &self, access_token: &str, user_id: &str, media_type: &str, raw_id: &str,
+    ) -> CoreResult<Option<String>> {
+        let path = format!(
+            "/library-entries?filter[userId]={}&filter[mediaId]={}&filter[kind]={}",
+            user_id, raw_id, media_type
+        );
+        let existing = self.get_auth(&path, access_token).await?;
+        Ok(existing
+            .get("data").and_then(|d| d.as_array()).and_then(|arr| arr.first())
+            .and_then(|e| e.get("id")).and_then(|v| v.as_str())
+            .map(String::from))
+    }
+
     async fn get_public(&self, path: &str) -> CoreResult<Value> {
         let res = self
             .client
@@ -36,13 +90,10 @@ impl KitsuProvider {
             .await
             .map_err(|e| CoreError::Network(e.to_string()))?;
 
-        if res.status() == reqwest::StatusCode::NOT_FOUND {
-            return Err(CoreError::NotFound("Kitsu: resource not found".into()));
-        }
         if !res.status().is_success() {
             let status = res.status();
             let text = res.text().await.unwrap_or_default();
-            return Err(CoreError::Internal(format!("Kitsu HTTP {}: {}", status, text)));
+            return Err(http_status_error("kitsu", status, &text));
         }
 
         res.json::<Value>()
@@ -63,7 +114,7 @@ impl KitsuProvider {
         if !res.status().is_success() {
             let status = res.status();
             let text = res.text().await.unwrap_or_default();
-            return Err(CoreError::Internal(format!("Kitsu HTTP {}: {}", status, text)));
+            return Err(http_status_error("kitsu", status, &text));
         }
 
         res.json::<Value>()
@@ -97,7 +148,7 @@ impl KitsuProvider {
         if !res.status().is_success() {
             let status = res.status();
             let text = res.text().await.unwrap_or_default();
-            return Err(CoreError::Internal(format!("Kitsu HTTP {}: {}", status, text)));
+            return Err(http_status_error("kitsu", status, &text));
         }
 
         if res.status() == reqwest::StatusCode::NO_CONTENT {
@@ -230,7 +281,7 @@ impl KitsuProvider {
         ));
 
         Some(TrackerMedia {
-            tracker_id: id,
+            tracker_id: format!("{}:{}", Self::kind_prefix(media_type), id),
             tracker_url,
             cross_ids,
             content_type,
@@ -386,8 +437,8 @@ impl KitsuProvider {
         for item in Self::find_included(included, "mediaRelationships", &rel_ids) {
             let relation_type = item
                 .get("attributes").and_then(|a| a.get("role")).and_then(|v| v.as_str())
-                .unwrap_or("related")
-                .to_string();
+                .map(Self::normalize_role)
+                .unwrap_or_else(|| "OTHER".to_string());
 
             let dest = item.get("relationships").and_then(|r| r.get("destination")).and_then(|d| d.get("data"));
             let dest_id   = dest.and_then(|d| d.get("id")).and_then(|v| v.as_str());
@@ -399,7 +450,7 @@ impl KitsuProvider {
                     None => {
                         let c_type = if dest_type == "manga" { ContentType::Manga } else { ContentType::Anime };
                         Some(TrackerMedia {
-                            tracker_id:       dest_id.to_string(),
+                            tracker_id:       format!("{}:{}", Self::kind_prefix(dest_type), dest_id),
                             tracker_url:      None,
                             cross_ids:        HashMap::new(),
                             content_type:     c_type,
@@ -465,7 +516,9 @@ impl KitsuProvider {
             _ => ContentType::Anime,
         };
 
+        let reconsuming = attrs.get("reconsuming").and_then(|v| v.as_bool()).unwrap_or(false);
         let status = attrs.get("status").and_then(|v| v.as_str()).map(|s| match s {
+            "current" if reconsuming => "REPEATING",
             "current"   => "CURRENT",
             "planned"   => "PLANNING",
             "completed" => "COMPLETED",
@@ -488,7 +541,7 @@ impl KitsuProvider {
         };
 
         Some(UserListEntry {
-            tracker_media_id: media_id.to_string(),
+            tracker_media_id: format!("{}:{}", Self::kind_prefix(media_type), media_id),
             title,
             poster,
             content_type,
@@ -642,13 +695,7 @@ impl TrackerProvider for KitsuProvider {
     }
 
     async fn get_by_id(&self, tracker_id: &str) -> CoreResult<Option<TrackerMedia>> {
-        let (endpoint, id) = if let Some(s) = tracker_id.strip_prefix("anime:") {
-            ("anime", s)
-        } else if let Some(s) = tracker_id.strip_prefix("manga:") {
-            ("manga", s)
-        } else {
-            ("anime", tracker_id)
-        };
+        let (endpoint, id) = Self::split_media_id(tracker_id);
 
         let path = format!(
             "/{}/{}?include=categories,mappings,mediaRelationships,\
@@ -711,33 +758,15 @@ impl TrackerProvider for KitsuProvider {
     }
 
     async fn update_entry(&self, access_token: &str, params: UpdateEntryParams) -> CoreResult<()> {
-        let user_res = self.get_auth("/users?filter[self]=true", access_token).await?;
-        let user_id = user_res
-            .get("data").and_then(|d| d.as_array()).and_then(|arr| arr.first())
-            .and_then(|u| u.get("id")).and_then(|v| v.as_str())
-            .ok_or_else(|| CoreError::AuthError("error.tracker.invalid_credentials".into()))?
-            .to_string();
+        let user_id = self.current_user_id(access_token).await?;
+        let (media_type, raw_id) = Self::split_media_id(&params.media_id);
+        let raw_id = raw_id.to_string();
+        let entry_id = self.find_library_entry(access_token, &user_id, media_type, &raw_id).await?;
 
-        let (media_type, raw_id) = if let Some(s) = params.media_id.strip_prefix("anime:") {
-            ("anime", s.to_string())
-        } else if let Some(s) = params.media_id.strip_prefix("manga:") {
-            ("manga", s.to_string())
-        } else {
-            ("anime", params.media_id.clone())
-        };
-
-        let existing_path = format!(
-            "/library-entries?filter[userId]={}&filter[mediaId]={}&filter[kind]={}",
-            user_id, raw_id, media_type
-        );
-        let existing  = self.get_auth(&existing_path, access_token).await?;
-        let entry_id  = existing
-            .get("data").and_then(|d| d.as_array()).and_then(|arr| arr.first())
-            .and_then(|e| e.get("id")).and_then(|v| v.as_str())
-            .map(String::from);
-
+        // Kitsu has no "repeating" status: it's "current" plus the reconsuming flag.
+        let reconsuming = params.status.as_deref().map(|s| s == "REPEATING");
         let kitsu_status = params.status.as_deref().map(|s| match s {
-            "CURRENT"   => "current",
+            "CURRENT" | "REPEATING" => "current",
             "PLANNING"  => "planned",
             "COMPLETED" => "completed",
             "PAUSED"    => "on_hold",
@@ -749,6 +778,7 @@ impl TrackerProvider for KitsuProvider {
 
         let mut entry_attrs = json!({});
         if let Some(st)     = kitsu_status          { entry_attrs["status"]         = json!(st); }
+        if let Some(rc)     = reconsuming           { entry_attrs["reconsuming"]    = json!(rc); }
         if let Some(prog)   = params.progress        { entry_attrs["progress"]       = json!(prog); }
         if let Some(r)      = rating_twenty          { entry_attrs["ratingTwenty"]   = json!(r); }
         if let Some(repeat) = params.repeat_count    { entry_attrs["reconsumeCount"] = json!(repeat); }
@@ -783,8 +813,15 @@ impl TrackerProvider for KitsuProvider {
         Ok(())
     }
 
+    /// `media_id` is the anime/manga id; DELETE needs the user's library-entry id,
+    /// so look it up first (same as update_entry).
     async fn delete_entry(&self, access_token: &str, media_id: &str) -> CoreResult<bool> {
-        match self.mutate(reqwest::Method::DELETE, &format!("/library-entries/{}", media_id), access_token, None).await {
+        let user_id = self.current_user_id(access_token).await?;
+        let (media_type, raw_id) = Self::split_media_id(media_id);
+        let Some(entry_id) = self.find_library_entry(access_token, &user_id, media_type, raw_id).await? else {
+            return Ok(false); // not on the user's list
+        };
+        match self.mutate(reqwest::Method::DELETE, &format!("/library-entries/{}", entry_id), access_token, None).await {
             Ok(_)                        => Ok(true),
             Err(CoreError::NotFound(_))  => Ok(false),
             Err(e)                       => Err(e),
