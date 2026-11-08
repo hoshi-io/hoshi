@@ -113,8 +113,11 @@
   },
   "card": {
     "TV": "TV",
+    "TV_SHORT": "TV Short",
+    "LIGHT_NOVEL": "Light Novel",
     "ONA": "ONA",
     "OVA": "OVA",
+    "MUSIC": "Musika",
     "MOVIE": "Pelikula",
     "SPECIAL": "Espesyal",
     "airing": "Ipinapalabas",
@@ -133,6 +136,8 @@
     "missing_mal": "Wala sa MyAnimeList",
     "missing_kitsu": "Wala sa Kitsu",
     "missing_simkl": "Wala sa Simkl",
+    "missing_mangabaka": "Wala sa MangaBaka",
+    "missing_shikimori": "Wala sa Shikimori",
     "show_conflicts": "Ipakita ang Mga Conflict sa Sync",
     "header_title": "Listahan ni {{name}}",
     "add_to_list": "Idagdag sa listahan",
@@ -189,6 +194,74 @@
       "conflict": "Hidwaan",
       "history": "Kasaysayan",
       "no_history": "Walang kasaysayan"
+    },
+    "browse": "Mag-browse ng content",
+    "no_matches_desc": "Walang tumutugma sa kasalukuyang paghahanap o mga filter.",
+    "no_matches_title": "Walang tugma",
+    "push_to": "Ipadala sa {{tracker}} ({{n}})",
+    "selection": {
+      "cancel": "Kanselahin",
+      "clear": "I-clear",
+      "confirm_delete": "Burahin ang {{n}} na entry?",
+      "confirm_delete_trackers": "Aalisin din ang mga ito sa mga nakakonektang tracker mo.",
+      "count": "{{n}} ang napili",
+      "delete": "Burahin",
+      "details": "Mga detalye",
+      "exit": "Lumabas sa pagpili",
+      "increment": "Dagdagan ng isa ang progreso",
+      "push": "Ipadala sa {{tracker}}",
+      "push_short": "Ipadala",
+      "select_all": "Piliin lahat ({{n}})",
+      "select_entry": "Piliin ang entry",
+      "toggle": "Pumili ng mga entry",
+      "toolbar": "Mga aksyon sa pagpili"
+    },
+    "sync": {
+      "all_synced": "Naka-sync na ang lahat",
+      "batch": {
+        "complete": "Tapos na",
+        "delete": "Maramihang pagbura",
+        "edit": "Maramihang pag-edit",
+        "finished_issues": "{{done}} tapos · {{n}} kailangang tingnan",
+        "generic": "Batch",
+        "push": "Ipadala sa {{tracker}}",
+        "running": "{{done}} tapos · {{n}} natitira"
+      },
+      "batches": "Mga batch",
+      "cancel": "Kanselahin ang natitira",
+      "dismiss": "Isara",
+      "failed": "{{n}} ang pumalya",
+      "hide_details": "Itago ang mga detalye",
+      "indicator": {
+        "done": "Tapos na ang sync",
+        "failed": "Mga problema sa sync",
+        "paused": "Naka-pause ang sync",
+        "syncing": "Nagsi-sync"
+      },
+      "loading": "Naglo-load…",
+      "needs_attention": "Kailangang tingnan",
+      "paused": {
+        "auth": "Nag-expire ang login · kumonekta ulit para magpatuloy",
+        "offline": "Offline · awtomatikong sinusubukang muli",
+        "rate": "Na-rate limit · magpapatuloy maya-maya"
+      },
+      "reason": {
+        "entry_missing": "Wala na sa listahan mo",
+        "no_mapping": "Hindi ma-match sa tracker na ito",
+        "no_remote_id": "Walang remote id",
+        "not_connected": "Hindi nakakonekta ang tracker",
+        "sync_disabled": "Naka-off ang sync para sa tracker na ito",
+        "unknown": "Hindi kilalang error",
+        "unknown_tracker": "Hindi kilalang tracker"
+      },
+      "reconnect": "Kumonekta ulit",
+      "retry_all": "Subukang muli lahat ng pumalya",
+      "retry_failed": "Subukang muli ang pumalya",
+      "retry_now": "Subukan ngayon",
+      "show_details": "Ipakita ang mga detalye",
+      "syncing": "Nagsi-sync",
+      "title": "Sync",
+      "trackers": "Mga tracker"
     }
   },
   "marketplace": {
@@ -208,7 +281,11 @@
     "no_repo": "Walang Konektadong Repository",
     "no_repo_desc": "Maglagay ng URL ng repository sa itaas para makatuklas at makapag-install ng mga extension ng komunidad.",
     "empty": "Walang Laman ang Repository",
-    "empty_desc": "Matagumpay na na-load ang repository na ito, ngunit wala itong nilalamang anumang mga extension."
+    "empty_desc": "Matagumpay na na-load ang repository na ito, ngunit wala itong nilalamang anumang mga extension.",
+    "manage_repos": "Pamahalaan ang mga repository",
+    "all_languages": "Lahat ng wika",
+    "add_repo": "Magdagdag ng repo",
+    "repositories": "Mga repository"
   },
   "reader": {
     "loading": "naglo-load",
@@ -271,6 +348,7 @@
   },
   "search": {
     "title": "Maghanap",
+    "filter_tags": "I-filter ang mga tag",
     "placeholder": "maghanap...",
     "any_format": "Kahit anong format",
     "enter_filter": "Maglagay ng filter",
@@ -616,7 +694,10 @@
       "conflict_updated": "Panatilihin ang Pinakabagong Na-update",
       "conflict_anilist": "Unahin ang Anilist",
       "conflict_mal": "Unahin ang MyAnimeList",
-      "conflict_kitsu": "Unahin ang Kitsu"
+      "conflict_kitsu": "Unahin ang Kitsu",
+      "conflict_simkl": "Unahin ang Simkl",
+      "conflict_shikimori": "Unahin ang Shikimori",
+      "conflict_mangabaka": "Unahin ang MangaBaka"
     },
     "general_section": {
       "general_desc": "Pamahalaan ang iyong mga pangkalahatang kagustuhan sa app.",
@@ -649,7 +730,9 @@
       "default_home_manga": "Manga",
       "default_home_novel": "Mga Nobela",
       "disable_card_trailers": "I-disable ang mga card trailer",
-      "disable_card_trailers_desc": "Pinipigilan ang mga trailer na awtomatikong tumugtog kapag itinuturo ang card."
+      "disable_card_trailers_desc": "Pinipigilan ang mga trailer na awtomatikong tumugtog kapag itinuturo ang card.",
+      "disable_hero_trailers": "I-disable ang mga trailer sa hero",
+      "disable_hero_trailers_desc": "Ipakita ang banner image sa halip na i-play ang trailer sa hero ng home page."
     },
     "content_section": {
       "content_desc": "Pamahalaan ang iyong mga metadata provider at mga gawi sa pag-track.",
@@ -671,7 +754,9 @@
       "close": "Isara",
       "enabled": "Naka-enable",
       "unsupported_type": "Hindi Suportadong Uri",
-      "extension_config": "Mga Setting ng {{name}}"
+      "extension_config": "Mga Setting ng {{name}}",
+      "all_sources": "Lahat ng source",
+      "confirm_uninstall": "Kumpirmahin"
     },
     "player_section": {
       "player_desc": "I-configure ang mga setting ng playback, mga wika, at automation.",
@@ -727,7 +812,26 @@
       "anime4k_fast": "Mabilis",
       "anime4k_hq": "HQ",
       "anime4k_mode": "Anime4K Mode",
-      "anime4k_mode_desc": "Ang A, B, at C ay para sa iba't ibang uri ng pagkasira ng source."
+      "anime4k_mode_desc": "Ang A, B, at C ay para sa iba't ibang uri ng pagkasira ng source.",
+      "thumbnails": "Mga thumbnail",
+      "thumbnails_desc": "Magpakita ng preview frame kapag nag-hover o nag-drag sa seek bar. Gagana simula sa susunod na episode.",
+      "thumb_interval": "Pagitan ng thumbnail",
+      "thumb_interval_desc": "Oras sa pagitan ng mga preview. Mas mahahabang pagitan ay gumagamit ng mas kaunting data, lalo na sa streams.",
+      "thumb_size": "Laki ng thumbnail",
+      "thumb_size_desc": "Lapad ng preview image.",
+      "thumb_size_small": "Maliit",
+      "thumb_size_medium": "Katamtaman",
+      "thumb_size_large": "Malaki",
+      "thumb_hls": "Mga thumbnail sa streams (HLS)",
+      "thumb_hls_desc": "Nagda-download ng dagdag na video data habang nag-i-scrub.",
+      "thumb_torrent": "Mga thumbnail sa torrents",
+      "thumb_torrent_desc": "Ang mga bahaging na-download na lang ang may preview.",
+      "thumb_precise": "Eksaktong frame",
+      "thumb_precise_desc": "Ipakita ang eksaktong frame sa halip na ang pinakamalapit na keyframe. Mas mabagal.",
+      "sub_group_text": "Teksto",
+      "sub_group_outline": "Outline at anino",
+      "sub_group_placement": "Posisyon at timing",
+      "sub_group_behavior": "Gawi"
     },
     "readers_section": {
       "reader_preview": "Preview",

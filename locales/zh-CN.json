@@ -113,8 +113,11 @@
   },
   "card": {
     "TV": "TV",
+    "TV_SHORT": "TV 短片",
+    "LIGHT_NOVEL": "轻小说",
     "ONA": "ONA",
     "OVA": "OVA",
+    "MUSIC": "音乐",
     "MOVIE": "电影",
     "SPECIAL": "特别篇",
     "airing": "放送中",
@@ -133,6 +136,8 @@
     "missing_mal": "MyAnimeList 中缺失",
     "missing_kitsu": "Kitsu 中缺失",
     "missing_simkl": "Simkl 中缺失",
+    "missing_mangabaka": "MangaBaka 中缺失",
+    "missing_shikimori": "Shikimori 中缺失",
     "show_conflicts": "显示同步冲突",
     "header_title": "{{name}} 的列表",
     "add_to_list": "添加到列表",
@@ -189,6 +194,74 @@
       "conflict": "冲突",
       "history": "历史记录",
       "no_history": "暂无历史记录"
+    },
+    "browse": "浏览内容",
+    "no_matches_desc": "没有符合当前搜索或筛选条件的内容。",
+    "no_matches_title": "无匹配结果",
+    "push_to": "推送到 {{tracker}}（{{n}}）",
+    "selection": {
+      "cancel": "取消",
+      "clear": "清除",
+      "confirm_delete": "删除 {{n}} 个条目？",
+      "confirm_delete_trackers": "它们也会从已连接的追踪器中移除。",
+      "count": "已选择 {{n}} 个",
+      "delete": "删除",
+      "details": "详情",
+      "exit": "退出选择",
+      "increment": "进度加一",
+      "push": "推送到 {{tracker}}",
+      "push_short": "推送",
+      "select_all": "全选（{{n}}）",
+      "select_entry": "选择条目",
+      "toggle": "选择条目",
+      "toolbar": "选择操作"
+    },
+    "sync": {
+      "all_synced": "全部已同步",
+      "batch": {
+        "complete": "已完成",
+        "delete": "批量删除",
+        "edit": "批量编辑",
+        "finished_issues": "已完成 {{done}} · {{n}} 个需要处理",
+        "generic": "批次",
+        "push": "推送到 {{tracker}}",
+        "running": "已完成 {{done}} · 剩余 {{n}}"
+      },
+      "batches": "批次",
+      "cancel": "取消剩余",
+      "dismiss": "关闭",
+      "failed": "{{n}} 个失败",
+      "hide_details": "隐藏详情",
+      "indicator": {
+        "done": "同步完成",
+        "failed": "同步出现问题",
+        "paused": "同步已暂停",
+        "syncing": "正在同步"
+      },
+      "loading": "加载中…",
+      "needs_attention": "需要处理",
+      "paused": {
+        "auth": "登录已过期 · 重新连接以继续",
+        "offline": "离线 · 正在自动重试",
+        "rate": "请求受限 · 稍后继续"
+      },
+      "reason": {
+        "entry_missing": "已不在你的列表中",
+        "no_mapping": "无法在此追踪器上匹配",
+        "no_remote_id": "缺少远程 ID",
+        "not_connected": "追踪器未连接",
+        "sync_disabled": "此追踪器的同步已关闭",
+        "unknown": "未知错误",
+        "unknown_tracker": "未知追踪器"
+      },
+      "reconnect": "重新连接",
+      "retry_all": "重试所有失败项",
+      "retry_failed": "重试失败项",
+      "retry_now": "立即重试",
+      "show_details": "显示详情",
+      "syncing": "正在同步",
+      "title": "同步",
+      "trackers": "追踪器"
     }
   },
   "marketplace": {
@@ -208,7 +281,11 @@
     "no_repo": "未连接存储库",
     "no_repo_desc": "在上方输入存储库 URL 以发现并安装社区扩展。",
     "empty": "存储库为空",
-    "empty_desc": "此存储库已成功加载，但未包含任何扩展。"
+    "empty_desc": "此存储库已成功加载，但未包含任何扩展。",
+    "manage_repos": "管理仓库",
+    "all_languages": "所有语言",
+    "add_repo": "添加仓库",
+    "repositories": "仓库"
   },
   "reader": {
     "loading": "正在加载",
@@ -271,6 +348,7 @@
   },
   "search": {
     "title": "搜索",
+    "filter_tags": "筛选标签",
     "placeholder": "搜索内容...",
     "any_format": "任何格式",
     "enter_filter": "输入过滤条件",
@@ -616,7 +694,10 @@
       "conflict_updated": "保留最新更新",
       "conflict_anilist": "优先 Anilist",
       "conflict_mal": "优先 MyAnimeList",
-      "conflict_kitsu": "优先 Kitsu"
+      "conflict_kitsu": "优先 Kitsu",
+      "conflict_simkl": "优先 Simkl",
+      "conflict_shikimori": "优先 Shikimori",
+      "conflict_mangabaka": "优先 MangaBaka"
     },
     "general_section": {
       "general_desc": "管理全局应用偏好。",
@@ -649,7 +730,9 @@
       "default_home_manga": "漫画",
       "default_home_novel": "小说",
       "disable_card_trailers": "禁用卡片预告片",
-      "disable_card_trailers_desc": "防止在悬停在卡片上时自动播放预告片。"
+      "disable_card_trailers_desc": "防止在悬停在卡片上时自动播放预告片。",
+      "disable_hero_trailers": "关闭首页预告片",
+      "disable_hero_trailers_desc": "在首页横幅中显示横幅图片，而不是播放预告片。"
     },
     "content_section": {
       "content_desc": "管理元数据提供商和进度追踪行为。",
@@ -671,7 +754,9 @@
       "close": "关闭",
       "enabled": "已启用",
       "unsupported_type": "不支持的类型",
-      "extension_config": "{{name}} 设置"
+      "extension_config": "{{name}} 设置",
+      "all_sources": "所有来源",
+      "confirm_uninstall": "确认"
     },
     "player_section": {
       "player_desc": "配置播放体验",
@@ -727,7 +812,26 @@
       "anime4k_fast": "快速",
       "anime4k_hq": "高质量",
       "anime4k_mode": "Anime4K 模式",
-      "anime4k_mode_desc": "A、B 和 C 模式针对不同类型的源视频劣化情况。"
+      "anime4k_mode_desc": "A、B 和 C 模式针对不同类型的源视频劣化情况。",
+      "thumbnails": "缩略图",
+      "thumbnails_desc": "悬停或拖动进度条时显示预览画面。从下一集开始生效。",
+      "thumb_interval": "缩略图间隔",
+      "thumb_interval_desc": "预览之间的时间。间隔越长，流量消耗越少，尤其是在线流。",
+      "thumb_size": "缩略图大小",
+      "thumb_size_desc": "预览图片的宽度。",
+      "thumb_size_small": "小",
+      "thumb_size_medium": "中",
+      "thumb_size_large": "大",
+      "thumb_hls": "在线流缩略图 (HLS)",
+      "thumb_hls_desc": "拖动时会下载额外的视频数据。",
+      "thumb_torrent": "种子缩略图",
+      "thumb_torrent_desc": "只能预览已下载的部分。",
+      "thumb_precise": "精确画面",
+      "thumb_precise_desc": "显示精确的画面，而不是最近的关键帧。较慢。",
+      "sub_group_text": "文字",
+      "sub_group_outline": "描边与阴影",
+      "sub_group_placement": "位置与时间",
+      "sub_group_behavior": "行为"
     },
     "readers_section": {
       "reader_preview": "预览",

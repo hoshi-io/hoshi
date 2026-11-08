@@ -217,7 +217,7 @@
       "details": "Details",
       "exit": "Exit selection",
       "increment": "Add one to progress",
-      "push": "Push to {tracker}",
+      "push": "Push to {{tracker}}",
       "push_short": "Push",
       "select_all": "Select all ({{n}})",
       "select_entry": "Select entry",

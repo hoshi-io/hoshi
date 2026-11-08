@@ -113,8 +113,11 @@
   },
   "card": {
     "TV": "TV",
+    "TV_SHORT": "TV-Kurzfolge",
+    "LIGHT_NOVEL": "Light Novel",
     "ONA": "ONA",
     "OVA": "OVA",
+    "MUSIC": "Musik",
     "MOVIE": "Film",
     "SPECIAL": "Spezial",
     "airing": "Laufend",
@@ -133,6 +136,8 @@
     "missing_mal": "Fehlt auf MyAnimeList",
     "missing_kitsu": "Fehlt auf Kitsu",
     "missing_simkl": "Fehlt auf Simkl",
+    "missing_mangabaka": "Fehlt auf MangaBaka",
+    "missing_shikimori": "Fehlt auf Shikimori",
     "show_conflicts": "Synchronisierungskonflikte anzeigen",
     "header_title": "Liste von {{name}}",
     "add_to_list": "Zur Liste hinzufügen",
@@ -189,6 +194,74 @@
       "conflict": "Konflikt",
       "history": "Verlauf",
       "no_history": "Kein Verlauf"
+    },
+    "browse": "Inhalte durchsuchen",
+    "no_matches_desc": "Nichts passt zur aktuellen Suche oder zu den Filtern.",
+    "no_matches_title": "Keine Treffer",
+    "push_to": "An {{tracker}} senden ({{n}})",
+    "selection": {
+      "cancel": "Abbrechen",
+      "clear": "Leeren",
+      "confirm_delete": "{{n}} Einträge löschen?",
+      "confirm_delete_trackers": "Sie werden auch aus deinen verbundenen Trackern entfernt.",
+      "count": "{{n}} ausgewählt",
+      "delete": "Löschen",
+      "details": "Details",
+      "exit": "Auswahl beenden",
+      "increment": "Fortschritt um eins erhöhen",
+      "push": "An {{tracker}} senden",
+      "push_short": "Senden",
+      "select_all": "Alle auswählen ({{n}})",
+      "select_entry": "Eintrag auswählen",
+      "toggle": "Einträge auswählen",
+      "toolbar": "Auswahlaktionen"
+    },
+    "sync": {
+      "all_synced": "Alles ist synchronisiert",
+      "batch": {
+        "complete": "Abgeschlossen",
+        "delete": "Stapel löschen",
+        "edit": "Stapel bearbeiten",
+        "finished_issues": "{{done}} erledigt · {{n}} benötigen Aufmerksamkeit",
+        "generic": "Stapel",
+        "push": "An {{tracker}} senden",
+        "running": "{{done}} erledigt · {{n}} übrig"
+      },
+      "batches": "Stapel",
+      "cancel": "Restliche abbrechen",
+      "dismiss": "Schließen",
+      "failed": "{{n}} fehlgeschlagen",
+      "hide_details": "Details ausblenden",
+      "indicator": {
+        "done": "Synchronisierung abgeschlossen",
+        "failed": "Synchronisierungsprobleme",
+        "paused": "Synchronisierung pausiert",
+        "syncing": "Synchronisiere"
+      },
+      "loading": "Wird geladen…",
+      "needs_attention": "Benötigt Aufmerksamkeit",
+      "paused": {
+        "auth": "Anmeldung abgelaufen · neu verbinden, um fortzufahren",
+        "offline": "Offline · wird automatisch erneut versucht",
+        "rate": "Ratenlimit · wird gleich fortgesetzt"
+      },
+      "reason": {
+        "entry_missing": "Nicht mehr in deiner Liste",
+        "no_mapping": "Konnte auf diesem Tracker nicht zugeordnet werden",
+        "no_remote_id": "Remote-ID fehlt",
+        "not_connected": "Tracker ist nicht verbunden",
+        "sync_disabled": "Synchronisierung ist für diesen Tracker deaktiviert",
+        "unknown": "Unbekannter Fehler",
+        "unknown_tracker": "Unbekannter Tracker"
+      },
+      "reconnect": "Neu verbinden",
+      "retry_all": "Alle fehlgeschlagenen wiederholen",
+      "retry_failed": "Fehlgeschlagene wiederholen",
+      "retry_now": "Jetzt wiederholen",
+      "show_details": "Details anzeigen",
+      "syncing": "Synchronisiere",
+      "title": "Synchronisierung",
+      "trackers": "Tracker"
     }
   },
   "marketplace": {
@@ -208,7 +281,11 @@
     "no_repo": "Kein Repository verbunden",
     "no_repo_desc": "Geben Sie oben eine Repository-URL ein, um Community-Erweiterungen zu entdecken und zu installieren.",
     "empty": "Repository ist leer",
-    "empty_desc": "Dieses Repository wurde erfolgreich geladen, enthält aber keine Erweiterungen."
+    "empty_desc": "Dieses Repository wurde erfolgreich geladen, enthält aber keine Erweiterungen.",
+    "manage_repos": "Repositories verwalten",
+    "all_languages": "Alle Sprachen",
+    "add_repo": "Repository hinzufügen",
+    "repositories": "Repositories"
   },
   "reader": {
     "loading": "Lädt",
@@ -271,6 +348,7 @@
   },
   "search": {
     "title": "Suche",
+    "filter_tags": "Tags filtern",
     "placeholder": "Suchen...",
     "any_format": "Jedes Format",
     "enter_filter": "Filter eingeben",
@@ -616,7 +694,10 @@
       "conflict_updated": "Zuletzt aktualisierte Version behalten",
       "conflict_anilist": "Anilist priorisieren",
       "conflict_mal": "MyAnimeList priorisieren",
-      "conflict_kitsu": "Kitsu priorisieren"
+      "conflict_kitsu": "Kitsu priorisieren",
+      "conflict_simkl": "Simkl priorisieren",
+      "conflict_shikimori": "Shikimori priorisieren",
+      "conflict_mangabaka": "MangaBaka priorisieren"
     },
     "general_section": {
       "general_desc": "Verwalte deine globalen App-Einstellungen.",
@@ -649,7 +730,9 @@
       "default_home_manga": "Manga",
       "default_home_novel": "Novels",
       "disable_card_trailers": "Karten-Trailer deaktivieren",
-      "disable_card_trailers_desc": "Verhindert, dass Trailer beim Drüberfahren mit der Maus automatisch abgespielt werden."
+      "disable_card_trailers_desc": "Verhindert, dass Trailer beim Drüberfahren mit der Maus automatisch abgespielt werden.",
+      "disable_hero_trailers": "Hero-Trailer deaktivieren",
+      "disable_hero_trailers_desc": "Zeigt im Hero der Startseite das Bannerbild statt den Trailer abzuspielen."
     },
     "content_section": {
       "content_desc": "Verwalte deine Metadaten-Anbieter und das Tracking-Verhalten.",
@@ -671,7 +754,9 @@
       "close": "Schließen",
       "enabled": "Aktiviert",
       "unsupported_type": "Nicht unterstützter Typ",
-      "extension_config": "{{name}} Einstellungen"
+      "extension_config": "{{name}} Einstellungen",
+      "all_sources": "Alle Quellen",
+      "confirm_uninstall": "Bestätigen"
     },
     "player_section": {
       "player_desc": "Konfiguriere deine Wiedergabe",
@@ -727,7 +812,26 @@
       "anime4k_fast": "Schnell",
       "anime4k_hq": "Hohe Qualität",
       "anime4k_mode": "Anime4K-Modus",
-      "anime4k_mode_desc": "A, B und C zielen auf unterschiedliche Qualitätsverluste der Quelle ab."
+      "anime4k_mode_desc": "A, B und C zielen auf unterschiedliche Qualitätsverluste der Quelle ab.",
+      "thumbnails": "Vorschaubilder",
+      "thumbnails_desc": "Zeigt beim Überfahren oder Ziehen der Zeitleiste ein Vorschaubild. Gilt ab der nächsten Folge.",
+      "thumb_interval": "Vorschau-Intervall",
+      "thumb_interval_desc": "Zeit zwischen Vorschaubildern. Längere Intervalle verbrauchen weniger Daten, besonders bei Streams.",
+      "thumb_size": "Vorschaugröße",
+      "thumb_size_desc": "Breite des Vorschaubilds.",
+      "thumb_size_small": "Klein",
+      "thumb_size_medium": "Mittel",
+      "thumb_size_large": "Groß",
+      "thumb_hls": "Vorschaubilder bei Streams (HLS)",
+      "thumb_hls_desc": "Lädt beim Spulen zusätzliche Videodaten herunter.",
+      "thumb_torrent": "Vorschaubilder bei Torrents",
+      "thumb_torrent_desc": "Nur bereits heruntergeladene Teile können angezeigt werden.",
+      "thumb_precise": "Exakte Bilder",
+      "thumb_precise_desc": "Zeigt das exakte Bild statt des nächsten Keyframes. Langsamer.",
+      "sub_group_text": "Text",
+      "sub_group_outline": "Umriss & Schatten",
+      "sub_group_placement": "Position & Timing",
+      "sub_group_behavior": "Verhalten"
     },
     "readers_section": {
       "reader_preview": "Vorschau",

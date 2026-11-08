@@ -113,8 +113,11 @@
   },
   "card": {
     "TV": "TV",
+    "TV_SHORT": "TV Pendek",
+    "LIGHT_NOVEL": "Light Novel",
     "ONA": "ONA",
     "OVA": "OVA",
+    "MUSIC": "Musik",
     "MOVIE": "Film",
     "SPECIAL": "Spesial",
     "airing": "Sedang tayang",
@@ -133,6 +136,8 @@
     "missing_mal": "Tidak ada di MyAnimeList",
     "missing_kitsu": "Tidak ada di Kitsu",
     "missing_simkl": "Tidak ada di Simkl",
+    "missing_mangabaka": "Tidak ada di MangaBaka",
+    "missing_shikimori": "Tidak ada di Shikimori",
     "show_conflicts": "Tampilkan Konflik Sinkronisasi",
     "header_title": "Daftar {{name}}",
     "add_to_list": "Tambah ke daftar",
@@ -189,6 +194,74 @@
       "conflict": "Konflik",
       "history": "Riwayat",
       "no_history": "Tidak ada riwayat"
+    },
+    "browse": "Jelajahi konten",
+    "no_matches_desc": "Tidak ada yang cocok dengan pencarian atau filter saat ini.",
+    "no_matches_title": "Tidak ada hasil",
+    "push_to": "Kirim ke {{tracker}} ({{n}})",
+    "selection": {
+      "cancel": "Batal",
+      "clear": "Bersihkan",
+      "confirm_delete": "Hapus {{n}} entri?",
+      "confirm_delete_trackers": "Entri juga akan dihapus dari tracker yang terhubung.",
+      "count": "{{n}} dipilih",
+      "delete": "Hapus",
+      "details": "Detail",
+      "exit": "Keluar dari pilihan",
+      "increment": "Tambah satu ke progres",
+      "push": "Kirim ke {{tracker}}",
+      "push_short": "Kirim",
+      "select_all": "Pilih semua ({{n}})",
+      "select_entry": "Pilih entri",
+      "toggle": "Pilih entri",
+      "toolbar": "Aksi pilihan"
+    },
+    "sync": {
+      "all_synced": "Semua sudah tersinkron",
+      "batch": {
+        "complete": "Selesai",
+        "delete": "Hapus massal",
+        "edit": "Edit massal",
+        "finished_issues": "{{done}} selesai · {{n}} perlu perhatian",
+        "generic": "Batch",
+        "push": "Kirim ke {{tracker}}",
+        "running": "{{done}} selesai · {{n}} tersisa"
+      },
+      "batches": "Batch",
+      "cancel": "Batalkan sisanya",
+      "dismiss": "Tutup",
+      "failed": "{{n}} gagal",
+      "hide_details": "Sembunyikan detail",
+      "indicator": {
+        "done": "Sinkronisasi selesai",
+        "failed": "Masalah sinkronisasi",
+        "paused": "Sinkronisasi dijeda",
+        "syncing": "Menyinkronkan"
+      },
+      "loading": "Memuat…",
+      "needs_attention": "Perlu perhatian",
+      "paused": {
+        "auth": "Login kedaluwarsa · hubungkan ulang untuk melanjutkan",
+        "offline": "Offline · mencoba ulang otomatis",
+        "rate": "Batas permintaan · segera dilanjutkan"
+      },
+      "reason": {
+        "entry_missing": "Sudah tidak ada di daftarmu",
+        "no_mapping": "Tidak bisa dicocokkan di tracker ini",
+        "no_remote_id": "ID remote tidak ada",
+        "not_connected": "Tracker tidak terhubung",
+        "sync_disabled": "Sinkronisasi dimatikan untuk tracker ini",
+        "unknown": "Kesalahan tidak diketahui",
+        "unknown_tracker": "Tracker tidak dikenal"
+      },
+      "reconnect": "Hubungkan ulang",
+      "retry_all": "Coba ulang semua yang gagal",
+      "retry_failed": "Coba ulang yang gagal",
+      "retry_now": "Coba sekarang",
+      "show_details": "Tampilkan detail",
+      "syncing": "Menyinkronkan",
+      "title": "Sinkronisasi",
+      "trackers": "Tracker"
     }
   },
   "marketplace": {
@@ -208,7 +281,11 @@
     "no_repo": "Tidak Ada Repositori Terhubung",
     "no_repo_desc": "Masukkan URL repositori di atas untuk menemukan dan menginstal ekstensi komunitas.",
     "empty": "Repositori Kosong",
-    "empty_desc": "Repositori ini berhasil dimuat, tetapi tidak berisi ekstensi apa pun."
+    "empty_desc": "Repositori ini berhasil dimuat, tetapi tidak berisi ekstensi apa pun.",
+    "manage_repos": "Kelola repositori",
+    "all_languages": "Semua bahasa",
+    "add_repo": "Tambah repositori",
+    "repositories": "Repositori"
   },
   "reader": {
     "loading": "memuat",
@@ -271,6 +348,7 @@
   },
   "search": {
     "title": "Cari",
+    "filter_tags": "Filter tag",
     "placeholder": "cari...",
     "any_format": "Semua format",
     "enter_filter": "Masukkan filter",
@@ -616,7 +694,10 @@
       "conflict_updated": "Simpan Pembaruan Terakhir",
       "conflict_anilist": "Prioritaskan Anilist",
       "conflict_mal": "Prioritaskan MyAnimeList",
-      "conflict_kitsu": "Prioritaskan Kitsu"
+      "conflict_kitsu": "Prioritaskan Kitsu",
+      "conflict_simkl": "Prioritaskan Simkl",
+      "conflict_shikimori": "Prioritaskan Shikimori",
+      "conflict_mangabaka": "Prioritaskan MangaBaka"
     },
     "general_section": {
       "general_desc": "Kelola preferensi aplikasi global Anda.",
@@ -649,7 +730,9 @@
       "default_home_manga": "Manga",
       "default_home_novel": "Novel",
       "disable_card_trailers": "Nonaktifkan trailer kartu",
-      "disable_card_trailers_desc": "Mencegah trailer diputar otomatis saat mengarahkan kursor ke atas kartu."
+      "disable_card_trailers_desc": "Mencegah trailer diputar otomatis saat mengarahkan kursor ke atas kartu.",
+      "disable_hero_trailers": "Matikan trailer di hero",
+      "disable_hero_trailers_desc": "Tampilkan gambar banner alih-alih memutar trailer di hero beranda."
     },
     "content_section": {
       "content_desc": "Kelola penyedia metadata dan perilaku pelacakan.",
@@ -671,7 +754,9 @@
       "close": "Tutup",
       "enabled": "Aktif",
       "unsupported_type": "Tipe Tidak Didukung",
-      "extension_config": "Pengaturan {{name}}"
+      "extension_config": "Pengaturan {{name}}",
+      "all_sources": "Semua sumber",
+      "confirm_uninstall": "Konfirmasi"
     },
     "player_section": {
       "player_desc": "Konfigurasikan pengalaman pemutaran Anda",
@@ -727,7 +812,26 @@
       "anime4k_fast": "Cepat",
       "anime4k_hq": "Kualitas Tinggi",
       "anime4k_mode": "Mode Anime4K",
-      "anime4k_mode_desc": "A, B, dan C menargetkan jenis penurunan kualitas sumber yang berbeda."
+      "anime4k_mode_desc": "A, B, dan C menargetkan jenis penurunan kualitas sumber yang berbeda.",
+      "thumbnails": "Thumbnail",
+      "thumbnails_desc": "Tampilkan frame pratinjau saat mengarahkan atau menggeser bilah putar. Berlaku mulai episode berikutnya.",
+      "thumb_interval": "Interval thumbnail",
+      "thumb_interval_desc": "Jeda antar pratinjau. Interval lebih panjang memakai lebih sedikit data, terutama saat streaming.",
+      "thumb_size": "Ukuran thumbnail",
+      "thumb_size_desc": "Lebar gambar pratinjau.",
+      "thumb_size_small": "Kecil",
+      "thumb_size_medium": "Sedang",
+      "thumb_size_large": "Besar",
+      "thumb_hls": "Thumbnail pada stream (HLS)",
+      "thumb_hls_desc": "Mengunduh data video tambahan saat menggeser.",
+      "thumb_torrent": "Thumbnail pada torrent",
+      "thumb_torrent_desc": "Hanya bagian yang sudah diunduh yang bisa dipratinjau.",
+      "thumb_precise": "Frame presisi",
+      "thumb_precise_desc": "Tampilkan frame yang tepat, bukan keyframe terdekat. Lebih lambat.",
+      "sub_group_text": "Teks",
+      "sub_group_outline": "Garis tepi & bayangan",
+      "sub_group_placement": "Posisi & waktu",
+      "sub_group_behavior": "Perilaku"
     },
     "readers_section": {
       "reader_preview": "Pratinjau",

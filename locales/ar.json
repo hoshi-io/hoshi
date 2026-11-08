@@ -113,8 +113,11 @@
   },
   "card": {
     "TV": "تلفزيون",
+    "TV_SHORT": "حلقات قصيرة",
+    "LIGHT_NOVEL": "رواية خفيفة",
     "ONA": "أونا",
     "OVA": "أوفا (OVA)",
+    "MUSIC": "موسيقى",
     "MOVIE": "فيلم",
     "SPECIAL": "حلقة خاصة",
     "airing": "يعرض الآن",
@@ -133,6 +136,8 @@
     "missing_mal": "غير موجود على MyAnimeList",
     "missing_kitsu": "غير موجود على Kitsu",
     "missing_simkl": "غير موجود على Simkl",
+    "missing_mangabaka": "غير موجود على MangaBaka",
+    "missing_shikimori": "غير موجود على Shikimori",
     "show_conflicts": "عرض تعارضات المزامنة",
     "header_title": "قائمة {{name}}",
     "add_to_list": "إضافة إلى القائمة",
@@ -189,6 +194,74 @@
       "conflict": "تعارض",
       "history": "السجل",
       "no_history": "لا يوجد سجل"
+    },
+    "browse": "تصفح المحتوى",
+    "no_matches_desc": "لا شيء يطابق البحث أو عوامل التصفية الحالية.",
+    "no_matches_title": "لا توجد نتائج",
+    "push_to": "إرسال إلى {{tracker}} ({{n}})",
+    "selection": {
+      "cancel": "إلغاء",
+      "clear": "مسح",
+      "confirm_delete": "حذف {{n}} من الإدخالات؟",
+      "confirm_delete_trackers": "ستُزال أيضًا من المتتبعات المتصلة.",
+      "count": "تم تحديد {{n}}",
+      "delete": "حذف",
+      "details": "التفاصيل",
+      "exit": "إنهاء التحديد",
+      "increment": "زيادة التقدم بواحد",
+      "push": "إرسال إلى {{tracker}}",
+      "push_short": "إرسال",
+      "select_all": "تحديد الكل ({{n}})",
+      "select_entry": "تحديد الإدخال",
+      "toggle": "تحديد الإدخالات",
+      "toolbar": "إجراءات التحديد"
+    },
+    "sync": {
+      "all_synced": "كل شيء متزامن",
+      "batch": {
+        "complete": "مكتمل",
+        "delete": "حذف جماعي",
+        "edit": "تعديل جماعي",
+        "finished_issues": "{{done}} منجزة · {{n}} تحتاج إلى انتباه",
+        "generic": "دفعة",
+        "push": "إرسال إلى {{tracker}}",
+        "running": "{{done}} منجزة · {{n}} متبقية"
+      },
+      "batches": "الدفعات",
+      "cancel": "إلغاء المتبقي",
+      "dismiss": "إغلاق",
+      "failed": "{{n}} فشلت",
+      "hide_details": "إخفاء التفاصيل",
+      "indicator": {
+        "done": "اكتملت المزامنة",
+        "failed": "مشاكل في المزامنة",
+        "paused": "المزامنة متوقفة مؤقتًا",
+        "syncing": "جارٍ المزامنة"
+      },
+      "loading": "جارٍ التحميل…",
+      "needs_attention": "يحتاج إلى انتباه",
+      "paused": {
+        "auth": "انتهت صلاحية تسجيل الدخول · أعد الاتصال للمتابعة",
+        "offline": "غير متصل · إعادة المحاولة تلقائيًا",
+        "rate": "تجاوز حد الطلبات · سيُستأنف قريبًا"
+      },
+      "reason": {
+        "entry_missing": "لم يعد في قائمتك",
+        "no_mapping": "تعذّرت المطابقة على هذا المتتبع",
+        "no_remote_id": "المعرّف البعيد مفقود",
+        "not_connected": "المتتبع غير متصل",
+        "sync_disabled": "المزامنة معطلة لهذا المتتبع",
+        "unknown": "خطأ غير معروف",
+        "unknown_tracker": "متتبع غير معروف"
+      },
+      "reconnect": "إعادة الاتصال",
+      "retry_all": "إعادة محاولة كل الفاشلة",
+      "retry_failed": "إعادة محاولة الفاشلة",
+      "retry_now": "أعد المحاولة الآن",
+      "show_details": "عرض التفاصيل",
+      "syncing": "جارٍ المزامنة",
+      "title": "المزامنة",
+      "trackers": "المتتبعات"
     }
   },
   "marketplace": {
@@ -208,7 +281,11 @@
     "no_repo": "لا يوجد مستودع متصل",
     "no_repo_desc": "أدخل رابط المستودع أعلاه لاستكشاف وتثبيت إضافات المجتمع.",
     "empty": "المستودع فارغ",
-    "empty_desc": "تم تحميل هذا المستودع بنجاح، ولكنه لا يحتوي على أي إضافات."
+    "empty_desc": "تم تحميل هذا المستودع بنجاح، ولكنه لا يحتوي على أي إضافات.",
+    "manage_repos": "إدارة المستودعات",
+    "all_languages": "كل اللغات",
+    "add_repo": "إضافة مستودع",
+    "repositories": "المستودعات"
   },
   "reader": {
     "loading": "جاري التحميل",
@@ -271,6 +348,7 @@
   },
   "search": {
     "title": "بحث",
+    "filter_tags": "تصفية الوسوم",
     "placeholder": "بحث...",
     "any_format": "أي تنسيق",
     "enter_filter": "أدخل الفلتر",
@@ -616,7 +694,10 @@
       "conflict_updated": "الاحتفاظ بأحدث تحديث",
       "conflict_anilist": "إعطاء الأولوية لـ Anilist",
       "conflict_mal": "إعطاء الأولوية لـ MyAnimeList",
-      "conflict_kitsu": "إعطاء الأولوية لـ Kitsu"
+      "conflict_kitsu": "إعطاء الأولوية لـ Kitsu",
+      "conflict_simkl": "إعطاء الأولوية لـ Simkl",
+      "conflict_shikimori": "إعطاء الأولوية لـ Shikimori",
+      "conflict_mangabaka": "إعطاء الأولوية لـ MangaBaka"
     },
     "general_section": {
       "general_desc": "إدارة تفضيلات التطبيق العامة.",
@@ -649,7 +730,9 @@
       "default_home_manga": "مانجا",
       "default_home_novel": "روايات",
       "disable_card_trailers": "تعطيل العروض الدعائية للبطاقات",
-      "disable_card_trailers_desc": "يمنع العروض الدعائية من التشغيل تلقائياً عند تمرير الفأرة فوق البطاقات."
+      "disable_card_trailers_desc": "يمنع العروض الدعائية من التشغيل تلقائياً عند تمرير الفأرة فوق البطاقات.",
+      "disable_hero_trailers": "تعطيل العروض الدعائية في الواجهة",
+      "disable_hero_trailers_desc": "عرض صورة البانر بدلًا من تشغيل العرض الدعائي في واجهة الصفحة الرئيسية."
     },
     "content_section": {
       "content_desc": "إدارة مزودي البيانات الوصفية وسلوكيات التتبع.",
@@ -671,7 +754,9 @@
       "close": "إغلاق",
       "enabled": "مفعل",
       "unsupported_type": "نوع غير مدعوم",
-      "extension_config": "إعدادات {{name}}"
+      "extension_config": "إعدادات {{name}}",
+      "all_sources": "كل المصادر",
+      "confirm_uninstall": "تأكيد"
     },
     "player_section": {
       "player_desc": "اضبط تجربة التشغيل الخاصة بك",
@@ -727,7 +812,26 @@
       "anime4k_fast": "سريع",
       "anime4k_hq": "جودة عالية",
       "anime4k_mode": "وضع Anime4K",
-      "anime4k_mode_desc": "تستهدف الأوضاع A وB وC أنواعًا مختلفة من تدهور المصدر."
+      "anime4k_mode_desc": "تستهدف الأوضاع A وB وC أنواعًا مختلفة من تدهور المصدر.",
+      "thumbnails": "الصور المصغرة",
+      "thumbnails_desc": "عرض إطار معاينة عند التمرير فوق شريط التقدم أو سحبه. يُطبَّق من الحلقة التالية.",
+      "thumb_interval": "الفاصل بين الصور المصغرة",
+      "thumb_interval_desc": "الوقت بين المعاينات. الفواصل الأطول تستهلك بيانات أقل، خاصة في البث.",
+      "thumb_size": "حجم الصورة المصغرة",
+      "thumb_size_desc": "عرض صورة المعاينة.",
+      "thumb_size_small": "صغير",
+      "thumb_size_medium": "متوسط",
+      "thumb_size_large": "كبير",
+      "thumb_hls": "صور مصغرة للبث (HLS)",
+      "thumb_hls_desc": "ينزّل بيانات فيديو إضافية أثناء التنقل.",
+      "thumb_torrent": "صور مصغرة للتورنت",
+      "thumb_torrent_desc": "يمكن معاينة الأجزاء التي نُزّلت فقط.",
+      "thumb_precise": "إطارات دقيقة",
+      "thumb_precise_desc": "عرض الإطار الدقيق بدلًا من أقرب إطار رئيسي. أبطأ.",
+      "sub_group_text": "النص",
+      "sub_group_outline": "الحدود والظل",
+      "sub_group_placement": "الموضع والتوقيت",
+      "sub_group_behavior": "السلوك"
     },
     "readers_section": {
       "reader_preview": "معاينة",

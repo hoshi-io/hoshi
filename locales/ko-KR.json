@@ -113,8 +113,11 @@
   },
   "card": {
     "TV": "TV",
+    "TV_SHORT": "TV 단편",
+    "LIGHT_NOVEL": "라이트 노벨",
     "ONA": "ONA",
     "OVA": "OVA",
+    "MUSIC": "음악",
     "MOVIE": "영화",
     "SPECIAL": "스페셜",
     "airing": "방영 중",
@@ -133,6 +136,8 @@
     "missing_mal": "MyAnimeList에 없음",
     "missing_kitsu": "Kitsu에 없음",
     "missing_simkl": "Simkl에 없음",
+    "missing_mangabaka": "MangaBaka에 없음",
+    "missing_shikimori": "Shikimori에 없음",
     "show_conflicts": "동기화 충돌 표시",
     "header_title": "{{name}}님의 목록",
     "add_to_list": "목록에 추가",
@@ -189,6 +194,74 @@
       "conflict": "충돌",
       "history": "기록",
       "no_history": "기록 없음"
+    },
+    "browse": "콘텐츠 둘러보기",
+    "no_matches_desc": "현재 검색 또는 필터와 일치하는 항목이 없습니다.",
+    "no_matches_title": "일치 항목 없음",
+    "push_to": "{{tracker}}에 보내기 ({{n}})",
+    "selection": {
+      "cancel": "취소",
+      "clear": "지우기",
+      "confirm_delete": "항목 {{n}}개를 삭제할까요?",
+      "confirm_delete_trackers": "연결된 트래커에서도 삭제됩니다.",
+      "count": "{{n}}개 선택됨",
+      "delete": "삭제",
+      "details": "세부 정보",
+      "exit": "선택 종료",
+      "increment": "진행도 1 올리기",
+      "push": "{{tracker}}에 보내기",
+      "push_short": "보내기",
+      "select_all": "모두 선택 ({{n}})",
+      "select_entry": "항목 선택",
+      "toggle": "항목 선택",
+      "toolbar": "선택 작업"
+    },
+    "sync": {
+      "all_synced": "모두 동기화됨",
+      "batch": {
+        "complete": "완료",
+        "delete": "일괄 삭제",
+        "edit": "일괄 편집",
+        "finished_issues": "{{done}}개 완료 · {{n}}개 확인 필요",
+        "generic": "배치",
+        "push": "{{tracker}}에 보내기",
+        "running": "{{done}}개 완료 · {{n}}개 남음"
+      },
+      "batches": "배치",
+      "cancel": "나머지 취소",
+      "dismiss": "닫기",
+      "failed": "{{n}}개 실패",
+      "hide_details": "세부 정보 숨기기",
+      "indicator": {
+        "done": "동기화 완료",
+        "failed": "동기화 문제",
+        "paused": "동기화 일시 중지됨",
+        "syncing": "동기화 중"
+      },
+      "loading": "불러오는 중…",
+      "needs_attention": "확인 필요",
+      "paused": {
+        "auth": "로그인 만료 · 계속하려면 다시 연결하세요",
+        "offline": "오프라인 · 자동으로 다시 시도 중",
+        "rate": "요청 제한 · 곧 다시 시작됩니다"
+      },
+      "reason": {
+        "entry_missing": "더 이상 목록에 없음",
+        "no_mapping": "이 트래커에서 일치하는 항목을 찾을 수 없음",
+        "no_remote_id": "원격 ID 없음",
+        "not_connected": "트래커가 연결되지 않음",
+        "sync_disabled": "이 트래커의 동기화가 꺼져 있음",
+        "unknown": "알 수 없는 오류",
+        "unknown_tracker": "알 수 없는 트래커"
+      },
+      "reconnect": "다시 연결",
+      "retry_all": "실패한 항목 모두 재시도",
+      "retry_failed": "실패한 항목 재시도",
+      "retry_now": "지금 재시도",
+      "show_details": "세부 정보 보기",
+      "syncing": "동기화 중",
+      "title": "동기화",
+      "trackers": "트래커"
     }
   },
   "marketplace": {
@@ -208,7 +281,11 @@
     "no_repo": "연결된 저장소 없음",
     "no_repo_desc": "커뮤니티 확장 기능을 찾아 설치하려면 위에 저장소 URL을 입력하세요.",
     "empty": "저장소가 비어 있음",
-    "empty_desc": "저장소를 성공적으로 불러왔지만, 포함된 확장 기능이 없습니다."
+    "empty_desc": "저장소를 성공적으로 불러왔지만, 포함된 확장 기능이 없습니다.",
+    "manage_repos": "저장소 관리",
+    "all_languages": "모든 언어",
+    "add_repo": "저장소 추가",
+    "repositories": "저장소"
   },
   "reader": {
     "loading": "로딩 중",
@@ -271,6 +348,7 @@
   },
   "search": {
     "title": "검색",
+    "filter_tags": "태그 필터",
     "placeholder": "검색...",
     "any_format": "모든 형식",
     "enter_filter": "필터 입력",
@@ -616,7 +694,10 @@
       "conflict_updated": "최근 업데이트 유지",
       "conflict_anilist": "Anilist 우선",
       "conflict_mal": "MyAnimeList 우선",
-      "conflict_kitsu": "Kitsu 우선"
+      "conflict_kitsu": "Kitsu 우선",
+      "conflict_simkl": "Simkl 우선",
+      "conflict_shikimori": "Shikimori 우선",
+      "conflict_mangabaka": "MangaBaka 우선"
     },
     "general_section": {
       "general_desc": "글로벌 앱 설정을 관리합니다.",
@@ -649,7 +730,9 @@
       "default_home_manga": "만화",
       "default_home_novel": "소설",
       "disable_card_trailers": "카드 트레일러 비활성화",
-      "disable_card_trailers_desc": "카드에 마우스를 올렸을 때 트레일러가 자동으로 재생되지 않도록 합니다."
+      "disable_card_trailers_desc": "카드에 마우스를 올렸을 때 트레일러가 자동으로 재생되지 않도록 합니다.",
+      "disable_hero_trailers": "히어로 트레일러 끄기",
+      "disable_hero_trailers_desc": "홈 화면 히어로에서 트레일러 대신 배너 이미지를 표시합니다."
     },
     "content_section": {
       "content_desc": "메타데이터 제공자 및 트래킹 동작을 관리합니다.",
@@ -671,7 +754,9 @@
       "close": "닫기",
       "enabled": "활성화됨",
       "unsupported_type": "지원되지 않는 유형",
-      "extension_config": "{{name}} 설정"
+      "extension_config": "{{name}} 설정",
+      "all_sources": "모든 소스",
+      "confirm_uninstall": "확인"
     },
     "player_section": {
       "player_desc": "재생 환경을 설정합니다",
@@ -727,7 +812,26 @@
       "anime4k_fast": "빠르게",
       "anime4k_hq": "고품질",
       "anime4k_mode": "Anime4K 모드",
-      "anime4k_mode_desc": "A, B, C 모드는 서로 다른 원본 화질 저하를 대상으로 합니다."
+      "anime4k_mode_desc": "A, B, C 모드는 서로 다른 원본 화질 저하를 대상으로 합니다.",
+      "thumbnails": "썸네일",
+      "thumbnails_desc": "탐색 바에 마우스를 올리거나 드래그할 때 미리보기 프레임을 표시합니다. 다음 에피소드부터 적용됩니다.",
+      "thumb_interval": "썸네일 간격",
+      "thumb_interval_desc": "미리보기 사이의 시간. 간격이 길수록 데이터를 적게 사용합니다(특히 스트림).",
+      "thumb_size": "썸네일 크기",
+      "thumb_size_desc": "미리보기 이미지의 너비.",
+      "thumb_size_small": "작게",
+      "thumb_size_medium": "보통",
+      "thumb_size_large": "크게",
+      "thumb_hls": "스트림 썸네일 (HLS)",
+      "thumb_hls_desc": "탐색하는 동안 추가 영상 데이터를 다운로드합니다.",
+      "thumb_torrent": "토렌트 썸네일",
+      "thumb_torrent_desc": "이미 다운로드된 부분만 미리볼 수 있습니다.",
+      "thumb_precise": "정확한 프레임",
+      "thumb_precise_desc": "가장 가까운 키프레임 대신 정확한 프레임을 표시합니다. 느립니다.",
+      "sub_group_text": "텍스트",
+      "sub_group_outline": "외곽선 및 그림자",
+      "sub_group_placement": "위치 및 타이밍",
+      "sub_group_behavior": "동작"
     },
     "readers_section": {
       "reader_preview": "미리보기",

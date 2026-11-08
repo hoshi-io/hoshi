@@ -113,8 +113,11 @@
   },
   "card": {
     "TV": "TV",
+    "TV_SHORT": "TV Pendek",
+    "LIGHT_NOVEL": "Light Novel",
     "ONA": "ONA",
     "OVA": "OVA",
+    "MUSIC": "Muzik",
     "MOVIE": "Filem",
     "SPECIAL": "Khas",
     "airing": "Sedang disiarkan",
@@ -133,6 +136,8 @@
     "missing_mal": "Tiada di MyAnimeList",
     "missing_kitsu": "Tiada di Kitsu",
     "missing_simkl": "Tiada di Simkl",
+    "missing_mangabaka": "Tiada di MangaBaka",
+    "missing_shikimori": "Tiada di Shikimori",
     "show_conflicts": "Tunjukkan Konflik Penyegerakan",
     "header_title": "Senarai {{name}}",
     "add_to_list": "Tambah ke senarai",
@@ -189,6 +194,74 @@
       "conflict": "Konflik",
       "history": "Sejarah",
       "no_history": "Tiada sejarah"
+    },
+    "browse": "Layari kandungan",
+    "no_matches_desc": "Tiada yang sepadan dengan carian atau penapis semasa.",
+    "no_matches_title": "Tiada padanan",
+    "push_to": "Hantar ke {{tracker}} ({{n}})",
+    "selection": {
+      "cancel": "Batal",
+      "clear": "Kosongkan",
+      "confirm_delete": "Padam {{n}} entri?",
+      "confirm_delete_trackers": "Entri juga akan dibuang daripada penjejak yang disambungkan.",
+      "count": "{{n}} dipilih",
+      "delete": "Padam",
+      "details": "Butiran",
+      "exit": "Keluar pilihan",
+      "increment": "Tambah satu pada kemajuan",
+      "push": "Hantar ke {{tracker}}",
+      "push_short": "Hantar",
+      "select_all": "Pilih semua ({{n}})",
+      "select_entry": "Pilih entri",
+      "toggle": "Pilih entri",
+      "toolbar": "Tindakan pilihan"
+    },
+    "sync": {
+      "all_synced": "Semuanya telah disegerakkan",
+      "batch": {
+        "complete": "Selesai",
+        "delete": "Padam pukal",
+        "edit": "Sunting pukal",
+        "finished_issues": "{{done}} selesai · {{n}} perlu perhatian",
+        "generic": "Kelompok",
+        "push": "Hantar ke {{tracker}}",
+        "running": "{{done}} selesai · {{n}} lagi"
+      },
+      "batches": "Kelompok",
+      "cancel": "Batalkan selebihnya",
+      "dismiss": "Tutup",
+      "failed": "{{n}} gagal",
+      "hide_details": "Sembunyikan butiran",
+      "indicator": {
+        "done": "Penyegerakan selesai",
+        "failed": "Masalah penyegerakan",
+        "paused": "Penyegerakan dijeda",
+        "syncing": "Menyegerakkan"
+      },
+      "loading": "Memuatkan…",
+      "needs_attention": "Perlu perhatian",
+      "paused": {
+        "auth": "Log masuk tamat tempoh · sambung semula untuk teruskan",
+        "offline": "Luar talian · mencuba semula secara automatik",
+        "rate": "Had permintaan · akan bersambung sebentar lagi"
+      },
+      "reason": {
+        "entry_missing": "Tiada lagi dalam senarai anda",
+        "no_mapping": "Tidak dapat dipadankan pada penjejak ini",
+        "no_remote_id": "ID jauh tiada",
+        "not_connected": "Penjejak tidak disambungkan",
+        "sync_disabled": "Penyegerakan dimatikan untuk penjejak ini",
+        "unknown": "Ralat tidak diketahui",
+        "unknown_tracker": "Penjejak tidak diketahui"
+      },
+      "reconnect": "Sambung semula",
+      "retry_all": "Cuba semula semua yang gagal",
+      "retry_failed": "Cuba semula yang gagal",
+      "retry_now": "Cuba sekarang",
+      "show_details": "Tunjukkan butiran",
+      "syncing": "Menyegerakkan",
+      "title": "Penyegerakan",
+      "trackers": "Penjejak"
     }
   },
   "marketplace": {
@@ -208,7 +281,11 @@
     "no_repo": "Tiada Repositori Disambungkan",
     "no_repo_desc": "Masukkan URL repositori di atas untuk menemui dan memasang sambungan komuniti.",
     "empty": "Repositori Kosong",
-    "empty_desc": "Repositori ini berjaya dimuatkan, tetapi ia tidak mengandungi sebarang sambungan."
+    "empty_desc": "Repositori ini berjaya dimuatkan, tetapi ia tidak mengandungi sebarang sambungan.",
+    "manage_repos": "Urus repositori",
+    "all_languages": "Semua bahasa",
+    "add_repo": "Tambah repositori",
+    "repositories": "Repositori"
   },
   "reader": {
     "loading": "memuatkan",
@@ -271,6 +348,7 @@
   },
   "search": {
     "title": "Cari",
+    "filter_tags": "Tapis tag",
     "placeholder": "cari...",
     "any_format": "Mana-mana format",
     "enter_filter": "Masukkan penapis",
@@ -616,7 +694,10 @@
       "conflict_updated": "Kekalkan Kemas Kini Terkini",
       "conflict_anilist": "Utamakan Anilist",
       "conflict_mal": "Utamakan MyAnimeList",
-      "conflict_kitsu": "Utamakan Kitsu"
+      "conflict_kitsu": "Utamakan Kitsu",
+      "conflict_simkl": "Utamakan Simkl",
+      "conflict_shikimori": "Utamakan Shikimori",
+      "conflict_mangabaka": "Utamakan MangaBaka"
     },
     "general_section": {
       "general_desc": "Urus keutamaan aplikasi global anda.",
@@ -649,7 +730,9 @@
       "default_home_manga": "Manga",
       "default_home_novel": "Novel",
       "disable_card_trailers": "Lumpuhkan treler kad",
-      "disable_card_trailers_desc": "Menghalang treler daripada dimainkan secara automatik apabila menuding pada kad."
+      "disable_card_trailers_desc": "Menghalang treler daripada dimainkan secara automatik apabila menuding pada kad.",
+      "disable_hero_trailers": "Matikan treler hero",
+      "disable_hero_trailers_desc": "Tunjukkan imej sepanduk dan bukannya memainkan treler dalam hero halaman utama."
     },
     "content_section": {
       "content_desc": "Urus penyedia metadata dan tingkah laku penjejakan anda.",
@@ -671,7 +754,9 @@
       "close": "Tutup",
       "enabled": "Didayakan",
       "unsupported_type": "Jenis Tidak Disokong",
-      "extension_config": "Tetapan {{name}}"
+      "extension_config": "Tetapan {{name}}",
+      "all_sources": "Semua sumber",
+      "confirm_uninstall": "Sahkan"
     },
     "player_section": {
       "player_desc": "Konfigurasikan pengalaman main balik anda",
@@ -727,7 +812,26 @@
       "anime4k_fast": "Pantas",
       "anime4k_hq": "HQ",
       "anime4k_mode": "Mod Anime4K",
-      "anime4k_mode_desc": "A, B dan C menyasarkan kemerosotan sumber yang berbeza."
+      "anime4k_mode_desc": "A, B dan C menyasarkan kemerosotan sumber yang berbeza.",
+      "thumbnails": "Lakaran kecil",
+      "thumbnails_desc": "Tunjukkan bingkai pratonton apabila menuding atau menyeret bar main. Berkuat kuasa dari episod seterusnya.",
+      "thumb_interval": "Selang lakaran kecil",
+      "thumb_interval_desc": "Masa antara pratonton. Selang lebih panjang menggunakan kurang data, terutamanya pada strim.",
+      "thumb_size": "Saiz lakaran kecil",
+      "thumb_size_desc": "Lebar imej pratonton.",
+      "thumb_size_small": "Kecil",
+      "thumb_size_medium": "Sederhana",
+      "thumb_size_large": "Besar",
+      "thumb_hls": "Lakaran kecil pada strim (HLS)",
+      "thumb_hls_desc": "Memuat turun data video tambahan semasa menatal.",
+      "thumb_torrent": "Lakaran kecil pada torrent",
+      "thumb_torrent_desc": "Hanya bahagian yang telah dimuat turun boleh dipratonton.",
+      "thumb_precise": "Bingkai tepat",
+      "thumb_precise_desc": "Tunjukkan bingkai tepat dan bukannya bingkai utama terdekat. Lebih perlahan.",
+      "sub_group_text": "Teks",
+      "sub_group_outline": "Garis luar & bayang",
+      "sub_group_placement": "Kedudukan & masa",
+      "sub_group_behavior": "Tingkah laku"
     },
     "readers_section": {
       "reader_preview": "Pratonton",

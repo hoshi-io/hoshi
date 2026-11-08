@@ -113,8 +113,11 @@
   },
   "card": {
     "TV": "टीवी",
+    "TV_SHORT": "टीवी शॉर्ट",
+    "LIGHT_NOVEL": "लाइट नॉवेल",
     "ONA": "ONA",
     "OVA": "OVA",
+    "MUSIC": "संगीत",
     "MOVIE": "फिल्म",
     "SPECIAL": "स्पेशल",
     "airing": "प्रसारित हो रहा है",
@@ -133,6 +136,8 @@
     "missing_mal": "MyAnimeList पर उपलब्ध नहीं",
     "missing_kitsu": "Kitsu पर उपलब्ध नहीं",
     "missing_simkl": "Simkl पर उपलब्ध नहीं",
+    "missing_mangabaka": "MangaBaka पर उपलब्ध नहीं",
+    "missing_shikimori": "Shikimori पर उपलब्ध नहीं",
     "show_conflicts": "सिंक विरोधाभास दिखाएँ",
     "header_title": "{{name}} की सूची",
     "add_to_list": "सूची में जोड़ें",
@@ -189,6 +194,74 @@
       "conflict": "विरोध (Conflict)",
       "history": "इतिहास",
       "no_history": "कोई इतिहास नहीं"
+    },
+    "browse": "कंटेंट ब्राउज़ करें",
+    "no_matches_desc": "मौजूदा खोज या फ़िल्टर से कुछ भी मेल नहीं खाता।",
+    "no_matches_title": "कोई मिलान नहीं",
+    "push_to": "{{tracker}} पर भेजें ({{n}})",
+    "selection": {
+      "cancel": "रद्द करें",
+      "clear": "साफ़ करें",
+      "confirm_delete": "{{n}} एंट्री हटाएँ?",
+      "confirm_delete_trackers": "इन्हें आपके कनेक्ट किए गए ट्रैकर्स से भी हटा दिया जाएगा।",
+      "count": "{{n}} चुनी गईं",
+      "delete": "हटाएँ",
+      "details": "विवरण",
+      "exit": "चयन से बाहर निकलें",
+      "increment": "प्रगति में एक जोड़ें",
+      "push": "{{tracker}} पर भेजें",
+      "push_short": "भेजें",
+      "select_all": "सभी चुनें ({{n}})",
+      "select_entry": "एंट्री चुनें",
+      "toggle": "एंट्री चुनें",
+      "toolbar": "चयन क्रियाएँ"
+    },
+    "sync": {
+      "all_synced": "सब कुछ सिंक है",
+      "batch": {
+        "complete": "पूर्ण",
+        "delete": "एक साथ हटाना",
+        "edit": "एक साथ संपादन",
+        "finished_issues": "{{done}} पूरी · {{n}} पर ध्यान चाहिए",
+        "generic": "बैच",
+        "push": "{{tracker}} पर भेजें",
+        "running": "{{done}} पूरी · {{n}} बाकी"
+      },
+      "batches": "बैच",
+      "cancel": "बाकी रद्द करें",
+      "dismiss": "बंद करें",
+      "failed": "{{n}} विफल",
+      "hide_details": "विवरण छिपाएँ",
+      "indicator": {
+        "done": "सिंक पूरा हुआ",
+        "failed": "सिंक में समस्याएँ",
+        "paused": "सिंक रुका हुआ है",
+        "syncing": "सिंक हो रहा है"
+      },
+      "loading": "लोड हो रहा है…",
+      "needs_attention": "ध्यान चाहिए",
+      "paused": {
+        "auth": "लॉगिन की अवधि समाप्त · जारी रखने के लिए फिर से कनेक्ट करें",
+        "offline": "ऑफ़लाइन · अपने आप फिर से कोशिश हो रही है",
+        "rate": "अनुरोध सीमा · जल्द फिर शुरू होगा"
+      },
+      "reason": {
+        "entry_missing": "अब आपकी सूची में नहीं है",
+        "no_mapping": "इस ट्रैकर पर मिलान नहीं हो सका",
+        "no_remote_id": "रिमोट आईडी नहीं है",
+        "not_connected": "ट्रैकर कनेक्ट नहीं है",
+        "sync_disabled": "इस ट्रैकर के लिए सिंक बंद है",
+        "unknown": "अज्ञात त्रुटि",
+        "unknown_tracker": "अज्ञात ट्रैकर"
+      },
+      "reconnect": "फिर से कनेक्ट करें",
+      "retry_all": "सभी विफल फिर से आज़माएँ",
+      "retry_failed": "विफल फिर से आज़माएँ",
+      "retry_now": "अभी फिर से आज़माएँ",
+      "show_details": "विवरण दिखाएँ",
+      "syncing": "सिंक हो रहा है",
+      "title": "सिंक",
+      "trackers": "ट्रैकर्स"
     }
   },
   "marketplace": {
@@ -208,7 +281,11 @@
     "no_repo": "कोई रिपॉजिटरी कनेक्ट नहीं है",
     "no_repo_desc": "कम्युनिटी एक्सटेंशन खोजने और इंस्टॉल करने के लिए ऊपर एक रिपॉजिटरी URL दर्ज करें।",
     "empty": "रिपॉजिटरी खाली है",
-    "empty_desc": "यह रिपॉजिटरी सफलतापूर्वक लोड हो गई थी, लेकिन इसमें कोई एक्सटेंशन नहीं है।"
+    "empty_desc": "यह रिपॉजिटरी सफलतापूर्वक लोड हो गई थी, लेकिन इसमें कोई एक्सटेंशन नहीं है।",
+    "manage_repos": "रिपॉज़िटरी प्रबंधित करें",
+    "all_languages": "सभी भाषाएँ",
+    "add_repo": "रिपॉज़िटरी जोड़ें",
+    "repositories": "रिपॉज़िटरी"
   },
   "reader": {
     "loading": "लोड हो रहा है",
@@ -271,6 +348,7 @@
   },
   "search": {
     "title": "खोजें",
+    "filter_tags": "टैग फ़िल्टर करें",
     "placeholder": "खोजें...",
     "any_format": "कोई भी फॉर्मेट",
     "enter_filter": "फ़िल्टर डालें",
@@ -616,7 +694,10 @@
       "conflict_updated": "नवीनतम अपडेटेड वर्शन रखें",
       "conflict_anilist": "Anilist को प्राथमिकता दें",
       "conflict_mal": "MyAnimeList को प्राथमिकता दें",
-      "conflict_kitsu": "Kitsu को प्राथमिकता दें"
+      "conflict_kitsu": "Kitsu को प्राथमिकता दें",
+      "conflict_simkl": "Simkl को प्राथमिकता दें",
+      "conflict_shikimori": "Shikimori को प्राथमिकता दें",
+      "conflict_mangabaka": "MangaBaka को प्राथमिकता दें"
     },
     "general_section": {
       "general_desc": "अपनी वैश्विक ऐप प्राथमिकताएं प्रबंधित करें।",
@@ -649,7 +730,9 @@
       "default_home_manga": "मंगा",
       "default_home_novel": "नॉवेल्स",
       "disable_card_trailers": "कार्ड ट्रेलर अक्षम करें",
-      "disable_card_trailers_desc": "कार्ड के ऊपर कर्सर ले जाने पर ट्रेलर को स्वचालित रूप से चलने से रोकता है।"
+      "disable_card_trailers_desc": "कार्ड के ऊपर कर्सर ले जाने पर ट्रेलर को स्वचालित रूप से चलने से रोकता है।",
+      "disable_hero_trailers": "हीरो ट्रेलर बंद करें",
+      "disable_hero_trailers_desc": "होम पेज के हीरो में ट्रेलर चलाने के बजाय बैनर इमेज दिखाएँ।"
     },
     "content_section": {
       "content_desc": "अपने मेटाडेटा प्रदाताओं और ट्रैकिंग व्यवहारों को प्रबंधित करें।",
@@ -671,7 +754,9 @@
       "close": "बंद करें",
       "enabled": "सक्षम",
       "unsupported_type": "असमर्थित प्रकार",
-      "extension_config": "{{name}} सेटिंग्स"
+      "extension_config": "{{name}} सेटिंग्स",
+      "all_sources": "सभी स्रोत",
+      "confirm_uninstall": "पुष्टि करें"
     },
     "player_section": {
       "player_desc": "अपने प्लेबैक अनुभव को कॉन्फ़िगर करें",
@@ -727,7 +812,26 @@
       "anime4k_fast": "तेज़",
       "anime4k_hq": "उच्च गुणवत्ता",
       "anime4k_mode": "Anime4K मोड",
-      "anime4k_mode_desc": "A, B और C अलग-अलग स्रोत गुणवत्ता समस्याओं के लिए हैं।"
+      "anime4k_mode_desc": "A, B और C अलग-अलग स्रोत गुणवत्ता समस्याओं के लिए हैं।",
+      "thumbnails": "थंबनेल",
+      "thumbnails_desc": "सीक बार पर होवर करने या खींचने पर प्रीव्यू फ़्रेम दिखाएँ। अगले एपिसोड से लागू होगा।",
+      "thumb_interval": "थंबनेल अंतराल",
+      "thumb_interval_desc": "प्रीव्यू के बीच का समय। लंबे अंतराल कम डेटा इस्तेमाल करते हैं, खासकर स्ट्रीम पर।",
+      "thumb_size": "थंबनेल आकार",
+      "thumb_size_desc": "प्रीव्यू इमेज की चौड़ाई।",
+      "thumb_size_small": "छोटा",
+      "thumb_size_medium": "मध्यम",
+      "thumb_size_large": "बड़ा",
+      "thumb_hls": "स्ट्रीम पर थंबनेल (HLS)",
+      "thumb_hls_desc": "स्क्रब करते समय अतिरिक्त वीडियो डेटा डाउनलोड करता है।",
+      "thumb_torrent": "टोरेंट पर थंबनेल",
+      "thumb_torrent_desc": "केवल पहले से डाउनलोड हुए हिस्सों का प्रीव्यू दिखाया जा सकता है।",
+      "thumb_precise": "सटीक फ़्रेम",
+      "thumb_precise_desc": "सबसे नज़दीकी कीफ़्रेम के बजाय सटीक फ़्रेम दिखाएँ। धीमा।",
+      "sub_group_text": "टेक्स्ट",
+      "sub_group_outline": "आउटलाइन और छाया",
+      "sub_group_placement": "स्थान और समय",
+      "sub_group_behavior": "व्यवहार"
     },
     "readers_section": {
       "reader_preview": "पूर्वावलोकन",

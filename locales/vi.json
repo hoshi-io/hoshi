@@ -113,8 +113,11 @@
   },
   "card": {
     "TV": "TV",
+    "TV_SHORT": "TV ngắn",
+    "LIGHT_NOVEL": "Light novel",
     "ONA": "ONA",
     "OVA": "OVA",
+    "MUSIC": "Âm nhạc",
     "MOVIE": "Phim",
     "SPECIAL": "Đặc biệt",
     "airing": "Đang phát sóng",
@@ -133,6 +136,8 @@
     "missing_mal": "Thiếu trên MyAnimeList",
     "missing_kitsu": "Thiếu trên Kitsu",
     "missing_simkl": "Thiếu trên Simkl",
+    "missing_mangabaka": "Thiếu trên MangaBaka",
+    "missing_shikimori": "Thiếu trên Shikimori",
     "show_conflicts": "Hiển thị xung đột đồng bộ",
     "header_title": "Danh sách của {{name}}",
     "add_to_list": "Thêm vào danh sách",
@@ -189,6 +194,74 @@
       "conflict": "Xung đột",
       "history": "Lịch sử",
       "no_history": "Không có lịch sử"
+    },
+    "browse": "Duyệt nội dung",
+    "no_matches_desc": "Không có gì khớp với tìm kiếm hoặc bộ lọc hiện tại.",
+    "no_matches_title": "Không có kết quả",
+    "push_to": "Đẩy lên {{tracker}} ({{n}})",
+    "selection": {
+      "cancel": "Hủy",
+      "clear": "Xóa chọn",
+      "confirm_delete": "Xóa {{n}} mục?",
+      "confirm_delete_trackers": "Chúng cũng sẽ bị xóa khỏi các tracker đã kết nối.",
+      "count": "Đã chọn {{n}}",
+      "delete": "Xóa",
+      "details": "Chi tiết",
+      "exit": "Thoát chọn",
+      "increment": "Tăng tiến độ thêm một",
+      "push": "Đẩy lên {{tracker}}",
+      "push_short": "Đẩy",
+      "select_all": "Chọn tất cả ({{n}})",
+      "select_entry": "Chọn mục",
+      "toggle": "Chọn các mục",
+      "toolbar": "Thao tác với mục đã chọn"
+    },
+    "sync": {
+      "all_synced": "Mọi thứ đã đồng bộ",
+      "batch": {
+        "complete": "Hoàn tất",
+        "delete": "Xóa hàng loạt",
+        "edit": "Sửa hàng loạt",
+        "finished_issues": "{{done}} xong · {{n}} cần chú ý",
+        "generic": "Lô",
+        "push": "Đẩy lên {{tracker}}",
+        "running": "{{done}} xong · còn {{n}}"
+      },
+      "batches": "Các lô",
+      "cancel": "Hủy phần còn lại",
+      "dismiss": "Bỏ qua",
+      "failed": "{{n}} thất bại",
+      "hide_details": "Ẩn chi tiết",
+      "indicator": {
+        "done": "Đồng bộ xong",
+        "failed": "Sự cố đồng bộ",
+        "paused": "Đồng bộ tạm dừng",
+        "syncing": "Đang đồng bộ"
+      },
+      "loading": "Đang tải…",
+      "needs_attention": "Cần chú ý",
+      "paused": {
+        "auth": "Phiên đăng nhập hết hạn · kết nối lại để tiếp tục",
+        "offline": "Ngoại tuyến · đang tự động thử lại",
+        "rate": "Giới hạn yêu cầu · sẽ tiếp tục ngay"
+      },
+      "reason": {
+        "entry_missing": "Không còn trong danh sách của bạn",
+        "no_mapping": "Không thể khớp trên tracker này",
+        "no_remote_id": "Thiếu id từ xa",
+        "not_connected": "Tracker chưa được kết nối",
+        "sync_disabled": "Đồng bộ đang tắt cho tracker này",
+        "unknown": "Lỗi không xác định",
+        "unknown_tracker": "Tracker không xác định"
+      },
+      "reconnect": "Kết nối lại",
+      "retry_all": "Thử lại tất cả mục lỗi",
+      "retry_failed": "Thử lại mục lỗi",
+      "retry_now": "Thử lại ngay",
+      "show_details": "Hiện chi tiết",
+      "syncing": "Đang đồng bộ",
+      "title": "Đồng bộ",
+      "trackers": "Tracker"
     }
   },
   "marketplace": {
@@ -208,7 +281,11 @@
     "no_repo": "Chưa kết nối kho lưu trữ",
     "no_repo_desc": "Nhập URL kho lưu trữ ở trên để khám phá và cài đặt các tiện ích mở rộng từ cộng đồng.",
     "empty": "Kho lưu trữ trống",
-    "empty_desc": "Kho lưu trữ này đã được tải thành công nhưng không chứa bất kỳ tiện ích mở rộng nào."
+    "empty_desc": "Kho lưu trữ này đã được tải thành công nhưng không chứa bất kỳ tiện ích mở rộng nào.",
+    "manage_repos": "Quản lý kho",
+    "all_languages": "Tất cả ngôn ngữ",
+    "add_repo": "Thêm kho",
+    "repositories": "Kho"
   },
   "reader": {
     "loading": "đang tải",
@@ -271,6 +348,7 @@
   },
   "search": {
     "title": "Tìm kiếm",
+    "filter_tags": "Lọc thẻ",
     "placeholder": "tìm kiếm...",
     "any_format": "Mọi định dạng",
     "enter_filter": "Nhập bộ lọc",
@@ -616,7 +694,10 @@
       "conflict_updated": "Giữ lại bản cập nhật mới nhất",
       "conflict_anilist": "Ưu tiên Anilist",
       "conflict_mal": "Ưu tiên MyAnimeList",
-      "conflict_kitsu": "Ưu tiên Kitsu"
+      "conflict_kitsu": "Ưu tiên Kitsu",
+      "conflict_simkl": "Ưu tiên Simkl",
+      "conflict_shikimori": "Ưu tiên Shikimori",
+      "conflict_mangabaka": "Ưu tiên MangaBaka"
     },
     "general_section": {
       "general_desc": "Quản lý các tùy chọn ứng dụng chung.",
@@ -649,7 +730,9 @@
       "default_home_manga": "Manga",
       "default_home_novel": "Tiểu thuyết",
       "disable_card_trailers": "Tắt trailer trên thẻ",
-      "disable_card_trailers_desc": "Ngăn trailer tự động phát khi di chuột qua các thẻ nội dung."
+      "disable_card_trailers_desc": "Ngăn trailer tự động phát khi di chuột qua các thẻ nội dung.",
+      "disable_hero_trailers": "Tắt trailer ở phần nổi bật",
+      "disable_hero_trailers_desc": "Hiển thị ảnh banner thay vì phát trailer ở phần nổi bật của trang chủ."
     },
     "content_section": {
       "content_desc": "Quản lý nguồn cung cấp dữ liệu và hành vi theo dõi.",
@@ -671,7 +754,9 @@
       "close": "Đóng",
       "enabled": "Đã bật",
       "unsupported_type": "Loại không hỗ trợ",
-      "extension_config": "Cài đặt của {{name}}"
+      "extension_config": "Cài đặt của {{name}}",
+      "all_sources": "Tất cả nguồn",
+      "confirm_uninstall": "Xác nhận"
     },
     "player_section": {
       "player_desc": "Cấu hình trải nghiệm phát lại",
@@ -727,7 +812,26 @@
       "anime4k_fast": "Nhanh",
       "anime4k_hq": "Chất lượng cao",
       "anime4k_mode": "Chế độ Anime4K",
-      "anime4k_mode_desc": "A, B và C nhắm đến các mức suy giảm khác nhau của nguồn video."
+      "anime4k_mode_desc": "A, B và C nhắm đến các mức suy giảm khác nhau của nguồn video.",
+      "thumbnails": "Ảnh xem trước",
+      "thumbnails_desc": "Hiển thị khung hình xem trước khi rê chuột hoặc kéo thanh tua. Áp dụng từ tập tiếp theo.",
+      "thumb_interval": "Khoảng cách ảnh xem trước",
+      "thumb_interval_desc": "Thời gian giữa các ảnh xem trước. Khoảng dài hơn dùng ít dữ liệu hơn, nhất là khi phát trực tuyến.",
+      "thumb_size": "Kích thước ảnh xem trước",
+      "thumb_size_desc": "Chiều rộng của ảnh xem trước.",
+      "thumb_size_small": "Nhỏ",
+      "thumb_size_medium": "Vừa",
+      "thumb_size_large": "Lớn",
+      "thumb_hls": "Ảnh xem trước trên luồng (HLS)",
+      "thumb_hls_desc": "Tải thêm dữ liệu video khi tua.",
+      "thumb_torrent": "Ảnh xem trước trên torrent",
+      "thumb_torrent_desc": "Chỉ xem trước được những phần đã tải xong.",
+      "thumb_precise": "Khung hình chính xác",
+      "thumb_precise_desc": "Hiển thị đúng khung hình thay vì keyframe gần nhất. Chậm hơn.",
+      "sub_group_text": "Văn bản",
+      "sub_group_outline": "Viền và bóng",
+      "sub_group_placement": "Vị trí và thời gian",
+      "sub_group_behavior": "Hành vi"
     },
     "readers_section": {
       "reader_preview": "Xem trước",

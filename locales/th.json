@@ -113,8 +113,11 @@
   },
   "card": {
     "TV": "TV",
+    "TV_SHORT": "ทีวีสั้น",
+    "LIGHT_NOVEL": "ไลต์โนเวล",
     "ONA": "ONA",
     "OVA": "OVA",
+    "MUSIC": "เพลง",
     "MOVIE": "ภาพยนตร์",
     "SPECIAL": "พิเศษ",
     "airing": "กำลังออกอากาศ",
@@ -133,6 +136,8 @@
     "missing_mal": "ไม่มีใน MyAnimeList",
     "missing_kitsu": "ไม่มีใน Kitsu",
     "missing_simkl": "ไม่มีใน Simkl",
+    "missing_mangabaka": "ไม่มีใน MangaBaka",
+    "missing_shikimori": "ไม่มีใน Shikimori",
     "show_conflicts": "แสดงข้อขัดแย้งในการซิงค์",
     "header_title": "รายการของ {{name}}",
     "add_to_list": "เพิ่มในรายการ",
@@ -189,6 +194,74 @@
       "conflict": "ข้อขัดแย้ง",
       "history": "ประวัติ",
       "no_history": "ไม่มีประวัติ"
+    },
+    "browse": "เรียกดูเนื้อหา",
+    "no_matches_desc": "ไม่มีรายการที่ตรงกับการค้นหาหรือตัวกรองปัจจุบัน",
+    "no_matches_title": "ไม่พบรายการที่ตรงกัน",
+    "push_to": "ส่งไปยัง {{tracker}} ({{n}})",
+    "selection": {
+      "cancel": "ยกเลิก",
+      "clear": "ล้าง",
+      "confirm_delete": "ลบ {{n}} รายการหรือไม่?",
+      "confirm_delete_trackers": "รายการเหล่านี้จะถูกลบออกจากแทร็กเกอร์ที่เชื่อมต่อด้วย",
+      "count": "เลือกแล้ว {{n}}",
+      "delete": "ลบ",
+      "details": "รายละเอียด",
+      "exit": "ออกจากการเลือก",
+      "increment": "เพิ่มความคืบหน้าหนึ่ง",
+      "push": "ส่งไปยัง {{tracker}}",
+      "push_short": "ส่ง",
+      "select_all": "เลือกทั้งหมด ({{n}})",
+      "select_entry": "เลือกรายการ",
+      "toggle": "เลือกรายการ",
+      "toolbar": "การทำงานกับรายการที่เลือก"
+    },
+    "sync": {
+      "all_synced": "ซิงค์ครบทั้งหมดแล้ว",
+      "batch": {
+        "complete": "เสร็จสิ้น",
+        "delete": "ลบเป็นชุด",
+        "edit": "แก้ไขเป็นชุด",
+        "finished_issues": "เสร็จ {{done}} · ต้องตรวจสอบ {{n}}",
+        "generic": "ชุด",
+        "push": "ส่งไปยัง {{tracker}}",
+        "running": "เสร็จ {{done}} · เหลือ {{n}}"
+      },
+      "batches": "ชุด",
+      "cancel": "ยกเลิกที่เหลือ",
+      "dismiss": "ปิด",
+      "failed": "ล้มเหลว {{n}}",
+      "hide_details": "ซ่อนรายละเอียด",
+      "indicator": {
+        "done": "ซิงค์เสร็จแล้ว",
+        "failed": "ปัญหาการซิงค์",
+        "paused": "หยุดซิงค์ชั่วคราว",
+        "syncing": "กำลังซิงค์"
+      },
+      "loading": "กำลังโหลด…",
+      "needs_attention": "ต้องตรวจสอบ",
+      "paused": {
+        "auth": "การเข้าสู่ระบบหมดอายุ · เชื่อมต่อใหม่เพื่อดำเนินการต่อ",
+        "offline": "ออฟไลน์ · กำลังลองใหม่อัตโนมัติ",
+        "rate": "ถูกจำกัดคำขอ · จะดำเนินการต่อในไม่ช้า"
+      },
+      "reason": {
+        "entry_missing": "ไม่อยู่ในรายการของคุณแล้ว",
+        "no_mapping": "ไม่สามารถจับคู่ในแทร็กเกอร์นี้",
+        "no_remote_id": "ไม่มี ID ระยะไกล",
+        "not_connected": "แทร็กเกอร์ยังไม่ได้เชื่อมต่อ",
+        "sync_disabled": "ปิดการซิงค์สำหรับแทร็กเกอร์นี้",
+        "unknown": "ข้อผิดพลาดที่ไม่รู้จัก",
+        "unknown_tracker": "แทร็กเกอร์ที่ไม่รู้จัก"
+      },
+      "reconnect": "เชื่อมต่อใหม่",
+      "retry_all": "ลองใหม่ทุกรายการที่ล้มเหลว",
+      "retry_failed": "ลองใหม่รายการที่ล้มเหลว",
+      "retry_now": "ลองใหม่ตอนนี้",
+      "show_details": "แสดงรายละเอียด",
+      "syncing": "กำลังซิงค์",
+      "title": "ซิงค์",
+      "trackers": "แทร็กเกอร์"
     }
   },
   "marketplace": {
@@ -208,7 +281,11 @@
     "no_repo": "ไม่ได้เชื่อมต่อกับพื้นที่จัดเก็บ",
     "no_repo_desc": "ป้อน URL ของพื้นที่จัดเก็บด้านบนเพื่อค้นหาและติดตั้งส่วนขยายจากชุมชน",
     "empty": "พื้นที่จัดเก็บว่างเปล่า",
-    "empty_desc": "โหลดพื้นที่จัดเก็บนี้สำเร็จแล้ว แต่ไม่มีส่วนขยายใดๆ อยู่ภายใน"
+    "empty_desc": "โหลดพื้นที่จัดเก็บนี้สำเร็จแล้ว แต่ไม่มีส่วนขยายใดๆ อยู่ภายใน",
+    "manage_repos": "จัดการคลัง",
+    "all_languages": "ทุกภาษา",
+    "add_repo": "เพิ่มคลัง",
+    "repositories": "คลัง"
   },
   "reader": {
     "loading": "กำลังโหลด",
@@ -271,6 +348,7 @@
   },
   "search": {
     "title": "ค้นหา",
+    "filter_tags": "กรองแท็ก",
     "placeholder": "ค้นหา...",
     "any_format": "ทุกรูปแบบ",
     "enter_filter": "ใส่ตัวกรอง",
@@ -616,7 +694,10 @@
       "conflict_updated": "เก็บเวอร์ชันที่อัปเดตล่าสุดไว้",
       "conflict_anilist": "ให้ความสำคัญกับ Anilist ก่อน",
       "conflict_mal": "ให้ความสำคัญกับ MyAnimeList ก่อน",
-      "conflict_kitsu": "ให้ความสำคัญกับ Kitsu ก่อน"
+      "conflict_kitsu": "ให้ความสำคัญกับ Kitsu ก่อน",
+      "conflict_simkl": "ให้ความสำคัญกับ Simkl",
+      "conflict_shikimori": "ให้ความสำคัญกับ Shikimori",
+      "conflict_mangabaka": "ให้ความสำคัญกับ MangaBaka"
     },
     "general_section": {
       "general_desc": "จัดการการตั้งค่าแอปโดยรวม",
@@ -649,7 +730,9 @@
       "default_home_manga": "มังงะ",
       "default_home_novel": "นิยาย",
       "disable_card_trailers": "ปิดใช้งานตัวอย่างบนการ์ด",
-      "disable_card_trailers_desc": "ป้องกันไม่ให้ตัวอย่างเล่นโดยอัตโนมัติเมื่อวางเมาส์เหนือการ์ด"
+      "disable_card_trailers_desc": "ป้องกันไม่ให้ตัวอย่างเล่นโดยอัตโนมัติเมื่อวางเมาส์เหนือการ์ด",
+      "disable_hero_trailers": "ปิดตัวอย่างในส่วนไฮไลต์",
+      "disable_hero_trailers_desc": "แสดงภาพแบนเนอร์แทนการเล่นตัวอย่างในส่วนไฮไลต์ของหน้าแรก"
     },
     "content_section": {
       "content_desc": "จัดการผู้ให้บริการข้อมูลเมตาและพฤติกรรมการติดตาม",
@@ -671,7 +754,9 @@
       "close": "ปิด",
       "enabled": "เปิดใช้งาน",
       "unsupported_type": "ประเภทที่ไม่รองรับ",
-      "extension_config": "ตั้งค่า {{name}}"
+      "extension_config": "ตั้งค่า {{name}}",
+      "all_sources": "ทุกแหล่ง",
+      "confirm_uninstall": "ยืนยัน"
     },
     "player_section": {
       "player_desc": "กำหนดค่าการเล่น ภาษา และระบบอัตโนมัติ",
@@ -727,7 +812,26 @@
       "anime4k_fast": "เร็ว",
       "anime4k_hq": "คุณภาพสูง",
       "anime4k_mode": "โหมด Anime4K",
-      "anime4k_mode_desc": "A, B และ C เหมาะสำหรับความเสื่อมของแหล่งวิดีโอที่แตกต่างกัน"
+      "anime4k_mode_desc": "A, B และ C เหมาะสำหรับความเสื่อมของแหล่งวิดีโอที่แตกต่างกัน",
+      "thumbnails": "ภาพตัวอย่าง",
+      "thumbnails_desc": "แสดงเฟรมตัวอย่างเมื่อชี้หรือลากแถบเลื่อนเวลา มีผลตั้งแต่ตอนถัดไป",
+      "thumb_interval": "ระยะห่างภาพตัวอย่าง",
+      "thumb_interval_desc": "เวลาระหว่างภาพตัวอย่าง ระยะที่ยาวขึ้นใช้ข้อมูลน้อยลง โดยเฉพาะสตรีม",
+      "thumb_size": "ขนาดภาพตัวอย่าง",
+      "thumb_size_desc": "ความกว้างของภาพตัวอย่าง",
+      "thumb_size_small": "เล็ก",
+      "thumb_size_medium": "กลาง",
+      "thumb_size_large": "ใหญ่",
+      "thumb_hls": "ภาพตัวอย่างบนสตรีม (HLS)",
+      "thumb_hls_desc": "ดาวน์โหลดข้อมูลวิดีโอเพิ่มขณะเลื่อนดู",
+      "thumb_torrent": "ภาพตัวอย่างบนทอร์เรนต์",
+      "thumb_torrent_desc": "ดูตัวอย่างได้เฉพาะส่วนที่ดาวน์โหลดแล้ว",
+      "thumb_precise": "เฟรมที่แม่นยำ",
+      "thumb_precise_desc": "แสดงเฟรมที่ตรงกันแทนคีย์เฟรมที่ใกล้ที่สุด ช้ากว่า",
+      "sub_group_text": "ข้อความ",
+      "sub_group_outline": "เส้นขอบและเงา",
+      "sub_group_placement": "ตำแหน่งและจังหวะเวลา",
+      "sub_group_behavior": "การทำงาน"
     },
     "readers_section": {
       "reader_preview": "ตัวอย่าง",

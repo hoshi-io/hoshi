@@ -113,8 +113,11 @@
   },
   "card": {
     "TV": "TV",
+    "TV_SHORT": "TVショート",
+    "LIGHT_NOVEL": "ライトノベル",
     "ONA": "ONA",
     "OVA": "OVA",
+    "MUSIC": "音楽",
     "MOVIE": "映画",
     "SPECIAL": "スペシャル",
     "airing": "放送中",
@@ -133,6 +136,8 @@
     "missing_mal": "MyAnimeListにありません",
     "missing_kitsu": "Kitsuにありません",
     "missing_simkl": "Simklにありません",
+    "missing_mangabaka": "MangaBakaにありません",
+    "missing_shikimori": "Shikimoriにありません",
     "show_conflicts": "同期の競合を表示",
     "header_title": "{{name}}のリスト",
     "add_to_list": "リストに追加",
@@ -189,6 +194,74 @@
       "conflict": "競合",
       "history": "履歴",
       "no_history": "履歴なし"
+    },
+    "browse": "コンテンツを探す",
+    "no_matches_desc": "現在の検索やフィルターに一致するものはありません。",
+    "no_matches_title": "一致なし",
+    "push_to": "{{tracker}}に送信 ({{n}})",
+    "selection": {
+      "cancel": "キャンセル",
+      "clear": "クリア",
+      "confirm_delete": "{{n}}件のエントリーを削除しますか？",
+      "confirm_delete_trackers": "接続中のトラッカーからも削除されます。",
+      "count": "{{n}}件選択中",
+      "delete": "削除",
+      "details": "詳細",
+      "exit": "選択を終了",
+      "increment": "進捗を1増やす",
+      "push": "{{tracker}}に送信",
+      "push_short": "送信",
+      "select_all": "すべて選択 ({{n}})",
+      "select_entry": "エントリーを選択",
+      "toggle": "エントリーを選択",
+      "toolbar": "選択中の操作"
+    },
+    "sync": {
+      "all_synced": "すべて同期済み",
+      "batch": {
+        "complete": "完了",
+        "delete": "一括削除",
+        "edit": "一括編集",
+        "finished_issues": "{{done}}件完了 · {{n}}件要確認",
+        "generic": "バッチ",
+        "push": "{{tracker}}に送信",
+        "running": "{{done}}件完了 · 残り{{n}}件"
+      },
+      "batches": "バッチ",
+      "cancel": "残りをキャンセル",
+      "dismiss": "閉じる",
+      "failed": "{{n}}件失敗",
+      "hide_details": "詳細を隠す",
+      "indicator": {
+        "done": "同期完了",
+        "failed": "同期の問題",
+        "paused": "同期を一時停止中",
+        "syncing": "同期中"
+      },
+      "loading": "読み込み中…",
+      "needs_attention": "要確認",
+      "paused": {
+        "auth": "ログインの有効期限切れ · 再接続して続行",
+        "offline": "オフライン · 自動で再試行中",
+        "rate": "リクエスト制限 · まもなく再開"
+      },
+      "reason": {
+        "entry_missing": "リストにもうありません",
+        "no_mapping": "このトラッカーで一致する作品が見つかりません",
+        "no_remote_id": "リモートIDがありません",
+        "not_connected": "トラッカーが接続されていません",
+        "sync_disabled": "このトラッカーの同期はオフです",
+        "unknown": "不明なエラー",
+        "unknown_tracker": "不明なトラッカー"
+      },
+      "reconnect": "再接続",
+      "retry_all": "失敗をすべて再試行",
+      "retry_failed": "失敗を再試行",
+      "retry_now": "今すぐ再試行",
+      "show_details": "詳細を表示",
+      "syncing": "同期中",
+      "title": "同期",
+      "trackers": "トラッカー"
     }
   },
   "marketplace": {
@@ -208,7 +281,11 @@
     "no_repo": "リポジトリが接続されていません",
     "no_repo_desc": "コミュニティ拡張機能を見つけてインストールするには、上にリポジトリのURLを入力してください。",
     "empty": "リポジトリが空です",
-    "empty_desc": "このリポジトリは正常に読み込まれましたが、拡張機能が含まれていません。"
+    "empty_desc": "このリポジトリは正常に読み込まれましたが、拡張機能が含まれていません。",
+    "manage_repos": "リポジトリを管理",
+    "all_languages": "すべての言語",
+    "add_repo": "リポジトリを追加",
+    "repositories": "リポジトリ"
   },
   "reader": {
     "loading": "読み込み中",
@@ -271,6 +348,7 @@
   },
   "search": {
     "title": "検索",
+    "filter_tags": "タグを絞り込む",
     "placeholder": "検索...",
     "any_format": "すべての形式",
     "enter_filter": "フィルターを入力",
@@ -616,7 +694,10 @@
       "conflict_updated": "最新の更新を維持",
       "conflict_anilist": "Anilistを優先",
       "conflict_mal": "MyAnimeListを優先",
-      "conflict_kitsu": "Kitsuを優先"
+      "conflict_kitsu": "Kitsuを優先",
+      "conflict_simkl": "Simklを優先",
+      "conflict_shikimori": "Shikimoriを優先",
+      "conflict_mangabaka": "MangaBakaを優先"
     },
     "general_section": {
       "general_desc": "アプリ全体の設定を管理します。",
@@ -649,7 +730,9 @@
       "default_home_manga": "マンガ",
       "default_home_novel": "小説",
       "disable_card_trailers": "カードの予告編を無効にする",
-      "disable_card_trailers_desc": "カードにホバーした際に予告編が自動再生されるのを防ぎます。"
+      "disable_card_trailers_desc": "カードにホバーした際に予告編が自動再生されるのを防ぎます。",
+      "disable_hero_trailers": "ヒーローの予告編を無効化",
+      "disable_hero_trailers_desc": "ホームのヒーローで予告編を再生する代わりにバナー画像を表示します。"
     },
     "content_section": {
       "content_desc": "メタデータ提供元とトラッキング動作を管理します。",
@@ -671,7 +754,9 @@
       "close": "閉じる",
       "enabled": "有効",
       "unsupported_type": "未対応タイプ",
-      "extension_config": "{{name}} 設定"
+      "extension_config": "{{name}} 設定",
+      "all_sources": "すべてのソース",
+      "confirm_uninstall": "確認"
     },
     "player_section": {
       "player_desc": "再生環境を設定します",
@@ -727,7 +812,26 @@
       "anime4k_fast": "高速",
       "anime4k_hq": "高品質",
       "anime4k_mode": "Anime4Kモード",
-      "anime4k_mode_desc": "A、B、Cはそれぞれ異なるソースの劣化に対応します。"
+      "anime4k_mode_desc": "A、B、Cはそれぞれ異なるソースの劣化に対応します。",
+      "thumbnails": "サムネイル",
+      "thumbnails_desc": "シークバーにホバーまたはドラッグしたときにプレビューを表示します。次のエピソードから適用されます。",
+      "thumb_interval": "サムネイルの間隔",
+      "thumb_interval_desc": "プレビューの間隔。長いほどデータ使用量が減ります（特にストリーム）。",
+      "thumb_size": "サムネイルのサイズ",
+      "thumb_size_desc": "プレビュー画像の幅。",
+      "thumb_size_small": "小",
+      "thumb_size_medium": "中",
+      "thumb_size_large": "大",
+      "thumb_hls": "ストリームのサムネイル (HLS)",
+      "thumb_hls_desc": "シーク中に追加の動画データをダウンロードします。",
+      "thumb_torrent": "トレントのサムネイル",
+      "thumb_torrent_desc": "ダウンロード済みの部分のみプレビューできます。",
+      "thumb_precise": "正確なフレーム",
+      "thumb_precise_desc": "最寄りのキーフレームではなく正確なフレームを表示します。低速です。",
+      "sub_group_text": "テキスト",
+      "sub_group_outline": "縁取りと影",
+      "sub_group_placement": "位置とタイミング",
+      "sub_group_behavior": "動作"
     },
     "readers_section": {
       "reader_preview": "プレビュー",

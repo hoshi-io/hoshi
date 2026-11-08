@@ -113,8 +113,11 @@
   },
   "card": {
     "TV": "TV",
+    "TV_SHORT": "TV Kısa",
+    "LIGHT_NOVEL": "Light Novel",
     "ONA": "ONA",
     "OVA": "OVA",
+    "MUSIC": "Müzik",
     "MOVIE": "Film",
     "SPECIAL": "Özel",
     "airing": "Yayında",
@@ -133,6 +136,8 @@
     "missing_mal": "MyAnimeList'te eksik",
     "missing_kitsu": "Kitsu'da eksik",
     "missing_simkl": "Simkl'da eksik",
+    "missing_mangabaka": "MangaBaka'da eksik",
+    "missing_shikimori": "Shikimori'de eksik",
     "show_conflicts": "Senkronizasyon Çakışmalarını Göster",
     "header_title": "{{name}}'in Listesi",
     "add_to_list": "Listeye ekle",
@@ -189,6 +194,74 @@
       "conflict": "Çakışma",
       "history": "Geçmiş",
       "no_history": "Geçmiş yok"
+    },
+    "browse": "İçeriklere göz at",
+    "no_matches_desc": "Mevcut arama veya filtrelerle eşleşen bir şey yok.",
+    "no_matches_title": "Eşleşme yok",
+    "push_to": "{{tracker}} hizmetine gönder ({{n}})",
+    "selection": {
+      "cancel": "İptal",
+      "clear": "Temizle",
+      "confirm_delete": "{{n}} giriş silinsin mi?",
+      "confirm_delete_trackers": "Bağlı takipçilerinden de kaldırılacaklar.",
+      "count": "{{n}} seçildi",
+      "delete": "Sil",
+      "details": "Ayrıntılar",
+      "exit": "Seçimden çık",
+      "increment": "İlerlemeye bir ekle",
+      "push": "{{tracker}} hizmetine gönder",
+      "push_short": "Gönder",
+      "select_all": "Tümünü seç ({{n}})",
+      "select_entry": "Girişi seç",
+      "toggle": "Girişleri seç",
+      "toolbar": "Seçim işlemleri"
+    },
+    "sync": {
+      "all_synced": "Her şey senkronize",
+      "batch": {
+        "complete": "Tamamlandı",
+        "delete": "Toplu silme",
+        "edit": "Toplu düzenleme",
+        "finished_issues": "{{done}} tamamlandı · {{n}} ilgi bekliyor",
+        "generic": "Toplu işlem",
+        "push": "{{tracker}} hizmetine gönder",
+        "running": "{{done}} tamamlandı · {{n}} kaldı"
+      },
+      "batches": "Toplu işlemler",
+      "cancel": "Kalanları iptal et",
+      "dismiss": "Kapat",
+      "failed": "{{n}} başarısız",
+      "hide_details": "Ayrıntıları gizle",
+      "indicator": {
+        "done": "Senkronizasyon bitti",
+        "failed": "Senkronizasyon sorunları",
+        "paused": "Senkronizasyon duraklatıldı",
+        "syncing": "Senkronize ediliyor"
+      },
+      "loading": "Yükleniyor…",
+      "needs_attention": "İlgi bekliyor",
+      "paused": {
+        "auth": "Oturum süresi doldu · devam etmek için yeniden bağlan",
+        "offline": "Çevrimdışı · otomatik olarak yeniden deneniyor",
+        "rate": "İstek sınırı · birazdan devam edecek"
+      },
+      "reason": {
+        "entry_missing": "Artık listende değil",
+        "no_mapping": "Bu takipçide eşleştirilemedi",
+        "no_remote_id": "Uzak kimlik eksik",
+        "not_connected": "Takipçi bağlı değil",
+        "sync_disabled": "Bu takipçi için senkronizasyon kapalı",
+        "unknown": "Bilinmeyen hata",
+        "unknown_tracker": "Bilinmeyen takipçi"
+      },
+      "reconnect": "Yeniden bağlan",
+      "retry_all": "Tüm başarısızları yeniden dene",
+      "retry_failed": "Başarısızları yeniden dene",
+      "retry_now": "Şimdi yeniden dene",
+      "show_details": "Ayrıntıları göster",
+      "syncing": "Senkronize ediliyor",
+      "title": "Senkronizasyon",
+      "trackers": "Takipçiler"
     }
   },
   "marketplace": {
@@ -208,7 +281,11 @@
     "no_repo": "Bağlı Depo Yok",
     "no_repo_desc": "Topluluk uzantılarını keşfetmek ve yüklemek için yukarıya bir depo URL'si girin.",
     "empty": "Depo Boş",
-    "empty_desc": "Bu depo başarıyla yüklendi ancak herhangi bir uzantı içermiyor."
+    "empty_desc": "Bu depo başarıyla yüklendi ancak herhangi bir uzantı içermiyor.",
+    "manage_repos": "Depoları yönet",
+    "all_languages": "Tüm diller",
+    "add_repo": "Depo ekle",
+    "repositories": "Depolar"
   },
   "reader": {
     "loading": "yükleniyor",
@@ -271,6 +348,7 @@
   },
   "search": {
     "title": "Ara",
+    "filter_tags": "Etiketleri filtrele",
     "placeholder": "ara...",
     "any_format": "Tüm formatlar",
     "enter_filter": "Filtre girin",
@@ -616,7 +694,10 @@
       "conflict_updated": "Son Güncelleneni Koru",
       "conflict_anilist": "Anilist'e Öncelik Ver",
       "conflict_mal": "MyAnimeList'e Öncelik Ver",
-      "conflict_kitsu": "Kitsu'ya Öncelik Ver"
+      "conflict_kitsu": "Kitsu'ya Öncelik Ver",
+      "conflict_simkl": "Simkl'e öncelik ver",
+      "conflict_shikimori": "Shikimori'ye öncelik ver",
+      "conflict_mangabaka": "MangaBaka'ya öncelik ver"
     },
     "general_section": {
       "general_desc": "Global uygulama tercihlerinizi yönetin.",
@@ -649,7 +730,9 @@
       "default_home_manga": "Manga",
       "default_home_novel": "Romanlar",
       "disable_card_trailers": "Kart fragmanlarını devre dışı bırak",
-      "disable_card_trailers_desc": "Kartların üzerine gelindiğinde fragmanların otomatik olarak oynatılmasını engeller."
+      "disable_card_trailers_desc": "Kartların üzerine gelindiğinde fragmanların otomatik olarak oynatılmasını engeller.",
+      "disable_hero_trailers": "Öne çıkan fragmanları kapat",
+      "disable_hero_trailers_desc": "Ana sayfadaki öne çıkan alanda fragman oynatmak yerine afiş görselini gösterir."
     },
     "content_section": {
       "content_desc": "Meta veri sağlayıcılarınızı ve takip davranışlarını yönetin.",
@@ -671,7 +754,9 @@
       "close": "Kapat",
       "enabled": "Etkin",
       "unsupported_type": "Desteklenmeyen Tür",
-      "extension_config": "{{name}} Ayarları"
+      "extension_config": "{{name}} Ayarları",
+      "all_sources": "Tüm kaynaklar",
+      "confirm_uninstall": "Onayla"
     },
     "player_section": {
       "player_desc": "Oynatma ayarlarını, dilleri ve otomasyonu yapılandırın.",
@@ -727,7 +812,26 @@
       "anime4k_fast": "Hızlı",
       "anime4k_hq": "Yüksek kalite",
       "anime4k_mode": "Anime4K Modu",
-      "anime4k_mode_desc": "A, B ve C farklı kaynak bozulmalarını hedefler."
+      "anime4k_mode_desc": "A, B ve C farklı kaynak bozulmalarını hedefler.",
+      "thumbnails": "Küçük resimler",
+      "thumbnails_desc": "İlerleme çubuğunun üzerine gelince veya sürüklerken önizleme karesi gösterir. Sonraki bölümden itibaren geçerlidir.",
+      "thumb_interval": "Küçük resim aralığı",
+      "thumb_interval_desc": "Önizlemeler arasındaki süre. Daha uzun aralıklar, özellikle yayınlarda daha az veri kullanır.",
+      "thumb_size": "Küçük resim boyutu",
+      "thumb_size_desc": "Önizleme görselinin genişliği.",
+      "thumb_size_small": "Küçük",
+      "thumb_size_medium": "Orta",
+      "thumb_size_large": "Büyük",
+      "thumb_hls": "Yayınlarda küçük resimler (HLS)",
+      "thumb_hls_desc": "Sararken ek video verisi indirir.",
+      "thumb_torrent": "Torrentlerde küçük resimler",
+      "thumb_torrent_desc": "Yalnızca indirilmiş kısımların önizlemesi gösterilebilir.",
+      "thumb_precise": "Hassas kareler",
+      "thumb_precise_desc": "En yakın anahtar kare yerine tam kareyi gösterir. Daha yavaş.",
+      "sub_group_text": "Metin",
+      "sub_group_outline": "Kontur ve gölge",
+      "sub_group_placement": "Konum ve zamanlama",
+      "sub_group_behavior": "Davranış"
     },
     "readers_section": {
       "reader_preview": "Önizleme",
