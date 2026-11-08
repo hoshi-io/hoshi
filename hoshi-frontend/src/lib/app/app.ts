@@ -6,6 +6,7 @@ import { listStore } from "@/app/list.svelte.js";
 import { i18n } from "@/stores/i18n.svelte";
 import { scheduleStore } from "@/app/schedule.svelte.js";
 import { layoutState } from "@/stores/layout.svelte.js";
+import { usersApi } from "@/api/users/users";
 
 const DEFAULT_USERNAME = 'User';
 
@@ -15,7 +16,24 @@ export async function initApp(setTouchDevice: (v: boolean) => void) {
     await auth.restore();
 
     if (!auth.isAuthenticated) {
-        await auth.register({ username: DEFAULT_USERNAME }, null);
+        let hasProfiles = false;
+        try {
+            hasProfiles = (await usersApi.getAll()).users.length > 0;
+        } catch (e) {
+            console.error("Could not list profiles", e);
+        }
+
+        if (hasProfiles) {
+            layoutState.switchProfileOpen = true;
+            return;
+        }
+        try {
+            await auth.register({ username: DEFAULT_USERNAME }, null);
+        } catch (e) {
+            console.error("Could not create the default profile", e);
+            layoutState.switchProfileOpen = true;
+            return;
+        }
     }
 
     if (auth.isAuthenticated) {
