@@ -207,7 +207,6 @@
             style:transition={isGesturing ? 'none' : 'transform 0.2s ease'}
             onload={() => readerState.setImgStatus(imgEntry.id, "loaded")}
             onerror={() => readerState.setImgStatus(imgEntry.id, "error")}
-            use:readerState.resolveBlobSrc={imgEntry}
             use:readerState.handleImgMount={imgEntry.id}
     />
 </div>

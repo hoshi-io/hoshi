@@ -30,6 +30,7 @@
             class="safe-reader flex-1 relative bg-muted/10
             {readerState.layout === 'scroll' ? 'overflow-y-auto overflow-x-hidden' : 'overflow-hidden'}"
             onclick={(e) => readerState.handleZoneClick(e)}
+            onscroll={(e) => readerState.onScroll(e)}
             onkeydown={(e) => {
                 if (e.key === 'ArrowRight') readerState.turnPage('next');
                 if (e.key === 'ArrowLeft') readerState.turnPage('prev');

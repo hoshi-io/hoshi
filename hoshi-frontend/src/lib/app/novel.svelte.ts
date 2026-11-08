@@ -6,6 +6,7 @@ import type { CoreError } from "@/api/client";
 import { untrack } from "svelte";
 
 import { BaseReaderState } from "./reader.svelte";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 export const NOVEL_THEMES = {
     light: { bg: "#fdfdfd", text: "#1a1a1a", border: "#e5e7eb" },
@@ -47,6 +48,8 @@ export class NovelReaderState extends BaseReaderState {
     }
 
     private debounceTimer: ReturnType<typeof setTimeout> | undefined;
+    /** Bumped per chapter load so a slower, older load can't overwrite a newer one. */
+    private loadToken = 0;
 
     scrollProgress = $state(0);
 
@@ -131,23 +134,32 @@ export class NovelReaderState extends BaseReaderState {
     }
 
     protected async loadChapter(currentCid: string, currentExt: string, currentChapterNum: number) {
+        const token = ++this.loadToken;
+        const stale = () => token !== this.loadToken;
+
         this.isLoading = true;
         this.error = null;
+        this.contentHtml = "";
 
         const container = document.getElementById("novel-main-container");
         if (container) container.scrollTop = 0;
 
         try {
             const [, playRes] = await Promise.all([
-                this.fetchShared(currentCid, currentExt, currentChapterNum),
+                this.fetchShared(currentCid, currentExt, currentChapterNum, stale),
                 contentApi.play(currentCid, currentExt, currentChapterNum),
             ]);
+            if (stale()) return;
             if (playRes.type.toLowerCase() !== "novel" || !playRes.data) {
                 throw { key: "reader.no_data" } as CoreError;
             }
 
             const data: any = playRes.data;
-            this.contentHtml = data.html || data.text || data.content || data;
+            const raw = typeof data === "string"
+                ? data
+                : [data.html, data.text, data.content].find(v => typeof v === "string") ?? "";
+            // Rendered with {@html}: must be sanitized (see sanitizeHtml.ts).
+            this.contentHtml = sanitizeHtml(raw);
 
             if (!this.contentHtml) {
                 throw { key: "reader.no_content" } as CoreError;
@@ -157,9 +169,9 @@ export class NovelReaderState extends BaseReaderState {
                 .updateChapterProgress({ cid: currentCid, chapter: currentChapterNum, completed: false })
                 .catch(e => console.error("History sync failed", e));
         } catch (e: any) {
-            this.error = e.key ? e : { key: "errors.unknown_error" };
+            if (!stale()) this.error = e?.key ? e : { key: "errors.unknown_error" };
         } finally {
-            this.isLoading = false;
+            if (!stale()) this.isLoading = false;
         }
     }
 

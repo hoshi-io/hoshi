@@ -1,5 +1,5 @@
 import { goto } from "$app/navigation";
-import { buildTauriProxyUrl, proxyApi } from "@/api/proxy";
+import { buildTauriProxyUrl } from "@/api/proxy";
 import { appConfig } from "@/stores/config.svelte.js";
 import { progressApi } from "@/api/progress/progress";
 import { contentApi } from "@/api/content/content";
@@ -73,7 +73,9 @@ export class MangaReaderState extends BaseReaderState {
             : null
     );
 
-    private blobCache = new Map<string, string>();
+    /** Bumped per chapter load so a slower, older load can't overwrite a newer one. */
+    private loadToken = 0;
+    private scrollRaf = 0;
 
     constructor() {
         super();
@@ -97,8 +99,7 @@ export class MangaReaderState extends BaseReaderState {
             this.preloadNextImages(this.currentGroupIndex);
         });
 
-        // Revoke blobs on destroy
-        $effect(() => () => this.revokeBlobs());
+        $effect(() => () => cancelAnimationFrame(this.scrollRaf));
     }
 
     private handleKeyDown(e: KeyboardEvent) {
@@ -117,22 +118,24 @@ export class MangaReaderState extends BaseReaderState {
     }
 
     protected async loadChapter(currentCid: string, currentExt: string, currentChapterNum: number) {
+        const token = ++this.loadToken;
+        const stale = () => token !== this.loadToken;
+
         this.isLoading = true;
         this.error = null;
         this.skipAnimation = true;
         this.currentGroupIndex = 0;
         this.animDir = 1;
         this.imageStatus = {};
-        this.revokeBlobs();
+        this.images = [];
         document.getElementById("reader-main-container")?.scrollTo(0, 0);
 
         try {
             const [, playRes] = await Promise.all([
-                this.fetchShared(currentCid, currentExt, currentChapterNum),
+                this.fetchShared(currentCid, currentExt, currentChapterNum, stale),
                 contentApi.play(currentCid, currentExt, currentChapterNum),
             ]);
-
-            console.log(playRes)
+            if (stale()) return;
 
             if (playRes.type.toLowerCase() !== "reader") {
                 throw { key: "reader.no_data" } as import("@/api/client").CoreError;
@@ -145,10 +148,11 @@ export class MangaReaderState extends BaseReaderState {
             if (extensions.isTachiyomi(currentExt) && rawImages.length > 0) {
                 const firstUrl = typeof rawImages[0] === "string" ? rawImages[0] : rawImages[0].url;
                 try {
-                    tachiyomiHeaders = await extensionsApi.getImageRequestHeaders(currentExt, firstUrl, this.allChapters[this.currentChapterIndex].id);
+                    tachiyomiHeaders = await extensionsApi.getImageRequestHeaders(currentExt, firstUrl, this.allChapters[this.currentChapterIndex]?.id);
                 } catch (e) {
                     console.warn("Could not fetch tachiyomi image headers", e);
                 }
+                if (stale()) return;
             }
 
             this.images = rawImages.map(
@@ -168,8 +172,6 @@ export class MangaReaderState extends BaseReaderState {
                 }
             );
 
-            console.log(this.images)
-
             if (this.images.length === 0) {
                 throw { key: "reader.no_images" } as import("@/api/client").CoreError;
             }
@@ -178,9 +180,9 @@ export class MangaReaderState extends BaseReaderState {
                 .updateChapterProgress({ cid: currentCid, chapter: currentChapterNum, completed: false })
                 .catch(e => console.error("History sync failed", e));
         } catch (e: any) {
-            this.error = e;
+            if (!stale()) this.error = e;
         } finally {
-            this.isLoading = false;
+            if (!stale()) this.isLoading = false;
         }
     }
 
@@ -206,35 +208,50 @@ export class MangaReaderState extends BaseReaderState {
     }
 
 
-    async resolveImageUrl(img: ImageEntry): Promise<string> {
-        if (!img.proxyParams) return img.url;
-        const key = img.proxyParams.url;
-        if (this.blobCache.has(key)) return this.blobCache.get(key)!;
-        const blob = await proxyApi.fetch(img.proxyParams);
-        const blobUrl = URL.createObjectURL(blob);
-        this.blobCache.set(key, blobUrl);
-        return blobUrl;
-    }
+    /** Action: a cached image can load before onload is attached; without this it stays invisible. */
+    handleImgMount = (node: HTMLImageElement, id: string) => {
+        if (node.complete && node.naturalWidth > 0) this.setImgStatus(id, "loaded");
+        return {
+            update: (newId: string) => {
+                if (node.complete && node.naturalWidth > 0) this.setImgStatus(newId, "loaded");
+            },
+        };
+    };
 
-    private revokeBlobs() {
-        this.blobCache.forEach(url => URL.revokeObjectURL(url));
-        this.blobCache.clear();
-    }
-
+    /** Warms the webview cache for the next pages (same proxy URL the <img> uses). */
     private preloadNextImages(currentIndex: number) {
         for (let i = currentIndex + 1; i <= currentIndex + 2; i++) {
             const group = this.groupedImages[i];
             if (!group) continue;
             group.forEach(img => {
                 if (!img) return;
-                if (img.proxyParams) {
-                    this.resolveImageUrl(img).catch(() => {});
-                } else {
-                    const imgEl = new Image();
-                    imgEl.src = img.url;
-                }
+                const imgEl = new Image();
+                imgEl.src = img.url;
             });
         }
+    }
+
+    /** Scroll-layout progress. Unloaded pages have no height, so a row only counts once loaded and in view. */
+    onScroll(e: Event) {
+        if (this.layout !== "scroll" || this.isLoading || this.images.length === 0) return;
+        const container = e.currentTarget as HTMLElement;
+        cancelAnimationFrame(this.scrollRaf);
+        this.scrollRaf = requestAnimationFrame(() => {
+            const rows = container.querySelectorAll<HTMLElement>(".scroll-row");
+            if (rows.length === 0) return;
+            const viewBottom = container.getBoundingClientRect().bottom;
+
+            let seen = 0;
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i].getBoundingClientRect().top >= viewBottom) break;
+                const loaded = (this.groupedImages[i] ?? []).every(
+                    img => !img || this.imageStatus[img.id] === "loaded"
+                );
+                if (!loaded) break;
+                seen = i + 1;
+            }
+            this.handleProgress(seen / rows.length);
+        });
     }
 
     handleTouchStart(e: TouchEvent) {

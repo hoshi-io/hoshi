@@ -5,7 +5,6 @@ import { contentApi } from "@/api/content/content";
 import { primaryMetadata } from "@/api/content/types";
 import { appConfig } from "@/stores/config.svelte.js";
 import { progressApi } from "@/api/progress/progress";
-import { listApi } from "@/api/list/list";
 import type { CoreError } from "@/api/client";
 import {listStore} from "@/app/list.svelte";
 import {invoke} from "@tauri-apps/api/core";
@@ -73,11 +72,16 @@ export abstract class BaseReaderState {
         await this.loadChapter(this.cid, this.extension, this.chapterNumber);
     }
 
-    protected async fetchShared(currentCid: string, currentExt: string, currentChapterNum: number) {
+    /** `stale` lets the caller's newer load win: nothing is applied once it returns true. */
+    protected async fetchShared(
+        currentCid: string, currentExt: string, currentChapterNum: number,
+        stale: () => boolean = () => false,
+    ) {
         const [contentRes, itemsRes] = await Promise.all([
             contentApi.get_by_cid(currentCid),
             contentApi.getItems(currentCid, currentExt),
         ]);
+        if (stale()) return contentRes;
 
         this.isNsfw = contentRes.content.nsfw;
 
@@ -109,11 +113,11 @@ export abstract class BaseReaderState {
 
         if (!this.hasUpdatedList && ratio >= 0.8 && appConfig.data?.content.autoUpdateProgress) {
             this.hasUpdatedList = true;
-            listApi
-                .upsert({ cid: this.cid, status: "CURRENT", progress: this.chapterNumber })
+            // Trackers count whole chapters: reading 10.5 means 10 are done.
+            // (The chapter history above keeps the exact 10.5.)
+            listStore
+                .autoUpdateProgress(this.cid, Math.floor(this.chapterNumber))
                 .catch(e => console.error("List sync failed", e));
-
-            listStore.updateEntryProgressLocal(this.cid, this.chapterNumber, "CURRENT");
         }
     }
 
