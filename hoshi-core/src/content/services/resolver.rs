@@ -45,6 +45,50 @@ fn mal_id_with_prefix(v: &Value, prefix: &str) -> Option<String> {
     }
 }
 
+/// Splits a trailing "(YYYY)" off a title: "Jujutsu Kaisen (2023)" -> ("Jujutsu Kaisen", Some(2023)).
+fn split_year_suffix(title: &str) -> (String, Option<i32>) {
+    let t = title.trim();
+    if let (true, Some(open)) = (t.ends_with(')'), t.rfind('(')) {
+        let inner = &t[open + 1..t.len() - 1];
+        if inner.len() == 4 && inner.chars().all(|c| c.is_ascii_digit()) {
+            if let Ok(y) = inner.parse::<i32>() {
+                if (1900..=2100).contains(&y) {
+                    return (t[..open].trim_end().to_string(), Some(y));
+                }
+            }
+        }
+    }
+    (t.to_string(), None)
+}
+
+fn is_ordinal(w: &str) -> bool {
+    let w = w.to_lowercase();
+    ["st", "nd", "rd", "th"].iter().any(|suf| {
+        w.strip_suffix(suf).map_or(false, |n| !n.is_empty() && n.chars().all(|c| c.is_ascii_digit()))
+    })
+}
+
+/// "Jujutsu Kaisen 2nd Season" / "Jujutsu Kaisen: Shimetsu Kaiyuu" -> "Jujutsu Kaisen".
+/// Cuts at the first ':' and at the first season/part marker. None when nothing changed.
+fn plain_title(title: &str) -> Option<String> {
+    let (no_year, _) = split_year_suffix(title);
+    let head = no_year.split(':').next().unwrap_or(&no_year);
+    let mut kept: Vec<&str> = Vec::new();
+    for w in head.split_whitespace() {
+        let lw = w.to_lowercase();
+        if matches!(lw.as_str(), "season" | "part" | "cour" | "final") || is_ordinal(w) {
+            break;
+        }
+        kept.push(w);
+    }
+    let out = kept.join(" ");
+    if out.is_empty() || out.eq_ignore_ascii_case(title.trim()) { None } else { Some(out) }
+}
+
+fn year_of(date: Option<&str>) -> Option<i32> {
+    date.and_then(|d| d.get(..4)).and_then(|y| y.parse().ok())
+}
+
 pub struct ContentResolverService;
 
 impl ContentResolverService {
@@ -86,56 +130,129 @@ impl ContentResolverService {
         let title = meta.title;
         let ct = content.content_type;
 
-        let search_results = state
-            .extension_manager
-            .read()
-            .await
-            .search(ext_name, &title, json!({}), 1)
-            .await
-            .map_err(|e| {
-                error!(ext = %ext_name, error = ?e, "Extension search failed");
-                CoreError::Internal("error.content.extension_search_failed".into())
-            })?;
-
         const MIN_SIMILARITY: f64 = 0.8;
+        const MAX_FALLBACK_QUERIES: usize = 2;
 
         let mut all_titles: Vec<String> = Vec::with_capacity(meta.title_i18n.len() + 1);
         all_titles.push(title.clone());
         all_titles.extend(meta.title_i18n.values().cloned());
+        let tracker_year = year_of(meta.release_date.as_deref());
 
-        let best_candidate = search_results
-            .iter()
-            .filter_map(|item| {
-                let normalized_item = normalize_title(&item.title);
-                let (best_score, _) = best_title_match(
-                    &normalized_item,
-                    all_titles.iter().map(String::as_str),
-                );
-                if best_score >= MIN_SIMILARITY {
-                    Some((best_score, item))
-                } else {
-                    None
+        let mut results = Self::search_candidates(state, ext_name, &title).await?;
+        let mut best = Self::pick_candidate(&results, &all_titles, tracker_year, MIN_SIMILARITY, false);
+
+        // Pass 2 (rare, only on a miss): sites that disambiguate seasons with "(YYYY)" or
+        // different subtitles. Search by plain title and let the year decide.
+        if best.is_none() {
+            let mut queries: Vec<String> = Vec::new();
+            for t in &all_titles {
+                if let Some(q) = plain_title(t) {
+                    if !queries.contains(&q) && !q.eq_ignore_ascii_case(&title) {
+                        queries.push(q);
+                    }
                 }
-            })
-            .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal))
-            .map(|(_, item)| item)
-            .ok_or_else(|| {
-                warn!(
-            title = %title,
-            titles = ?all_titles,
-            ext = %ext_name,
-            "No search result met similarity threshold across any title variant"
-        );
-                CoreError::NotFound("error.content.no_match_found".into())
-            })?;
+            }
+            queries.truncate(MAX_FALLBACK_QUERIES);
 
-        let candidate_id = best_candidate.id.clone();
+            if !queries.is_empty() {
+                info!(ext = %ext_name, ?queries, "No match on full title, retrying with plain title");
+                let q0 = queries.first().cloned();
+                let q1 = queries.get(1).cloned();
+                let run = |q: Option<String>| async move {
+                    match q {
+                        Some(q) => Self::search_candidates(state, ext_name, &q).await.unwrap_or_else(|e| {
+                            warn!(ext = %ext_name, error = ?e, "Fallback search failed");
+                            Vec::new()
+                        }),
+                        None => Vec::new(),
+                    }
+                };
+                let (r0, r1) = tokio::join!(run(q0), run(q1));
+                for (id, t, y) in r0.into_iter().chain(r1) {
+                    if !results.iter().any(|(rid, _, _)| *rid == id) {
+                        results.push((id, t, y));
+                    }
+                }
+                info!(ext = %ext_name, year = ?tracker_year, candidates = ?results, "Fallback search candidates");
+                best = Self::pick_candidate(&results, &all_titles, tracker_year, MIN_SIMILARITY, true);
+            }
+        }
+
+        let best_candidate_id = best.ok_or_else(|| {
+            warn!(
+                title = %title,
+                titles = ?all_titles,
+                year = ?tracker_year,
+                ext = %ext_name,
+                "No search result met similarity threshold across any title variant"
+            );
+            CoreError::NotFound("error.content.no_match_found".into())
+        })?;
+
+        let candidate_id = best_candidate_id;
         let ext_meta = Self::fetch_ext_metadata(state, ext_name, &candidate_id).await?;
         let ext_nsfw = state.extension_manager.read().await.is_nsfw(ext_name);
 
         Self::resolve_and_link(&state.pool, cid, ext_name, &candidate_id, &ext_meta, &ct, ext_nsfw).await?;
         ExtensionService::save_extension_metadata(state, cid, ext_name, &candidate_id).await;
         Ok((ct, candidate_id))
+    }
+
+    async fn search_candidates(
+        state: &Arc<AppState>,
+        ext_name: &str,
+        query: &str,
+    ) -> CoreResult<Vec<(String, String, Option<i32>)>> {
+        let items = state
+            .extension_manager
+            .read()
+            .await
+            .search(ext_name, query, json!({}), 0)
+            .await
+            .map_err(|e| {
+                error!(ext = %ext_name, error = ?e, "Extension search failed");
+                CoreError::Internal("error.content.extension_search_failed".into())
+            })?;
+        Ok(items
+            .into_iter()
+            .map(|i| {
+                let (plain, year) = split_year_suffix(&i.title);
+                (i.id, plain, year)
+            })
+            .collect())
+    }
+
+    fn pick_candidate(
+        results: &[(String, String, Option<i32>)],
+        all_titles: &[String],
+        tracker_year: Option<i32>,
+        min_similarity: f64,
+        require_year: bool,
+    ) -> Option<String> {
+        results
+            .iter()
+            .filter_map(|(id, item_title, item_year)| {
+                let (score, _) = best_title_match(
+                    &normalize_title(item_title),
+                    all_titles.iter().map(String::as_str),
+                );
+                if score < min_similarity {
+                    return None;
+                }
+                let tier = match (*item_year, tracker_year) {
+                    (Some(a), Some(b)) if a == b => 0,
+                    (Some(a), Some(b)) if (a - b).abs() == 1 => 1,
+                    (Some(_), Some(_)) => return None,
+                    _ if require_year => return None,
+                    _ => 2,
+                };
+                Some((tier, score, id))
+            })
+            .min_by(|a, b| {
+                a.0.cmp(&b.0)
+                    .then(b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal))
+            })
+            .map(|(_, _, id)| id.clone())
     }
 
     #[instrument(skip(pool, ext_meta))]
@@ -153,8 +270,9 @@ impl ContentResolverService {
             return Self::link(pool, cid, ext_name, ext_id, ext_nsfw).await;
         }
 
+        let (plain_ext_title, _) = split_year_suffix(&ext_meta.title);
         if let Some(matched) = ContentRepository::find_closest_match(
-            pool, &ext_meta.title, Some(content_type.clone()), ext_meta.year,
+            pool, &plain_ext_title, Some(content_type.clone()), ext_meta.year,
         ).await? {
             if matched.cid == cid {
                 debug!(cid = %cid, ext = %ext_name, "Resolved via fuzzy title match");
