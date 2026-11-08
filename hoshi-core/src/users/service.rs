@@ -1,9 +1,9 @@
-use bcrypt::{hash, verify, DEFAULT_COST};
 use tracing::{error, info, instrument, warn};
 use crate::core_err;
 use crate::error::{CoreError, CoreResult};
 use crate::state::AppState;
 use crate::users::repository::UserRepo;
+use crate::users::password::{hash_password, verify_password};
 use crate::users::types::{
     ChangePasswordBody, DeleteUserBody, UpdateUserBody,
     UserPrivate, UserResponse,
@@ -47,7 +47,8 @@ impl UserService {
             if password.is_empty() {
                 Some(None)
             } else {
-                let h = hash(password.trim(), DEFAULT_COST).map_err(|e| core_err!(Internal, "error.user.hashing_failed", e))?;
+                let h = hash_password(password.trim().to_string()).await
+                    .map_err(|e| core_err!(Internal, "error.user.hashing_failed", e))?;
                 Some(Some(h))
             }
         } else {
@@ -76,7 +77,7 @@ impl UserService {
                 CoreError::AuthError("error.user.password_required".into())
             })?;
 
-            if !verify(&pass, &hash_str).unwrap_or(false) {
+            if !verify_password(pass, hash_str).await.unwrap_or(false) {
                 warn!("Account deletion rejected: incorrect password");
                 return Err(CoreError::AuthError("error.user.incorrect_password".into()));
             }
@@ -105,7 +106,7 @@ impl UserService {
                 CoreError::AuthError("error.user.current_password_required".into())
             })?;
 
-            if !verify(curr_pass, &hash_str).unwrap_or(false) {
+            if !verify_password(curr_pass.clone(), hash_str).await.unwrap_or(false) {
                 warn!("Password change rejected: current password incorrect");
                 return Err(CoreError::AuthError("error.user.current_password_incorrect".into()));
             }
@@ -114,7 +115,8 @@ impl UserService {
         let has_new_password = body.new_password.is_some();
         let new_hash = match &body.new_password {
             Some(pass) if !pass.is_empty() => {
-                Some(hash(pass.trim(), DEFAULT_COST).map_err(|e| core_err!(Internal, "error.user.hashing_failed", e))?)
+                Some(hash_password(pass.trim().to_string()).await
+                    .map_err(|e| core_err!(Internal, "error.user.hashing_failed", e))?)
             }
             _ => None,
         };

@@ -1,4 +1,3 @@
-use bcrypt::{hash, verify, DEFAULT_COST};
 use tracing::{info, instrument, warn};
 
 use crate::auth::repository::AuthRepository;
@@ -7,6 +6,7 @@ use crate::core_err;
 use crate::error::{CoreError, CoreResult};
 use crate::state::AppState;
 use crate::users::repository::UserRepo;
+use crate::users::password::{hash_password, verify_password};
 
 pub struct AuthService;
 
@@ -33,7 +33,7 @@ impl AuthService {
                 CoreError::AuthError("error.auth.password_required".into())
             })?;
 
-            let is_valid = verify(&password_input, &hash_str)
+            let is_valid = verify_password(password_input, hash_str).await
                 .map_err(|e| core_err!(Internal, "error.auth.password_verification_failed", e))?;
 
             if !is_valid {
@@ -60,15 +60,11 @@ impl AuthService {
             return Err(CoreError::BadRequest("error.auth.username_required".into()));
         }
 
-        let password_hash = payload.password
-            .as_deref()
-            .map(str::trim)
-            .filter(|p| !p.is_empty())
-            .map(|p| {
-                hash(p, DEFAULT_COST)
-                    .map_err(|e| core_err!(Internal, "error.auth.hashing_failed", e))
-            })
-            .transpose()?;
+        let password_hash = match payload.password.as_deref().map(str::trim).filter(|p| !p.is_empty()) {
+            Some(p) => Some(hash_password(p.to_string()).await
+                .map_err(|e| core_err!(Internal, "error.auth.hashing_failed", e))?),
+            None => None,
+        };
 
         let user_id = UserRepo::create_user(&state.pool, &payload.username, password_hash).await?;
 
