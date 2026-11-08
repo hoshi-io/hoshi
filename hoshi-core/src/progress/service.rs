@@ -95,7 +95,7 @@ impl ProgressService {
                 Self::fetch_enriched_data(state, &row.cid).await;
             let content_type = Self::fetch_content_type(state, &row.cid).await;
 
-            let unit = units.into_iter().find(|u| u.unit_number == row.chapter as f64);
+            let unit = units.into_iter().find(|u| (u.unit_number - row.chapter).abs() < 1e-6);
 
             items.push(ContinueItem {
                 cid: row.cid,

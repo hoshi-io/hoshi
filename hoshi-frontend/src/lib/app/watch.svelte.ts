@@ -7,7 +7,6 @@ import { torrentApi } from "@/api/torrent/torrent";
 import { extensions as extensionsStore } from "@/stores/extensions.svelte.js";
 import { type CoreError } from "@/api/client";
 import { progressApi } from "@/api/progress/progress";
-import { listApi } from "@/api/list/list";
 import { listStore } from "@/app/list.svelte.js";
 import { appConfig } from "@/stores/config.svelte.js";
 import { i18n } from "@/stores/i18n.svelte.js";
@@ -427,12 +426,9 @@ export class WatchState {
         if (!this.hasUpdatedList && duration > 0 && appConfig.data.content.autoUpdateProgress) {
             if (currentTime / duration >= 0.8) {
                 this.hasUpdatedList = true;
-                const status =
-                    this.totalEpisodes > 0 && this.epNumber >= this.totalEpisodes
-                        ? "COMPLETED"
-                        : "CURRENT";
-                listApi.upsert({ cid: this.cid, status, progress: this.epNumber }).catch(() => {});
-                listStore.updateEntryProgressLocal(this.cid, this.epNumber, status);
+                listStore
+                    .autoUpdateProgress(this.cid, this.epNumber, this.totalEpisodes)
+                    .catch((e) => console.error("List sync failed", e));
             }
         }
     }

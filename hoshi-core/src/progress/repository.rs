@@ -100,7 +100,8 @@ impl ProgressRepository {
     ) -> CoreResult<Vec<ChapterProgress>> {
         let rows = sqlx::query_as(
             r#"
-            SELECT cp.*
+            SELECT cp.id, cp.user_id, cp.cid, CAST(cp.chapter AS REAL) AS chapter,
+                   cp.completed, cp.last_accessed
             FROM ChapterProgress cp
             INNER JOIN (
                 SELECT cid, MAX(last_accessed) AS max_accessed
@@ -136,7 +137,8 @@ impl ProgressRepository {
             .await?;
 
         let chapters = sqlx::query_as(
-            "SELECT * FROM ChapterProgress WHERE user_id = ? AND cid = ? ORDER BY chapter ASC",
+            "SELECT id, user_id, cid, CAST(chapter AS REAL) AS chapter, completed, last_accessed
+               FROM ChapterProgress WHERE user_id = ? AND cid = ? ORDER BY chapter ASC",
         )
             .bind(user_id)
             .bind(cid)

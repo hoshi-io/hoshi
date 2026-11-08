@@ -23,7 +23,7 @@ pub struct ChapterProgress {
     pub id: i64,
     pub user_id: i32,
     pub cid: String,
-    pub chapter: i32,
+    pub chapter: f64,
     pub completed: bool,
     pub last_accessed: i64,
 }
@@ -43,7 +43,7 @@ pub struct UpdateAnimeProgressBody {
 #[serde(rename_all = "camelCase")]
 pub struct UpdateChapterProgressBody {
     pub cid: String,
-    pub chapter: i32,
+    pub chapter: f64,
     pub completed: Option<bool>,
 }
 
@@ -60,7 +60,7 @@ pub struct ContinueItem {
     pub episode: Option<i32>,
     pub timestamp_seconds: Option<i32>,
     pub episode_duration_seconds: Option<i32>,
-    pub chapter: Option<i32>,
+    pub chapter: Option<f64>,
     pub unit: Option<ContentUnit>,
     pub last_accessed: i64,
 }

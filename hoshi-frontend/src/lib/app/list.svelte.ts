@@ -532,6 +532,40 @@ class ListStore {
         this.isModalOpen = true;
     }
 
+    /**
+     * Auto progress from the player/readers: never lowers progress, keeps REPEATING,
+     * otherwise CURRENT (COMPLETED at the last unit). Local copy comes from the backend.
+     */
+    async autoUpdateProgress(cid: string, progress: number, totalUnits = 0) {
+        if (!Number.isFinite(progress) || progress < 1) return;
+
+        let current: EnrichedListEntry | undefined = this.entries.find(e => e.cid === cid);
+        try {
+            const res = await listApi.getEntry(cid);
+            current = res.found && res.entry ? res.entry : undefined;
+        } catch {
+            // fall back to the local copy
+        }
+
+        if (current && progress <= (current.progress || 0)) return;
+
+        const status: ListStatus =
+            totalUnits > 0 && progress >= totalUnits ? "COMPLETED"
+                : current?.status === "REPEATING" ? "REPEATING"
+                    : "CURRENT";
+
+        const body: UpsertEntryBody = { cid, status, progress };
+        await listApi.upsert(body);
+        this.kickSync();
+
+        try {
+            const res = await listApi.getEntry(cid);
+            if (res.found && res.entry) this.upsertLocal(body, res.entry);
+        } catch {
+            this.updateEntryProgressLocal(cid, progress, status);
+        }
+    }
+
     updateEntryProgressLocal(cid: string, progress: number, status: ListStatus) {
         const idx = this.entries.findIndex(e => e.cid === cid);
         if (idx !== -1) {
