@@ -1,6 +1,7 @@
 //! Platform-agnostic playback core wrapping [`libmpv2::Mpv`].
 
 use std::io::Write;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
@@ -117,6 +118,7 @@ pub struct PlaybackHandle {
     chapters_files: Arc<Mutex<Vec<PathBuf>>>,
     load_counter: Arc<AtomicU64>,
     now_playing: Arc<Mutex<Option<NowPlaying>>>,
+    queued_now_playing: Arc<Mutex<HashMap<String, NowPlaying>>>,
     events: broadcast::Sender<PlaybackEvent>,
     protocol_hooks: Arc<Mutex<Vec<ProtocolHook>>>,
 }
@@ -130,6 +132,7 @@ impl PlaybackHandle {
             chapters_files: Arc::new(Mutex::new(Vec::new())),
             load_counter: Arc::new(AtomicU64::new(0)),
             now_playing: Arc::new(Mutex::new(None)),
+            queued_now_playing: Arc::new(Mutex::new(HashMap::new())),
             events: broadcast::channel(64).0,
             protocol_hooks: Arc::new(Mutex::new(vec![])),
         }
@@ -187,7 +190,12 @@ impl PlaybackHandle {
         *guard = Some(mpv.clone());
         self.session.fetch_add(1, Ordering::SeqCst);
 
-        spawn_event_loop(mpv, self.events.clone());
+        spawn_event_loop(
+            mpv,
+            self.events.clone(),
+            self.now_playing.clone(),
+            self.queued_now_playing.clone(),
+        );
 
         info!("playback core initialized");
         Ok(())
@@ -199,6 +207,7 @@ impl PlaybackHandle {
 
         self.cleanup_chapters_files();
         *self.now_playing.lock().unwrap() = None;
+        self.queued_now_playing.lock().unwrap().clear();
 
         self.run(move || -> libmpv2::Result<()> {
             mpv.command("stop", &[])?;
@@ -239,30 +248,17 @@ impl PlaybackHandle {
     pub async fn load(&self, spec: LoadSpec, mode: LoadMode) -> CoreResult<()> {
         let mpv = self.require_mpv().await?;
 
+        // Headers and user-agent go in as per-file loadfile options, not global
+        // properties: a global would leak into whatever plays next and would be
+        // overwritten for an already-queued entry by a later load.
         let mut other_headers = Vec::with_capacity(spec.headers.len());
         let mut user_agent: Option<String> = None;
         for (k, v) in &spec.headers {
             if k.eq_ignore_ascii_case("user-agent") {
                 user_agent = Some(v.clone());
             } else {
-                other_headers.push((k.clone(), v.clone()));
+                other_headers.push(mpv_list_escape(&format!("{k}: {v}")));
             }
-        }
-
-        let header_value = other_headers
-            .iter()
-            .map(|(k, v)| mpv_list_escape(&format!("{k}: {v}")))
-            .collect::<Vec<_>>()
-            .join(",");
-        {
-            let mpv = mpv.clone();
-            self.run(move || mpv.set_property("http-header-fields", header_value))
-                .await?;
-        }
-        {
-            let mpv = mpv.clone();
-            let ua = user_agent.unwrap_or_default();
-            self.run(move || mpv.set_property("user-agent", ua)).await?;
         }
 
         // Replace clears the playlist, so older chapters files are dead. Append
@@ -271,9 +267,24 @@ impl PlaybackHandle {
             self.cleanup_chapters_files();
         }
 
-        *self.now_playing.lock().unwrap() = spec.now_playing.clone();
+        // Only a Replace changes what is playing right now. Appended entries are
+        // remembered and promoted when mpv starts them (see spawn_event_loop).
+        match (&mode, spec.now_playing.clone()) {
+            (LoadMode::Replace, np) => {
+                *self.now_playing.lock().unwrap() = np;
+                self.queued_now_playing.lock().unwrap().clear();
+            }
+            (_, Some(np)) => {
+                self.queued_now_playing.lock().unwrap().insert(spec.url.clone(), np);
+            }
+            (_, None) => {}
+        }
 
         let mut options: Vec<String> = Vec::new();
+
+        // Always set both, even when empty, so a previous file's values never apply.
+        options.push(format!("http-header-fields={}", mpv_list_escape(&other_headers.join(","))));
+        options.push(format!("user-agent={}", mpv_list_escape(user_agent.as_deref().unwrap_or(""))));
 
         if let Some(start) = spec.start_position {
             if start > 0.0 {
@@ -566,7 +577,12 @@ impl Default for PlaybackHandle {
 
 /// Observes mpv's own event loop for the properties/events we care about
 /// and rebroadcasts them as [`PlaybackEvent`]s.
-fn spawn_event_loop(mpv: Arc<Mpv>, events: broadcast::Sender<PlaybackEvent>) {
+fn spawn_event_loop(
+    mpv: Arc<Mpv>,
+    events: broadcast::Sender<PlaybackEvent>,
+    now_playing: Arc<Mutex<Option<NowPlaying>>>,
+    queued_now_playing: Arc<Mutex<HashMap<String, NowPlaying>>>,
+) {
     std::thread::spawn(move || {
         if let Err(e) = mpv.observe_property("time-pos", libmpv2::Format::Double, 1) {
             warn!(?e, "failed to observe time-pos, position events disabled");
@@ -606,6 +622,14 @@ fn spawn_event_loop(mpv: Arc<Mpv>, events: broadcast::Sender<PlaybackEvent>) {
                 Some(Ok(libmpv2::events::Event::EndFile(reason))) => {
                     if matches!(reason, libmpv2::mpv_end_file_reason::Eof) {
                         let _ = events.send(PlaybackEvent::Eof);
+                    }
+                }
+                // A queued (appended) entry just started: it is now what's playing.
+                Some(Ok(libmpv2::events::Event::FileLoaded)) => {
+                    if let Ok(path) = mpv.get_property::<String>("path") {
+                        if let Some(np) = queued_now_playing.lock().unwrap().remove(&path) {
+                            *now_playing.lock().unwrap() = Some(np);
+                        }
                     }
                 }
                 Some(Ok(libmpv2::events::Event::Shutdown)) => break,
