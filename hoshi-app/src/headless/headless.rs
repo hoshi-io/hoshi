@@ -145,10 +145,9 @@ impl<R: Runtime + 'static> TauriHeadless<R> {
                 let cookies = app
                     .get_webview_window(&label)
                     .and_then(|w| {
-                        let u1 = (&p.url).parse().unwrap();
-                        let u2 = url_clone.parse().unwrap();
-                        let r = w.cookies_for_url(u1);
-                        r.or_else(|_| w.cookies_for_url(u2)).ok()
+                        p.url.parse().ok()
+                            .and_then(|u| w.cookies_for_url(u).ok())
+                            .or_else(|| url_clone.parse().ok().and_then(|u| w.cookies_for_url(u).ok()))
                     })
                     .map(|tauri_cookies| {
                         tauri_cookies.iter().map(|c| Cookie {

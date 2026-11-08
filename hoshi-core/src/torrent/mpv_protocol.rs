@@ -5,6 +5,7 @@ use std::time::Duration;
 use libmpv2::protocol::{Protocol};
 use libmpv2::Mpv;
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
+use tracing::warn;
 
 use crate::torrent::TorrentHandle;
 
@@ -14,8 +15,12 @@ const OPEN_TIMEOUT: Duration = Duration::from_secs(20);
 trait ReadSeek: tokio::io::AsyncRead + tokio::io::AsyncSeek + Unpin + Send {}
 impl<T: tokio::io::AsyncRead + tokio::io::AsyncSeek + Unpin + Send> ReadSeek for T {}
 
+/// `stream` is `None` when opening failed. libmpv2's open callback can only
+/// signal failure by panicking, and with `panic = "abort"` in release that
+/// would kill the process, so we hand back a dead cookie instead and fail
+/// every read/seek, which mpv reports as a normal load error.
 pub struct TorrentStreamCookie {
-    stream: Box<dyn ReadSeek>,
+    stream: Option<Box<dyn ReadSeek>>,
     len: u64,
     rt: tokio::runtime::Handle,
 }
@@ -48,13 +53,8 @@ fn open_thumb(handle: &mut TorrentHandle, uri: &str) -> TorrentStreamCookie {
 
 
 fn read_thumb(cookie: &mut TorrentStreamCookie, buf: &mut [c_char]) -> i64 {
-    let buf_u8 = unsafe { std::slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut u8, buf.len()) };
-    match cookie.rt.block_on(async {
-        tokio::time::timeout(THUMB_READ_TIMEOUT, cookie.stream.read(buf_u8)).await
-    }) {
-        Ok(Ok(n)) => n as i64,
-        _ => -1, // data not there in time: no thumbnail
-    }
+    // data not there in time: no thumbnail
+    read_with_timeout(cookie, buf, THUMB_READ_TIMEOUT)
 }
 
 pub fn register_thumb(mpv: &Mpv, torrent: TorrentHandle) -> libmpv2::Result<()> {
@@ -69,35 +69,48 @@ pub fn register_thumb(mpv: &Mpv, torrent: TorrentHandle) -> libmpv2::Result<()> 
 const THUMB_READ_TIMEOUT: Duration = Duration::from_millis(1500);
 
 fn open_with(handle: &mut TorrentHandle, uri: &str, prefix: &str) -> TorrentStreamCookie {
-    let session_id = uri.strip_prefix(prefix).expect("registered for this scheme only");
-    let (torrent, file_index, len, rt) = handle
-        .lookup_session(session_id)
-        .expect("unknown or expired torrent stream session");
-    let stream = rt
-        .block_on(async { tokio::time::timeout(OPEN_TIMEOUT, torrent.stream(file_index)).await })
-        .expect("timed out opening torrent file stream")
-        .expect("failed to open torrent file stream");
-    TorrentStreamCookie { stream: Box::new(stream), len, rt }
+    let rt = handle.runtime();
+    let dead = |rt: tokio::runtime::Handle| TorrentStreamCookie { stream: None, len: 0, rt };
+
+    let Some(session_id) = uri.strip_prefix(prefix) else {
+        warn!(uri, "torrent protocol: unexpected uri scheme");
+        return dead(rt);
+    };
+    let Some((torrent, file_index, len, rt)) = handle.lookup_session(session_id) else {
+        warn!(session_id, "torrent protocol: unknown or expired stream session");
+        return dead(rt);
+    };
+    match rt.block_on(async { tokio::time::timeout(OPEN_TIMEOUT, torrent.stream(file_index)).await }) {
+        Ok(Ok(stream)) => TorrentStreamCookie { stream: Some(Box::new(stream)), len, rt },
+        Ok(Err(e)) => {
+            warn!(session_id, error = ?e, "torrent protocol: failed to open file stream");
+            dead(rt)
+        }
+        Err(_) => {
+            warn!(session_id, "torrent protocol: timed out opening file stream");
+            dead(rt)
+        }
+    }
 }
 
-fn read(cookie: &mut TorrentStreamCookie, buf: &mut [c_char]) -> i64 {
+fn read_with_timeout(cookie: &mut TorrentStreamCookie, buf: &mut [c_char], timeout: Duration) -> i64 {
+    let Some(stream) = cookie.stream.as_mut() else { return -1 };
     let buf_u8 = unsafe {
         std::slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut u8, buf.len())
     };
-
-    let result = cookie.rt.block_on(async {
-        tokio::time::timeout(READ_TIMEOUT, cookie.stream.read(buf_u8)).await
-    });
-
-    match result {
+    match cookie.rt.block_on(async { tokio::time::timeout(timeout, stream.read(buf_u8)).await }) {
         Ok(Ok(n)) => n as i64,
         _ => -1,
     }
 }
 
+fn read(cookie: &mut TorrentStreamCookie, buf: &mut [c_char]) -> i64 {
+    read_with_timeout(cookie, buf, READ_TIMEOUT)
+}
+
 fn seek(cookie: &mut TorrentStreamCookie, offset: i64) -> i64 {
-    let rt = cookie.rt.clone();
-    match rt.block_on(async { cookie.stream.seek(SeekFrom::Start(offset as u64)).await }) {
+    let Some(stream) = cookie.stream.as_mut() else { return -1 };
+    match cookie.rt.block_on(async { stream.seek(SeekFrom::Start(offset as u64)).await }) {
         Ok(pos) => pos as i64,
         Err(_) => -1,
     }

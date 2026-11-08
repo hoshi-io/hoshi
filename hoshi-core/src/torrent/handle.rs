@@ -28,8 +28,8 @@ const LAST_PLAYED_MARKER: &str = ".last_played";
 #[derive(Clone)]
 pub struct TorrentHandle(Arc<Inner>);
 
-// libmpv2 wraps protocol callbacks in catch_unwind; only `open` can panic,
-// and it does so before touching any shared state.
+// libmpv2 wraps protocol callbacks in catch_unwind, but release builds use
+// panic = "abort", so the callbacks in mpv_protocol.rs must never panic.
 impl std::panic::RefUnwindSafe for TorrentHandle {}
 
 struct Inner {
@@ -252,6 +252,10 @@ impl TorrentHandle {
             .filter(|s| s.torrent_id == torrent_id)
             .map(|s| s.file_index)
             .collect()
+    }
+
+    pub fn runtime(&self) -> tokio::runtime::Handle {
+        self.0.rt.clone()
     }
 
     /// Sync lookup, called from mpv's demuxer thread (not an async context).

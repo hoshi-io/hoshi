@@ -761,6 +761,11 @@ impl TrackerProvider for AniListProvider {
     }
 
     async fn get_user_list(&self, access_token: &str, tracker_user_id: &str, score_format: Option<&str>,) -> CoreResult<Vec<UserListEntry>> {
+        let score_format = match score_format {
+            Some(f) => f.to_string(),
+            None => self.refresh_score_format(access_token).await?
+                .ok_or_else(|| CoreError::Internal("error.tracker.score_format_unknown".into()))?,
+        };
         let user_id    = tracker_user_id.parse::<i64>().unwrap_or(0);
         let full_query = format!("{}\n{}", USER_LIST_QUERY, MEDIA_FRAGMENT);
         let res = self.graphql(
@@ -822,7 +827,7 @@ impl TrackerProvider for AniListProvider {
                                 format:       format.map(String::from),
                                 status:       entry.get("status").and_then(|s| s.as_str()).map(String::from),
                                 progress:     entry.get("progress").and_then(|i| i.as_i64()).unwrap_or(0) as i32,
-                                score:        entry.get("score").and_then(|f| f.as_f64()).map(|s| normalize_score(s, score_format.unwrap())),
+                                score:        entry.get("score").and_then(|f| f.as_f64()).map(|s| normalize_score(s, &score_format)),
                                 start_date:   entry.get("startedAt").and_then(|d| Self::parse_date(d)),
                                 end_date:     entry.get("completedAt").and_then(|d| Self::parse_date(d)),
                                 repeat_count: entry.get("repeat").and_then(|i| i.as_i64()).unwrap_or(0) as i32,

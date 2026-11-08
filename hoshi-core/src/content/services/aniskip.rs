@@ -52,7 +52,7 @@ impl AniSkipService {
             }
         }).collect();
 
-        chapters.sort_by(|a, b| a.start.partial_cmp(&b.start).unwrap());
+        chapters.sort_by(|a, b| a.start.total_cmp(&b.start));
         chapters
     }
 
