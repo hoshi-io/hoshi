@@ -3,7 +3,7 @@ use std::sync::Arc;
 use sqlx::SqlitePool;
 use chrono::Utc;
 use tracing::{debug, error, info, instrument, warn};
-use serde_json::json;
+use serde_json::{json, Value};
 
 use crate::config::repository::ConfigRepository;
 use crate::content::models::{ContentType, EpisodeData, ExtensionSource, FullContent, Metadata};
@@ -21,8 +21,29 @@ use crate::tracker::provider::TrackerMedia;
 use crate::tracker::repository::TrackerRepository;
 use crate::tracker::types::TrackerMapping;
 
-const TRACKER_SOURCES: &[&str] = &["anilist", "mal", "kitsu", "simkl"];
+const TRACKER_SOURCES: &[&str] = &["anilist", "mal", "kitsu", "simkl", "mangabaka", "shikimori"];
 const FUZZY_SCORE_THRESHOLD: f64 = 0.85;
+const MAX_FUZZY_CANDIDATES: usize = 3;
+
+fn value_to_id(v: &Value) -> Option<String> {
+    match v {
+        Value::String(s) => {
+            let s = s.trim();
+            if s.is_empty() { None } else { Some(s.to_string()) }
+        }
+        Value::Number(n) => Some(n.as_i64().map(|i| i.to_string()).unwrap_or_else(|| n.to_string())),
+        _ => None,
+    }
+}
+
+fn mal_id_with_prefix(v: &Value, prefix: &str) -> Option<String> {
+    let id = value_to_id(v)?;
+    if id.starts_with(&format!("{prefix}:")) {
+        Some(id)
+    } else {
+        Some(format!("{prefix}:{id}"))
+    }
+}
 
 pub struct ContentResolverService;
 
@@ -265,22 +286,16 @@ impl ContentResolverService {
         content_type: &ContentType,
         ext_nsfw: bool,
     ) -> CoreResult<Option<FullContent>> {
-        if let Some(ref raw) = ext_meta.anilist_id {
-            let id_str = raw.to_string();
-            if let Some(full) = Self::link_or_enrich_tracker(
-                state, ext_name, ext_id, ext_nsfw, "anilist", &id_str, content_type,
-            ).await? {
-                return Ok(Some(full));
-            }
-        }
-
-        if let Some(ref raw) = ext_meta.mal_id {
-            let prefix = match content_type { ContentType::Anime => "anime", _ => "manga" };
-            let id_str = format!("{}:{}", prefix, raw);
-            if let Some(full) = Self::link_or_enrich_tracker(
-                state, ext_name, ext_id, ext_nsfw, "mal", &id_str, content_type,
-            ).await? {
-                return Ok(Some(full));
+        for (tracker, id) in Self::tracker_ids_from_ext_meta(ext_meta, content_type) {
+            match Self::link_or_enrich_tracker(
+                state, ext_name, ext_id, ext_nsfw, tracker, &id, content_type,
+            ).await {
+                Ok(Some(full)) => return Ok(Some(full)),
+                Ok(None) => {}
+                Err(e) => warn!(
+                    ext = %ext_name, tracker = %tracker, id = %id, error = ?e,
+                    "Tracker id from extension failed, trying next strategy"
+                ),
             }
         }
 
@@ -358,10 +373,17 @@ impl ContentResolverService {
             Err(e) => warn!(error = ?e, "MAL fuzzy search failed"),
         }
 
-        if let Some((tracker, tracker_id)) = candidates.into_iter().next() {
-            return Self::link_or_enrich_tracker(
+        for (tracker, tracker_id) in candidates.into_iter().take(MAX_FUZZY_CANDIDATES) {
+            match Self::link_or_enrich_tracker(
                 state, ext_name, ext_id, ext_nsfw, &tracker, &tracker_id, content_type,
-            ).await;
+            ).await {
+                Ok(Some(full)) => return Ok(Some(full)),
+                Ok(None) => {}
+                Err(e) => warn!(
+                    ext = %ext_name, tracker = %tracker, id = %tracker_id, error = ?e,
+                    "Fuzzy tracker candidate failed, trying next"
+                ),
+            }
         }
 
         Ok(None)
@@ -435,22 +457,16 @@ impl ContentResolverService {
     ) -> Vec<(&'static str, String)> {
         let mut ids = Vec::with_capacity(2);
 
-        if let Some(anilist_id) = &ext_meta.anilist_id {
-            ids.push(("anilist", anilist_id.to_string()));
+        if let Some(id) = ext_meta.anilist_id.as_ref().and_then(value_to_id) {
+            ids.push(("anilist", id));
         }
 
-        if let Some(mal_id) = &ext_meta.mal_id {
-            let prefix = match content_type {
-                ContentType::Anime => "anime",
-                ContentType::Manga | ContentType::Novel => "manga",
-            };
-            let id_str = mal_id.to_string();
-            let prefixed = if id_str.starts_with(&format!("{prefix}:")) {
-                id_str
-            } else {
-                format!("{prefix}:{id_str}")
-            };
-            ids.push(("mal", prefixed));
+        let prefix = match content_type {
+            ContentType::Anime => "anime",
+            ContentType::Manga | ContentType::Novel => "manga",
+        };
+        if let Some(id) = ext_meta.mal_id.as_ref().and_then(|v| mal_id_with_prefix(v, prefix)) {
+            ids.push(("mal", id));
         }
 
         ids

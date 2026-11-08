@@ -14,6 +14,14 @@ use crate::tracker::provider::TrackerMedia;
 use crate::tracker::repository::TrackerRepository;
 use crate::tracker::types::TrackerMapping;
 
+/// Cross-ids that identify a whole *show*, not one season/entry. In the animeApi dump every season
+/// of a show carries the same `trakt` value (e.g. Boku no Hero Academia S1..S8 are all 104311, only
+/// `trakt_season` differs), so using it to decide "this is the same content as an existing CID"
+/// merges S3..S8 into whichever season was opened first.
+/// It may still be stored as a mapping; it must never be used to match an existing CID.
+/// (`simkl`, `kitsu`, `mal`, `anidb`, ... are per-season and stay valid identity keys.)
+const SHOW_LEVEL_KEYS: &[&str] = &["trakt"];
+
 pub struct EnrichmentService;
 
 impl EnrichmentService {
@@ -28,7 +36,7 @@ impl EnrichmentService {
         if let Some(full) = Self::find_existing_cid_via_cross_ids(state, media, tracker, id).await? {
             return Ok(full);
         }
-        
+
         let (resolved, prefix) = match c_type {
             ContentType::Anime => (
                 Self::resolve_anime_cross_ids(state, tracker, id, provided_cross_ids).await,
@@ -51,6 +59,9 @@ impl EnrichmentService {
         let now = chrono::Utc::now().timestamp();
 
         for (cross_tracker, cross_id) in &cross_ids {
+            if SHOW_LEVEL_KEYS.contains(&cross_tracker.as_str()) {
+                continue;
+            }
             if let Ok(Some(cid)) = TrackerRepository::find_cid_by_tracker(&state.pool, cross_tracker, cross_id).await {
                 debug!(cid = %cid, via = %cross_tracker, "Resolved cross-ID matches existing CID, linking instead of importing");
                 Self::persist_mappings(&state.pool, &cid, &cross_ids, now).await;
@@ -106,13 +117,17 @@ impl EnrichmentService {
             return Self::link_tracker_and_load(state, &cid, tracker, id).await;
         }
 
-        let lookups = media.cross_ids.iter().map(|(cross_tracker, cross_id)| {
-            let pool = &state.pool;
-            async move {
-                let result = TrackerRepository::find_cid_by_tracker(pool, cross_tracker, cross_id).await;
-                (cross_tracker.clone(), result)
-            }
-        });
+        let lookups = media
+            .cross_ids
+            .iter()
+            .filter(|(cross_tracker, _)| !SHOW_LEVEL_KEYS.contains(&cross_tracker.as_str()))
+            .map(|(cross_tracker, cross_id)| {
+                let pool = &state.pool;
+                async move {
+                    let result = TrackerRepository::find_cid_by_tracker(pool, cross_tracker, cross_id).await;
+                    (cross_tracker.clone(), result)
+                }
+            });
 
         for (cross_tracker, result) in futures::future::join_all(lookups).await {
             if let Ok(Some(cid)) = result {
