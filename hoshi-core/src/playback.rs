@@ -594,6 +594,10 @@ fn spawn_event_loop(
             warn!(?e, "failed to observe demuxer-cache-time, buffer events disabled");
         }
 
+        if let Err(e) = mpv.observe_property("eof-reached", libmpv2::Format::Flag, 4) {
+            warn!(?e, "failed to observe eof-reached, eof events disabled");
+        }
+
         loop {
             match mpv.wait_event(1.0) {
                 Some(Ok(libmpv2::events::Event::PropertyChange {
@@ -619,10 +623,12 @@ fn spawn_event_loop(
                         let _ = events.send(PlaybackEvent::Buffered(cache_time));
                     }
                 }
-                Some(Ok(libmpv2::events::Event::EndFile(reason))) => {
-                    if matches!(reason, libmpv2::mpv_end_file_reason::Eof) {
-                        let _ = events.send(PlaybackEvent::Eof);
-                    }
+                Some(Ok(libmpv2::events::Event::PropertyChange {
+                            name: "eof-reached",
+                            change: libmpv2::events::PropertyData::Flag(true),
+                            ..
+                        })) => {
+                    let _ = events.send(PlaybackEvent::Eof);
                 }
                 // A queued (appended) entry just started: it is now what's playing.
                 Some(Ok(libmpv2::events::Event::FileLoaded)) => {

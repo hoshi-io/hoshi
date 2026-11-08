@@ -160,6 +160,10 @@ export class WatchState {
 
     /// Bumped by every `loadPlay()` so async work from a superseded load can tell.
     private loadToken = 0;
+    /// Resolves once mpv exists; load_stream fails with not_initialized before that.
+    private playerReady: Promise<unknown> = Promise.resolve();
+    /// The load whose EOF was already acted on (one auto-advance per file).
+    private eofHandledFor = -1;
     /// A torrent the user picked by hand; only valid for the current episode/extension.
     private forcedTorrent: TorrentSearchResult | null = null;
 
@@ -188,7 +192,7 @@ export class WatchState {
         // itself off the first native surfaceCreated callback (see
         // player_surface::android on the Rust side), not off a frontend call.
         if (getOsType() !== "android") {
-            invoke("initialize_player").catch(() => {});
+            this.playerReady = invoke("initialize_player").catch(() => {});
         }
 
         // Episode/content loading — reacts only to route params.
@@ -434,6 +438,8 @@ export class WatchState {
     }
 
     private handleEof() {
+        if (!this.isStreamLoaded || this.eofHandledFor === this.loadToken) return;
+        this.eofHandledFor = this.loadToken;
         if (this.hasNext && appConfig.data?.player.autoplayNextEpisode) {
             this.goToEpisode(this.epNumber + 1);
         }
@@ -737,6 +743,9 @@ export class WatchState {
         this.resetPlaybackState();
         const token = ++this.loadToken;
 
+        await this.playerReady;
+        if (token !== this.loadToken) return;
+
         // Stop the old file now, not when the new one is ready.
         await this.haltCurrentPlayback();
         if (token !== this.loadToken) return;
@@ -757,6 +766,7 @@ export class WatchState {
             this.chapters = stream.chapters;
 
             await invoke("wait_for_player_ready").catch(() => {});
+            if (token !== this.loadToken) return;
             await invoke("load_stream", {
                 url: stream.url,
                 headers: this.toHeaderList(stream.headers),
@@ -765,7 +775,9 @@ export class WatchState {
                 startPosition: initialTime > 0 ? initialTime : undefined,
                 nowPlaying: this.buildNowPlaying(),
             });
-            
+            // A newer load started while mpv was opening this one; it owns the player now.
+            if (token !== this.loadToken) return;
+
             this.isStreamLoaded = true;
             await this.refreshTracks();
 
@@ -773,7 +785,8 @@ export class WatchState {
             if (preferredId !== null) await this.setSubtitleTrack(preferredId);
         } catch (e: any) {
             console.error("loadPlay failed", e);
-            this.error = e.key ? e : { key: "errors.unknown_error" };
+            if (token !== this.loadToken) return;
+            this.error = e?.key ? e : { key: "errors.unknown_error" };
 
             if (this.isTorrent && (e?.key === "watch.no_torrent_match" || this.isMappingError)) {
                 this.showTorrentPicker = true;
