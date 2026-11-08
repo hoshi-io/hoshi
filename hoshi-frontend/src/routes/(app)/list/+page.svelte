@@ -62,7 +62,9 @@
         { value: "anilist", label: i18n.t('list.missing_anilist') },
         { value: "mal", label: i18n.t('list.missing_mal') },
         { value: "kitsu", label: i18n.t('list.missing_kitsu') },
-        { value: "simkl", label: i18n.t('list.missing_simkl') }
+        { value: "simkl", label: i18n.t('list.missing_simkl') },
+        { value: "mangabaka", label: i18n.t('list.missing_mangabaka') },
+        { value: "shikimori", label: i18n.t('list.missing_shikimori') }
     ];
 
     const statusCounts = $derived<Record<StatusFilter, number>>({

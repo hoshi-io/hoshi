@@ -143,6 +143,8 @@
     "missing_mal": "Missing on MyAnimeList",
     "missing_kitsu": "Missing on Kitsu",
     "missing_simkl": "Missing on Simkl",
+    "missing_mangabaka": "Missing on MangaBaka",
+    "missing_shikimori": "Missing on Shikimori",
     "show_conflicts": "Show Sync Conflicts",
     "header_title": "{{name}}'s List",
     "add_to_list": "Add to list",
