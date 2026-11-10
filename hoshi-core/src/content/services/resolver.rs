@@ -191,7 +191,7 @@ impl ContentResolverService {
 
         let candidate_id = best_candidate_id;
         let ext_meta = Self::fetch_ext_metadata(state, ext_name, &candidate_id).await?;
-        let ext_nsfw = state.extension_manager.read().await.is_nsfw(ext_name);
+        let ext_nsfw = state.extension_manager.is_nsfw(ext_name);
 
         Self::resolve_and_link(&state.pool, cid, ext_name, &candidate_id, &ext_meta, &ct, ext_nsfw).await?;
         ExtensionService::save_extension_metadata(state, cid, ext_name, &candidate_id).await;
@@ -205,8 +205,6 @@ impl ContentResolverService {
     ) -> CoreResult<Vec<(String, String, Option<i32>)>> {
         let items = state
             .extension_manager
-            .read()
-            .await
             .search(ext_name, query, json!({}), 0)
             .await
             .map_err(|e| {
@@ -361,9 +359,9 @@ impl ContentResolverService {
         }
 
         let ext_meta = Self::fetch_ext_metadata(state, ext_name, ext_id).await?;
-        let ext_nsfw = state.extension_manager.read().await.is_nsfw(ext_name);
-        let skip = state.extension_manager.read().await.skip_default_processing(ext_name);
-        let content_type = state.extension_manager.read().await.content_type(ext_name);
+        let ext_nsfw = state.extension_manager.is_nsfw(ext_name);
+        let skip = state.extension_manager.skip_default_processing(ext_name);
+        let content_type = state.extension_manager.content_type(ext_name);
 
         if skip {
             let cid = Self::create_derived(state, ext_name, ext_id, &ext_meta, &content_type, ext_nsfw).await?;
@@ -658,8 +656,6 @@ impl ContentResolverService {
     ) -> CoreResult<ExtensionMetadata> {
         state
             .extension_manager
-            .read()
-            .await
             .get_metadata(ext_name, ext_id)
             .await
             .map_err(|e| {
@@ -674,7 +670,7 @@ impl ContentResolverService {
     }
 
     pub async fn backfill_via_preferred_mapping(state: Arc<AppState>, cid: String) {
-        let Ok(config) = ConfigRepository::get_config(&state.pool, 1).await else { return };
+        let Ok(config) = ConfigRepository::get_active_user_config(&state.pool).await else { return };
         let preferred = config.content.preferred_metadata_provider.clone();
 
         let Ok(mappings) = TrackerRepository::get_mappings_by_cid(&state.pool, &cid).await else { return };
@@ -766,7 +762,7 @@ impl ContentResolverService {
         current_tracker: &str,
         current_tracker_id: &str,
     ) -> CoreResult<()> {
-        let config = ConfigRepository::get_config(&state.pool, 1).await?;
+        let config = ConfigRepository::get_active_user_config(&state.pool).await?;
         let preferred = &config.content.preferred_metadata_provider;
         Self::ensure_preferred_metadata(state, cid, &full.metadata, preferred, current_tracker, current_tracker_id).await
     }

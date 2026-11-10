@@ -26,7 +26,6 @@ use paths::AppPaths;
 use std::sync::{Arc};
 use std::time::Duration;
 use reqwest::Client;
-use tokio::sync::RwLock;
 use tracker::provider::build_registry;
 use tracing::{info, instrument};
 use crate::content::services::home::HomeService;
@@ -46,7 +45,7 @@ pub async fn build(paths: AppPaths, headless: HeadlessHandle, log_store: logs::L
     let db_manager = db::DatabaseManager::new(&paths).await?;
 
     let http_client = Client::builder()
-        .timeout(Duration::from_secs(45))
+        .read_timeout(Duration::from_secs(45))
         .connect_timeout(Duration::from_secs(10))
         .pool_idle_timeout(Duration::from_secs(90))
         .pool_max_idle_per_host(10)
@@ -72,7 +71,7 @@ pub async fn build(paths: AppPaths, headless: HeadlessHandle, log_store: logs::L
 
     let state = Arc::new(AppState {
         pool: db_manager.pool().clone(),
-        extension_manager: Arc::new(RwLock::new(extension_manager)),
+        extension_manager: Arc::new(extension_manager),
         tracker_registry: Arc::new(build_registry(http_client.clone())),
         torrent: TorrentHandle::new(paths.torrent.clone()),
         paths: Arc::new(paths),

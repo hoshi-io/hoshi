@@ -5,7 +5,7 @@ use super::types::{Extension, ExtensionManifest, ExtensionType};
 
 impl ExtensionManager {
     pub async fn create_dev_extension(
-        &mut self,
+        &self,
         name: &str,
         ext_type: ExtensionType,
         starter_code: &str,
@@ -57,7 +57,7 @@ impl ExtensionManager {
             dev: true,
         };
 
-        self.extensions.insert(id, extension.clone());
+        self.insert(extension.clone());
         Ok(extension)
     }
 
@@ -77,7 +77,7 @@ impl ExtensionManager {
         fs::read_to_string(&manifest_path).await.map_err(CoreError::Io)
     }
 
-    pub async fn write_manifest_raw(&mut self, ext_id: &str, yaml: String) -> CoreResult<Extension> {
+    pub async fn write_manifest_raw(&self, ext_id: &str, yaml: String) -> CoreResult<Extension> {
         let ext_dir = {
             let ext = self.dev_ext(ext_id)?;
             ext.script_path.parent().unwrap().to_path_buf()
@@ -117,22 +117,22 @@ impl ExtensionManager {
             dev: true,
         };
 
-        self.extensions.insert(ext_id.to_string(), extension.clone());
+        self.insert(extension.clone());
         Ok(extension)
     }
 
-    pub async fn delete_dev_extension(&mut self, ext_id: &str) -> CoreResult<()> {
+    pub async fn delete_dev_extension(&self, ext_id: &str) -> CoreResult<()> {
         let ext_dir = {
             let ext = self.dev_ext(ext_id)?;
             ext.script_path.parent().unwrap().to_path_buf()
         };
         fs::remove_dir_all(&ext_dir).await.map_err(CoreError::Io)?;
-        self.extensions.remove(ext_id);
+        self.remove(ext_id);
         Ok(())
     }
 
-    fn dev_ext(&self, ext_id: &str) -> CoreResult<&Extension> {
-        self.extensions.get(ext_id)
+    fn dev_ext(&self, ext_id: &str) -> CoreResult<Extension> {
+        self.get(ext_id)
             .filter(|e| e.dev)
             .ok_or_else(|| CoreError::NotFound("error.extension.not_found".into()))
     }

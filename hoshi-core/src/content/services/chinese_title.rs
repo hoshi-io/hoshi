@@ -91,7 +91,7 @@ impl ChineseTitleService {
         anilist_tracker_id: &str,
         title_i18n: &mut HashMap<String, String>,
     ) {
-        let config = match ConfigRepository::get_config(pool, 1).await {
+        let config = match ConfigRepository::get_active_user_config(pool).await {
             Ok(c) => c,
             Err(e) => {
                 warn!(error = ?e, "Could not read config for Chinese title check");

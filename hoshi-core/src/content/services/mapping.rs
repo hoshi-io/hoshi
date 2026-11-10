@@ -76,11 +76,7 @@ impl MappingService {
         ext_name: &str,
         ext_id: &str,
     ) -> CoreResult<FullContent> {
-        let ext_nsfw = state.extension_manager.read().await
-            .list_extensions().iter()
-            .find(|e| e.id == ext_name)
-            .map(|e| e.nsfw)
-            .unwrap_or(false);
+        let ext_nsfw = state.extension_manager.is_nsfw(ext_name);
 
         let now = chrono::Utc::now().timestamp();
 

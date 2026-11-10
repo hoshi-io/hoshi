@@ -112,7 +112,6 @@ pub fn lock_orientation<R: Runtime>(
     app: tauri::AppHandle<R>,
     orientation: String,
 ) -> Result<(), String> {
-    println!("LLAMADA ORIENTACION: {}", orientation);
     let o = parse_orientation(&orientation)
         .ok_or_else(|| format!("Orientación desconocida: {}", orientation))?;
 

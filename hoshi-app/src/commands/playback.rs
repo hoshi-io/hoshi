@@ -65,11 +65,12 @@ pub async fn stop_playback(state: State<'_, Arc<AppState>>) -> Result<(), CoreEr
 
 #[tauri::command]
 pub async fn get_thumbnail(state: State<'_, Arc<AppState>>, time: f64) -> Result<Response, CoreError> {
-    let r = state.thumbnails.get(time).await;
-    if let Err(e) = &r { tracing::warn!(?e, time, "thumb: get failed"); }
     Ok(match state.thumbnails.get(time).await {
         Ok(t) => Response::new(t.jpeg),
-        Err(_) => Response::new(Vec::<u8>::new()),
+        Err(e) => {
+            tracing::debug!(?e, time, "thumb: get failed");
+            Response::new(Vec::<u8>::new())
+        }
     })
 }
 
@@ -185,9 +186,8 @@ pub async fn load_stream(
         tauri::async_runtime::spawn(async move {
             match ConfigService::get_config(&st, user_id).await {
                 Ok(cfg) => {
-                    tracing::warn!(enabled = cfg.player.thumbnails_enabled, url = %thumb_spec.url, "thumb: open requested");
                     let ok = st.thumbnails.open(thumb_spec, &cfg.player).await;
-                    tracing::warn!(ok, "thumb: open result");
+                    tracing::debug!(ok, "thumb: open result");
                 }
                 Err(e) => tracing::warn!(?e, "thumb: could not read config"),
             }

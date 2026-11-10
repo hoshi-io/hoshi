@@ -671,7 +671,8 @@ impl TrackerProvider for KitsuProvider {
         );
 
         if let Some(q) = query.filter(|q| !q.trim().is_empty()) {
-            path.push_str(&format!("&filter[text]={}", urlencoding::encode(q)));
+            let encoded: String = url::form_urlencoded::byte_serialize(q.as_bytes()).collect();
+            path.push_str(&format!("&filter[text]={encoded}"));
         }
         if let Some(s) = sort   { path.push_str(&format!("&sort={}", s)); }
         if let Some(g) = genre  { path.push_str(&format!("&filter[categories]={}", g)); }

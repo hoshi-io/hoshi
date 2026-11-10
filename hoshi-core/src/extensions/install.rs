@@ -84,7 +84,7 @@ impl Extension {
 impl ExtensionManager {
     #[instrument(skip(self, state, entry))]
     pub async fn install_lnreader_extension(
-        &mut self,
+        &self,
         state: &AppState,
         entry: LNReaderMarketplaceEntry,
     ) -> CoreResult<Extension> {
@@ -133,7 +133,7 @@ impl ExtensionManager {
         let script_path = ext_dir.join("index.js");
         let extension = Extension::from_manifest(manifest, script_path, settings);
 
-        self.extensions.insert(extension.id.clone(), extension.clone());
+        self.insert(extension.clone());
         info!(ext = %extension.id, "LNReader extension installed successfully");
 
         Ok(extension)
@@ -141,7 +141,7 @@ impl ExtensionManager {
 
     #[instrument(skip(self, state, entry))]
     pub async fn install_sora_extension(
-        &mut self,
+        &self,
         state: &AppState,
         entry: SoraMarketplaceEntry,
     ) -> CoreResult<Extension> {
@@ -201,20 +201,20 @@ impl ExtensionManager {
         let mut extension = Extension::from_manifest(manifest, script_path, settings);
         extension.nsfw = false;
 
-        self.extensions.insert(extension.id.clone(), extension.clone());
+        self.insert(extension.clone());
         info!(ext = %extension.id, "Sora extension installed successfully");
         Ok(extension)
     }
 
     #[instrument(skip(self, state, manifest_url))]
-    pub async fn install_extension(&mut self, state: &AppState, manifest_url: &str) -> CoreResult<Extension> {
+    pub async fn install_extension(&self, state: &AppState, manifest_url: &str) -> CoreResult<Extension> {
         self.install_extension_checked(state, manifest_url, None).await
     }
 
     /// Downloads and validates everything first, writes to disk last.
     /// `expected_id`: on update, the new manifest must keep the same id.
     async fn install_extension_checked(
-        &mut self,
+        &self,
         state: &AppState,
         manifest_url: &str,
         expected_id: Option<&str>,
@@ -325,17 +325,17 @@ impl ExtensionManager {
         let mut extension = Extension::from_manifest(manifest, script_path, settings);
         extension.source = None;
 
-        self.extensions.insert(extension.id.clone(), extension.clone());
+        self.insert(extension.clone());
         info!(ext = %extension.id, "Extension installed and loaded successfully");
 
         Ok(extension)
     }
 
     #[instrument(skip(self, state, manifest_url))]
-    pub async fn update_extension(&mut self, state: &AppState, id: &str, manifest_url: &str) -> CoreResult<Extension> {
+    pub async fn update_extension(&self, state: &AppState, id: &str, manifest_url: &str) -> CoreResult<Extension> {
         validate_extension_id(id)?;
-        let preserved_settings = self.extensions.get(id)
-            .map(|e| e.settings.clone())
+        let preserved_settings = self.get(id)
+            .map(|e| e.settings)
             .unwrap_or_default();
 
         // Same id is enforced, so the install writes into this extension's own folder.
@@ -348,15 +348,15 @@ impl ExtensionManager {
         let ext_dir = self.extensions_dir.join(id);
         persist_settings(&ext_dir, &extension.settings).await;
 
-        self.extensions.insert(id.to_string(), extension.clone());
+        self.insert(extension.clone());
 
         info!(ext = %id, "Extension updated successfully");
         Ok(extension)
     }
 
     #[instrument(skip(self))]
-    pub async fn uninstall_extension(&mut self, id: &str) -> CoreResult<()> {
-        let Some(ext) = self.extensions.get(id) else {
+    pub async fn uninstall_extension(&self, id: &str) -> CoreResult<()> {
+        let Some(ext) = self.get(id) else {
             warn!(ext = %id, "Attempted to uninstall a non-existent extension");
             return Err(CoreError::NotFound("error.extension.not_found".into()));
         };
@@ -382,7 +382,7 @@ impl ExtensionManager {
             }
         }
 
-        self.extensions.remove(id);
+        self.remove(id);
 
         if let Ok(mut store) = self.extension_state.lock() {
             store.remove(id);
@@ -394,11 +394,11 @@ impl ExtensionManager {
 
     #[instrument(skip(self, updates))]
     pub async fn update_extension_settings(
-        &mut self,
+        &self,
         id: &str,
         updates: HashMap<String, Value>,
     ) -> CoreResult<()> {
-        let extension = self.extensions.get_mut(id).ok_or_else(|| {
+        let mut extension = self.get(id).ok_or_else(|| {
             warn!(ext = %id, "Attempted to update settings for a non-existent extension");
             CoreError::NotFound("error.extension.not_found".into())
         })?;
@@ -409,6 +409,7 @@ impl ExtensionManager {
 
         let ext_dir = self.extensions_dir.join(id);
         persist_settings(&ext_dir, &extension.settings).await;
+        self.insert(extension);
 
         debug!(ext = %id, "Extension settings updated successfully");
         Ok(())

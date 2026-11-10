@@ -80,7 +80,7 @@ impl ExtensionService {
 
         Self::cached_or(&state.pool, &cache_key, ext_name, "content_items", || async {
             let (content_type, ext_id) = ContentResolverService::ensure_extension_link(state, cid, ext_name).await?;
-            let manager = state.extension_manager.read().await;
+            let manager = &state.extension_manager;
 
             let items = match content_type {
                 ContentType::Anime => ContentItems::Episodes(manager.find_episodes(ext_name, &ext_id).await?),
@@ -122,7 +122,7 @@ impl ExtensionService {
                 CoreError::NotFound("error.content.item_number_not_found".into())
             })?;
 
-        let manager = state.extension_manager.read().await;
+        let manager = &state.extension_manager;
 
         match content_type {
             ContentType::Anime => {

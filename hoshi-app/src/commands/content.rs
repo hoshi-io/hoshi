@@ -217,8 +217,6 @@ pub async fn list_episode_servers(
     cid: String,
     number: f64,
 ) -> Result<Value, CoreError> {
-    let manager = state.inner().extension_manager.read().await;
-
     let items_list = ExtensionService::get_content_items(state.inner(), &cid, &ext_name).await?;
 
     let real_id = match &items_list {
@@ -230,6 +228,6 @@ pub async fn list_episode_servers(
             .map(|c| c.id.clone()),
     }.ok_or_else(|| CoreError::NotFound("error.content.item_number_not_found".into()))?;
 
-    let servers = manager.list_episode_servers(&ext_name, &real_id).await?;
+    let servers = state.extension_manager.list_episode_servers(&ext_name, &real_id).await?;
     Ok(json!({ "ok": true, "servers": servers }))
 }

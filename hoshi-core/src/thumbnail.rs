@@ -8,7 +8,7 @@ use libmpv2::events::Event;
 use libmpv2::Mpv;
 use lru::LruCache;
 use tokio::sync::oneshot;
-use tracing::{warn};
+use tracing::{debug, warn};
 
 use crate::config::model::PlayerConfig;
 use crate::playback::{LoadSpec, ProtocolHook};
@@ -98,7 +98,7 @@ impl ThumbnailService {
     pub async fn open(&self, spec: LoadSpec, cfg: &PlayerConfig) -> bool {
         let kind = SourceKind::detect(&spec.url);
         let Some(cfg) = ThumbSettings::from_config(cfg, kind) else {
-            warn!(?kind, "thumb: disabled by config for this source kind");
+            debug!(?kind, "thumb: disabled by config for this source kind");
             self.close().await;
             return false;
         };
@@ -219,7 +219,7 @@ impl Worker {
         }
         let _ = self.wait(|e| matches!(e, Event::PlaybackRestart), Duration::from_secs(3));
         self.duration = self.mpv.get_property::<f64>("duration").unwrap_or(0.0);
-        warn!(duration = self.duration, "thumb: opened");
+        debug!(duration = self.duration, "thumb: opened");
         self.duration > 0.0
     }
 

@@ -47,7 +47,7 @@ impl ExtensionManager {
         http_client: reqwest::Client,
         console_buffer: Option<ConsoleBuffer>,
     ) -> CoreResult<Value> {
-        let extension = self.extensions.get(extension_id).ok_or_else(|| {
+        let extension = self.get(extension_id).ok_or_else(|| {
             error!(ext = %extension_id, func = %function_name, "Attempted to call function on unloaded extension");
             CoreError::NotFound("error.extension.not_found".into())
         })?;
@@ -69,18 +69,16 @@ impl ExtensionManager {
             _ => None,
         };
 
-        let ext_type = extension.ext_type.clone();
-
         sandbox::execute_in_quickjs(
             extension_code,
             function_name.to_string(),
             args,
             self.headless.clone(),
-            extension.settings.clone(),
+            extension.settings,
             extension_id.to_string(),
             Arc::clone(&self.extension_state),
             compat,
-            ext_type,
+            extension.ext_type,
             http_client,
             console_buffer
         ).await

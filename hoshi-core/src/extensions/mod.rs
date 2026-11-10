@@ -8,7 +8,7 @@ pub mod dev;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock, RwLock};
 use tokio::fs;
 use tracing::{error, info, instrument, warn};
 use types::{Extension, ExtensionManifest, ExtensionType, SettingDefinition};
@@ -33,7 +33,7 @@ static SORA_ARC: OnceLock<Arc<str>> = OnceLock::new();
 const SANDBOX_BOOTSTRAP: &str = include_str!("sandbox_bootstrap.js");
 
 pub struct ExtensionManager {
-    extensions: HashMap<String, Extension>,
+    extensions: RwLock<HashMap<String, Extension>>,
     extensions_dir: PathBuf,
     headless: HeadlessHandle,
     extension_state: ExtensionStateStore,
@@ -44,7 +44,7 @@ impl ExtensionManager {
     pub fn new(paths: &AppPaths, http_client: reqwest::Client) -> CoreResult<Self> {
         let extensions_dir = paths.base_dir.join("extensions");
         Ok(Self {
-            extensions: HashMap::new(),
+            extensions: RwLock::new(HashMap::new()),
             extensions_dir,
             headless: noop_headless(),
             extension_state: Arc::new(Mutex::new(HashMap::new())),
@@ -52,42 +52,60 @@ impl ExtensionManager {
         })
     }
 
-    pub fn list_extensions(&self) -> Vec<&Extension> {
-        self.extensions.values().filter(|e| !e.dev).collect()
+    fn with_registry<T>(&self, f: impl FnOnce(&HashMap<String, Extension>) -> T) -> T {
+        f(&self.extensions.read().unwrap_or_else(|p| p.into_inner()))
     }
 
-    pub fn list_dev_extensions(&self) -> Vec<&Extension> {
-        self.extensions.values().filter(|e| e.dev).collect()
+    pub(super) fn get(&self, extension_id: &str) -> Option<Extension> {
+        self.with_registry(|m| m.get(extension_id).cloned())
+    }
+
+    pub(super) fn insert(&self, extension: Extension) {
+        self.extensions
+            .write()
+            .unwrap_or_else(|p| p.into_inner())
+            .insert(extension.id.clone(), extension);
+    }
+
+    pub(super) fn remove(&self, extension_id: &str) {
+        self.extensions
+            .write()
+            .unwrap_or_else(|p| p.into_inner())
+            .remove(extension_id);
+    }
+
+    pub fn list_extensions(&self) -> Vec<Extension> {
+        self.with_registry(|m| m.values().filter(|e| !e.dev).cloned().collect())
+    }
+
+    pub fn list_dev_extensions(&self) -> Vec<Extension> {
+        self.with_registry(|m| m.values().filter(|e| e.dev).cloned().collect())
     }
 
     pub fn get_extensions_by_type(&self, target_type: ExtensionType) -> Vec<String> {
-        self.extensions.values()
-            .filter(|e| e.ext_type == target_type)
-            .map(|e| e.id.clone())
-            .collect()
+        self.with_registry(|m| {
+            m.values()
+                .filter(|e| e.ext_type == target_type)
+                .map(|e| e.id.clone())
+                .collect()
+        })
     }
 
     pub fn is_nsfw(&self, extension_id: &str) -> bool {
-        self.extensions
-            .get(extension_id)
-            .map(|ext| ext.nsfw)
-            .unwrap_or(false)
+        self.with_registry(|m| m.get(extension_id).map(|ext| ext.nsfw).unwrap_or(false))
     }
 
     pub fn skip_default_processing(&self, extension_id: &str) -> bool {
-        self.extensions
-            .get(extension_id)
-            .map(|ext| ext.skip_default_processing)
-            .unwrap_or(false)
+        self.with_registry(|m| m.get(extension_id).map(|ext| ext.skip_default_processing).unwrap_or(false))
     }
 
     pub fn content_type(&self, extension_id: &str) -> crate::content::models::ContentType {
         use crate::content::models::ContentType;
-        match self.extensions.get(extension_id).map(|e| &e.ext_type) {
+        self.with_registry(|m| match m.get(extension_id).map(|e| &e.ext_type) {
             Some(ExtensionType::Manga) => ContentType::Manga,
             Some(ExtensionType::Novel) => ContentType::Novel,
             _ => ContentType::Anime,
-        }
+        })
     }
 
     pub fn set_headless(&mut self, headless: HeadlessHandle) {
@@ -164,7 +182,7 @@ impl ExtensionManager {
                 dev: manifest.dev,
             };
 
-            self.extensions.insert(manifest.id, extension);
+            self.insert(extension);
             loaded_count += 1;
         }
 

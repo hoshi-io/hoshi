@@ -11,8 +11,7 @@ use crate::commands::extensions::ExtensionsResponse;
 pub async fn list_dev_extensions(
     state: State<'_, Arc<AppState>>,
 ) -> Result<ExtensionsResponse<Vec<Extension>>, CoreError> {
-    let manager = state.inner().extension_manager.read().await;
-    let list = manager.list_dev_extensions().iter().map(|e| (*e).clone()).collect();
+    let list = state.extension_manager.list_dev_extensions();
     Ok(ExtensionsResponse { extensions: list })
 }
 
@@ -23,7 +22,7 @@ pub async fn create_dev_extension(
     ext_type: ExtensionType,
     starter_code: String,
 ) -> Result<Extension, CoreError> {
-    let mut manager = state.inner().extension_manager.write().await;
+    let manager = &state.extension_manager;
     manager.create_dev_extension(&name, ext_type, &starter_code).await
 }
 
@@ -32,7 +31,7 @@ pub async fn read_extension_source(
     state: State<'_, Arc<AppState>>,
     id: String,
 ) -> Result<String, CoreError> {
-    let manager = state.inner().extension_manager.read().await;
+    let manager = &state.extension_manager;
     manager.read_extension_source(&id).await
 }
 
@@ -42,7 +41,7 @@ pub async fn write_extension_source(
     id: String,
     code: String,
 ) -> Result<Value, CoreError> {
-    let manager = state.inner().extension_manager.read().await;
+    let manager = &state.extension_manager;
     manager.write_extension_source(&id, code).await?;
     Ok(json!({ "ok": true }))
 }
@@ -52,7 +51,7 @@ pub async fn read_manifest_raw(
     state: State<'_, Arc<AppState>>,
     id: String,
 ) -> Result<String, CoreError> {
-    let manager = state.inner().extension_manager.read().await;
+    let manager = &state.extension_manager;
     manager.read_manifest_raw(&id).await
 }
 
@@ -62,7 +61,7 @@ pub async fn write_manifest_raw(
     id: String,
     yaml: String,
 ) -> Result<Extension, CoreError> {
-    let mut manager = state.inner().extension_manager.write().await;
+    let manager = &state.extension_manager;
     manager.write_manifest_raw(&id, yaml).await
 }
 
@@ -71,7 +70,7 @@ pub async fn delete_dev_extension(
     state: State<'_, Arc<AppState>>,
     id: String,
 ) -> Result<Value, CoreError> {
-    let mut manager = state.inner().extension_manager.write().await;
+    let manager = &state.extension_manager;
     manager.delete_dev_extension(&id).await?;
     Ok(json!({ "ok": true, "id": id }))
 }
@@ -90,7 +89,7 @@ pub async fn run_extension_function(
     function_name: String,
     args: Vec<Value>,
 ) -> Result<RunResult, CoreError> {
-    let manager = state.inner().extension_manager.read().await;
+    let manager = &state.extension_manager;
     let http_client = state.inner().http_client.clone();
 
     let (result, console) = manager

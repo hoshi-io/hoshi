@@ -19,7 +19,7 @@ pub async fn search_torrents(
     filters: Value,
     page: u32,
 ) -> Result<Value, CoreError> {
-    let manager = state.inner().extension_manager.read().await;
+    let manager = &state.extension_manager;
     let results: Vec<TorrentSearchResult> = manager.search_torrents(&id, &query, filters, page).await?;
     Ok(json!({ "results": results }))
 }
@@ -30,7 +30,7 @@ pub async fn get_magnet(
     id: String,
     content_id: String,
 ) -> Result<Value, CoreError> {
-    let manager = state.inner().extension_manager.read().await;
+    let manager = &state.extension_manager;
     let magnet = manager.get_magnet(&id, &content_id).await?;
     Ok(json!({ "magnet": magnet }))
 }
@@ -46,9 +46,9 @@ pub async fn auto_select_torrent(
     page: u32,
 ) -> Result<Value, CoreError> {
     let user_id = require_auth(&session).await?;
-    let manager = state.inner().extension_manager.read().await;
+    let manager = &state.extension_manager;
     let picked = TorrentService::auto_select_torrent(
-        state.inner(), &manager, user_id, &id, &cid, episode, filters, page,
+        state.inner(), manager, user_id, &id, &cid, episode, filters, page,
     ).await?;
     Ok(json!({ "torrent": picked }))
 }
@@ -69,7 +69,7 @@ pub async fn start_torrent_stream(
     let magnet = match magnet.filter(|m| m.starts_with("magnet:")) {
         Some(m) => m,
         None => {
-            let manager = state.inner().extension_manager.read().await;
+            let manager = &state.extension_manager;
             manager.get_magnet(&id, &content_id).await?
         }
     };

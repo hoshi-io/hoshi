@@ -4,12 +4,22 @@ use sqlx::SqlitePool;
 
 use tracing::{error, warn};
 
+use crate::auth::repository::AuthRepository;
 use crate::config::model::UserConfig;
 use crate::error::{CoreError, CoreResult};
 
 pub struct ConfigRepository;
 
 impl ConfigRepository {
+    /// Config of the signed-in profile, for code paths that have no user id
+    /// (imports, background backfills). Defaults when nobody is signed in.
+    pub async fn get_active_user_config(pool: &SqlitePool) -> CoreResult<UserConfig> {
+        match AuthRepository::get_active_user(pool).await? {
+            Some(user_id) => Self::get_config(pool, user_id).await,
+            None => Ok(UserConfig::default()),
+        }
+    }
+
     pub async fn get_config(pool: &SqlitePool, user_id: i32) -> CoreResult<UserConfig> {
         let row: Option<(String,)> = sqlx::query_as(
             "SELECT config FROM UserConfig WHERE user_id = ?",

@@ -96,7 +96,7 @@ impl SearchService {
         let query_str = query.unwrap_or_default();
         let page = page.unwrap_or(1);
 
-        let manager = state.extension_manager.read().await;
+        let manager = &state.extension_manager;
         let extension_is_nsfw = manager.is_nsfw(ext_id);
 
         let mut results = manager
