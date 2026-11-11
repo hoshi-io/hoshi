@@ -1,8 +1,7 @@
 use std::sync::Arc;
 use tracing::{debug, instrument, warn};
 
-use crate::content::models::{ContentUnit, Status};
-use crate::content::repositories::content::ContentRepository;
+use crate::content::models::{ContentUnit, FullContent, Status};
 use crate::content::repositories::unit::UnitRepository;
 use crate::error::{CoreError, CoreResult};
 use crate::state::AppState;
@@ -14,35 +13,31 @@ const AIRING_SYNC_INTERVAL_SECS: i64 = 6 * 60 * 60;
 pub struct SimklUnitsService;
 
 impl SimklUnitsService {
-
-    #[instrument(skip(state))]
-    pub async fn sync_units_if_needed(state: &Arc<AppState>, cid: &str) -> CoreResult<()> {
+    
+    #[instrument(skip(state, full), fields(cid = %full.content.cid))]
+    pub async fn sync_units_if_needed(state: &Arc<AppState>, full: &FullContent) -> CoreResult<bool> {
+        let cid = full.content.cid.as_str();
         let simkl_id = match TrackerRepository::find_tracker_id_by_cid(&state.pool, cid, "simkl").await? {
             Some(id) => id,
-            None => return Ok(()),
+            None => return Ok(false),
         };
 
-        let units = UnitRepository::get_by_cid(&state.pool, cid).await?;
-        let has_units = !units.is_empty();
-
-        if !has_units {
+        if full.content_units.is_empty() {
             debug!(cid = %cid, simkl_id = %simkl_id, "No units cached, fetching from Simkl");
             return Self::fetch_and_persist(state, cid, &simkl_id).await;
         }
 
-        let is_airing = ContentRepository::get_full_content(&state.pool, cid).await?
-            .and_then(|c| c.metadata.first().map(|m| matches!(m.status, Some(Status::Ongoing))))
-            .unwrap_or(false);
-
+        let is_airing = full.metadata.first()
+            .is_some_and(|m| matches!(m.status, Some(Status::Ongoing)));
         if !is_airing {
-            return Ok(());
+            return Ok(false);
         }
 
         let last_synced = UnitRepository::last_synced_at(&state.pool, cid).await?.unwrap_or(0);
         let now = chrono::Utc::now().timestamp();
 
         if now - last_synced < AIRING_SYNC_INTERVAL_SECS {
-            return Ok(());
+            return Ok(false);
         }
 
         debug!(cid = %cid, simkl_id = %simkl_id, "Airing series due for re-sync");
@@ -50,7 +45,7 @@ impl SimklUnitsService {
     }
 
     #[instrument(skip(state))]
-    async fn fetch_and_persist(state: &Arc<AppState>, cid: &str, simkl_id: &str) -> CoreResult<()> {
+    async fn fetch_and_persist(state: &Arc<AppState>, cid: &str, simkl_id: &str) -> CoreResult<bool> {
         let url = format!(
             "https://api.simkl.com/anime/episodes/{}?client_id={}",
             simkl_id, SIMKL_CLIENT_ID
@@ -65,7 +60,7 @@ impl SimklUnitsService {
 
         if !response.status().is_success() {
             warn!(cid = %cid, status = %response.status(), "Simkl returned non-2xx, skipping unit sync");
-            return Ok(());
+            return Ok(false);
         }
 
         let episodes: Vec<serde_json::Value> = response
@@ -110,6 +105,6 @@ impl SimklUnitsService {
         tx.commit().await.map_err(CoreError::Database)?;
 
         debug!(cid = %cid, count = upserted, "Simkl unit sync complete");
-        Ok(())
+        Ok(upserted > 0)
     }
 }

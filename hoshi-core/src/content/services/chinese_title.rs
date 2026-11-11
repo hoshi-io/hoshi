@@ -86,23 +86,17 @@ impl ChineseTitleService {
         Ok(map)
     }
 
-    pub async fn maybe_inject_chinese_title(
-        pool: &SqlitePool,
-        anilist_tracker_id: &str,
-        title_i18n: &mut HashMap<String, String>,
-    ) {
-        let config = match ConfigRepository::get_active_user_config(pool).await {
-            Ok(c) => c,
+    pub async fn enabled(pool: &SqlitePool) -> bool {
+        match ConfigRepository::get_active_user_config(pool).await {
+            Ok(c) => matches!(c.ui.title_language, TitleLanguage::Chinese),
             Err(e) => {
                 warn!(error = ?e, "Could not read config for Chinese title check");
-                return;
+                false
             }
-        };
-
-        if !matches!(config.ui.title_language, TitleLanguage::Chinese) {
-            return;
         }
+    }
 
+    pub async fn inject(anilist_tracker_id: &str, title_i18n: &mut HashMap<String, String>) {
         let Ok(anilist_id) = anilist_tracker_id.parse::<u32>() else {
             warn!(tracker_id = %anilist_tracker_id, "AniList tracker_id is not a valid u32, skipping Chinese title");
             return;
@@ -112,6 +106,16 @@ impl ChineseTitleService {
 
         if let Some(chinese_title) = Self::lookup(anilist_id).await {
             title_i18n.insert("chinese".into(), chinese_title);
+        }
+    }
+
+    pub async fn maybe_inject_chinese_title(
+        pool: &SqlitePool,
+        anilist_tracker_id: &str,
+        title_i18n: &mut HashMap<String, String>,
+    ) {
+        if Self::enabled(pool).await {
+            Self::inject(anilist_tracker_id, title_i18n).await;
         }
     }
 }

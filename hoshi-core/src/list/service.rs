@@ -1,11 +1,10 @@
 use std::sync::Arc;
 use serde_json::{json, Value};
 use chrono::Utc;
-use futures::future::join_all;
 use sqlx::{SqliteConnection, SqlitePool};
 use tracing::{error, info, instrument, warn};
 use crate::content::models::EpisodeData;
-use crate::content::repositories::content::ContentRepository;
+use crate::content::repositories::content::{ContentRepository, FullContentParts};
 use crate::diff_field;
 use crate::error::{CoreError, CoreResult};
 use crate::list::repository::ListRepository;
@@ -31,7 +30,7 @@ impl ListService {
     ) -> CoreResult<ListResponse> {
         let entries = ListRepository::get_entries(&state.pool, user_id, filter.status.as_deref()).await?;
 
-        let mut enriched = Self::enrich_entries(&state, &state.pool, entries).await?;
+        let mut enriched = Self::enrich_entries(&state.pool, entries).await?;
 
         if let Some(ct) = filter.content_type {
             enriched.retain(|e| e.content_type == ct.to_lowercase());
@@ -49,7 +48,7 @@ impl ListService {
         let entry = ListRepository::get_entry(&state.pool, user_id, &cid).await?;
 
         if let Some(e) = entry {
-            let enriched = Self::enrich_entries(&state, &state.pool, vec![e]).await?;
+            let enriched = Self::enrich_entries(&state.pool, vec![e]).await?;
             Ok(SingleEntryResponse {
                 found: true,
                 entry: enriched.into_iter().next(),
@@ -64,26 +63,7 @@ impl ListService {
         state: &AppState,
         user_id: i32,
     ) -> CoreResult<UserStats> {
-        let mut stats = ListRepository::get_user_stats(&state.pool, user_id).await?;
-
-        let completed_progress = ListRepository::get_completed_entries_progress(&state.pool, user_id).await?;
-        let mut total_episodes = 0i32;
-        let mut total_chapters = 0i32;
-
-        for (cid, progress) in completed_progress {
-            if let Ok(Some(content)) = ContentRepository::get_content_by_cid(&state.pool, &cid).await {
-                match content.content_type.as_str() {
-                    "anime" => total_episodes += progress,
-                    "manga" | "novel" => total_chapters += progress,
-                    _ => {}
-                }
-            }
-        }
-
-        stats.total_episodes = total_episodes;
-        stats.total_chapters = total_chapters;
-
-        Ok(stats)
+        ListRepository::get_user_stats(&state.pool, user_id).await
     }
     
     fn compute_final_fields(
@@ -335,64 +315,24 @@ impl ListService {
         Ok(BatchWriteResponse { batch_id, applied: deleted.len(), enqueued, errors })
     }
 
+    /// Batched: a fixed handful of queries for the whole list, not ~7 per entry.
     async fn enrich_entries(
-        state: &AppState,
         pool: &SqlitePool,
         entries: Vec<ListEntry>,
     ) -> CoreResult<Vec<EnrichedListEntry>> {
-        let futures = entries.into_iter().map(|entry| {
-            let pool_clone = pool.clone();
-            async move {
-                let full_content = ContentRepository::get_full_content(&pool_clone, &entry.cid).await.ok().flatten();
+        let cids: Vec<&str> = entries.iter().map(|e| e.cid.as_str()).collect();
+        let entry_ids: Vec<i64> = entries.iter().filter_map(|e| e.id).collect();
 
-                match full_content {
-                    Some(full) => {
-                        let content_type = full.content.content_type.as_str().to_string();
-                        let nsfw         = full.content.nsfw;
+        let (mut contents, mut sources) = tokio::try_join!(
+            ContentRepository::get_full_contents(pool, &cids, FullContentParts::SUMMARY),
+            ListRepository::get_entry_sources_by_entry_ids(pool, &entry_ids),
+        )?;
 
-                        let meta = full.primary_metadata();
-
-                        let title       = meta.map(|m| m.title.clone()).unwrap_or_else(|| "Unknown".into());
-                        let title_i18n = meta.as_ref().map(|m| m.title_i18n.clone()).unwrap_or_default();
-                        let cover_image = meta.and_then(|m| m.cover_image.clone());
-                        let external_ids = meta.map(|m| m.external_ids.clone()).unwrap_or(json!({}));
-
-                        let total = meta.map(|m| match &m.eps_or_chapters {
-                            EpisodeData::Count(n) => *n,
-                            EpisodeData::List(l)  => l.len() as i32,
-                        });
-
-                        let mut tracker_ids = serde_json::Map::new();
-                        for mapping in &full.tracker_mappings {
-                            tracker_ids.insert(
-                                mapping.tracker_name.clone(),
-                                Value::String(mapping.tracker_id.clone()),
-                            );
-                        }
-
-                        let sources = if let Some(entry_id) = entry.id {
-                            ListRepository::get_entry_sources(&state.pool, entry_id)
-                                .await
-                                .unwrap_or_default()
-                        } else {
-                            vec![]
-                        };
-
-                        EnrichedListEntry {
-                            entry,
-                            title,
-                            title_i18n,
-                            cover_image,
-                            content_type,
-                            nsfw,
-                            total_units: total,
-                            tracker_ids: Value::Object(tracker_ids),
-                            external_ids,
-                            has_extension_source: !full.extension_sources.is_empty(),
-                            sources
-                        }
-                    }
-                    None => EnrichedListEntry {
+        Ok(entries
+            .into_iter()
+            .map(|entry| {
+                let Some(full) = contents.remove(&entry.cid) else {
+                    return EnrichedListEntry {
                         entry,
                         title: "Unknown Content".into(),
                         title_i18n: Default::default(),
@@ -404,12 +344,41 @@ impl ListService {
                         external_ids: json!({}),
                         has_extension_source: false,
                         sources: vec![],
-                    },
-                }
-            }
-        });
+                    };
+                };
 
-        Ok(join_all(futures).await)
+                let meta = full.primary_metadata();
+                let title = meta.map(|m| m.title.clone()).unwrap_or_else(|| "Unknown".into());
+                let title_i18n = meta.map(|m| m.title_i18n.clone()).unwrap_or_default();
+                let cover_image = meta.and_then(|m| m.cover_image.clone());
+                let external_ids = meta.map(|m| m.external_ids.clone()).unwrap_or(json!({}));
+                let total = meta.map(|m| match &m.eps_or_chapters {
+                    EpisodeData::Count(n) => *n,
+                    EpisodeData::List(l)  => l.len() as i32,
+                });
+
+                let tracker_ids: serde_json::Map<String, Value> = full.tracker_mappings
+                    .iter()
+                    .map(|m| (m.tracker_name.clone(), Value::String(m.tracker_id.clone())))
+                    .collect();
+
+                let entry_sources = entry.id.and_then(|id| sources.remove(&id)).unwrap_or_default();
+
+                EnrichedListEntry {
+                    content_type: full.content.content_type.as_str().to_string(),
+                    nsfw: full.content.nsfw,
+                    title,
+                    title_i18n,
+                    cover_image,
+                    total_units: total,
+                    tracker_ids: Value::Object(tracker_ids),
+                    external_ids,
+                    has_extension_source: !full.extension_sources.is_empty(),
+                    sources: entry_sources,
+                    entry,
+                }
+            })
+            .collect())
     }
 
     pub fn diff_entry(

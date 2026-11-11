@@ -1,28 +1,38 @@
+use std::collections::HashMap;
+
 use sqlx::SqlitePool;
 
 use crate::content::models::{Relation, RelationType};
+use crate::content::repositories::{placeholders, IN_CHUNK};
 use crate::error::CoreResult;
+
+type RelationRow = (i64, String, Option<String>, String, String, String, String, Option<String>, String, i64);
 
 pub struct RelationRepository;
 
 impl RelationRepository {
     pub async fn get_by_source(pool: &SqlitePool, source_cid: &str) -> CoreResult<Vec<Relation>> {
-        let rows: Vec<(i64, String, Option<String>, String, String, String, String, Option<String>, String, i64)> = sqlx::query_as(
-            "SELECT id, source_cid, target_cid, target_tracker_name, target_tracker_id, \
-                    relation_type, target_title, target_cover_image, source_name, created_at \
-             FROM content_relations WHERE source_cid = ?",
-        )
-            .bind(source_cid)
-            .fetch_all(pool)
-            .await?;
+        Ok(Self::get_by_sources(pool, &[source_cid]).await?.remove(source_cid).unwrap_or_default())
+    }
 
-        Ok(rows
-            .into_iter()
-            .map(|(id, source_cid, target_cid, target_tracker_name, target_tracker_id,
-                      type_raw, target_title, target_cover_image, source_name, created_at)| {
-                let relation_type = serde_json::from_str(&format!("\"{}\"", type_raw))
+    pub async fn get_by_sources(pool: &SqlitePool, source_cids: &[&str]) -> CoreResult<HashMap<String, Vec<Relation>>> {
+        let mut out: HashMap<String, Vec<Relation>> = HashMap::new();
+        for chunk in source_cids.chunks(IN_CHUNK) {
+            let sql = format!(
+                "SELECT id, source_cid, target_cid, target_tracker_name, target_tracker_id, \
+                        relation_type, target_title, target_cover_image, source_name, created_at \
+                 FROM content_relations WHERE source_cid IN ({})",
+                placeholders(chunk.len()),
+            );
+            let mut q = sqlx::query_as::<_, RelationRow>(&sql);
+            for cid in chunk {
+                q = q.bind(*cid);
+            }
+            for (id, source_cid, target_cid, target_tracker_name, target_tracker_id,
+                 type_raw, target_title, target_cover_image, source_name, created_at) in q.fetch_all(pool).await? {
+                let relation_type = serde_json::from_value(serde_json::Value::String(type_raw))
                     .unwrap_or(RelationType::Other);
-                Relation {
+                out.entry(source_cid.clone()).or_default().push(Relation {
                     id: Some(id),
                     source_cid,
                     target_cid,
@@ -33,9 +43,10 @@ impl RelationRepository {
                     target_cover_image,
                     source_name,
                     created_at,
-                }
-            })
-            .collect())
+                });
+            }
+        }
+        Ok(out)
     }
 
     pub async fn upsert(pool: &SqlitePool, relation: &Relation) -> CoreResult<()> {

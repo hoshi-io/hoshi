@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use sqlx::{SqliteConnection, SqlitePool};
+use crate::content::repositories::{placeholders, IN_CHUNK};
 use crate::error::CoreResult;
 use crate::list::types::{EntrySource, EntrySourceRow, ListEntry, ListEntryChange, ScoreDistribution, UpsertEntryBody, UserStats};
 
@@ -121,31 +124,34 @@ impl ListRepository {
     }
 
     pub async fn get_user_stats(pool: &SqlitePool, user_id: i32) -> CoreResult<UserStats> {
-        // All counts in a single query
-        let row: (i32, i32, i32, i32, i32, i32, i32) = sqlx::query_as(
+        type StatsRow = (i32, i32, i32, i32, i32, i32, i32, Option<f64>, Option<i64>, i32, i32, i32, i32, i32);
+        let (
+            total_entries, watching, completed, planning, paused, dropped, repeating,
+            mean_score, days_since_last_activity, total_rewatches, entries_with_notes,
+            private_entries, total_episodes, total_chapters,
+        ): StatsRow = sqlx::query_as(
             "SELECT
                 COUNT(*),
-                SUM(status = 'CURRENT'),
-                SUM(status = 'COMPLETED'),
-                SUM(status = 'PLANNING'),
-                SUM(status = 'PAUSED'),
-                SUM(status = 'DROPPED'),
-                SUM(status = 'REPEATING')
-             FROM ListEntry WHERE user_id = ?",
+                COALESCE(SUM(le.status = 'CURRENT'), 0),
+                COALESCE(SUM(le.status = 'COMPLETED'), 0),
+                COALESCE(SUM(le.status = 'PLANNING'), 0),
+                COALESCE(SUM(le.status = 'PAUSED'), 0),
+                COALESCE(SUM(le.status = 'DROPPED'), 0),
+                COALESCE(SUM(le.status = 'REPEATING'), 0),
+                AVG(le.score),
+                CAST(julianday('now') - julianday(MAX(le.updated_at)) AS INTEGER),
+                COALESCE(SUM(le.repeat_count), 0),
+                COALESCE(SUM(le.notes IS NOT NULL AND le.notes != ''), 0),
+                COALESCE(SUM(le.is_private = 1), 0),
+                COALESCE(SUM(CASE WHEN le.status = 'COMPLETED' AND c.type = 'anime' THEN le.progress END), 0),
+                COALESCE(SUM(CASE WHEN le.status = 'COMPLETED' AND c.type IN ('manga', 'novel') THEN le.progress END), 0)
+             FROM ListEntry le
+             LEFT JOIN content c ON c.cid = le.cid
+             WHERE le.user_id = ?",
         )
             .bind(user_id)
             .fetch_one(pool)
             .await?;
-
-        let (total_entries, watching, completed, planning, paused, dropped, repeating) = row;
-
-        let mean_score: Option<f64> = sqlx::query_scalar(
-            "SELECT AVG(score) FROM ListEntry WHERE user_id = ? AND score IS NOT NULL",
-        )
-            .bind(user_id)
-            .fetch_optional(pool)
-            .await?
-            .flatten();
 
         let score_distribution: Vec<ScoreDistribution> = sqlx::query_as(
             "SELECT CAST(ROUND(score) AS INTEGER) AS score, COUNT(*) AS count
@@ -155,36 +161,6 @@ impl ListRepository {
         )
             .bind(user_id)
             .fetch_all(pool)
-            .await?;
-
-        let days_since_last_activity: Option<i64> = sqlx::query_scalar(
-            "SELECT CAST(julianday('now') - julianday(MAX(updated_at)) AS INTEGER)
-             FROM ListEntry WHERE user_id = ?",
-        )
-            .bind(user_id)
-            .fetch_optional(pool)
-            .await?
-            .flatten();
-
-        let total_rewatches: i32 = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(repeat_count), 0) FROM ListEntry WHERE user_id = ?",
-        )
-            .bind(user_id)
-            .fetch_one(pool)
-            .await?;
-
-        let entries_with_notes: i32 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM ListEntry WHERE user_id = ? AND notes IS NOT NULL AND notes != ''",
-        )
-            .bind(user_id)
-            .fetch_one(pool)
-            .await?;
-
-        let private_entries: i32 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM ListEntry WHERE user_id = ? AND is_private = 1",
-        )
-            .bind(user_id)
-            .fetch_one(pool)
             .await?;
 
         let started = total_entries - planning;
@@ -198,8 +174,8 @@ impl ListRepository {
             paused,
             dropped,
             repeating,
-            total_episodes: 0,
-            total_chapters: 0,
+            total_episodes,
+            total_chapters,
             mean_score,
             score_distribution,
             days_since_last_activity,
@@ -208,19 +184,6 @@ impl ListRepository {
             entries_with_notes,
             private_entries,
         })
-    }
-
-    pub async fn get_completed_entries_progress(
-        pool: &SqlitePool,
-        user_id: i32,
-    ) -> CoreResult<Vec<(String, i32)>> {
-        let rows: Vec<(String, i32)> = sqlx::query_as(
-            "SELECT cid, progress FROM ListEntry WHERE user_id = ? AND status = 'COMPLETED'",
-        )
-            .bind(user_id)
-            .fetch_all(pool)
-            .await?;
-        Ok(rows)
     }
 
     pub async fn get_entries_by_cids(
@@ -362,20 +325,30 @@ impl ListRepository {
         Ok(())
     }
 
-    pub async fn get_entry_sources(
+    pub async fn get_entry_sources_by_entry_ids(
         pool: &SqlitePool,
-        entry_id: i64,
-    ) -> CoreResult<Vec<EntrySource>> {
-        let rows = sqlx::query_as::<_, EntrySourceRow>(
-            "SELECT tracker, remote_id, synced_at, remote_snapshot FROM ListEntrySource WHERE entry_id = ?",
-        )
-            .bind(entry_id)
-            .fetch_all(pool)
-            .await?;
-        Ok(rows.into_iter().map(EntrySource::from).collect())
+        entry_ids: &[i64],
+    ) -> CoreResult<HashMap<i64, Vec<EntrySource>>> {
+        let mut out: HashMap<i64, Vec<EntrySource>> = HashMap::new();
+        for chunk in entry_ids.chunks(IN_CHUNK) {
+            let sql = format!(
+                "SELECT entry_id, tracker, remote_id, synced_at, remote_snapshot \
+                 FROM ListEntrySource WHERE entry_id IN ({})",
+                placeholders(chunk.len()),
+            );
+            let mut q = sqlx::query_as::<_, (i64, String, String, Option<String>, Option<String>)>(&sql);
+            for id in chunk {
+                q = q.bind(*id);
+            }
+            for (entry_id, tracker, remote_id, synced_at, remote_snapshot) in q.fetch_all(pool).await? {
+                out.entry(entry_id).or_default().push(EntrySource::from(EntrySourceRow {
+                    tracker, remote_id, synced_at, remote_snapshot,
+                }));
+            }
+        }
+        Ok(out)
     }
 
-    /// Raw last-synced snapshot for one tracker (used by the KeepLatest merge).
     pub async fn get_entry_source_snapshot(
         pool: &SqlitePool,
         entry_id: i64,

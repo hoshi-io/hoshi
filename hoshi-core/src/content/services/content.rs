@@ -3,7 +3,6 @@ use tracing::{instrument, warn};
 use crate::content::models::{FullContent, Metadata};
 use crate::content::repositories::content::ContentRepository;
 use crate::content::services::chinese_title::ChineseTitleService;
-pub(crate) use crate::content::services::content_units::SimklUnitsService;
 use crate::content::services::resolver::ContentResolverService;
 use crate::error::{CoreError, CoreResult};
 use crate::state::AppState;
@@ -23,14 +22,9 @@ impl ContentService {
     }
 
     pub async fn get_content_by_cid(state: &Arc<AppState>, cid: &str) -> CoreResult<FullContent> {
-        ContentResolverService::backfill_cross_ids_by_cid(state, cid).await;
-
-        if let Err(e) = SimklUnitsService::sync_units_if_needed(state, cid).await {
-            warn!(cid = %cid, error = ?e, "Failed to sync units synchronously");
-        }
-
-        let mut full = ContentRepository::get_full_content(&state.pool, cid).await?
+        let full = ContentRepository::get_full_content(&state.pool, cid).await?
             .ok_or_else(|| CoreError::NotFound("error.content.not_found".into()))?;
+        let mut full = ContentResolverService::refresh_derived_data_by_mappings(state, full).await?;
 
         tokio::spawn(ContentResolverService::backfill_via_preferred_mapping(state.clone(), cid.to_string()));
 
@@ -42,10 +36,13 @@ impl ContentService {
         let Some(mapping) = full.tracker_mappings.iter().find(|m| m.tracker_name == "anilist") else {
             return;
         };
+        if !ChineseTitleService::enabled(&state.pool).await {
+            return;
+        }
         let tracker_id = mapping.tracker_id.clone();
 
         for meta in &mut full.metadata {
-            ChineseTitleService::maybe_inject_chinese_title(&state.pool, &tracker_id, &mut meta.title_i18n).await;
+            ChineseTitleService::inject(&tracker_id, &mut meta.title_i18n).await;
         }
     }
 

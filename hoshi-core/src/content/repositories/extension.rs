@@ -1,9 +1,13 @@
+use std::collections::HashMap;
+
 use chrono::Utc;
 use sqlx::SqlitePool;
 
 use crate::content::models::ExtensionSource;
+use crate::content::repositories::{placeholders, IN_CHUNK};
 use crate::error::CoreResult;
 
+type ExtensionSourceRow = (i64, String, String, String, i32, Option<String>, i64, i64);
 pub struct ExtensionRepository;
 
 impl ExtensionRepository {
@@ -67,19 +71,23 @@ impl ExtensionRepository {
     }
 
     pub async fn get_by_cid(pool: &SqlitePool, cid: &str) -> CoreResult<Vec<ExtensionSource>> {
-        let rows: Vec<(i64, String, String, String, i32, Option<String>, i64, i64)> =
-            sqlx::query_as(
-                "SELECT id, cid, extension_name, extension_id, nsfw, language, created_at, updated_at \
-                 FROM extension_sources WHERE cid = ?",
-            )
-                .bind(cid)
-                .fetch_all(pool)
-                .await?;
+        Ok(Self::get_by_cids(pool, &[cid]).await?.remove(cid).unwrap_or_default())
+    }
 
-        Ok(rows
-            .into_iter()
-            .map(|(id, cid, extension_name, extension_id, nsfw, language, created_at, updated_at)| {
-                ExtensionSource {
+    pub async fn get_by_cids(pool: &SqlitePool, cids: &[&str]) -> CoreResult<HashMap<String, Vec<ExtensionSource>>> {
+        let mut out: HashMap<String, Vec<ExtensionSource>> = HashMap::new();
+        for chunk in cids.chunks(IN_CHUNK) {
+            let sql = format!(
+                "SELECT id, cid, extension_name, extension_id, nsfw, language, created_at, updated_at \
+                 FROM extension_sources WHERE cid IN ({})",
+                placeholders(chunk.len()),
+            );
+            let mut q = sqlx::query_as::<_, ExtensionSourceRow>(&sql);
+            for cid in chunk {
+                q = q.bind(*cid);
+            }
+            for (id, cid, extension_name, extension_id, nsfw, language, created_at, updated_at) in q.fetch_all(pool).await? {
+                out.entry(cid.clone()).or_default().push(ExtensionSource {
                     id: Some(id),
                     cid,
                     extension_name,
@@ -88,9 +96,10 @@ impl ExtensionRepository {
                     language,
                     created_at,
                     updated_at,
-                }
-            })
-            .collect())
+                });
+            }
+        }
+        Ok(out)
     }
 
     pub async fn find_mapping_id(

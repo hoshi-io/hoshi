@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use tracing::{debug, instrument};
-use crate::content::models::{ContentType, ContentUnit};
-use crate::content::repositories::content::ContentRepository;
+use crate::content::models::{ContentUnit, FullContent};
+use crate::content::repositories::content::{ContentRepository, FullContentParts};
 use crate::error::CoreResult;
 use crate::progress::repository::ProgressRepository;
 use crate::progress::types::{
@@ -51,21 +51,22 @@ impl ProgressService {
         let anime_rows = ProgressRepository::get_latest_anime_per_cid(pool, user_id, limit).await?;
         let chapter_rows = ProgressRepository::get_latest_chapter_per_cid(pool, user_id, limit).await?;
 
+        let cids: Vec<&str> = anime_rows.iter().map(|r| r.cid.as_str())
+            .chain(chapter_rows.iter().map(|r| r.cid.as_str()))
+            .collect();
+        let mut contents = ContentRepository::get_full_contents(
+            pool, &cids, FullContentParts { relations: false, units: true },
+        ).await?;
+
         let mut items: Vec<ContinueItem> = Vec::new();
 
         for row in anime_rows {
-            let (title, cover_image, title_i18n, nsfw, units) =
-                Self::fetch_enriched_data(state, &row.cid).await;
+            let (title, cover_image, title_i18n, nsfw, units, _) = Self::summary(contents.remove(&row.cid));
 
-            let (display_episode, display_timestamp, _) = if row.completed {
-                (row.episode + 1, Some(0), false)
-            } else {
-                (row.episode, Some(row.timestamp_seconds), row.completed)
-            };
-
+            let display_episode = if row.completed { row.episode + 1 } else { row.episode };
             let unit = units.into_iter().find(|u| u.unit_number == display_episode as f64);
 
-            // If the user finished the episode but there IS NO next episode,
+            // Finished the last episode: nothing left to continue.
             if row.completed && unit.is_none() {
                 continue;
             }
@@ -78,7 +79,7 @@ impl ProgressService {
                 cover_image,
                 nsfw,
                 episode: Some(display_episode),
-                timestamp_seconds: display_timestamp,
+                timestamp_seconds: Some(if row.completed { 0 } else { row.timestamp_seconds }),
                 episode_duration_seconds: if row.completed { None } else { row.episode_duration_seconds },
                 chapter: None,
                 unit,
@@ -91,10 +92,7 @@ impl ProgressService {
                 continue;
             }
 
-            let (title, cover_image, title_i18n, nsfw, units) =
-                Self::fetch_enriched_data(state, &row.cid).await;
-            let content_type = Self::fetch_content_type(state, &row.cid).await;
-
+            let (title, cover_image, title_i18n, nsfw, units, content_type) = Self::summary(contents.remove(&row.cid));
             let unit = units.into_iter().find(|u| (u.unit_number - row.chapter).abs() < 1e-6);
 
             items.push(ContinueItem {
@@ -115,26 +113,25 @@ impl ProgressService {
 
         items.sort_by(|a, b| b.last_accessed.cmp(&a.last_accessed));
         items.truncate(limit as usize);
-        
+
         Ok(ContinueWatchingResponse { items })
     }
 
-    async fn fetch_enriched_data(
-        state: &AppState,
-        cid: &str,
-    ) -> (String, Option<String>, HashMap<String, String>, bool, Vec<ContentUnit>) {
-        ContentRepository::get_full_content(state.pool(), cid)
-            .await
-            .ok()
-            .flatten()
-            .map(|f| {
+    /// (title, cover, title_i18n, nsfw, units, content_type) with "Unknown" fallbacks.
+    fn summary(
+        full: Option<FullContent>,
+    ) -> (String, Option<String>, HashMap<String, String>, bool, Vec<ContentUnit>, String) {
+        match full {
+            Some(f) => {
                 let primary = f.primary_metadata();
                 let title = primary.map(|m| m.title.clone()).unwrap_or_else(|| "Unknown".into());
                 let cover_image = primary.and_then(|m| m.cover_image.clone());
                 let title_i18n = primary.map(|m| m.title_i18n.clone()).unwrap_or_default();
-                (title, cover_image, title_i18n, f.content.nsfw, f.content_units)
-            })
-            .unwrap_or_else(|| ("Unknown".into(), None, HashMap::new(), false, vec![]))
+                let content_type = f.content.content_type.as_str().to_string();
+                (title, cover_image, title_i18n, f.content.nsfw, f.content_units, content_type)
+            }
+            None => ("Unknown".into(), None, HashMap::new(), false, vec![], "unknown".into()),
+        }
     }
 
     #[instrument(skip(state))]
@@ -151,19 +148,5 @@ impl ProgressService {
             anime_progress,
             chapter_progress,
         })
-    }
-
-    async fn fetch_content_type(state: &AppState, cid: &str) -> String {
-        ContentRepository::get_content_by_cid(state.pool(), cid)
-            .await
-            .ok()
-            .flatten()
-            .map(|c| match c.content_type {
-                ContentType::Anime => "anime",
-                ContentType::Manga => "manga",
-                ContentType::Novel => "novel",
-            })
-            .unwrap_or("unknown")
-            .to_string()
     }
 }

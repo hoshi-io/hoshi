@@ -1,7 +1,3 @@
-//! Fetches images and manga pages on behalf of the webview, adding the
-//! Referer/Origin/User-Agent the origin site expects. Video and HLS go
-//! through mpv directly and never pass here.
-
 use reqwest::StatusCode;
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
 use serde::Deserialize;

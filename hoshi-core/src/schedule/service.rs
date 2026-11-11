@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use chrono::Utc;
 use tracing::{debug, info, instrument, warn};
-use crate::content::{repositories::content::ContentRepository};
+use crate::content::repositories::content::{ContentRepository, FullContentParts};
 use crate::content::repositories::cache::CacheRepository;
 use crate::content::services::import::ImportService;
 use crate::core_err;
@@ -55,38 +55,38 @@ impl ScheduleService {
             .ok_or_else(|| CoreError::Internal("error.tracker.anilist_not_registered".into()))?;
 
         let episodes = provider.fetch_airing_schedule(from_ts, to_ts).await?;
-        let mut entries: Vec<AiringEntryEnriched> = Vec::with_capacity(episodes.len());
 
-        for episode in episodes {
+        let tracker_ids: Vec<&str> = episodes.iter()
+            .filter_map(|e| e.media.as_ref().map(|m| m.tracker_id.as_str()))
+            .collect();
+        let mut cid_by_tracker_id = TrackerRepository::find_cids_by_tracker_ids(pool, "anilist", &tracker_ids).await?;
+
+        // Only titles never seen before need an import (one write each).
+        for episode in &episodes {
             let Some(media) = &episode.media else { continue };
-            let tracker_id = media.tracker_id.clone();
+            if cid_by_tracker_id.contains_key(&media.tracker_id) {
+                continue;
+            }
+            match ImportService::import_media(pool, "anilist", media).await {
+                Ok(cid) => { cid_by_tracker_id.insert(media.tracker_id.clone(), cid); }
+                Err(e) => warn!(tracker_id = %media.tracker_id, error = ?e, "Failed to import media for airing entry"),
+            }
+        }
 
-            let cid = match TrackerRepository::find_cid_by_tracker(
-                pool, "anilist", &tracker_id,
-            ).await? {
-                Some(cid) => cid,
-                None => match ImportService::import_media(pool, "anilist", media).await {
-                    Ok(cid) => cid,
-                    Err(e) => {
-                        warn!(tracker_id = %tracker_id, error = ?e, "Failed to import media for airing entry");
-                        continue;
-                    }
-                },
+        let cids: Vec<&str> = cid_by_tracker_id.values().map(String::as_str).collect();
+        let contents = ContentRepository::get_full_contents(pool, &cids, FullContentParts::ALL).await?;
+
+        let mut entries: Vec<AiringEntryEnriched> = Vec::with_capacity(episodes.len());
+        for episode in episodes {
+            let Some(media) = episode.media else { continue };
+            let Some(full_content) = cid_by_tracker_id.get(&media.tracker_id).and_then(|cid| contents.get(cid)) else {
+                continue;
             };
-
-            let full_content = match ContentRepository::get_full_content(pool, &cid).await? {
-                Some(fc) => fc,
-                None => {
-                    warn!(cid = %cid, "Missing full content after import, skipping entry");
-                    continue;
-                }
-            };
-
             entries.push(AiringEntryEnriched {
-                tracker_id,
+                tracker_id: media.tracker_id,
                 episode: episode.episode,
                 airing_at: episode.airing_at,
-                full_content,
+                full_content: full_content.clone(),
             });
         }
 

@@ -1,5 +1,9 @@
+use std::collections::HashMap;
+
 use chrono::Utc;
 use sqlx::SqlitePool;
+
+use crate::content::repositories::{placeholders, IN_CHUNK};
 
 use crate::error::CoreResult;
 use crate::tracker::types::{TrackerIntegration, TrackerMapping};
@@ -240,36 +244,46 @@ impl TrackerRepository {
 
     pub async fn get_mappings_by_cids(
         pool: &SqlitePool,
-        cids: &[String],
-    ) -> CoreResult<std::collections::HashMap<String, Vec<TrackerMapping>>> {
-        use std::collections::HashMap;
-
-        if cids.is_empty() {
-            return Ok(HashMap::new());
-        }
-
-        let placeholders = std::iter::repeat("?")
-            .take(cids.len())
-            .collect::<Vec<_>>()
-            .join(",");
-        let query = format!(
-            "SELECT cid, tracker_name, tracker_id, tracker_url, created_at, updated_at
-         FROM tracker_mappings WHERE cid IN ({placeholders})"
-        );
-
-        let mut q = sqlx::query_as::<_, (String, String, String, Option<String>, i64, i64)>(&query);
-        for cid in cids {
-            q = q.bind(cid);
-        }
-        let rows = q.fetch_all(pool).await?;
-
+        cids: &[&str],
+    ) -> CoreResult<HashMap<String, Vec<TrackerMapping>>> {
         let mut map: HashMap<String, Vec<TrackerMapping>> = HashMap::new();
-        for (cid, tracker_name, tracker_id, tracker_url, created_at, updated_at) in rows {
-            map.entry(cid.clone()).or_default().push(TrackerMapping {
-                cid, tracker_name, tracker_id, tracker_url, created_at, updated_at,
-            });
+        for chunk in cids.chunks(IN_CHUNK) {
+            let sql = format!(
+                "SELECT cid, tracker_name, tracker_id, tracker_url, created_at, updated_at \
+                 FROM tracker_mappings WHERE cid IN ({})",
+                placeholders(chunk.len()),
+            );
+            let mut q = sqlx::query_as::<_, (String, String, String, Option<String>, i64, i64)>(&sql);
+            for cid in chunk {
+                q = q.bind(*cid);
+            }
+            for (cid, tracker_name, tracker_id, tracker_url, created_at, updated_at) in q.fetch_all(pool).await? {
+                map.entry(cid.clone()).or_default().push(TrackerMapping {
+                    cid, tracker_name, tracker_id, tracker_url, created_at, updated_at,
+                });
+            }
         }
+        Ok(map)
+    }
 
+    /// tracker_id -> cid for every id of one tracker that is already imported.
+    pub async fn find_cids_by_tracker_ids(
+        pool: &SqlitePool,
+        tracker_name: &str,
+        tracker_ids: &[&str],
+    ) -> CoreResult<HashMap<String, String>> {
+        let mut map = HashMap::new();
+        for chunk in tracker_ids.chunks(IN_CHUNK) {
+            let sql = format!(
+                "SELECT tracker_id, cid FROM tracker_mappings WHERE tracker_name = ? AND tracker_id IN ({})",
+                placeholders(chunk.len()),
+            );
+            let mut q = sqlx::query_as::<_, (String, String)>(&sql).bind(tracker_name);
+            for id in chunk {
+                q = q.bind(*id);
+            }
+            map.extend(q.fetch_all(pool).await?);
+        }
         Ok(map)
     }
 

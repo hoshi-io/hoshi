@@ -1,10 +1,9 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashSet;
 use std::sync::Arc;
 use tracing::instrument;
 
 use crate::content::models::RelationType;
-use crate::content::repositories::content::ContentRepository;
-use crate::content::repositories::relations::RelationRepository;
+use crate::content::repositories::content::{ContentRepository, FullContentParts};
 use crate::content::types::{RelationEdge, RelationGraph, RelationNode};
 use crate::error::CoreResult;
 use crate::state::AppState;
@@ -32,89 +31,93 @@ impl RelationTreeService {
         let mut node_cids: HashSet<String> = HashSet::new();
         let mut visited_leaves: HashSet<(String, String)> = HashSet::new();
         let mut seen_edges: HashSet<(String, String)> = HashSet::new();
-        let mut queue: VecDeque<(String, usize)> = VecDeque::new();
         let mut nodes = Vec::new();
         let mut edges = Vec::new();
 
-        queue.push_back((root_cid.to_string(), 0));
+        // Level-order BFS: each depth is loaded in one batch.
+        let mut frontier: Vec<String> = vec![root_cid.to_string()];
+        let mut depth = 0usize;
 
-        while let Some((cid, depth)) = queue.pop_front() {
-            if node_cids.len() >= MAX_TREE_NODES {
-                break; // BFS: nothing further can be added
-            }
-            if !visited.insert(cid.clone()) {
-                continue;
-            }
+        while !frontier.is_empty() && node_cids.len() < MAX_TREE_NODES {
+            let level: Vec<String> = frontier.drain(..).filter(|c| visited.insert(c.clone())).collect();
+            let level_refs: Vec<&str> = level.iter().map(String::as_str).collect();
+            let parts = FullContentParts { relations: depth < MAX_TREE_DEPTH, units: false };
+            let contents = ContentRepository::get_full_contents(&state.pool, &level_refs, parts).await?;
 
-            let Some(full) = ContentRepository::get_full_content(&state.pool, &cid).await? else {
-                continue;
-            };
-
-            node_cids.insert(cid.clone());
-            nodes.push(RelationNode {
-                cid: Some(cid.clone()),
-                tracker_name: None,
-                tracker_id: None,
-                title: full.metadata.first().map(|m| m.title.clone()).unwrap_or_default(),
-                cover_image: full.metadata.first().and_then(|m| m.cover_image.clone()),
-            });
-
-            if depth >= MAX_TREE_DEPTH {
-                continue;
-            }
-
-            let relations = RelationRepository::get_by_source(&state.pool, &cid).await?;
-
-            for rel in relations {
-                if !Self::is_traversable(&rel.relation_type) {
-                    continue;
+            let mut next: Vec<String> = Vec::new();
+            for cid in level {
+                if node_cids.len() >= MAX_TREE_NODES {
+                    break;
                 }
+                let Some(full) = contents.get(&cid) else { continue };
 
-                let mut target_cid = rel.target_cid.clone();
-                if target_cid.is_none() && budget.try_take() {
-                    target_cid =
-                        resolve_target(state, &rel.target_tracker_name, &rel.target_tracker_id).await;
-                }
-
-                // Unordered pair: collapses mirrored edges (A sequel B / B prequel A).
-                let edge_key = match &target_cid {
-                    Some(t) if cid < *t => (cid.clone(), t.clone()),
-                    Some(t) => (t.clone(), cid.clone()),
-                    None => (
-                        cid.clone(),
-                        format!("{}:{}", rel.target_tracker_name, rel.target_tracker_id),
-                    ),
-                };
-                if !seen_edges.insert(edge_key) {
-                    continue;
-                }
-
-                edges.push(RelationEdge {
-                    source_cid: cid.clone(),
-                    target_cid: target_cid.clone(),
-                    target_tracker_name: rel.target_tracker_name.clone(),
-                    target_tracker_id: rel.target_tracker_id.clone(),
-                    relation_type: rel.relation_type.clone(),
+                node_cids.insert(cid.clone());
+                nodes.push(RelationNode {
+                    cid: Some(cid.clone()),
+                    tracker_name: None,
+                    tracker_id: None,
+                    title: full.metadata.first().map(|m| m.title.clone()).unwrap_or_default(),
+                    cover_image: full.metadata.first().and_then(|m| m.cover_image.clone()),
                 });
 
-                match &target_cid {
-                    Some(t) if !visited.contains(t) => queue.push_back((t.clone(), depth + 1)),
-                    None => {
-                        let leaf_key =
-                            (rel.target_tracker_name.clone(), rel.target_tracker_id.clone());
-                        if visited_leaves.insert(leaf_key) {
-                            nodes.push(RelationNode {
-                                cid: None,
-                                tracker_name: Some(rel.target_tracker_name.clone()),
-                                tracker_id: Some(rel.target_tracker_id.clone()),
-                                title: rel.target_title.clone(),
-                                cover_image: rel.target_cover_image.clone(),
-                            });
-                        }
+                if depth >= MAX_TREE_DEPTH {
+                    continue;
+                }
+
+                for rel in &full.relations {
+                    if !Self::is_traversable(&rel.relation_type) {
+                        continue;
                     }
-                    _ => {}
+
+                    let mut target_cid = rel.target_cid.clone();
+                    if target_cid.is_none() && budget.try_take() {
+                        target_cid =
+                            resolve_target(state, &rel.target_tracker_name, &rel.target_tracker_id).await;
+                    }
+
+                    // Unordered pair: collapses mirrored edges (A sequel B / B prequel A).
+                    let edge_key = match &target_cid {
+                        Some(t) if cid < *t => (cid.clone(), t.clone()),
+                        Some(t) => (t.clone(), cid.clone()),
+                        None => (
+                            cid.clone(),
+                            format!("{}:{}", rel.target_tracker_name, rel.target_tracker_id),
+                        ),
+                    };
+                    if !seen_edges.insert(edge_key) {
+                        continue;
+                    }
+
+                    edges.push(RelationEdge {
+                        source_cid: cid.clone(),
+                        target_cid: target_cid.clone(),
+                        target_tracker_name: rel.target_tracker_name.clone(),
+                        target_tracker_id: rel.target_tracker_id.clone(),
+                        relation_type: rel.relation_type.clone(),
+                    });
+
+                    match &target_cid {
+                        Some(t) if !visited.contains(t) => next.push(t.clone()),
+                        None => {
+                            let leaf_key =
+                                (rel.target_tracker_name.clone(), rel.target_tracker_id.clone());
+                            if visited_leaves.insert(leaf_key) {
+                                nodes.push(RelationNode {
+                                    cid: None,
+                                    tracker_name: Some(rel.target_tracker_name.clone()),
+                                    tracker_id: Some(rel.target_tracker_id.clone()),
+                                    title: rel.target_title.clone(),
+                                    cover_image: rel.target_cover_image.clone(),
+                                });
+                            }
+                        }
+                        _ => {}
+                    }
                 }
             }
+
+            frontier = next;
+            depth += 1;
         }
 
         // Edges pushed toward targets that never became nodes (node cap hit,

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::Utc;
 use sqlx::{Row, SqlitePool};
 
@@ -8,12 +10,40 @@ use crate::content::models::{
 use crate::content::repositories::extension::ExtensionRepository;
 use crate::content::repositories::relations::RelationRepository;
 use crate::content::repositories::unit::UnitRepository;
+use crate::content::repositories::{placeholders, unique, IN_CHUNK};
 use crate::content::types::SearchResult;
 use crate::content::utils::{best_title_match, normalize_title};
 use crate::error::{CoreError, CoreResult};
 use crate::tracker::repository::TrackerRepository;
 
 pub struct ContentRepository;
+
+#[derive(Debug, Clone, Copy)]
+pub struct FullContentParts {
+    pub relations: bool,
+    pub units: bool,
+}
+
+impl FullContentParts {
+    pub const ALL: Self = Self { relations: true, units: true };
+    pub const SUMMARY: Self = Self { relations: false, units: false };
+}
+
+type ContentRow = (String, String, i32, i64, i64);
+
+fn content_from_row((cid, type_str, nsfw, created_at, updated_at): ContentRow) -> Content {
+    Content {
+        cid,
+        content_type: match type_str.as_str() {
+            "manga" => ContentType::Manga,
+            "novel" => ContentType::Novel,
+            _ => ContentType::Anime,
+        },
+        nsfw: nsfw == 1,
+        created_at,
+        updated_at,
+    }
+}
 
 impl ContentRepository {
     pub async fn create_with_type(
@@ -115,21 +145,54 @@ impl ContentRepository {
         pool: &SqlitePool,
         cid: &str,
     ) -> CoreResult<Option<Content>> {
-        let row: Option<(String, String, i32, i64, i64)> = sqlx::query_as(
+        let row: Option<ContentRow> = sqlx::query_as(
             "SELECT cid, type, nsfw, created_at, updated_at FROM content WHERE cid = ?",
         )
             .bind(cid)
             .fetch_optional(pool)
             .await?;
 
-        Ok(row.map(|(cid, type_str, nsfw, created_at, updated_at)| Content {
-            cid,
-            content_type: serde_json::from_str(&format!("\"{}\"", type_str))
-                .unwrap_or(ContentType::Anime),
-            nsfw: nsfw == 1,
-            created_at,
-            updated_at,
-        }))
+        Ok(row.map(content_from_row))
+    }
+
+    pub async fn get_contents_by_cids(pool: &SqlitePool, cids: &[&str]) -> CoreResult<HashMap<String, Content>> {
+        let mut out = HashMap::with_capacity(cids.len());
+        for chunk in cids.chunks(IN_CHUNK) {
+            let sql = format!(
+                "SELECT cid, type, nsfw, created_at, updated_at FROM content WHERE cid IN ({})",
+                placeholders(chunk.len()),
+            );
+            let mut q = sqlx::query_as::<_, ContentRow>(&sql);
+            for cid in chunk {
+                q = q.bind(*cid);
+            }
+            for row in q.fetch_all(pool).await? {
+                let content = content_from_row(row);
+                out.insert(content.cid.clone(), content);
+            }
+        }
+        Ok(out)
+    }
+
+    /// Per cid, AniList first (same order as `get_all_metadata`).
+    pub async fn get_all_metadata_by_cids(pool: &SqlitePool, cids: &[&str]) -> CoreResult<HashMap<String, Vec<Metadata>>> {
+        let mut out: HashMap<String, Vec<Metadata>> = HashMap::new();
+        for chunk in cids.chunks(IN_CHUNK) {
+            let sql = format!(
+                "SELECT * FROM metadata WHERE cid IN ({}) \
+                 ORDER BY cid, CASE source_name WHEN 'anilist' THEN 0 ELSE 1 END",
+                placeholders(chunk.len()),
+            );
+            let mut q = sqlx::query(&sql);
+            for cid in chunk {
+                q = q.bind(*cid);
+            }
+            for row in q.fetch_all(pool).await? {
+                let meta = Self::map_metadata_row(&row)?;
+                out.entry(meta.cid.clone()).or_default().push(meta);
+            }
+        }
+        Ok(out)
     }
 
     pub async fn get_all_metadata(pool: &SqlitePool, cid: &str) -> CoreResult<Vec<Metadata>> {
@@ -227,6 +290,45 @@ impl ContentRepository {
         }
 
         Ok(None)
+    }
+    
+    pub async fn get_full_contents(
+        pool: &SqlitePool,
+        cids: &[&str],
+        parts: FullContentParts,
+    ) -> CoreResult<HashMap<String, FullContent>> {
+        let cids = unique(cids.iter().copied());
+        if cids.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let (contents, mut metadata, mut mappings, mut ext_sources, mut relations, mut units) = tokio::try_join!(
+            Self::get_contents_by_cids(pool, &cids),
+            Self::get_all_metadata_by_cids(pool, &cids),
+            TrackerRepository::get_mappings_by_cids(pool, &cids),
+            ExtensionRepository::get_by_cids(pool, &cids),
+            async {
+                if parts.relations { RelationRepository::get_by_sources(pool, &cids).await } else { Ok(HashMap::new()) }
+            },
+            async {
+                if parts.units { UnitRepository::get_by_cids(pool, &cids).await } else { Ok(HashMap::new()) }
+            },
+        )?;
+
+        Ok(contents
+            .into_iter()
+            .map(|(cid, content)| {
+                let full = FullContent {
+                    metadata: metadata.remove(&cid).unwrap_or_default(),
+                    tracker_mappings: mappings.remove(&cid).unwrap_or_default(),
+                    extension_sources: ext_sources.remove(&cid).unwrap_or_default(),
+                    relations: relations.remove(&cid).unwrap_or_default(),
+                    content_units: units.remove(&cid).unwrap_or_default(),
+                    content,
+                };
+                (cid, full)
+            })
+            .collect())
     }
 
     pub async fn get_full_content(pool: &SqlitePool, cid: &str) -> CoreResult<Option<FullContent>> {
