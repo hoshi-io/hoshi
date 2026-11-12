@@ -214,18 +214,4 @@ impl HomeService {
         if !adult_enabled { view.filter_nsfw(); }
         Ok(view)
     }
-
-    pub async fn get_trending(
-        state: &Arc<AppState>,
-        media_type: &str,
-        user_id: i32,
-    ) -> CoreResult<Vec<FullContent>> {
-        let view = Self::get_home_view(state, user_id).await?;
-        Ok(match media_type {
-            "anime" => view.anime.trending,
-            "manga" => view.manga.trending,
-            "novel" => view.novel.trending,
-            _ => return Err(CoreError::NotFound("error.content.invalid_media_type".into())),
-        })
-    }
 }

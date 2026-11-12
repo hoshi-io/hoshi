@@ -67,7 +67,7 @@
 
     const airingEntry = $derived(
         scheduleStore.upcoming.find(e =>
-            String(e.fullContent.content.cid) === currentItem.cid
+            !!currentItem.cid && e.fullContent.content.cid === currentItem.cid
         )
     );
 
@@ -92,7 +92,6 @@
 </script>
 
 {#if currentItem}
-    {@const cid = currentItem.href.replace('/c/', '')}
 
     <div
             class="relative w-full h-[75vh] md:h-[90vh] min-h-[550px] overflow-hidden bg-background select-none"
@@ -210,7 +209,8 @@
                             </a>
 
                             <ListEditorButton
-                                    cid={cid}
+                                    cid={currentItem.cid}
+                                    source={currentItem.source}
                                     title={title}
                                     contentType={currentItem.contentType}
                                     coverImage={currentItem.cover ?? undefined}

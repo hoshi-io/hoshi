@@ -4,16 +4,18 @@
     import ListEditorButton from "@/components/ListEditorButton.svelte";
     import {i18n} from "@/stores/i18n.svelte";
     import SmartImage from "@/components/SmartImage.svelte";
+    import type { CardSource } from "@/utils/normalize";
 
     const YOUTUBE_REGEXP = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
 
     let {
-        cid, title, cover, bannerImage, trailerUrl,
+        cid, source, title, cover, bannerImage, trailerUrl,
         score, status, synopsis, episodeCount,
         contentType, contentTypeLabel, shouldBlur,
         href, isStar
     }: {
-        cid: string;
+        cid: string | null;
+        source?: CardSource | null;
         title: string;
         cover: string;
         bannerImage?: string | null;
@@ -101,6 +103,7 @@
 
                 <ListEditorButton
                         cid={cid}
+                        source={source}
                         title={title}
                         contentType={contentType || ""}
                         coverImage={cover}

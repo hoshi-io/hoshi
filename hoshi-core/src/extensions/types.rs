@@ -192,7 +192,7 @@ pub struct ExtensionMetadata {
    pub external_ids: Option<Value>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExtensionSearchResult {
     pub id: String,
     pub title: String,

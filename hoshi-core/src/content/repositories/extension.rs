@@ -70,6 +70,27 @@ impl ExtensionRepository {
         Ok(row.map(|(cid,)| cid))
     }
 
+    /// extension_id -> cid for every id of one extension that is already linked.
+    pub async fn find_cids_by_extension_ids(
+        pool: &SqlitePool,
+        extension_name: &str,
+        extension_ids: &[&str],
+    ) -> CoreResult<HashMap<String, String>> {
+        let mut map = HashMap::new();
+        for chunk in extension_ids.chunks(IN_CHUNK) {
+            let sql = format!(
+                "SELECT extension_id, cid FROM extension_sources WHERE extension_name = ? AND extension_id IN ({})",
+                placeholders(chunk.len()),
+            );
+            let mut q = sqlx::query_as::<_, (String, String)>(&sql).bind(extension_name);
+            for id in chunk {
+                q = q.bind(*id);
+            }
+            map.extend(q.fetch_all(pool).await?);
+        }
+        Ok(map)
+    }
+
     pub async fn get_by_cid(pool: &SqlitePool, cid: &str) -> CoreResult<Vec<ExtensionSource>> {
         Ok(Self::get_by_cids(pool, &[cid]).await?.remove(cid).unwrap_or_default())
     }

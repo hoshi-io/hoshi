@@ -148,17 +148,17 @@ class SearchState {
             }
 
             const unique = Array.from(
-                new Map(normalized.map(item => [item.cid, item])).values()
+                new Map(normalized.map(item => [item.key, item])).values()
             );
 
             if (this.page === 1) {
                 this.results = unique;
             } else {
-                const existingIds = new Set(this.results.map(i => i.cid));
+                const existingIds = new Set(this.results.map(i => i.key));
 
                 this.results = [
                     ...this.results,
-                    ...unique.filter(i => !existingIds.has(i.cid))
+                    ...unique.filter(i => !existingIds.has(i.key))
                 ];
             }
 
@@ -229,8 +229,8 @@ class SearchState {
             if (this.page === 1) {
                 this.results = withHeaders;
             } else {
-                const existingIds = new Set(this.results.map(i => i.cid));
-                this.results = [...this.results, ...withHeaders.filter(i => !existingIds.has(i.cid))];
+                const existingIds = new Set(this.results.map(i => i.key));
+                this.results = [...this.results, ...withHeaders.filter(i => !existingIds.has(i.key))];
             }
 
             this.hasSearched = true;

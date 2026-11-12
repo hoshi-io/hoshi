@@ -5,9 +5,14 @@
     import { Check, BookmarkPlus } from "lucide-svelte";
     import {cn} from "@/utils";
     import { layoutState, openListEditor } from "@/stores/layout.svelte";
+    import { contentApi } from "@/api/content/content";
+    import type { CardSource } from "@/utils/normalize";
+    import { toast } from "svelte-sonner";
+    import { i18n } from "@/stores/i18n.svelte";
 
     let {
         cid,
+        source = null,
         title,
         contentType,
         coverImage,
@@ -17,7 +22,8 @@
         class: className = "",
         label
     } = $props<{
-        cid: string;
+        cid: string | null;
+        source?: CardSource | null;
         title: string;
         contentType: string;
         coverImage?: string | null;
@@ -28,11 +34,31 @@
         label?: string;
     }>();
 
-    const isInList = $derived(listStore.hasCid(cid));
+    let resolvedCid = $state<string | null>(null);
+    let resolving = $state(false);
 
-    function handleClick() {
+    const effectiveCid = $derived(cid ?? resolvedCid);
+    const isInList = $derived(!!effectiveCid && listStore.hasCid(effectiveCid));
+    const busy = $derived(listStore.isLoading || resolving);
+
+    async function handleClick() {
+        if (resolving) return;
+        let target = effectiveCid;
+        if (!target) {
+            if (!source) return;
+            resolving = true;
+            try {
+                target = (await contentApi.get(source.name, source.id)).content.cid;
+                resolvedCid = target;
+            } catch (e: any) {
+                toast.error(i18n.t(e?.key || 'error.system.unknown'));
+                return;
+            } finally {
+                resolving = false;
+            }
+        }
         openListEditor({
-            cid,
+            cid: target,
             title,
             contentType,
             coverImage,
@@ -54,7 +80,7 @@
                 className
             )}
     >
-        {#if listStore.isLoading}
+        {#if busy}
             <Spinner class="size-5" />
         {:else if isInList}
             <Check class="size-5" />
@@ -70,7 +96,7 @@
             class={cn("rounded-sm", className)}
             onclick={handleClick}
     >
-        {#if listStore.isLoading}
+        {#if busy}
             <Spinner class="w-4 h-4" />
         {:else if isInList}
             <Check class="w-4 h-4 text-green-500" />

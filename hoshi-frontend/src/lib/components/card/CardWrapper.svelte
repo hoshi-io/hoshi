@@ -70,6 +70,7 @@
         >
             <CardPreview
                     cid={card.cid}
+                    source={card.source}
                     {title}
                     cover={card.cover}
                     bannerImage={card.bannerImage}

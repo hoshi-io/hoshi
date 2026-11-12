@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use chrono::Utc;
-use tracing::{debug, info, instrument, warn};
+use tracing::{debug, info, instrument};
 use crate::content::repositories::content::{ContentRepository, FullContentParts};
 use crate::content::repositories::cache::CacheRepository;
 use crate::content::services::import::ImportService;
@@ -8,7 +8,6 @@ use crate::core_err;
 use crate::error::{CoreError, CoreResult};
 use crate::schedule::types::{AiringEntryEnriched, ScheduleWindow};
 use crate::state::AppState;
-use crate::tracker::repository::TrackerRepository;
 
 const SCHEDULE_CACHE_TTL: i64 = 3 * 3600;
 
@@ -56,22 +55,8 @@ impl ScheduleService {
 
         let episodes = provider.fetch_airing_schedule(from_ts, to_ts).await?;
 
-        let tracker_ids: Vec<&str> = episodes.iter()
-            .filter_map(|e| e.media.as_ref().map(|m| m.tracker_id.as_str()))
-            .collect();
-        let mut cid_by_tracker_id = TrackerRepository::find_cids_by_tracker_ids(pool, "anilist", &tracker_ids).await?;
-
-        // Only titles never seen before need an import (one write each).
-        for episode in &episodes {
-            let Some(media) = &episode.media else { continue };
-            if cid_by_tracker_id.contains_key(&media.tracker_id) {
-                continue;
-            }
-            match ImportService::import_media(pool, "anilist", media).await {
-                Ok(cid) => { cid_by_tracker_id.insert(media.tracker_id.clone(), cid); }
-                Err(e) => warn!(tracker_id = %media.tracker_id, error = ?e, "Failed to import media for airing entry"),
-            }
-        }
+        let medias: Vec<_> = episodes.iter().filter_map(|e| e.media.as_ref()).collect();
+        let cid_by_tracker_id = ImportService::ensure_imported(pool, "anilist", &medias).await?;
 
         let cids: Vec<&str> = cid_by_tracker_id.values().map(String::as_str).collect();
         let contents = ContentRepository::get_full_contents(pool, &cids, FullContentParts::ALL).await?;

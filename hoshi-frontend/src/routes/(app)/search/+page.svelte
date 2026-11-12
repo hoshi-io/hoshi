@@ -331,7 +331,7 @@
                 {:else if searchState.displayResults.length > 0}
                     <LazyCardGrid
                             items={searchState.displayResults}
-                            keyFn={(card) => card.cid}
+                            keyFn={(card) => card.key}
                             hasMore={searchState.hasMore}
                             isLoading={searchState.isLoading && searchState.page > 1}
                             onLoadMore={() => {

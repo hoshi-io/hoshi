@@ -111,6 +111,7 @@
 
                             <ListEditorButton
                                     cid={current.cid}
+                                    source={current.source}
                                     title={title}
                                     contentType="anime"
                                     coverImage={current.cover}

@@ -10,6 +10,7 @@ use hoshi_core::content::models::{ContentType, ExtensionSource, FullContent, Met
 use hoshi_core::content::relations::RelationTreeService;
 use hoshi_core::content::services::content::ContentService;
 use hoshi_core::content::services::extensions::ExtensionService;
+use hoshi_core::content::services::discover::DiscoverService;
 use hoshi_core::content::services::home::HomeService;
 use hoshi_core::content::services::mapping::MappingService;
 use hoshi_core::content::services::search::SearchService;
@@ -191,15 +192,14 @@ pub async fn get_trending(
     session_state: State<'_, TauriSession>,
     media_type: String,
 ) -> Result<Vec<FullContent>, CoreError> {
-    if !matches!(media_type.as_str(), "anime" | "manga" | "novel") {
-        return Err(CoreError::BadRequest("error.content.invalid_media_type".into()));
-    }
+    let content_type = match media_type.as_str() {
+        "anime" => ContentType::Anime,
+        "manga" => ContentType::Manga,
+        "novel" => ContentType::Novel,
+        _ => return Err(CoreError::BadRequest("error.content.invalid_media_type".into())),
+    };
     let user_id = require_auth(&session_state).await?;
-    HomeService::get_trending(
-        &state,
-        &media_type,
-        user_id,
-    ).await
+    DiscoverService::trending(state.inner(), user_id, content_type).await
 }
 
 #[tauri::command(rename_all = "snake_case")]

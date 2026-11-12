@@ -9,8 +9,15 @@ function contentBase(): string {
     return layoutState.isTV ? "/tv/c" : "/c";
 }
 
+/** Where a card's content comes from when it has no local cid yet. */
+export type CardSource = { name: string; id: string };
+
 export type NormalizedCard = {
-    cid: string;
+    /** Local content id; null until the content is imported. */
+    cid: string | null;
+    source: CardSource | null;
+    /** Unique per card, for keyed loops and dedupe. */
+    key: string;
     titleI18n: Record<string, string>;
     titleDefault: string;
     cover: string;
@@ -91,6 +98,8 @@ export function normalizeFullContent(item: FullContent): NormalizedCard {
 
     return {
         cid: item.content.cid,
+        source: null,
+        key: item.content.cid,
         titleI18n: meta?.titleI18n ?? {},
         titleDefault: meta?.title ?? "",
         cover: meta?.coverImage ?? "",
@@ -118,7 +127,9 @@ export function normalizeTrackerMedia(item: TrackerMedia, tracker: string): Norm
     ) ?? false;
 
     return {
-        cid: `${item.trackerId}`,
+        cid: null,
+        source: { name: tracker, id: item.trackerId },
+        key: `${tracker}:${item.trackerId}`,
         titleI18n: item.titleI18n ?? {},
         titleDefault: item.title ?? "",
         cover: item.coverImage ?? "",
@@ -148,7 +159,9 @@ export function normalizeExtensionResult(
     contentType: ContentType
 ): NormalizedCard {
     return {
-        cid: `${item.id}`,
+        cid: null,
+        source: { name: extensionId, id: item.id },
+        key: `${extensionId}:${item.id}`,
         titleI18n: {},
         titleDefault: item.title ?? "",
         cover: item.image ?? "",
@@ -171,6 +184,8 @@ export function normalizeExtensionResult(
 export function normalizeListEntry(entry: EnrichedListEntry): NormalizedCard {
     return {
         cid: entry.cid,
+        source: null,
+        key: entry.cid,
         titleI18n: entry.titleI18n ?? {},
         titleDefault: entry.title ?? "",
         cover: entry.coverImage ?? "",
@@ -209,7 +224,9 @@ export function normalizeRelationCard(relation: {
         : `${contentBase()}/${relation.targetTrackerName}/${btoa(relation.targetTrackerId)}`;
 
     return {
-        cid: relation.targetCid ?? "",
+        cid: relation.targetCid,
+        source: relation.targetCid ? null : { name: relation.targetTrackerName, id: relation.targetTrackerId },
+        key: relation.targetCid ?? `${relation.targetTrackerName}:${relation.targetTrackerId}`,
         titleI18n: {},
         titleDefault: relation.targetTitle,
         cover: relation.targetCoverImage ?? "",

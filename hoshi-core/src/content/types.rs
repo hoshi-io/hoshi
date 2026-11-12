@@ -181,3 +181,46 @@ pub struct RelationGraph {
     pub nodes: Vec<RelationNode>,
     pub edges: Vec<RelationEdge>,
 }
+/// A saved search against one source; the unit a home section is built from.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum DiscoverQuery {
+    #[serde(rename_all = "camelCase")]
+    Tracker {
+        tracker: String,
+        content_type: ContentType,
+        #[serde(default)]
+        query: Option<String>,
+        #[serde(default)]
+        sort: Option<String>,
+        #[serde(default)]
+        genre: Option<String>,
+        #[serde(default)]
+        format: Option<String>,
+        #[serde(default)]
+        status: Option<String>,
+        #[serde(default)]
+        tags: Vec<String>,
+    },
+    #[serde(rename_all = "camelCase")]
+    Extension {
+        extension: String,
+        #[serde(default)]
+        query: Option<String>,
+        #[serde(default)]
+        filters: serde_json::Value,
+    },
+}
+
+/// A discover result: either already in the local DB, or an extension
+/// result that is only resolved (and imported) when the user acts on it.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum DiscoverItem {
+    Content(FullContent),
+    #[serde(rename_all = "camelCase")]
+    Extension {
+        extension: String,
+        item: crate::extensions::types::ExtensionSearchResult,
+    },
+}

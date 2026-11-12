@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use sqlx::SqlitePool;
 use serde_json::json;
 use tracing::{debug, instrument, warn};
@@ -15,6 +16,29 @@ use crate::tracker::types::TrackerMapping;
 pub struct ImportService;
 
 impl ImportService {
+    
+    /// tracker_id -> cid for every media; only media never seen before get imported.
+    pub async fn ensure_imported(
+        pool: &SqlitePool,
+        tracker_name: &str,
+        medias: &[&TrackerMedia],
+    ) -> CoreResult<HashMap<String, String>> {
+        let ids: Vec<&str> = medias.iter().map(|m| m.tracker_id.as_str()).collect();
+        let mut cids = TrackerRepository::find_cids_by_tracker_ids(pool, tracker_name, &ids).await?;
+
+        for media in medias {
+            if cids.contains_key(&media.tracker_id) {
+                continue;
+            }
+            match Self::import_media(pool, tracker_name, media).await {
+                Ok(cid) => { cids.insert(media.tracker_id.clone(), cid); }
+                Err(e) => warn!(tracker = %tracker_name, tracker_id = %media.tracker_id, error = ?e, "Failed to import media"),
+            }
+        }
+
+        Ok(cids)
+    }
+
     #[instrument(skip(pool, media))]
     pub async fn import_media(
         pool: &SqlitePool,
