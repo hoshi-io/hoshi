@@ -5,11 +5,14 @@
     import type { UiConfig } from "@/api/config/types";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { themeManager } from "@/stores/theme.svelte";
-    import { Check } from "lucide-svelte";
+    import { Check, Pencil } from "lucide-svelte";
+    import { goto } from "$app/navigation";
+    import { Button } from "$lib/components/ui/button";
+    import { homeState } from "@/app/home.svelte.js";
+    import { homeEditor } from "@/app/home-editor.svelte.js";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
     import SettingRow from "@/components/settings/parts/SettingRow.svelte";
-    import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
 
     let {
         config = $bindable(),
@@ -61,11 +64,11 @@
     ];
 
     // Three short options: a segmented control is quicker than opening a menu.
-    const homeSectionItems = [
-        { value: "anime", label: i18n.t('settings.ui_section.default_home_anime') },
-        { value: "manga", label: i18n.t('settings.ui_section.default_home_manga') },
-        { value: "novel", label: i18n.t('settings.ui_section.default_home_novel') }
-    ];
+    async function customizeHome() {
+        if (!homeState.hasData) await homeState.load();
+        homeEditor.start();
+        await goto('/');
+    }
 </script>
 
 <SettingsSection
@@ -170,16 +173,13 @@
     </div>
 
     <SettingRow
-            label={i18n.t('settings.ui_section.default_home')}
-            description={i18n.t('settings.ui_section.default_home_desc')}
+            label={i18n.t('settings.ui_section.customize_home')}
+            description={i18n.t('settings.ui_section.customize_home_desc')}
     >
-        <SegmentedControl
-                label={i18n.t('settings.ui_section.default_home')}
-                bind:value={config.defaultHomeSection}
-                options={homeSectionItems}
-                onValueChange={() => onSave()}
-                class="capitalize"
-        />
+        <Button variant="outline" class="rounded-sm" onclick={customizeHome}>
+            <Pencil class="size-4" />
+            {i18n.t('settings.ui_section.customize_home_button')}
+        </Button>
     </SettingRow>
 
     <SettingRow

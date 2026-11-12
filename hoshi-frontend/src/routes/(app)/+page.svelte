@@ -3,13 +3,16 @@
     import HomeHero from '@/components/hero/HomeHero.svelte';
     import HomeSectionView from '@/components/home/HomeSectionView.svelte';
     import { tabIcon } from '@/components/home/icons';
-    import { crossfade, fade } from 'svelte/transition';
+    import { crossfade, fade, slide } from 'svelte/transition';
     import { cubicOut } from 'svelte/easing';
     import type { Action } from 'svelte/action';
     import { layoutState } from '@/stores/layout.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { auth } from '@/stores/auth.svelte.js';
     import { homeState, labelText } from '@/app/home.svelte.js';
+    import { homeEditor } from '@/app/home-editor.svelte.js';
+    import HomeEditView from '@/components/home/editor/HomeEditView.svelte';
+    import { Pencil } from 'lucide-svelte';
 
     const prefersReducedMotion =
         typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -51,6 +54,10 @@
         heroSection?.source.kind === 'search' ? homeState.feed(heroSection.source.query) : null
     );
 
+    // The slot stays while the hero loads, so items arriving don't cause a second jump.
+    const hasHero = $derived(!!heroFeed && !heroFeed.error && (heroFeed.items.length > 0 || !heroFeed.loaded));
+    const heroItems = $derived(heroFeed?.items.slice(0, 5) ?? []);
+
     $effect(() => {
         heroFeed?.load();
     });
@@ -63,6 +70,9 @@
 
         return () => { layoutState.headerAction = undefined; };
     });
+
+    // Leaving the page drops an unsaved draft.
+    $effect(() => () => homeEditor.cancel());
 
     $effect(() => {
         if (auth.loading || !auth.initialized || !auth.user) return;
@@ -79,8 +89,22 @@
     <title>{i18n.t("home.title")}</title>
 </svelte:head>
 
+{#snippet editButton(extra: string)}
+    <button
+            type="button"
+            onclick={() => homeEditor.start()}
+            title={i18n.t('home.edit.customize')}
+            aria-label={i18n.t('home.edit.customize')}
+            class="flex shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground {extra}"
+    >
+        <Pencil class="size-4" />
+    </button>
+{/snippet}
+
 {#snippet mobileHeaderAction()}
-    <div class="flex max-w-[60vw] items-center overflow-x-auto [scrollbar-width:none] bg-muted/40 p-1 rounded-xl border border-border/40 shadow-inner h-10 mr-1" in:fade={{duration: 150}}>
+    {#if !homeEditor.editing}
+    <div class="flex items-center gap-1 mr-1" in:fade={{duration: 150}}>
+    <div class="flex max-w-[55vw] items-center overflow-x-auto [scrollbar-width:none] bg-muted/40 p-1 rounded-xl border border-border/40 shadow-inner h-10">
         {#each homeState.tabs as tab (tab.id)}
             {@const Icon = tabIcon(tab.icon)}
             {@const label = labelText(tab.title)}
@@ -102,6 +126,9 @@
             </button>
         {/each}
     </div>
+    {@render editButton('size-10 md:hidden')}
+    </div>
+    {/if}
 {/snippet}
 
 <div class="bg-background overflow-x-hidden relative -mt-24 lg:mt-0 pb-11">
@@ -128,17 +155,29 @@
                 {/each}
             </div>
         </div>
+    {:else if homeEditor.editing}
+        <div class="mx-auto w-full max-w-[2000px] px-4 pt-28 pb-safe md:px-8 lg:pl-32 lg:pr-12 lg:pt-6">
+            <HomeEditView />
+        </div>
     {:else if activeTab}
         <div in:fade={{ duration: 500 }}>
-            {#if heroFeed && heroFeed.items.length > 0}
-                <div class="w-full relative">
-                    <HomeHero items={heroFeed.items.slice(0, 5)}/>
+            {#if hasHero}
+                <div class="w-full relative overflow-hidden" transition:slide={{ duration: prefersReducedMotion ? 0 : 450, easing: cubicOut }}>
+                    {#key heroSection?.id}
+                        <div in:fade={{ duration: 400 }}>
+                            {#if heroItems.length > 0}
+                                <HomeHero items={heroItems}/>
+                            {:else}
+                                <div class="w-full h-[75vh] md:h-[90vh] min-h-[550px] bg-card/30"></div>
+                            {/if}
+                        </div>
+                    {/key}
                 </div>
             {:else}
-                <div class="h-24 lg:h-8"></div>
+                <div class="h-24 lg:h-8" transition:slide={{ duration: prefersReducedMotion ? 0 : 450, easing: cubicOut }}></div>
             {/if}
 
-            <div class="w-full px-4 md:px-12 lg:pl-32 pt-4 md:pt-6 relative z-20 space-y-4 md:space-y-6 pb-safe {heroFeed && heroFeed.items.length > 0 ? '-mt-8 md:-mt-16' : ''}">
+            <div class="w-full px-4 md:px-12 lg:pl-32 pt-4 md:pt-6 relative z-20 space-y-4 md:space-y-6 pb-safe transition-[margin] duration-500 {hasHero ? '-mt-8 md:-mt-16' : ''}">
                 <div class="hidden md:flex items-center gap-8 border-b border-border/10 pb-4 overflow-x-auto [scrollbar-width:none]">
                     {#each homeState.tabs as tab (tab.id)}
                         {@const Icon = tabIcon(tab.icon)}
@@ -160,6 +199,7 @@
                             {/if}
                         </button>
                     {/each}
+                    <div class="ml-auto">{@render editButton('size-9')}</div>
                 </div>
 
                 {#key activeTab.id}

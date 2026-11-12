@@ -1,4 +1,3 @@
-export type HomeSection = 'anime' | 'manga' | 'novel';
 export type MetadataProvider = 'anilist' | 'myanimelist' | 'kitsu' | 'simkl' | 'shikimori' | 'mangabaka';
 
 export type TitleLanguage = 'native' | 'romaji' | 'english' | 'chinese';
@@ -38,7 +37,6 @@ export interface UiConfig {
     sidebarCollapsed: boolean;
     disableCardTrailers: boolean;
     disableHeroTrailers: boolean;
-    defaultHomeSection: HomeSection;
     titleLanguage: TitleLanguage;
 }
 

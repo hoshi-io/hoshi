@@ -35,6 +35,12 @@ export class SectionFeed {
         return this.fetchPage(1);
     }
 
+    retry() {
+        this.loaded = false;
+        this.error = null;
+        return this.fetchPage(1);
+    }
+
     more() {
         if (!this.hasMore || this.loading || !this.loaded) return Promise.resolve();
         return this.fetchPage(this.page + 1);

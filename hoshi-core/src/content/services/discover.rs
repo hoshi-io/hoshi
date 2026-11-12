@@ -108,7 +108,9 @@ impl DiscoverService {
             DiscoverQuery::Tracker { query: Some(q), .. } if !q.trim().is_empty() => 24 * HOUR,
             DiscoverQuery::Tracker { sort, status, .. } => {
                 let sort = sort.as_deref().unwrap_or_default().to_ascii_uppercase();
-                if sort.contains("TRENDING") {
+                if sort.contains("LATEST") {
+                    3 * HOUR
+                } else if sort.contains("TRENDING") {
                     TRENDING_TTL
                 } else if status.is_some() || sort.contains("DATE") {
                     12 * HOUR

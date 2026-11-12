@@ -26,7 +26,7 @@ impl HomeLayoutService {
 
     pub async fn get_layout(state: &AppState, user_id: i32) -> CoreResult<HomeLayout> {
         let Some(raw) = HomeRepository::get_layout(&state.pool, user_id).await? else {
-            return Ok(default_layout());
+            return Self::migrate_legacy(state, user_id).await;
         };
         match serde_json::from_str(&raw) {
             Ok(layout) => Ok(layout),
@@ -35,6 +35,23 @@ impl HomeLayoutService {
                 Ok(default_layout())
             }
         }
+    }
+
+    /// Users who picked manga/novel as their home section get that tab first, once.
+    async fn migrate_legacy(state: &AppState, user_id: i32) -> CoreResult<HomeLayout> {
+        let mut layout = default_layout();
+        let legacy = HomeRepository::legacy_default_tab(&state.pool, user_id).await.ok().flatten();
+
+        let Some(pos) = legacy.and_then(|id| layout.tabs.iter().position(|t| t.id == id)) else {
+            return Ok(layout);
+        };
+        if pos == 0 {
+            return Ok(layout);
+        }
+
+        let tab = layout.tabs.remove(pos);
+        layout.tabs.insert(0, tab);
+        Self::save_layout(state, user_id, layout).await
     }
 
     pub async fn save_layout(state: &AppState, user_id: i32, layout: HomeLayout) -> CoreResult<HomeLayout> {

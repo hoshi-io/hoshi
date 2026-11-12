@@ -28,6 +28,17 @@ impl HomeRepository {
         Ok(())
     }
 
+    /// The pre-layout `defaultHomeSection` setting, still present in older stored configs.
+    pub async fn legacy_default_tab(pool: &SqlitePool, user_id: i32) -> CoreResult<Option<String>> {
+        let row: Option<(Option<String>,)> = sqlx::query_as(
+            "SELECT json_extract(config, '$.ui.defaultHomeSection') FROM UserConfig WHERE user_id = ?",
+        )
+            .bind(user_id)
+            .fetch_optional(pool)
+            .await?;
+        Ok(row.and_then(|(v,)| v))
+    }
+
     pub async fn delete_layout(pool: &SqlitePool, user_id: i32) -> CoreResult<()> {
         sqlx::query("DELETE FROM UserHomeLayout WHERE user_id = ?")
             .bind(user_id)
