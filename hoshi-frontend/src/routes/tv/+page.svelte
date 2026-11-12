@@ -3,7 +3,7 @@
     import { Skeleton } from '@/components/ui/skeleton';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { auth } from '@/stores/auth.svelte.js';
-    import { homeState } from '@/app/home.svelte.js';
+    import { homeState, labelText } from '@/app/home.svelte.js';
     import type { NormalizedCard } from '@/utils/normalize';
     import TvHero from '@/tv/components/TvHero.svelte';
     import TvRow, { TV_ROW_MAX } from '@/tv/components/TvRow.svelte';
@@ -11,10 +11,20 @@
     import TvContinueRow from '@/tv/components/card/TvContinueRow.svelte';
     import TvRecentlyAiredRow from '@/tv/components/card/TvRecentlyAiredRow.svelte';
 
-    // TV is anime-only for now.
-    const section = $derived(homeState.getSection('anime'));
+    // TV is anime-only for now, on the default layout.
+    const tab = $derived(homeState.tabs.find(t => t.id === 'anime') ?? null);
+    const sections = $derived(tab?.sections.filter(s => !s.hidden) ?? []);
     const continueItems = $derived(homeState.getContinueItems('anime'));
-    const heroItems = $derived(section?.trending.slice(0, 5) ?? []);
+    const heroSection = $derived(homeState.heroSection(tab));
+    const heroItems = $derived(
+        heroSection?.source.kind === 'search' ? homeState.feed(heroSection.source.query).items.slice(0, 5) : []
+    );
+
+    $effect(() => {
+        for (const s of sections) {
+            if (s.source.kind === 'search') homeState.feed(s.source.query).load();
+        }
+    });
 
     const isSkeletonVisible = $derived(
         (auth.loading || !auth.initialized || homeState.loading) && !homeState.hasData
@@ -26,7 +36,7 @@
         if (homeState.hasData) {
             homeState.refreshContinueWatching();
         } else {
-            homeState.load();
+            homeState.load({ defaultOnly: true });
         }
     });
 </script>
@@ -64,18 +74,15 @@
         <TvHero items={heroItems} />
 
         <div class="relative z-10 -mt-6 space-y-1 pb-12">
-            <TvContinueRow items={continueItems} />
-
-            {#if section}
-                {@render cardRow(i18n.t('home.trending'), section.trending)}
-                <TvRecentlyAiredRow />
-                {@render cardRow(i18n.t('home.popular'), section.popular)}
-                {@render cardRow(i18n.t('home.simulcast'), section.seasonal)}
-                {@render cardRow(i18n.t('home.upcoming'), section.upcoming)}
-                {@render cardRow(i18n.t('home.recently_finished'), section.recentlyFinished)}
-                {@render cardRow(i18n.t('home.critically_acclaimed'), section.topRated)}
-                {@render cardRow(i18n.t('home.action'), section.topAction)}
-            {/if}
+            {#each sections as s (s.id)}
+                {#if s.source.kind === 'search'}
+                    {@render cardRow(labelText(s.title), homeState.feed(s.source.query).items)}
+                {:else if s.source.builtin.type === 'continueWatching'}
+                    <TvContinueRow items={continueItems} />
+                {:else if s.source.builtin.type === 'recentlyAired'}
+                    <TvRecentlyAiredRow />
+                {/if}
+            {/each}
         </div>
     </div>
 {/if}

@@ -1,28 +1,15 @@
 <script lang="ts">
     import { Skeleton } from '@/components/ui/skeleton';
-    import { Tv, Book, BookText } from "lucide-svelte";
     import HomeHero from '@/components/hero/HomeHero.svelte';
-    import ContentCardCarousel from '@/components/carousel/CardCarousel.svelte';
-    import ContinueCarouselCarousel from '@/components/carousel/ContinueCarousel.svelte';
+    import HomeSectionView from '@/components/home/HomeSectionView.svelte';
+    import { tabIcon } from '@/components/home/icons';
     import { crossfade, fade } from 'svelte/transition';
     import { cubicOut } from 'svelte/easing';
     import type { Action } from 'svelte/action';
-    import type { ContentType } from '@/api/content/types';
-    import { appConfig } from "@/stores/config.svelte.js";
     import { layoutState } from '@/stores/layout.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { auth } from '@/stores/auth.svelte.js';
-    import { homeState } from '@/app/home.svelte.js';
-    import RecentlyAiredCarousel from "@/components/carousel/RecentlyAiredCarousel.svelte";
-
-    let currentMode = $state<ContentType>('anime');
-    let initializedMode = $state(false);
-
-    const modes = [
-        { id: 'anime', label: 'Anime', icon: Tv },
-        { id: 'manga', label: 'Manga', icon: Book },
-        { id: 'novel', label: 'Novel', icon: BookText }
-    ] as const;
+    import { homeState, labelText } from '@/app/home.svelte.js';
 
     const prefersReducedMotion =
         typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -57,6 +44,17 @@
         (auth.loading || !auth.initialized || homeState.loading) && !homeState.hasData
     );
 
+    const activeTab = $derived(homeState.activeTab);
+    const visibleSections = $derived(activeTab?.sections.filter(s => !s.hidden) ?? []);
+    const heroSection = $derived(homeState.heroSection(activeTab));
+    const heroFeed = $derived(
+        heroSection?.source.kind === 'search' ? homeState.feed(heroSection.source.query) : null
+    );
+
+    $effect(() => {
+        heroFeed?.load();
+    });
+
     $effect(() => {
         layoutState.title = i18n.t("home.title");
         layoutState.showBack = false;
@@ -65,17 +63,6 @@
 
         return () => { layoutState.headerAction = undefined; };
     });
-
-    $effect(() => {
-        if (appConfig.data && !initializedMode) {
-            currentMode = appConfig.data.ui.defaultHomeSection as ContentType;
-            initializedMode = true;
-        }
-    });
-
-    const currentSection = $derived(homeState.getSection(currentMode));
-    const currentTrending = $derived(currentSection?.trending ?? []);
-    const continueItems = $derived(homeState.getContinueItems(currentMode));
 
     $effect(() => {
         if (auth.loading || !auth.initialized || !auth.user) return;
@@ -93,22 +80,24 @@
 </svelte:head>
 
 {#snippet mobileHeaderAction()}
-    <div class="flex items-center bg-muted/40 p-1 rounded-xl border border-border/40 shadow-inner h-10 mr-1" in:fade={{duration: 150}}>
-        {#each modes as { id, label, icon: Icon }}
+    <div class="flex max-w-[60vw] items-center overflow-x-auto [scrollbar-width:none] bg-muted/40 p-1 rounded-xl border border-border/40 shadow-inner h-10 mr-1" in:fade={{duration: 150}}>
+        {#each homeState.tabs as tab (tab.id)}
+            {@const Icon = tabIcon(tab.icon)}
+            {@const label = labelText(tab.title)}
             <button
-                    class="relative flex items-center justify-center px-3 sm:px-4 h-full rounded-lg text-xs font-bold transition-colors duration-300 {currentMode === id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}"
-                    onclick={() => currentMode = id}
+                    class="relative flex shrink-0 items-center justify-center px-3 sm:px-4 h-full rounded-lg text-xs font-bold transition-colors duration-300 {activeTab?.id === tab.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}"
+                    onclick={() => homeState.activeTabId = tab.id}
                     aria-label={label}
-                    aria-pressed={currentMode === id}
+                    aria-pressed={activeTab?.id === tab.id}
             >
-                {#if currentMode === id}
+                {#if activeTab?.id === tab.id}
                     <span
                             class="absolute inset-0 rounded-lg bg-background shadow-sm ring-1 ring-border/30"
                             in:receive={{ key: 'mode-pill' }}
                             out:send={{ key: 'mode-pill' }}
                     ></span>
                 {/if}
-                <Icon class="relative w-4.5 h-4.5 transition-transform duration-300 {currentMode === id ? 'scale-110' : ''} sm:mr-1.5" />
+                <Icon class="relative w-4.5 h-4.5 transition-transform duration-300 {activeTab?.id === tab.id ? 'scale-110' : ''} sm:mr-1.5" />
                 <span class="relative hidden sm:inline-block tracking-wide">{label}</span>
             </button>
         {/each}
@@ -139,27 +128,30 @@
                 {/each}
             </div>
         </div>
-    {:else}
+    {:else if activeTab}
         <div in:fade={{ duration: 500 }}>
-            {#if currentTrending.length > 0}
+            {#if heroFeed && heroFeed.items.length > 0}
                 <div class="w-full relative">
-                    <HomeHero items={currentTrending.slice(0, 5)}/>
+                    <HomeHero items={heroFeed.items.slice(0, 5)}/>
                 </div>
+            {:else}
+                <div class="h-24 lg:h-8"></div>
             {/if}
 
-            <div class="w-full px-4 md:px-12 lg:pl-32 pt-4 md:pt-6 relative z-20 space-y-4 md:space-y-6 -mt-8 md:-mt-16 pb-safe">
-                <div class="hidden md:flex items-center gap-8 border-b border-border/10 pb-4">
-                    {#each modes as { id, label, icon: Icon }}
+            <div class="w-full px-4 md:px-12 lg:pl-32 pt-4 md:pt-6 relative z-20 space-y-4 md:space-y-6 pb-safe {heroFeed && heroFeed.items.length > 0 ? '-mt-8 md:-mt-16' : ''}">
+                <div class="hidden md:flex items-center gap-8 border-b border-border/10 pb-4 overflow-x-auto [scrollbar-width:none]">
+                    {#each homeState.tabs as tab (tab.id)}
+                        {@const Icon = tabIcon(tab.icon)}
                         <button
-                                class="group relative flex items-center gap-2.5 py-2 transition-all duration-300"
-                                onclick={() => currentMode = id}
-                                aria-pressed={currentMode === id}
+                                class="group relative flex shrink-0 items-center gap-2.5 py-2 transition-all duration-300"
+                                onclick={() => homeState.activeTabId = tab.id}
+                                aria-pressed={activeTab.id === tab.id}
                         >
-                            <Icon class="size-5 transition-colors {currentMode === id ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}" />
-                            <span class="text-sm font-black uppercase tracking-widest transition-colors {currentMode === id ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}">
-                                {label}
+                            <Icon class="size-5 transition-colors {activeTab.id === tab.id ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}" />
+                            <span class="text-sm font-black uppercase tracking-widest transition-colors {activeTab.id === tab.id ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}">
+                                {labelText(tab.title)}
                             </span>
-                            {#if currentMode === id}
+                            {#if activeTab.id === tab.id}
                                 <div
                                         class="absolute -bottom-4 left-0 right-0 h-1 bg-primary rounded-t-full"
                                         in:receive={{ key: 'tab-underline' }}
@@ -170,65 +162,14 @@
                     {/each}
                 </div>
 
-                {#key currentMode}
-                    {#if currentSection}
-                        {@const section = currentSection}
-                        <div class="space-y-2 md:space-y-4">
-                            {#if continueItems.length > 0}
-                                <div use:reveal={{ delay: 0 }}>
-                                    <ContinueCarouselCarousel items={continueItems} mode={currentMode} />
-                                </div>
-                            {/if}
-
-                            {#if section.trending.length > 0}
-                                <div use:reveal={{ delay: 70 }}>
-                                    <ContentCardCarousel title={i18n.t("home.trending")} items={section.trending} />
-                                </div>
-                            {/if}
-
-                            {#if currentMode === 'anime'}
-                                <div use:reveal={{ delay: 140 }}>
-                                    <RecentlyAiredCarousel/>
-                                </div>
-                            {/if}
-
-                            {#if section.popular.length > 0}
-                                <div use:reveal>
-                                    <ContentCardCarousel title={i18n.t("home.popular")} items={section.popular} />
-                                </div>
-                            {/if}
-
-                            {#if section.seasonal.length > 0}
-                                <div use:reveal>
-                                    <ContentCardCarousel title={currentMode === 'anime' ? i18n.t("home.simulcast") : i18n.t("home.latest")} items={section.seasonal} />
-                                </div>
-                            {/if}
-
-                            {#if section.upcoming.length > 0}
-                                <div use:reveal>
-                                    <ContentCardCarousel title={i18n.t("home.upcoming")} items={section.upcoming} />
-                                </div>
-                            {/if}
-
-                            {#if section.recentlyFinished.length > 0}
-                                <div use:reveal>
-                                    <ContentCardCarousel title={i18n.t("home.recently_finished")} items={section.recentlyFinished} />
-                                </div>
-                            {/if}
-
-                            {#if section.topRated.length > 0}
-                                <div use:reveal>
-                                    <ContentCardCarousel title={i18n.t("home.critically_acclaimed")} items={section.topRated} />
-                                </div>
-                            {/if}
-
-                            {#if currentMode === 'anime' && section.topAction.length > 0}
-                                <div use:reveal>
-                                    <ContentCardCarousel title={i18n.t("home.action")} items={section.topAction} />
-                                </div>
-                            {/if}
-                        </div>
-                    {/if}
+                {#key activeTab.id}
+                    <div class="space-y-2 md:space-y-4">
+                        {#each visibleSections as section, i (section.id)}
+                            <div use:reveal={{ delay: Math.min(i, 2) * 70 }}>
+                                <HomeSectionView {section} />
+                            </div>
+                        {/each}
+                    </div>
                 {/key}
             </div>
         </div>

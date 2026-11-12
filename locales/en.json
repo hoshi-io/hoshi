@@ -1469,6 +1469,9 @@
       "io_error": "Extension I/O error.",
       "script_missing": "Extension script is missing."
     },
+    "home": {
+      "invalid_layout": "This home layout is not valid"
+    },
     "headless": {
       "not_available": "Headless browser is not available.",
       "timeout": "Headless browser timeout.",

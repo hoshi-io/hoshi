@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS UserHomeLayout (
+    user_id INTEGER PRIMARY KEY,
+    layout TEXT NOT NULL,
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE
+);

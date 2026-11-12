@@ -9,6 +9,7 @@ pub mod tracker;
 pub mod paths;
 pub mod error;
 pub mod schedule;
+pub mod home;
 pub mod config;
 pub mod headless;
 pub mod proxy;

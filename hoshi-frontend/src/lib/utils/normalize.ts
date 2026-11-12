@@ -1,4 +1,5 @@
 import type { ContentType, ExtensionSearchResult, FullContent, TrackerMedia } from "@/api/content/types";
+import type { DiscoverItem } from "@/api/home/types";
 import { primaryMetadata } from "@/api/content/types";
 import { appConfig } from "@/stores/config.svelte.js";
 import { i18n } from "@/stores/i18n.svelte.js";
@@ -243,4 +244,8 @@ export function normalizeRelationCard(relation: {
         contentType: "",
         href,
     };
+}
+export function normalizeDiscoverItem(item: DiscoverItem, fallbackType: ContentType): NormalizedCard {
+    if (item.kind === "content") return normalizeFullContent(item);
+    return normalizeExtensionResult(item.item, item.extension, fallbackType);
 }

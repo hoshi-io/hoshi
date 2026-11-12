@@ -100,6 +100,25 @@ impl DiscoverService {
             .collect())
     }
 
+    /// How fast a query's results change.
+    pub fn ttl_for(query: &DiscoverQuery) -> i64 {
+        const HOUR: i64 = 3600;
+        match query {
+            DiscoverQuery::Extension { .. } => 2 * HOUR,
+            DiscoverQuery::Tracker { query: Some(q), .. } if !q.trim().is_empty() => 24 * HOUR,
+            DiscoverQuery::Tracker { sort, status, .. } => {
+                let sort = sort.as_deref().unwrap_or_default().to_ascii_uppercase();
+                if sort.contains("TRENDING") {
+                    TRENDING_TTL
+                } else if status.is_some() || sort.contains("DATE") {
+                    12 * HOUR
+                } else {
+                    24 * HOUR
+                }
+            }
+        }
+    }
+
     async fn read_cache(state: &AppState, key: &str) -> Option<CachedPage> {
         let value = CacheRepository::get(&state.pool, key).await.ok()??;
         serde_json::from_value(value).ok()

@@ -89,6 +89,19 @@ class SearchState {
         this.search();
     }
 
+    /** Preselects an extension; the search page runs it on mount. */
+    openExtension(extId: string, type: ContentType) {
+        this.contentType = type;
+        this.searchMode = "extension";
+        this.selectedExtension = extId;
+        this.query = "";
+        this.clearFilters();
+        this.results = [];
+        this.page = 1;
+        this.hasMore = true;
+        this.hasSearched = false;
+    }
+
     clearFilters() {
         this.status = "";
         this.genre = "";
