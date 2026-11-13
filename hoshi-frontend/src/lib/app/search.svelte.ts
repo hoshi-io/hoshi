@@ -5,6 +5,13 @@ import { contentApi } from "@/api/content/content";
 import { extensions } from "@/stores/extensions.svelte.js";
 import type { CoreError } from "@/api/client";
 import {extensionsApi} from "@/api/extensions/extensions";
+import type { DiscoverQuery } from "@/api/home/types";
+
+/** Home sections store generic statuses; the search filters use each tracker's own values. */
+const STATUS_BY_TRACKER: Record<string, Record<string, string>> = {
+    anilist: { ongoing: "RELEASING", upcoming: "NOT_YET_RELEASED", completed: "FINISHED" },
+    mangabaka: { ongoing: "releasing", upcoming: "upcoming", completed: "completed" },
+};
 
 
 class SearchState {
@@ -63,6 +70,7 @@ class SearchState {
         const isTrending =
             this.searchMode === "tracker" &&
             !this.query.trim() &&
+            !this.sort &&
             !this.status &&
             !this.genre &&
             !this.format &&
@@ -85,6 +93,7 @@ class SearchState {
         this.results = [];
         this.page = 1;
         this.format = "";
+        this.sort = "";
         this.hasMore = true;
         this.search();
     }
@@ -102,7 +111,35 @@ class SearchState {
         this.hasSearched = false;
     }
 
+    /** Preloads a home section's search; the search page runs it on mount. */
+    openQuery(q: DiscoverQuery) {
+        if (q.kind === "extension") {
+            const type = extensions.installed.find(e => e.id === q.extension)?.ext_type;
+            this.openExtension(q.extension, (type === "manga" || type === "novel" ? type : "anime") as ContentType);
+            this.query = q.query ?? "";
+            this.extFilterValues = { ...(q.filters ?? {}) };
+            return;
+        }
+
+        this.contentType = q.contentType;
+        this.searchMode = "tracker";
+        this.tracker = q.tracker as typeof this.tracker;
+        this.query = q.query ?? "";
+        this.clearFilters();
+        this.sort = q.sort ?? "";
+        this.genre = q.genre ?? "";
+        this.format = q.format ?? "";
+        this.status = q.status ? (STATUS_BY_TRACKER[q.tracker]?.[q.status] ?? q.status) : "";
+        this.tags = [...(q.tags ?? [])];
+        this.nsfw = false;
+        this.results = [];
+        this.page = 1;
+        this.hasMore = true;
+        this.hasSearched = false;
+    }
+
     clearFilters() {
+        this.sort = "";
         this.status = "";
         this.genre = "";
         this.format = "";
@@ -120,7 +157,7 @@ class SearchState {
             this.hasMore = true;
         }
 
-        if (!this.query.trim() && !this.status && !this.genre && !this.format && !this.nsfw && this.tags.length === 0) {
+        if (!this.query.trim() && !this.sort && !this.status && !this.genre && !this.format && !this.nsfw && this.tags.length === 0) {
             try {
                 const res = await contentApi.getTrending(this.contentType);
                 if (token !== this.searchToken) return; // a newer search has since started, drop this

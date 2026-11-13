@@ -73,6 +73,7 @@
   },
 
   "home": {
+    "see_all": "See all",
     "edit": {
       "title": "Customize home",
       "customize": "Customize home",
