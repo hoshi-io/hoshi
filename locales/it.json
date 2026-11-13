@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "Impossibile collegare un tracker a contenuti esclusivi delle estensioni.",
       "mapping_not_found": "Collegamento non trovato.",
       "data_missing": "Dati del contenuto mancanti.",
-      "extension_only": "Questa azione non è consentita per contenuti esclusivi delle estensioni.",
-      "home_cache_error": "Impossibile memorizzare nella cache la schermata iniziale."
+      "extension_only": "Questa azione non è consentita per contenuti esclusivi delle estensioni."
     },
     "extension": {
       "not_found": "Estensione non trovata.",
       "metadata_fetch_failed": "Impossibile recuperare i metadati dall'estensione.",
-      "home_cache_missing": "La cache della schermata iniziale è mancante.",
       "load_failed": "Impossibile caricare l'estensione.",
       "install_network_failed": "Errore di rete durante l'installazione dell'estensione.",
       "invalid_manifest": "Manifest dell'estensione non valido.",

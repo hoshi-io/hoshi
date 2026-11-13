@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "Tidak dapat memautkan penjejak ke kandungan eksklusif ekstensi.",
       "mapping_not_found": "Pemetaan tidak ditemui.",
       "data_missing": "Data kandungan tiada.",
-      "extension_only": "Tindakan ini tidak dibenarkan pada kandungan eksklusif ekstensi.",
-      "home_cache_error": "Gagal menyimpan paparan utama ke dalam välimuisti (cache)."
+      "extension_only": "Tindakan ini tidak dibenarkan pada kandungan eksklusif ekstensi."
     },
     "extension": {
       "not_found": "Ekstensi tidak ditemui.",
       "metadata_fetch_failed": "Gagal mendapatkan data meta daripada ekstensi.",
-      "home_cache_missing": "Cache utama tiada.",
       "load_failed": "Gagal memuatkan ekstensi.",
       "install_network_failed": "Ralat rangkaian semasa pemasangan ekstensi.",
       "invalid_manifest": "Manifes ekstensi tidak sah.",

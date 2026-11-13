@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use tracing::warn;
+use tracing::{info, warn};
 
 use crate::content::models::ContentType;
 use crate::content::services::discover::DiscoverService;
@@ -10,7 +10,7 @@ use crate::content::utils::show_adult;
 use crate::error::{CoreError, CoreResult};
 use crate::home::defaults::default_layout;
 use crate::home::repository::HomeRepository;
-use crate::home::types::{HomeLayout, Label, SequelCard};
+use crate::home::types::{HomeLayout, Label, SectionSource, SequelCard};
 use crate::state::AppState;
 
 const MAX_TABS: usize = 8;
@@ -22,6 +22,28 @@ pub struct HomeLayoutService;
 impl HomeLayoutService {
     pub fn default_layout() -> HomeLayout {
         default_layout()
+    }
+
+    /// Caches the default layout's searches in the background, so a fresh install's first home load is instant.
+    pub fn warmup(state: Arc<AppState>) {
+        tokio::spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+
+            let mut seen = HashSet::new();
+            let queries: Vec<DiscoverQuery> = default_layout().tabs.into_iter()
+                .flat_map(|t| t.sections)
+                .filter_map(|s| match s.source {
+                    SectionSource::Search { query } => Some(query),
+                    SectionSource::Builtin { .. } => None,
+                })
+                .filter(|q| seen.insert(serde_json::to_string(q).unwrap_or_default()))
+                .collect();
+
+            info!(count = queries.len(), "Warming up default home sections");
+            for query in &queries {
+                DiscoverService::warm(&state, query).await;
+            }
+        });
     }
 
     pub async fn get_layout(state: &AppState, user_id: i32) -> CoreResult<HomeLayout> {

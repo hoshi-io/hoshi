@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "Tracker kann nicht mit reinen Erweiterungsinhalten verknüpft werden.",
       "mapping_not_found": "Verknüpfung nicht gefunden.",
       "data_missing": "Inhaltsdaten fehlen.",
-      "extension_only": "Diese Aktion ist für reine Erweiterungsinhalte nicht zulässig.",
-      "home_cache_error": "Startansicht konnte nicht zwischengespeichert werden."
+      "extension_only": "Diese Aktion ist für reine Erweiterungsinhalte nicht zulässig."
     },
     "extension": {
       "not_found": "Erweiterung nicht gefunden.",
       "metadata_fetch_failed": "Metadaten konnten nicht von der Erweiterung abgerufen werden.",
-      "home_cache_missing": "Startseiten-Cache fehlt.",
       "load_failed": "Erweiterung konnte nicht geladen werden.",
       "install_network_failed": "Netzwerkfehler während der Installation der Erweiterung.",
       "invalid_manifest": "Ungültiges Erweiterungsmanifest.",

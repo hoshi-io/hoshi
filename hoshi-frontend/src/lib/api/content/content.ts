@@ -9,18 +9,11 @@ import type {
     Metadata,
     TrackerMapping,
     ExtensionSource,
-    HomeView,
     ContentType,
     ExtensionSearchResult, RelationGraph, SearchResult,
 } from "./types";
 
 export const contentApi = {
-
-    getHome() {
-        return call<HomeView>({
-            tauri: { cmd: "get_home_content" },
-        });
-    },
 
     getTrending(mediaType: ContentType) {
         return call<FullContent[]>({

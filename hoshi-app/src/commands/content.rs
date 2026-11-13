@@ -11,23 +11,12 @@ use hoshi_core::content::relations::RelationTreeService;
 use hoshi_core::content::services::content::ContentService;
 use hoshi_core::content::services::extensions::ExtensionService;
 use hoshi_core::content::services::discover::DiscoverService;
-use hoshi_core::content::services::home::HomeService;
 use hoshi_core::content::services::mapping::MappingService;
 use hoshi_core::content::services::search::SearchService;
-use hoshi_core::content::types::{ContentListResponse, HomeView, RelationGraph, SearchParams, SearchResult, UpdateExtensionMappingRequest, UpdateTrackerMappingRequest};
+use hoshi_core::content::types::{ContentListResponse, RelationGraph, SearchParams, SearchResult, UpdateExtensionMappingRequest, UpdateTrackerMappingRequest};
 use hoshi_core::extensions::types::{ContentItems, ExtensionSearchResult, PlayContentResult};
 use hoshi_core::tracker::provider::TagInfo;
 use hoshi_core::tracker::types::TrackerMapping;
-
-#[tauri::command(rename_all = "snake_case")]
-pub async fn get_home_content(
-    state: State<'_, Arc<AppState>>,
-    session_state: State<'_, TauriSession>,
-) -> Result<HomeView, CoreError> {
-    let user_id = require_auth(&session_state).await?;
-    HomeService::get_home_view(state.inner(), user_id)
-        .await
-}
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn get_content(

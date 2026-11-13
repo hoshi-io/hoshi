@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "트래커를 확장 프로그램 전용 콘텐츠에 연결할 수 없습니다.",
       "mapping_not_found": "매핑을 찾을 수 없습니다.",
       "data_missing": "콘텐츠 데이터가 누락되었습니다.",
-      "extension_only": "이 작업은 확장 프로그램 전용 콘텐츠에서 허용되지 않습니다.",
-      "home_cache_error": "홈 화면을 캐시하지 못했습니다."
+      "extension_only": "이 작업은 확장 프로그램 전용 콘텐츠에서 허용되지 않습니다."
     },
     "extension": {
       "not_found": "확장 프로그램을 찾을 수 없습니다.",
       "metadata_fetch_failed": "확장 프로그램에서 메타데이터를 가져오지 못했습니다.",
-      "home_cache_missing": "홈 캐시가 누락되었습니다.",
       "load_failed": "확장 프로그램을 로드하지 못했습니다.",
       "install_network_failed": "확장 프로그램 설치 중 네트워크 오류가 발생했습니다.",
       "invalid_manifest": "잘못된 확장 프로그램 매니페스트입니다.",

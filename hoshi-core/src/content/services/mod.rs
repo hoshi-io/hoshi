@@ -4,7 +4,6 @@ pub mod content;
 pub mod mapping;
 pub mod extensions;
 pub mod search;
-pub mod home;
 pub mod discover;
 pub mod enrichment;
 pub mod content_units;

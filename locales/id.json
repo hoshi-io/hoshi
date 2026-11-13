@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "Pelacak tidak dapat ditautkan ke konten eksklusif ekstensi.",
       "mapping_not_found": "Tautan tidak ditemukan.",
       "data_missing": "Data konten tidak ada.",
-      "extension_only": "Tindakan ini tidak diizinkan pada konten eksklusif ekstensi.",
-      "home_cache_error": "Gagal menyimpan tampilan beranda ke cache."
+      "extension_only": "Tindakan ini tidak diizinkan pada konten eksklusif ekstensi."
     },
     "extension": {
       "not_found": "Ekstensi tidak ditemukan.",
       "metadata_fetch_failed": "Gagal mengambil metadata dari ekstensi.",
-      "home_cache_missing": "Cache beranda tidak ditemukan.",
       "load_failed": "Gagal memuat ekstensi.",
       "install_network_failed": "Kesalahan jaringan selama instalasi ekstensi.",
       "invalid_manifest": "Manifes ekstensi tidak valid.",

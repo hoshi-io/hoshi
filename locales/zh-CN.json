@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "无法将追踪器关联到仅限扩展的内容。",
       "mapping_not_found": "未找到关联映射。",
       "data_missing": "内容数据缺失。",
-      "extension_only": "不允许对仅限扩展的内容执行此操作。",
-      "home_cache_error": "缓存主页视图失败。"
+      "extension_only": "不允许对仅限扩展的内容执行此操作。"
     },
     "extension": {
       "not_found": "未找到扩展。",
       "metadata_fetch_failed": "无法从扩展获取元数据。",
-      "home_cache_missing": "缺少主页缓存。",
       "load_failed": "无法加载扩展。",
       "install_network_failed": "安装扩展时发生网络错误。",
       "invalid_manifest": "无效的扩展清单 (manifest)。",

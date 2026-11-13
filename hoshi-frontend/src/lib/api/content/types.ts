@@ -152,41 +152,6 @@ export interface PlayResponse {
     data: any;
 }
 
-export interface AnimeSection {
-    [key: string]: FullContent[];
-    trending: FullContent[];
-    popular: FullContent[];
-    topRated: FullContent[];
-    seasonal: FullContent[];
-    upcoming: FullContent[];
-    recentlyFinished: FullContent[];
-    topAction: FullContent[];
-}
-
-export interface MangaSection {
-    [key: string]: FullContent[];
-    trending: FullContent[];
-    popular: FullContent[];
-    topRated: FullContent[];
-    seasonal: FullContent[];
-    recentlyFinished: FullContent[];
-}
-
-export interface NovelSection {
-    [key: string]: FullContent[];
-    trending: FullContent[];
-    popular: FullContent[];
-    topRated: FullContent[];
-    recentlyFinished: FullContent[];
-}
-
-export interface HomeView {
-    anime: AnimeSection;
-    manga: MangaSection;
-    novel: NovelSection;
-    cachedAt: number;
-}
-
 export interface UpdateTrackerMappingRequest {
     trackerName: string;
     trackerId: string;

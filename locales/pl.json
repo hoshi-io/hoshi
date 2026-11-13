@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "Nie można powiązać trackera z zawartością pochodzącą wyłącznie z rozszerzenia.",
       "mapping_not_found": "Nie znaleziono powiązania.",
       "data_missing": "Brak danych zawartości.",
-      "extension_only": "Ta akcja jest niedozwolona dla zawartości pochodzącej wyłącznie z rozszerzenia.",
-      "home_cache_error": "Nie udało się zapisać widoku głównego w pamięci podręcznej."
+      "extension_only": "Ta akcja jest niedozwolona dla zawartości pochodzącej wyłącznie z rozszerzenia."
     },
     "extension": {
       "not_found": "Nie znaleziono rozszerzenia.",
       "metadata_fetch_failed": "Nie udało się pobrać metadanych z rozszerzenia.",
-      "home_cache_missing": "Brak pamięci podręcznej strony głównej.",
       "load_failed": "Nie udało się załadować rozszerzenia.",
       "install_network_failed": "Błąd sieci podczas instalacji rozszerzenia.",
       "invalid_manifest": "Nieprawidłowy manifest rozszerzenia.",

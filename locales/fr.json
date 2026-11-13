@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "Impossible d'associer un tracker à un contenu exclusif aux extensions.",
       "mapping_not_found": "Association introuvable.",
       "data_missing": "Données de contenu manquantes.",
-      "extension_only": "Cette action n'est pas autorisée sur un contenu exclusif aux extensions.",
-      "home_cache_error": "Échec de la mise en cache de l'écran d'accueil."
+      "extension_only": "Cette action n'est pas autorisée sur un contenu exclusif aux extensions."
     },
     "extension": {
       "not_found": "Extension introuvable.",
       "metadata_fetch_failed": "Échec de la récupération des métadonnées de l'extension.",
-      "home_cache_missing": "Le cache de l'accueil est manquant.",
       "load_failed": "Échec du chargement de l'extension.",
       "install_network_failed": "Erreur réseau lors de l'installation de l'extension.",
       "invalid_manifest": "Manifeste de l'extension invalide.",

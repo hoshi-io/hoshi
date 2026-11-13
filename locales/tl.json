@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "Hindi pwedeng i-link ang tracker sa extension-only na content.",
       "mapping_not_found": "Hindi nahanap ang mapping.",
       "data_missing": "Nawawala ang data ng content.",
-      "extension_only": "Hindi pinapayagan ang aksyong ito sa extension-only na content.",
-      "home_cache_error": "Nabigong i-cache ang home view."
+      "extension_only": "Hindi pinapayagan ang aksyong ito sa extension-only na content."
     },
     "extension": {
       "not_found": "Hindi nahanap ang extension.",
       "metadata_fetch_failed": "Nabigong kumuha ng metadata mula sa extension.",
-      "home_cache_missing": "Nawawala ang home cache.",
       "load_failed": "Nabigong i-load ang extension.",
       "install_network_failed": "Error sa network habang ini-install ang extension.",
       "invalid_manifest": "Imbalidong extension manifest.",

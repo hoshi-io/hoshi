@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "Không thể liên kết trình theo dõi với nội dung chỉ có trong tiện ích mở rộng.",
       "mapping_not_found": "Không tìm thấy bản đồ liên kết (mapping).",
       "data_missing": "Dữ liệu nội dung bị thiếu.",
-      "extension_only": "Hành động này không được phép đối với nội dung chỉ có trong tiện ích mở rộng.",
-      "home_cache_error": "Không thể lưu bộ nhớ đệm cho chế độ xem trang chủ."
+      "extension_only": "Hành động này không được phép đối với nội dung chỉ có trong tiện ích mở rộng."
     },
     "extension": {
       "not_found": "Không tìm thấy tiện ích mở rộng.",
       "metadata_fetch_failed": "Không thể lấy siêu dữ liệu từ tiện ích mở rộng.",
-      "home_cache_missing": "Thiếu bộ nhớ đệm trang chủ.",
       "load_failed": "Không thể tải tiện ích mở rộng.",
       "install_network_failed": "Lỗi mạng trong quá trình cài đặt tiện ích mở rộng.",
       "invalid_manifest": "Tệp kê khai (manifest) của tiện ích mở rộng không hợp lệ.",

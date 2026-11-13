@@ -146,10 +146,7 @@
       "completed_series": "Completed"
     },
     "empty": {
-      "nothing": "Nothing to show here yet.",
-      "error": "This section couldn't be loaded.",
-      "continue": "Nothing to continue yet. Start something and it will show up here.",
-      "extensions": "No extensions installed for this type."
+      "error": "This section couldn't be loaded."
     },
     "title": "Home",
     "anime": "Anime",
@@ -1530,13 +1527,11 @@
       "tracker_mapping_invalid": "Cannot link tracker to extension-only content.",
       "mapping_not_found": "Mapping not found.",
       "data_missing": "Content data is missing.",
-      "extension_only": "Action not permitted on extension-only content.",
-      "home_cache_error": "Failed to cache home view."
+      "extension_only": "Action not permitted on extension-only content."
     },
     "extension": {
       "not_found": "Extension not found.",
       "metadata_fetch_failed": "Failed to fetch metadata from extension.",
-      "home_cache_missing": "Home cache is missing.",
       "load_failed": "Failed to load extension.",
       "install_network_failed": "Network error during extension installation.",
       "invalid_manifest": "Invalid extension manifest.",

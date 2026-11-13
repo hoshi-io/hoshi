@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "拡張機能専用コンテンツにトラッカーをリンクすることはできません。",
       "mapping_not_found": "マッピングが見つかりません。",
       "data_missing": "コンテンツデータが不足しています。",
-      "extension_only": "このアクションは拡張機能専用コンテンツでは許可されていません。",
-      "home_cache_error": "ホームビューのキャッシュに失敗しました。"
+      "extension_only": "このアクションは拡張機能専用コンテンツでは許可されていません。"
     },
     "extension": {
       "not_found": "拡張機能が見つかりません。",
       "metadata_fetch_failed": "拡張機能からのメタデータ取得に失敗しました。",
-      "home_cache_missing": "ホームのキャッシュが見つかりません。",
       "load_failed": "拡張機能の読み込みに失敗しました。",
       "install_network_failed": "拡張機能のインストール中にネットワークエラーが発生しました。",
       "invalid_manifest": "無効な拡張機能マニフェストです。",

@@ -29,12 +29,12 @@ use std::time::Duration;
 use reqwest::Client;
 use tracker::provider::build_registry;
 use tracing::{info, instrument};
-use crate::content::services::home::HomeService;
 use crate::list::sync_queue::SyncQueue;
 use crate::playback::PlaybackHandle;
 use crate::thumbnail::ThumbnailService;
 use crate::torrent::TorrentHandle;
 use crate::tracker::sync::StartupSyncService;
+use crate::home::service::HomeLayoutService;
 
 #[instrument(skip(log_store, paths, headless))]
 pub async fn build(paths: AppPaths, headless: HeadlessHandle, log_store: logs::LogStore, ) -> CoreResult<Arc<AppState>> {
@@ -95,7 +95,7 @@ pub async fn build(paths: AppPaths, headless: HeadlessHandle, log_store: logs::L
     });
     state.torrent.spawn_reaper();
 
-    HomeService::warmup(state.clone());
+    HomeLayoutService::warmup(state.clone());
     SyncQueue::start(state.clone()).await;
     StartupSyncService::run(state.clone());
     info!("Hoshi Core initialization completed successfully");

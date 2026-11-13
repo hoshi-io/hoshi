@@ -188,10 +188,6 @@ pub trait TrackerProvider: Send + Sync {
 
     async fn get_by_id(&self, tracker_id: &str) -> CoreResult<Option<TrackerMedia>>;
 
-    async fn get_home(&self) -> CoreResult<HashMap<String, Vec<TrackerMedia>>> {
-        Ok(HashMap::new())
-    }
-
     async fn get_user_list(
         &self,
         access_token: &str,

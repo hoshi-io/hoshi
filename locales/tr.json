@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "İzleyici, yalnızca eklentiye özel içerikle ilişkilendirilemez.",
       "mapping_not_found": "Eşleştirme bulunamadı.",
       "data_missing": "İçerik verileri eksik.",
-      "extension_only": "Bu işleme yalnızca eklentiye özel içeriklerde izin verilmez.",
-      "home_cache_error": "Ana ekran önbelleğe alınamadı."
+      "extension_only": "Bu işleme yalnızca eklentiye özel içeriklerde izin verilmez."
     },
     "extension": {
       "not_found": "Eklenti bulunamadı.",
       "metadata_fetch_failed": "Eklentiden meta veriler alınamadı.",
-      "home_cache_missing": "Ana sayfa önbelleği eksik.",
       "load_failed": "Eklenti yüklenemedi.",
       "install_network_failed": "Eklenti kurulumu sırasında ağ hatası.",
       "invalid_manifest": "Geçersiz eklenti manifestosu.",

@@ -5,8 +5,8 @@ use chrono::Utc;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use tokio::sync::Mutex;
-use tracing::{debug, error, instrument};
+use tokio::sync::{Mutex, Semaphore};
+use tracing::{debug, error, instrument, warn};
 
 use crate::content::models::{ContentType, FullContent};
 use crate::content::repositories::cache::CacheRepository;
@@ -24,7 +24,11 @@ const PAGE_SIZE: usize = 20;
 const STALE_GRACE: i64 = 7 * 24 * 3600;
 pub const TRENDING_TTL: i64 = 6 * 3600;
 
+/// Concurrent calls allowed into a single extension, so a tab full of its sections doesn't flood the site.
+const EXTENSION_CONCURRENCY: usize = 2;
+
 static KEY_LOCKS: LazyLock<DashMap<String, Arc<Mutex<()>>>> = LazyLock::new(DashMap::new);
+static EXTENSION_PERMITS: LazyLock<DashMap<String, Arc<Semaphore>>> = LazyLock::new(DashMap::new);
 
 #[derive(Serialize, Deserialize)]
 struct CachedPage {
@@ -72,6 +76,24 @@ impl DiscoverService {
 
         let adult = show_adult(state, user_id).await;
         Self::resolve(state, query, cached.refs, adult).await
+    }
+
+    /// Fills the cache for page 1 of `query` if it is missing or stale; never resolves or filters.
+    pub async fn warm(state: &Arc<AppState>, query: &DiscoverQuery) {
+        let key = cache_key(query, 1);
+        let fresh = |c: &CachedPage| Utc::now().timestamp() <= c.stale_at;
+
+        if Self::read_cache(state, &key).await.is_some_and(|c| fresh(&c)) {
+            return;
+        }
+        let lock = key_lock(&key);
+        let _guard = lock.lock().await;
+        if Self::read_cache(state, &key).await.is_some_and(|c| fresh(&c)) {
+            return;
+        }
+        if let Err(e) = Self::refresh(state, &key, query, 1, Self::ttl_for(query)).await {
+            warn!(key = %key, error = ?e, "Discover warmup failed");
+        }
     }
 
     /// The tracker trending list for a content type, as plain content.
@@ -177,6 +199,13 @@ impl DiscoverService {
                 (tracker.as_str(), refs)
             }
             DiscoverQuery::Extension { extension, query, filters } => {
+                let permits = EXTENSION_PERMITS
+                    .entry(extension.clone())
+                    .or_insert_with(|| Arc::new(Semaphore::new(EXTENSION_CONCURRENCY)))
+                    .clone();
+                let _permit = permits.acquire_owned().await
+                    .map_err(|_| CoreError::Internal("error.content.extension_search_failed".into()))?;
+
                 let manager = &state.extension_manager;
                 let ext_nsfw = manager.is_nsfw(extension);
                 let filters = if filters.is_null() { serde_json::json!({}) } else { filters.clone() };

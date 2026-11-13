@@ -646,12 +646,6 @@ impl TrackerProvider for MalProvider {
         Ok(res.map(|r| Self::tenrai_to_tracker_media(&r.data, content_type)))
     }
 
-    async fn get_home(&self) -> CoreResult<HashMap<String, Vec<TrackerMedia>>> {
-        // Home is always served via AniList; MAL is list-import/manage + single-entry
-        // lookup only, so there's nothing to fetch here.
-        Ok(HashMap::new())
-    }
-
     async fn get_user_list(
         &self,
         access_token: &str,

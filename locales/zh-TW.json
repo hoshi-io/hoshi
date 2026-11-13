@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "無法將追蹤器連結到僅限擴充功能的內容。",
       "mapping_not_found": "找不到對應關係。",
       "data_missing": "內容資料遺失。",
-      "extension_only": "不允許對僅限擴充功能的內容執行此操作。",
-      "home_cache_error": "快取首頁視圖失敗。"
+      "extension_only": "不允許對僅限擴充功能的內容執行此操作。"
     },
     "extension": {
       "not_found": "找不到擴充功能。",
       "metadata_fetch_failed": "無法從擴充功能取得中繼資料。",
-      "home_cache_missing": "缺少首頁快取。",
       "load_failed": "無法載入擴充功能。",
       "install_network_failed": "安裝擴充功能時發生網路錯誤。",
       "invalid_manifest": "無效的擴充功能資訊清單 (manifest)。",

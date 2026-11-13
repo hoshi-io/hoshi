@@ -714,34 +714,6 @@ impl TrackerProvider for KitsuProvider {
         }
     }
 
-    async fn get_home(&self) -> CoreResult<HashMap<String, Vec<TrackerMedia>>> {
-        let (r_trending_anime, r_top_anime, r_trending_manga) = tokio::join!(
-            self.get_public("/anime?sort=-popularityRank&page[limit]=20&include=categories"),
-            self.get_public("/anime?sort=-averageRating&page[limit]=20&include=categories"),
-            self.get_public("/manga?sort=-popularityRank&page[limit]=20&include=categories"),
-        );
-
-        let mut home = HashMap::new();
-
-        let mut insert_section = |label: &str, result: CoreResult<Value>| {
-            if let Ok(res) = result {
-                let included = res.get("included").and_then(|i| i.as_array()).cloned().unwrap_or_default();
-                if let Some(data) = res.get("data").and_then(|d| d.as_array()) {
-                    home.insert(
-                        label.to_string(),
-                        data.iter().filter_map(|i| self.media_from_data(i, Some(&included))).collect(),
-                    );
-                }
-            }
-        };
-
-        insert_section("Trending Anime", r_trending_anime);
-        insert_section("Top Rated Anime", r_top_anime);
-        insert_section("Trending Manga", r_trending_manga);
-
-        Ok(home)
-    }
-
     async fn get_user_list(
         &self,
         access_token: &str,

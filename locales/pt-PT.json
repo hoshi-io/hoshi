@@ -1422,13 +1422,11 @@
       "tracker_mapping_invalid": "Não é possível ligar um tracker a conteúdo exclusivo de extensões.",
       "mapping_not_found": "Mapeamento não encontrado.",
       "data_missing": "Os dados do conteúdo estão em falta.",
-      "extension_only": "Esta ação não é permitida em conteúdo exclusivo de extensões.",
-      "home_cache_error": "Falha ao guardar a vista inicial em cache."
+      "extension_only": "Esta ação não é permitida em conteúdo exclusivo de extensões."
     },
     "extension": {
       "not_found": "Extensão não encontrada.",
       "metadata_fetch_failed": "Falha ao obter os metadados da extensão.",
-      "home_cache_missing": "A cache da vista inicial está em falta.",
       "load_failed": "Falha ao carregar a extensão.",
       "install_network_failed": "Erro de rede durante a instalação da extensão.",
       "invalid_manifest": "Manifesto da extensão inválido.",

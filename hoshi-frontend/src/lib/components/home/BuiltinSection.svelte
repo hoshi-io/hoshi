@@ -1,9 +1,7 @@
 <script lang="ts">
     import CardsSection from './CardsSection.svelte';
     import ExtensionsCarousel from './ExtensionsCarousel.svelte';
-    import EmptySection from './EmptySection.svelte';
     import { extensions } from '@/stores/extensions.svelte.js';
-    import { i18n } from '@/stores/i18n.svelte.js';
     import ContinueCarousel from '@/components/carousel/ContinueCarousel.svelte';
     import RecentlyAiredCarousel from '@/components/carousel/RecentlyAiredCarousel.svelte';
     import { homeState, labelText } from '@/app/home.svelte.js';
@@ -12,8 +10,7 @@
     import { homeApi } from '@/api/home/home';
     import type { BuiltinSection, HomeSection } from '@/api/home/types';
     import { normalizeFullContent, normalizeRelationCard, type NormalizedCard } from '@/utils/normalize';
-    import { shouldHideNsfw, useRecentlyAired } from '@/utils/episode-rows.svelte.js';
-    import { untrack } from 'svelte';
+    import { shouldHideNsfw } from '@/utils/episode-rows.svelte.js';
 
     const LIMIT = 20;
 
@@ -23,11 +20,6 @@
     const ct = $derived(section.contentType);
     const title = $derived(labelText(section.title));
     const usesSchedule = $derived(builtin.type === 'airingToday' || builtin.type === 'newEpisodes');
-
-    // Only the recently aired row needs this; the type of a section never changes once mounted.
-    const recentlyAired = untrack(() => section.source.kind === 'builtin' && section.source.builtin.type === 'recentlyAired')
-        ? useRecentlyAired()
-        : null;
 
     let sequels = $state<NormalizedCard[]>([]);
     let sequelsLoading = $state(false);
@@ -122,20 +114,12 @@
     {@const items = homeState.getContinueItems(ct)}
     {#if items.length > 0}
         <ContinueCarousel {items} mode={ct ?? 'anime'} />
-    {:else}
-        <EmptySection {title} layout={section.layout} message={i18n.t('home.empty.continue')} />
     {/if}
 {:else if builtin.type === 'recentlyAired'}
-    {#if recentlyAired && recentlyAired.items.length === 0 && !scheduleStore.isLoading && scheduleStore.entries.length > 0}
-        <EmptySection {title} layout={section.layout} message={i18n.t('home.empty.nothing')} />
-    {:else}
-        <RecentlyAiredCarousel />
-    {/if}
+    <RecentlyAiredCarousel />
 {:else if builtin.type === 'extensions'}
     {#if extensions.installed.some(e => e.ext_type !== 'torrent' && (!ct || e.ext_type === ct))}
         <ExtensionsCarousel {title} contentType={ct} />
-    {:else}
-        <EmptySection {title} layout={section.layout} message={i18n.t('home.empty.extensions')} />
     {/if}
 {:else if cards.length > 0 || loading || (builtin.type === 'unstartedSequels' && !sequelsRequested)}
     <CardsSection
@@ -145,6 +129,4 @@
             {loading}
             onvisible={builtin.type === 'unstartedSequels' ? loadSequels : undefined}
     />
-{:else}
-    <EmptySection {title} layout={section.layout} message={i18n.t('home.empty.nothing')} />
 {/if}

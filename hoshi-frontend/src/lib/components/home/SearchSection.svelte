@@ -14,9 +14,7 @@
 {#if feed}
     {#if feed.error && feed.items.length === 0}
         <EmptySection {title} layout={section.layout} message={i18n.t('home.empty.error')} onretry={() => feed.retry()} />
-    {:else if feed.loaded && feed.items.length === 0}
-        <EmptySection {title} layout={section.layout} message={i18n.t('home.empty.nothing')} />
-    {:else}
+    {:else if !feed.loaded || feed.items.length > 0}
         <CardsSection
                 {title}
                 items={feed.items}
