@@ -177,7 +177,6 @@
                                             ext={ideState.activeExtension}
                                             mode="installed"
                                             onSave={async () => true}
-                                            onAction={() => {}}
                                     />
                                 </div>
                                 <div class="flex-1 overflow-hidden">

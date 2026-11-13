@@ -74,7 +74,7 @@ export function buildDraftSettings(ext: CardExt): Record<string, any> {
     return draft;
 }
 
-export function sourceFilterItems() {
+export function sourceFilterItems(): { value: 'all' | Source; label: string }[] {
     return [
         { value: 'all', label: i18n.t('settings.extension_section.all_sources') },
         ...(Object.entries(SOURCE_LABELS) as [Source, string][]).map(([value, label]) => ({ value, label }))

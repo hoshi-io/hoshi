@@ -5,7 +5,7 @@ export type ListEditorPayload = {
     title: string;
     contentType: string;
     coverImage?: string;
-    headers?: string;
+    headers?: Record<string, string>;
 };
 
 

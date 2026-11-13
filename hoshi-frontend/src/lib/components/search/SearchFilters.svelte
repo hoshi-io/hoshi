@@ -33,7 +33,11 @@
     } = $props();
 
 
-    let activeFilters = $derived(TRACKER_FILTERS[tracker] || TRACKER_FILTERS.anilist);
+    let activeFilters = $derived(
+        tracker in TRACKER_FILTERS
+            ? TRACKER_FILTERS[tracker as keyof typeof TRACKER_FILTERS]
+            : TRACKER_FILTERS.anilist
+    );
 
     let filteredFormats = $derived(
         activeFilters.formats.filter((f: any) => {

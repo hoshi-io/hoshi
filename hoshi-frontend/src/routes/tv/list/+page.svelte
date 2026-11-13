@@ -14,8 +14,8 @@
     import { Skeleton } from '$lib/components/ui/skeleton';
     import LazyCardGrid from '@/components/card/LazyCardGrid.svelte';
     import TvCard from '@/tv/components/card/TvCard.svelte';
-    import {openListEditor} from "@/stores/layout.svelte.ts";
-    import {getCardTitle} from "@/utils/normalize.ts";
+    import {openListEditor} from "@/stores/layout.svelte";
+    import {getCardTitle} from "@/utils/normalize";
 
     onMount(() => {
         listStore.loadData(); // no-op when the list is already loaded

@@ -106,6 +106,7 @@
                 </div>
                     <div class="px-2">
                         <Slider
+                                type="multiple"
                                 value={[readerState.currentGroupIndex]}
                                 min={0}
                                 max={readerState.groupedImages.length - 1}

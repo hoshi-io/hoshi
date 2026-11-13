@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { PlayerConfig, SubtitleConfig } from '@/api/config/types.ts';
+    import type { PlayerConfig, SubtitleConfig } from '@/api/config/types';
     import { i18n } from '@/stores/i18n.svelte.js';
     import TvSettingRow from '@/tv/components/TvSettingRow.svelte';
     import TvSwitch from '@/tv/components/TvSwitch.svelte';

@@ -7,7 +7,7 @@
         onSelect
     }: {
         options: { id: string; label: string }[];
-        activeId: string;
+        activeId: string | null;
         onSelect: (id: string) => void;
     } = $props();
 </script>

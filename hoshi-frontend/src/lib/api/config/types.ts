@@ -81,7 +81,7 @@ export interface SubtitleConfig {
     color: string,          // "#RRGGBB" or "#RRGGBBAA"
     borderColor: string,
     borderSize: number,
-    backgroundColor?: string,
+    backgroundColor: string | null,
     position: number,          // 0-100, sub-pos
     delay: number,
     forceStyle: boolean,      // maps to sub-ass-override no/force

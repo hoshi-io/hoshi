@@ -8,7 +8,7 @@
         getCardShouldBlur,
         getCardScore,
         type NormalizedCard
-    } from '@/utils/normalize.ts';
+    } from '@/utils/normalize';
     import ListEditorButton from "@/components/ListEditorButton.svelte";
 
     let { items = [] }: { items: NormalizedCard[] } = $props();

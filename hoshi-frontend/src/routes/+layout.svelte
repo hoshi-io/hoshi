@@ -107,6 +107,7 @@
                     title={layoutState.listEditor.title}
                     contentType={layoutState.listEditor.contentType}
                     coverImage={layoutState.listEditor.coverImage}
+                    headers={layoutState.listEditor.headers}
             />
         {/if}
     {/if}

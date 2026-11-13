@@ -7,9 +7,9 @@
     import { platform } from '@tauri-apps/plugin-os';
     import { openPath } from '@tauri-apps/plugin-opener';
 
-    import type { TorrentConfig } from '@/api/config/types.ts';
-    import type { TorrentCacheEntry, TorrentStorageStats } from '@/api/torrent/types.ts';
-    import { torrentApi } from '@/api/torrent/torrent.ts';
+    import type { TorrentConfig } from '@/api/config/types';
+    import type { TorrentCacheEntry, TorrentStorageStats } from '@/api/torrent/types';
+    import { torrentApi } from '@/api/torrent/torrent';
     import { i18n } from '@/stores/i18n.svelte.js';
     import TvSettingRow from '@/tv/components/TvSettingRow.svelte';
     import TvSwitch from '@/tv/components/TvSwitch.svelte';

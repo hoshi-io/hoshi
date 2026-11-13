@@ -2,7 +2,8 @@ type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 export interface CoreError {
     key: string;
-    message: string;
+    /** Untranslated detail (backend error text); `key` is what gets shown. */
+    message?: string;
 }
 
 function buildUrl(path: string, params?: Record<string, unknown>): string {
