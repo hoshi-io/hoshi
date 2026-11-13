@@ -815,7 +815,8 @@
       "conflict_simkl": "Приоритет для Simkl",
       "conflict_shikimori": "Приоритет для Shikimori",
       "conflict_mangabaka": "Приоритет для MangaBaka",
-      "conflict_mangaupdates": "Приоритет MangaUpdates"
+      "conflict_mangaupdates": "Приоритет MangaUpdates",
+      "synced": "Синхронизировано: {{date}}"
     },
     "general_section": {
       "general_desc": "Управление глобальными настройками приложения.",

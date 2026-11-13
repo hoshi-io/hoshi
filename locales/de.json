@@ -815,7 +815,8 @@
       "conflict_simkl": "Simkl priorisieren",
       "conflict_shikimori": "Shikimori priorisieren",
       "conflict_mangabaka": "MangaBaka priorisieren",
-      "conflict_mangaupdates": "MangaUpdates bevorzugen"
+      "conflict_mangaupdates": "MangaUpdates bevorzugen",
+      "synced": "Synchronisiert: {{date}}"
     },
     "general_section": {
       "general_desc": "Verwalte deine globalen App-Einstellungen.",

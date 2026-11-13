@@ -815,7 +815,8 @@
       "conflict_simkl": "優先 Simkl",
       "conflict_shikimori": "優先 Shikimori",
       "conflict_mangabaka": "優先 MangaBaka",
-      "conflict_mangaupdates": "優先 MangaUpdates"
+      "conflict_mangaupdates": "優先 MangaUpdates",
+      "synced": "已同步：{{date}}"
     },
     "general_section": {
       "general_desc": "管理全域應用程式偏好。",

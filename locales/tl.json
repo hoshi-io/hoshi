@@ -815,7 +815,8 @@
       "conflict_simkl": "Unahin ang Simkl",
       "conflict_shikimori": "Unahin ang Shikimori",
       "conflict_mangabaka": "Unahin ang MangaBaka",
-      "conflict_mangaupdates": "Unahin ang MangaUpdates"
+      "conflict_mangaupdates": "Unahin ang MangaUpdates",
+      "synced": "Na-sync: {{date}}"
     },
     "general_section": {
       "general_desc": "Pamahalaan ang iyong mga pangkalahatang kagustuhan sa app.",

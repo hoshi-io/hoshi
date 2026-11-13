@@ -815,7 +815,8 @@
       "conflict_simkl": "Simkl 우선",
       "conflict_shikimori": "Shikimori 우선",
       "conflict_mangabaka": "MangaBaka 우선",
-      "conflict_mangaupdates": "MangaUpdates 우선"
+      "conflict_mangaupdates": "MangaUpdates 우선",
+      "synced": "동기화됨: {{date}}"
     },
     "general_section": {
       "general_desc": "글로벌 앱 설정을 관리합니다.",

@@ -815,7 +815,8 @@
       "conflict_simkl": "Ưu tiên Simkl",
       "conflict_shikimori": "Ưu tiên Shikimori",
       "conflict_mangabaka": "Ưu tiên MangaBaka",
-      "conflict_mangaupdates": "Ưu tiên MangaUpdates"
+      "conflict_mangaupdates": "Ưu tiên MangaUpdates",
+      "synced": "Đã đồng bộ: {{date}}"
     },
     "general_section": {
       "general_desc": "Quản lý các tùy chọn ứng dụng chung.",

@@ -815,7 +815,8 @@
       "conflict_simkl": "Utamakan Simkl",
       "conflict_shikimori": "Utamakan Shikimori",
       "conflict_mangabaka": "Utamakan MangaBaka",
-      "conflict_mangaupdates": "Utamakan MangaUpdates"
+      "conflict_mangaupdates": "Utamakan MangaUpdates",
+      "synced": "Disegerakkan: {{date}}"
     },
     "general_section": {
       "general_desc": "Urus keutamaan aplikasi global anda.",

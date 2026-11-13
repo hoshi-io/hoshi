@@ -815,7 +815,8 @@
       "conflict_simkl": "ให้ความสำคัญกับ Simkl",
       "conflict_shikimori": "ให้ความสำคัญกับ Shikimori",
       "conflict_mangabaka": "ให้ความสำคัญกับ MangaBaka",
-      "conflict_mangaupdates": "ให้ความสำคัญกับ MangaUpdates"
+      "conflict_mangaupdates": "ให้ความสำคัญกับ MangaUpdates",
+      "synced": "ซิงค์แล้ว: {{date}}"
     },
     "general_section": {
       "general_desc": "จัดการการตั้งค่าแอปโดยรวม",

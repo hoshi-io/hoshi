@@ -815,7 +815,8 @@
       "conflict_simkl": "Simkl'e öncelik ver",
       "conflict_shikimori": "Shikimori'ye öncelik ver",
       "conflict_mangabaka": "MangaBaka'ya öncelik ver",
-      "conflict_mangaupdates": "MangaUpdates'e öncelik ver"
+      "conflict_mangaupdates": "MangaUpdates'e öncelik ver",
+      "synced": "Senkronize edildi: {{date}}"
     },
     "general_section": {
       "general_desc": "Global uygulama tercihlerinizi yönetin.",

@@ -305,9 +305,9 @@
         }
     }
 
-    function formatDate(timestamp: number | null | undefined): string {
-        if (!timestamp) return 'Never';
-        return new Date(timestamp).toLocaleDateString(undefined, {
+    /** `timestamp` is Unix seconds (the backend stores `strftime('%s')`). */
+    function formatDate(timestamp: number): string {
+        return new Date(timestamp * 1000).toLocaleDateString(undefined, {
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
@@ -389,7 +389,7 @@
                                 {#if tracker.lastSyncedAt}
                                     <span class="flex items-center gap-1.5">
                                         <Calendar class="size-4" />
-                                        Synced: {formatDate(tracker.lastSyncedAt)}
+                                        {i18n.t('settings.trackers_section.synced', { date: formatDate(tracker.lastSyncedAt) })}
                                     </span>
                                 {/if}
                             </div>

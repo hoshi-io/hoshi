@@ -815,7 +815,8 @@
       "conflict_simkl": "Prioritaskan Simkl",
       "conflict_shikimori": "Prioritaskan Shikimori",
       "conflict_mangabaka": "Prioritaskan MangaBaka",
-      "conflict_mangaupdates": "Prioritaskan MangaUpdates"
+      "conflict_mangaupdates": "Prioritaskan MangaUpdates",
+      "synced": "Disinkronkan: {{date}}"
     },
     "general_section": {
       "general_desc": "Kelola preferensi aplikasi global Anda.",

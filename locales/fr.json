@@ -815,7 +815,8 @@
       "conflict_simkl": "Prioriser Simkl",
       "conflict_shikimori": "Prioriser Shikimori",
       "conflict_mangabaka": "Prioriser MangaBaka",
-      "conflict_mangaupdates": "Prioriser MangaUpdates"
+      "conflict_mangaupdates": "Prioriser MangaUpdates",
+      "synced": "Synchronisé : {{date}}"
     },
     "general_section": {
       "general_desc": "Gérez vos préférences globales de l'application.",

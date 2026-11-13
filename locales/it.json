@@ -815,7 +815,8 @@
       "conflict_simkl": "Dai priorità a Simkl",
       "conflict_shikimori": "Dai priorità a Shikimori",
       "conflict_mangabaka": "Dai priorità a MangaBaka",
-      "conflict_mangaupdates": "Dai priorità a MangaUpdates"
+      "conflict_mangaupdates": "Dai priorità a MangaUpdates",
+      "synced": "Sincronizzato: {{date}}"
     },
     "general_section": {
       "general_desc": "Gestisci le preferenze globali dell'app.",

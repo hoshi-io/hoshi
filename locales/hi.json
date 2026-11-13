@@ -815,7 +815,8 @@
       "conflict_simkl": "Simkl को प्राथमिकता दें",
       "conflict_shikimori": "Shikimori को प्राथमिकता दें",
       "conflict_mangabaka": "MangaBaka को प्राथमिकता दें",
-      "conflict_mangaupdates": "MangaUpdates को प्राथमिकता दें"
+      "conflict_mangaupdates": "MangaUpdates को प्राथमिकता दें",
+      "synced": "सिंक किया गया: {{date}}"
     },
     "general_section": {
       "general_desc": "अपनी वैश्विक ऐप प्राथमिकताएं प्रबंधित करें।",

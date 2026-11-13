@@ -815,7 +815,8 @@
       "conflict_simkl": "إعطاء الأولوية لـ Simkl",
       "conflict_shikimori": "إعطاء الأولوية لـ Shikimori",
       "conflict_mangabaka": "إعطاء الأولوية لـ MangaBaka",
-      "conflict_mangaupdates": "إعطاء الأولوية لـ MangaUpdates"
+      "conflict_mangaupdates": "إعطاء الأولوية لـ MangaUpdates",
+      "synced": "تمت المزامنة: {{date}}"
     },
     "general_section": {
       "general_desc": "إدارة تفضيلات التطبيق العامة.",

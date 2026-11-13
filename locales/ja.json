@@ -815,7 +815,8 @@
       "conflict_simkl": "Simklを優先",
       "conflict_shikimori": "Shikimoriを優先",
       "conflict_mangabaka": "MangaBakaを優先",
-      "conflict_mangaupdates": "MangaUpdatesを優先"
+      "conflict_mangaupdates": "MangaUpdatesを優先",
+      "synced": "同期済み: {{date}}"
     },
     "general_section": {
       "general_desc": "アプリ全体の設定を管理します。",
