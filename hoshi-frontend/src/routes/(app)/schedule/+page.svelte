@@ -5,7 +5,10 @@
 
     import { Skeleton } from "$lib/components/ui/skeleton";
     import { Badge } from "$lib/components/ui/badge";
-    import { Calendar as CalendarIcon, AlertCircle, RefreshCw, ListFilter } from "lucide-svelte";
+    import CalendarIcon from 'phosphor-svelte/lib/CalendarBlankIcon';
+    import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
+    import ListFilter from 'phosphor-svelte/lib/FunnelIcon';
     import { fade } from "svelte/transition";
     import { layoutState } from "@/stores/layout.svelte.js";
     import CardWrapper from "@/components/card/CardWrapper.svelte";

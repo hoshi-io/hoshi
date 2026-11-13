@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Check } from 'lucide-svelte';
+    import Check from 'phosphor-svelte/lib/CheckIcon';
 
     let {
         options,

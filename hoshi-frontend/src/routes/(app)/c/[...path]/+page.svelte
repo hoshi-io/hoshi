@@ -13,7 +13,7 @@
 
     import { Button } from "@/components/ui/button";
     import { Spinner } from "@/components/ui/spinner";
-    import { AlertCircle } from "lucide-svelte";
+    import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
 
     import { ContentDetailState } from "@/app/content.svelte";
     import { layoutState } from "@/stores/layout.svelte";

@@ -1,8 +1,8 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
-    import type { ComponentType } from "svelte";
+    import type { Component } from "svelte";
 
-    type Option = { value: string, label: string, icon?: ComponentType, class?: string };
+    type Option = { value: string, label: string, icon?: Component<any>, class?: string };
 
     let {
         value = $bindable(),

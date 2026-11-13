@@ -1,7 +1,7 @@
 <script lang="ts">
     import * as Carousel from '@/components/ui/carousel';
     import { goto } from '$app/navigation';
-    import { Puzzle } from 'lucide-svelte';
+    import Puzzle from 'phosphor-svelte/lib/PuzzlePieceIcon';
     import { extensions } from '@/stores/extensions.svelte.js';
     import { searchState } from '@/app/search.svelte.js';
     import type { ContentType } from '@/api/content/types';

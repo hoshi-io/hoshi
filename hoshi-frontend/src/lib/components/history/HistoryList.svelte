@@ -1,7 +1,8 @@
 <script lang="ts">
     import { historyStore } from '@/stores/history.svelte';
     import { goto } from '$app/navigation';
-    import { X, Clock } from 'lucide-svelte';
+    import X from 'phosphor-svelte/lib/XIcon';
+    import Clock from 'phosphor-svelte/lib/ClockIcon';
 
     let { onNavigate }: { onNavigate?: () => void } = $props();
 

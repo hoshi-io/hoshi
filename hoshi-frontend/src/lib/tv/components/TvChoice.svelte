@@ -1,5 +1,5 @@
 <script lang="ts" generics="T extends string">
-    import { Check } from 'lucide-svelte';
+    import Check from 'phosphor-svelte/lib/CheckIcon';
 
     type Item = { value: T; label: string };
 

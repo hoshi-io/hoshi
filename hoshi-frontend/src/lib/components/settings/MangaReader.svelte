@@ -3,11 +3,14 @@
     import SettingSlider from "@/components/settings/parts/SettingSlider.svelte";
     import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
     import { fade } from "svelte/transition";
-    import {
-        BookOpen, MoveHorizontal, MoveVertical,
-        GalleryVertical, ChevronLeft, ChevronRight,
-        Monitor, Info
-    } from "lucide-svelte";
+    import BookOpen from 'phosphor-svelte/lib/BookOpenIcon';
+    import MoveHorizontal from 'phosphor-svelte/lib/ArrowsHorizontalIcon';
+    import MoveVertical from 'phosphor-svelte/lib/ArrowsVerticalIcon';
+    import GalleryVertical from 'phosphor-svelte/lib/RowsIcon';
+    import ChevronLeft from 'phosphor-svelte/lib/CaretLeftIcon';
+    import ChevronRight from 'phosphor-svelte/lib/CaretRightIcon';
+    import Monitor from 'phosphor-svelte/lib/MonitorIcon';
+    import Info from 'phosphor-svelte/lib/InfoIcon';
     import * as Kbd from "$lib/components/ui/kbd";
     import type { MangaConfig, MangaLayout } from "@/api/config/types";
     import { i18n } from "@/stores/i18n.svelte.js";

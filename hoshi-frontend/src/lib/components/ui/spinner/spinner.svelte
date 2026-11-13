@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { cn } from "$lib/utils.js";
-	import Loader2Icon from '@lucide/svelte/icons/loader-2';
+	import Loader2Icon from 'phosphor-svelte/lib/CircleNotchIcon';
 	import type { SVGAttributes } from "svelte/elements";
 
 	let {

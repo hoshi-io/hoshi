@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { Star, Play } from 'lucide-svelte';
+    import Star from 'phosphor-svelte/lib/StarIcon';
+    import Play from 'phosphor-svelte/lib/PlayIcon';
     import { fade } from 'svelte/transition';
     import ListEditorButton from "@/components/ListEditorButton.svelte";
     import {i18n} from "@/stores/i18n.svelte";
@@ -97,7 +98,7 @@
 
             <div class="actions">
                 <a {href} class="play-btn">
-                    <Play size="0.9rem" fill="currentColor" />
+                    <Play size="0.9rem" weight="fill" />
                     {i18n.t(contentType === "anime" ? "content.watch_now" : "content.read_now")}
                 </a>
 
@@ -113,7 +114,7 @@
             </div>
 
             <div class="meta-row">
-                {#if score}<span class="score">{#if !isStar} <Star size="0.7rem" fill="currentColor" /> {/if} {score}</span>{/if}
+                {#if score}<span class="score">{#if !isStar} <Star size="0.7rem" weight="fill" /> {/if} {score}</span>{/if}
                 <span class="badge">{contentTypeLabel || contentType}</span>
                 {#if episodeCount}<span class="badge">{episodeCount} Ep</span>{/if}
                 {#if status}<span class="status-text {status.toLowerCase()}">{status}</span>{/if}

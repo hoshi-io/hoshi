@@ -1,7 +1,9 @@
 <script lang="ts">
     import {getCardScore, type NormalizedCard} from '@/utils/normalize';
     import { getCardTitle, getCardShouldBlur, getCardTrailerUrl } from '@/utils/normalize';
-    import {Play, Clock, Star} from 'lucide-svelte';
+    import Play from 'phosphor-svelte/lib/PlayIcon';
+    import Clock from 'phosphor-svelte/lib/ClockIcon';
+    import Star from 'phosphor-svelte/lib/StarIcon';
     import { fade, fly } from 'svelte/transition';
     import { i18n } from "@/stores/i18n.svelte.js";
     import { scheduleStore } from "@/app/schedule.svelte.js";
@@ -153,7 +155,7 @@
                             {/if}
                             {#if score}
                                 <span class="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md font-bold shadow-sm">
-                                    <Star class="w-3 h-3 fill-current" /> {score}
+                                    <Star class="w-3 h-3 fill-current" weight="fill" /> {score}
                                 </span>
                             {/if}
                             {#if airingEntry && countdownText}
@@ -204,7 +206,7 @@
                                     href={currentItem.href}
                                     class="flex-1 sm:flex-initial bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8 h-11 sm:h-12 rounded-lg flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] shadow-md hover:shadow-lg shadow-primary/10 hover:shadow-primary/20 text-sm tracking-wide group"
                             >
-                                <Play class="w-4 h-4 fill-current transition-transform group-hover:scale-110" />
+                                <Play class="w-4 h-4 fill-current transition-transform group-hover:scale-110" weight="fill" />
                                 {currentItem.contentType === 'anime' ? i18n.t('home.hero.watch') : i18n.t('home.hero.read')}
                             </a>
 

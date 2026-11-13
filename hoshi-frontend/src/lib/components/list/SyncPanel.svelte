@@ -3,9 +3,15 @@
     import { listApi } from "@/api/list/list";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { Button } from "$lib/components/ui/button";
-    import {
-        Loader2, WifiOff, KeyRound, Timer, RotateCw, X, ChevronDown, CheckCircle2, AlertTriangle
-    } from "lucide-svelte";
+    import Loader2 from 'phosphor-svelte/lib/CircleNotchIcon';
+    import WifiOff from 'phosphor-svelte/lib/WifiSlashIcon';
+    import KeyRound from 'phosphor-svelte/lib/KeyIcon';
+    import Timer from 'phosphor-svelte/lib/TimerIcon';
+    import RotateCw from 'phosphor-svelte/lib/ArrowClockwiseIcon';
+    import X from 'phosphor-svelte/lib/XIcon';
+    import ChevronDown from 'phosphor-svelte/lib/CaretDownIcon';
+    import CheckCircle2 from 'phosphor-svelte/lib/CheckCircleIcon';
+    import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
     import type {BatchIssue, BatchStatus} from "@/api/list/types.js";
 
     let { onReconnect, inline = false }: {

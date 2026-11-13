@@ -1,9 +1,9 @@
 <script lang="ts">
-	import CircleCheckIcon from "@lucide/svelte/icons/circle-check";
-	import InfoIcon from "@lucide/svelte/icons/info";
-	import Loader2Icon from "@lucide/svelte/icons/loader-2";
-	import OctagonXIcon from "@lucide/svelte/icons/octagon-x";
-	import TriangleAlertIcon from "@lucide/svelte/icons/triangle-alert";
+	import CircleCheckIcon from 'phosphor-svelte/lib/CheckCircleIcon';
+	import InfoIcon from 'phosphor-svelte/lib/InfoIcon';
+	import Loader2Icon from 'phosphor-svelte/lib/CircleNotchIcon';
+	import OctagonXIcon from 'phosphor-svelte/lib/XCircleIcon';
+	import TriangleAlertIcon from 'phosphor-svelte/lib/WarningIcon';
 
 	import { Toaster as Sonner, type ToasterProps as SonnerProps } from "svelte-sonner";
 	import { themeManager } from "@/stores/theme.svelte.js";

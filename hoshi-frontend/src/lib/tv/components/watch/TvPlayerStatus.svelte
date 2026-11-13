@@ -1,5 +1,8 @@
 <script lang="ts">
-    import { AlertCircle, ArrowLeft, Magnet, RefreshCw } from 'lucide-svelte';
+    import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
+    import ArrowLeft from 'phosphor-svelte/lib/ArrowLeftIcon';
+    import Magnet from 'phosphor-svelte/lib/MagnetIcon';
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
     import type { WatchState } from '@/app/watch.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { Spinner } from '@/components/ui/spinner';

@@ -1,6 +1,9 @@
 <script lang="ts">
     import type { Character, StaffMember } from "$lib/api/content/types";
-    import { Mic2, User, ChevronDown, ChevronUp } from "lucide-svelte";
+    import Mic2 from 'phosphor-svelte/lib/MicrophoneIcon';
+    import User from 'phosphor-svelte/lib/UserIcon';
+    import ChevronDown from 'phosphor-svelte/lib/CaretDownIcon';
+    import ChevronUp from 'phosphor-svelte/lib/CaretUpIcon';
     import { i18n } from "@/stores/i18n.svelte.js";
     import { Button } from "$lib/components/ui/button";
 

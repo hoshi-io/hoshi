@@ -1,7 +1,8 @@
 <script lang="ts">
     import { onDestroy, onMount, tick, untrack } from 'svelte';
     import { fade } from 'svelte/transition';
-    import { FastForward, Rewind } from 'lucide-svelte';
+    import FastForward from 'phosphor-svelte/lib/FastForwardIcon';
+    import Rewind from 'phosphor-svelte/lib/RewindIcon';
     import { goto } from '$app/navigation';
 
     import { WatchState } from '@/app/watch.svelte.js';

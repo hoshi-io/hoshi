@@ -5,7 +5,11 @@
     import { listStore } from "@/app/list.svelte.js";
     import { i18n } from "@/stores/i18n.svelte.js";
     import SyncPanel from "@/components/list/SyncPanel.svelte";
-    import { RefreshCw, AlertTriangle, CloudOff, CheckCircle2, ChevronDown } from "lucide-svelte";
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
+    import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
+    import CloudOff from 'phosphor-svelte/lib/CloudSlashIcon';
+    import CheckCircle2 from 'phosphor-svelte/lib/CheckCircleIcon';
+    import ChevronDown from 'phosphor-svelte/lib/CaretDownIcon';
 
     let { onReconnect }: { onReconnect?: (tracker: string) => void } = $props();
 

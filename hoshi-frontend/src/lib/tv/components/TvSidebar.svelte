@@ -1,7 +1,8 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { page } from '$app/state';
-    import { Users, Monitor } from 'lucide-svelte';
+    import Users from 'phosphor-svelte/lib/UsersIcon';
+    import Monitor from 'phosphor-svelte/lib/MonitorIcon';
     import * as Avatar from '@/components/ui/avatar';
     import { auth } from '@/stores/auth.svelte.js';
     import { layoutState } from '@/stores/layout.svelte.js';

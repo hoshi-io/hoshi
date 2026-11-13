@@ -2,7 +2,13 @@
     import { onMount } from 'svelte';
     import { fade } from 'svelte/transition';
     import { toast } from 'svelte-sonner';
-    import {Globe, LayoutTemplate, Link2, MonitorPlay, Puzzle, Settings, User} from 'lucide-svelte';
+    import Globe from 'phosphor-svelte/lib/GlobeIcon';
+    import LayoutTemplate from 'phosphor-svelte/lib/LayoutIcon';
+    import Link2 from 'phosphor-svelte/lib/LinkSimpleIcon';
+    import MonitorPlay from 'phosphor-svelte/lib/MonitorPlayIcon';
+    import Puzzle from 'phosphor-svelte/lib/PuzzlePieceIcon';
+    import Settings from 'phosphor-svelte/lib/GearSixIcon';
+    import User from 'phosphor-svelte/lib/UserIcon';
     import { getVersion } from '@tauri-apps/api/app';
 
     import { auth } from '@/stores/auth.svelte.js';

@@ -1,6 +1,8 @@
 <script lang="ts">
     import { importStatuses } from "@/stores/importStatus.svelte";
-    import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-svelte";
+    import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
+    import CheckCircle2 from 'phosphor-svelte/lib/CheckCircleIcon';
+    import Loader2 from 'phosphor-svelte/lib/CircleNotchIcon';
     import { i18n } from "@/stores/i18n.svelte.js";
     import { fade, fly } from "svelte/transition";
 

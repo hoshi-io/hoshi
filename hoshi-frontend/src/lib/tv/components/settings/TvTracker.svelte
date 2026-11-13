@@ -4,7 +4,11 @@
     import { toast } from 'svelte-sonner';
     import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
     import { invoke } from '@tauri-apps/api/core';
-    import { BarChart2, Calendar, Plus, Trash2, User } from 'lucide-svelte';
+    import BarChart2 from 'phosphor-svelte/lib/ChartBarIcon';
+    import Calendar from 'phosphor-svelte/lib/CalendarBlankIcon';
+    import Plus from 'phosphor-svelte/lib/PlusIcon';
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
+    import User from 'phosphor-svelte/lib/UserIcon';
 
     import { integrationsApi } from '@/api/tracker/tracker.js';
     import { listStore } from '@/app/list.svelte.js';

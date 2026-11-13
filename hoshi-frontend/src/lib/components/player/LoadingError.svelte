@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Spinner } from "$lib/components/ui/spinner";
-    import { AlertCircle } from "lucide-svelte";
+    import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
     import {i18n} from "@/stores/i18n.svelte.js";
 
     let {

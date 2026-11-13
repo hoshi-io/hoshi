@@ -13,7 +13,9 @@
     import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
     import SettingRow from "@/components/settings/parts/SettingRow.svelte";
 
-    import { Trash2, AlertTriangle, Camera } from "lucide-svelte";
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
+    import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
+    import Camera from 'phosphor-svelte/lib/CameraIcon';
 
     let { user, onUpdate, onDeleted }: {
         user: UserPrivate,

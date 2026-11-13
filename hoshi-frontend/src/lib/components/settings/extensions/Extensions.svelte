@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { Puzzle, Store } from "lucide-svelte";
+    import Puzzle from 'phosphor-svelte/lib/PuzzlePieceIcon';
+    import Store from 'phosphor-svelte/lib/StorefrontIcon';
     import * as Tabs from "$lib/components/ui/tabs";
     import { extensions } from "@/stores/extensions.svelte.js";
     import { i18n } from "@/stores/i18n.svelte.js";

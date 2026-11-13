@@ -3,7 +3,10 @@
     import { Slider } from "@/components/ui/slider";
     import { Label } from "@/components/ui/label";
     import * as Tabs from "$lib/components/ui/tabs";
-    import { ArrowLeftRight, GalleryVertical, BookOpen, Maximize } from "lucide-svelte";
+    import ArrowLeftRight from 'phosphor-svelte/lib/ArrowsLeftRightIcon';
+    import GalleryVertical from 'phosphor-svelte/lib/RowsIcon';
+    import BookOpen from 'phosphor-svelte/lib/BookOpenIcon';
+    import Maximize from 'phosphor-svelte/lib/CornersOutIcon';
     import { i18n } from "@/stores/i18n.svelte.js";
     import type { MangaReaderState } from "@/app/manga.svelte";
     import type { MangaLayout } from "@/api/config/types";

@@ -6,7 +6,10 @@
     import * as Drawer from "$lib/components/ui/drawer";
     import { buttonVariants } from "$lib/components/ui/button";
     import { cn } from "$lib/utils";
-    import { RefreshCw, AlertTriangle, CloudOff, CheckCircle2 } from "lucide-svelte";
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
+    import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
+    import CloudOff from 'phosphor-svelte/lib/CloudSlashIcon';
+    import CheckCircle2 from 'phosphor-svelte/lib/CheckCircleIcon';
     import SyncPanel from "@/components/list/SyncPanel.svelte";
 
     let { onReconnect }: { onReconnect?: (tracker: string) => void } = $props();

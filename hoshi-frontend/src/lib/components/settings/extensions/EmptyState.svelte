@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
-    import type { PackageOpen } from "lucide-svelte";
+    import type PackageOpen from 'phosphor-svelte/lib/PackageIcon';
 
     let {
         icon,

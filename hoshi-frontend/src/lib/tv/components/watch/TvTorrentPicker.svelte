@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { invoke } from '@tauri-apps/api/core';
-    import { RefreshCw } from 'lucide-svelte';
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
     import type { WatchState } from '@/app/watch.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { Spinner } from '@/components/ui/spinner';

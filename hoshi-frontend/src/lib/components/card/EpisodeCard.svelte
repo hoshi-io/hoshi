@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { CheckCircle2, Play } from "lucide-svelte";
+    import CheckCircle2 from 'phosphor-svelte/lib/CheckCircleIcon';
+    import Play from 'phosphor-svelte/lib/PlayIcon';
     import SmartImage from "@/components/SmartImage.svelte";
 
     let {
@@ -84,7 +85,7 @@
         {#if playOnHover}
             <div class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors duration-200">
                 <div class="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-200">
-                    <Play class="w-4 h-4 text-black fill-black ml-0.5" />
+                    <Play class="w-4 h-4 text-black fill-black ml-0.5" weight="fill" />
                 </div>
             </div>
         {/if}

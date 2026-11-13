@@ -1,8 +1,16 @@
 <script lang="ts">
-    import {
-        AudioLines, Captions, Gauge, List, Magnet, Mic2, Pause, Play,
-        PuzzleIcon, Server, SkipBack, SkipForward
-    } from 'lucide-svelte';
+    import AudioLines from 'phosphor-svelte/lib/WaveformIcon';
+    import Captions from 'phosphor-svelte/lib/ClosedCaptioningIcon';
+    import Gauge from 'phosphor-svelte/lib/GaugeIcon';
+    import List from 'phosphor-svelte/lib/ListIcon';
+    import Magnet from 'phosphor-svelte/lib/MagnetIcon';
+    import Mic2 from 'phosphor-svelte/lib/MicrophoneIcon';
+    import Pause from 'phosphor-svelte/lib/PauseIcon';
+    import Play from 'phosphor-svelte/lib/PlayIcon';
+    import PuzzleIcon from 'phosphor-svelte/lib/PuzzlePieceIcon';
+    import Server from 'phosphor-svelte/lib/HardDrivesIcon';
+    import SkipBack from 'phosphor-svelte/lib/SkipBackIcon';
+    import SkipForward from 'phosphor-svelte/lib/SkipForwardIcon';
     import type { WatchState } from '@/app/watch.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import TvSeekBar from "@/tv/components/watch/TvSeekBar.svelte";
@@ -67,7 +75,7 @@
                    {opts.big ? 'size-16' : 'size-14'}
                    {opts.pressed ? 'bg-primary text-primary-foreground' : 'bg-black/40 text-white'}"
     >
-        <Icon class="{opts.big ? 'size-7' : 'size-6'} {opts.fill ? 'fill-current' : ''}" />
+        <Icon class={opts.big ? 'size-7' : 'size-6'} weight={opts.fill ? 'fill' : 'regular'} />
     </button>
 {/snippet}
 

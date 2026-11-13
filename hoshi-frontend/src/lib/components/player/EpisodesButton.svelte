@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { List } from "lucide-svelte";
+    import List from 'phosphor-svelte/lib/ListIcon';
 
     let {
         onclick,

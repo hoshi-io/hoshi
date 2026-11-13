@@ -2,7 +2,10 @@
     import { contentApi } from "$lib/api/content/content";
     import { extensions } from "@/stores/extensions.svelte.js";
     import { Skeleton } from "$lib/components/ui/skeleton";
-    import { BookOpen, SearchX, AlertCircle, BookOpenCheck } from "lucide-svelte";
+    import BookOpen from 'phosphor-svelte/lib/BookOpenIcon';
+    import SearchX from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
+    import BookOpenCheck from 'phosphor-svelte/lib/CheckCircleIcon';
     import { i18n } from "@/stores/i18n.svelte.js";
     import type { CoreError } from "@/api/client";
     import type { ChapterProgress } from "@/api/progress/types";

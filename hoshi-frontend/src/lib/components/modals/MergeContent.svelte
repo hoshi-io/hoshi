@@ -4,7 +4,10 @@
     import { Input } from '@/components/ui/input';
     import { Spinner } from "@/components/ui/spinner";
     import * as Dialog from '@/components/ui/dialog';
-    import { GitMerge, Search, AlertTriangle, Check } from 'lucide-svelte';
+    import GitMerge from 'phosphor-svelte/lib/GitMergeIcon';
+    import Search from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
+    import Check from 'phosphor-svelte/lib/CheckIcon';
     import { toast } from "svelte-sonner";
     import { i18n } from "@/stores/i18n.svelte.js";
     import type { CoreError } from "@/api/client";

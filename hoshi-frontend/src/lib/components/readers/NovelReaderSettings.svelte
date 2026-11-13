@@ -4,7 +4,13 @@
     import { Slider } from "@/components/ui/slider";
     import { Label } from "@/components/ui/label";
     import * as Tabs from "$lib/components/ui/tabs";
-    import { Type, AlignLeft, AlignJustify, Palette, Expand, Baseline, Space } from "lucide-svelte";
+    import Type from 'phosphor-svelte/lib/TextTIcon';
+    import AlignLeft from 'phosphor-svelte/lib/TextAlignLeftIcon';
+    import AlignJustify from 'phosphor-svelte/lib/TextAlignJustifyIcon';
+    import Palette from 'phosphor-svelte/lib/PaletteIcon';
+    import Expand from 'phosphor-svelte/lib/ArrowsOutIcon';
+    import Baseline from 'phosphor-svelte/lib/TextUnderlineIcon';
+    import Space from 'phosphor-svelte/lib/ArrowsOutLineHorizontalIcon';
     import { i18n } from "@/stores/i18n.svelte.js";
     import type { NovelReaderState } from "@/app/novel.svelte";
     import type { NovelTheme, FontFamily } from "@/api/config/types";

@@ -5,7 +5,11 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { Button } from "$lib/components/ui/button";
     import { goto } from "$app/navigation";
-    import { X, Trash2, CloudUpload, Loader2, Info } from "lucide-svelte";
+    import X from 'phosphor-svelte/lib/XIcon';
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
+    import CloudUpload from 'phosphor-svelte/lib/CloudArrowUpIcon';
+    import Loader2 from 'phosphor-svelte/lib/CircleNotchIcon';
+    import Info from 'phosphor-svelte/lib/InfoIcon';
 
 
     let confirmingDelete = $state(false);

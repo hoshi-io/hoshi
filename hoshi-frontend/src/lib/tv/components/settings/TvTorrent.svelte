@@ -1,6 +1,9 @@
 <script lang="ts">
     import { onDestroy } from 'svelte';
-    import { ChevronRight, FolderOpen, RefreshCw, Trash2 } from 'lucide-svelte';
+    import ChevronRight from 'phosphor-svelte/lib/CaretRightIcon';
+    import FolderOpen from 'phosphor-svelte/lib/FolderOpenIcon';
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
     import { platform } from '@tauri-apps/plugin-os';
     import { openPath } from '@tauri-apps/plugin-opener';
 

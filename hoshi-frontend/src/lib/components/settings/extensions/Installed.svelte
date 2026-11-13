@@ -1,6 +1,9 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    import { Search, SearchX, PackageOpen, Store } from "lucide-svelte";
+    import Search from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import SearchX from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import PackageOpen from 'phosphor-svelte/lib/PackageIcon';
+    import Store from 'phosphor-svelte/lib/StorefrontIcon';
     import { Input } from "$lib/components/ui/input";
     import { Button } from "$lib/components/ui/button";
     import { i18n } from "@/stores/i18n.svelte.js";

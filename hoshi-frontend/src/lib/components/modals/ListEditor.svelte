@@ -10,7 +10,14 @@
     import { listApi } from "@/api/list/list";
     import type { EntrySource, ListEntryChange, ListStatus, UpsertEntryBody } from "@/api/list/types";
     import { toast } from "svelte-sonner";
-    import { Trash2, Save, Star, CheckCircle, Calendar as CalendarIcon, Clock, GitMerge, AlertTriangle } from "lucide-svelte";
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
+    import Save from 'phosphor-svelte/lib/FloppyDiskIcon';
+    import Star from 'phosphor-svelte/lib/StarIcon';
+    import CheckCircle from 'phosphor-svelte/lib/CheckCircleIcon';
+    import CalendarIcon from 'phosphor-svelte/lib/CalendarBlankIcon';
+    import Clock from 'phosphor-svelte/lib/ClockIcon';
+    import GitMerge from 'phosphor-svelte/lib/GitMergeIcon';
+    import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
     import { Spinner } from "$lib/components/ui/spinner";
     import { onMount } from "svelte";
     import {

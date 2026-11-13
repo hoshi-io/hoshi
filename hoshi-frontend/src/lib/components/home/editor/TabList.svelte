@@ -2,7 +2,8 @@
     import { flip } from 'svelte/animate';
     import { crossfade } from 'svelte/transition';
     import { cubicOut } from 'svelte/easing';
-    import { GripVertical, Plus } from 'lucide-svelte';
+    import GripVertical from 'phosphor-svelte/lib/DotsSixVerticalIcon';
+    import Plus from 'phosphor-svelte/lib/PlusIcon';
     import { homeEditor, MAX_TABS } from '@/app/home-editor.svelte.js';
     import { labelText } from '@/app/home.svelte.js';
     import { tabIcon } from '@/components/home/icons';

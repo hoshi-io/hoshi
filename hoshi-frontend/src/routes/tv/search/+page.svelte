@@ -1,6 +1,10 @@
 <script lang="ts">
     import { onMount, tick, untrack } from 'svelte';
-    import { Search, SearchX, ListFilter, X, Blocks } from 'lucide-svelte';
+    import Search from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import SearchX from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import ListFilter from 'phosphor-svelte/lib/FunnelIcon';
+    import X from 'phosphor-svelte/lib/XIcon';
+    import Blocks from 'phosphor-svelte/lib/CubeIcon';
     import { extensionsApi } from '$lib/api/extensions/extensions';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { searchState } from '@/app/search.svelte.js';

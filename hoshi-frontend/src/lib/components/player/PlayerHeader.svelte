@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { ArrowLeft, Settings } from "lucide-svelte";
+    import ArrowLeft from 'phosphor-svelte/lib/ArrowLeftIcon';
+    import Settings from 'phosphor-svelte/lib/GearSixIcon';
     import { goto } from "$app/navigation";
     import { i18n } from "@/stores/i18n.svelte.js";
     import EpisodesButton from "@/components/player/EpisodesButton.svelte";

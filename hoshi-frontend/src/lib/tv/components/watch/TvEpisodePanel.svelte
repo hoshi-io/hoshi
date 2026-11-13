@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { CheckCircle2 } from 'lucide-svelte';
+    import CheckCircle2 from 'phosphor-svelte/lib/CheckCircleIcon';
     import type { WatchState } from '@/app/watch.svelte.js';
     import { progressApi } from '@/api/progress/progress.ts';
     import type { AnimeProgress } from '@/api/progress/types.ts';

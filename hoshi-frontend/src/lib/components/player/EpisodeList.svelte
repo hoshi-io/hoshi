@@ -1,6 +1,7 @@
 <script lang="ts">
     import { tick, untrack } from "svelte";
-    import { X, Play } from "lucide-svelte";
+    import X from 'phosphor-svelte/lib/XIcon';
+    import Play from 'phosphor-svelte/lib/PlayIcon';
     import type { WatchState } from "@/app/watch.svelte.js";
     import { progressApi } from "@/api/progress/progress";
     import type { AnimeProgress } from "@/api/progress/types";
@@ -208,7 +209,7 @@
         {#if current}
             <div class="absolute inset-0 z-10 flex items-center justify-center bg-black/40">
                 <div class="flex size-10 items-center justify-center rounded-full bg-primary/90 text-primary-foreground shadow-sm backdrop-blur-md">
-                    <Play class="ml-1 size-5 fill-current" />
+                    <Play class="ml-1 size-5 fill-current" weight="fill" />
                 </div>
             </div>
         {/if}

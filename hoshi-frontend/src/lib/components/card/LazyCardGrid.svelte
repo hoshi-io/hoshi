@@ -5,7 +5,7 @@
     import type { Snippet } from "svelte";
     import { tick } from "svelte";
     import { Skeleton } from "$lib/components/ui/skeleton";
-    import { Check } from "lucide-svelte";
+    import Check from 'phosphor-svelte/lib/CheckIcon';
 
     let {
         items,
@@ -191,7 +191,7 @@
                             onclick={() => onToggle?.(item)}
                     >
                         <span class="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full border-2 transition-colors {sel(item) ? 'border-primary bg-primary text-primary-foreground' : 'border-white/70 bg-black/40'}">
-                            {#if sel(item)}<Check class="size-3.5" strokeWidth={3} />{/if}
+                            {#if sel(item)}<Check class="size-3.5" weight="bold" />{/if}
                         </span>
                     </button>
                 {/if}

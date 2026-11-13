@@ -1,6 +1,7 @@
 <script lang="ts">
     import { auth } from '@/stores/auth.svelte.js';
-    import { Users, Code2 } from 'lucide-svelte';
+    import UsersIcon from 'phosphor-svelte/lib/UsersIcon';
+    import CodeIcon from 'phosphor-svelte/lib/CodeIcon';
     import { Button } from '$lib/components/ui/button';
     import * as Avatar from '$lib/components/ui/avatar';
     import { i18n } from '@/stores/i18n.svelte.js';
@@ -99,7 +100,7 @@
                         ></span>
                     {/if}
 
-                    <Icon class="relative shrink-0 size-5.5 transition-transform duration-300 ease-out
+                    <Icon weight={active ? 'fill' : 'regular'} class="relative shrink-0 size-5.5 transition-transform duration-300 ease-out
     {active
         ? 'scale-105 opacity-100'
         : 'opacity-70 group-hover:rotate-8 group-hover:scale-105 group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-visible:scale-105'}" />
@@ -136,7 +137,7 @@
                             ></span>
                         {/if}
 
-                        <Icon class="relative shrink-0 size-5.5 transition-transform duration-300 ease-out
+                        <Icon weight={active ? 'fill' : 'regular'} class="relative shrink-0 size-5.5 transition-transform duration-300 ease-out
     {active
         ? 'scale-105 opacity-100'
         : 'opacity-70 group-hover:rotate-4 group-hover:scale-105 group-hover:opacity-100 group-focus-visible:opacity-100'}" />
@@ -153,7 +154,7 @@
                     title={layoutState.isTV ? undefined : 'Extension IDE'}
                     class="group {itemBase} {itemLayout} {itemIdle}"
             >
-                <Code2 class="relative shrink-0 size-5.5 opacity-70 transition-transform duration-300 ease-out group-hover:rotate-4 group-hover:scale-105 group-hover:opacity-100 group-focus-visible:opacity-100" />
+                <CodeIcon class="relative shrink-0 size-5.5 opacity-70 transition-transform duration-300 ease-out group-hover:rotate-4 group-hover:scale-105 group-hover:opacity-100 group-focus-visible:opacity-100" />
 
                 {#if layoutState.isTV}
                     <span class={tvLabel}>Extension IDE</span>
@@ -182,7 +183,7 @@
                     }}
                         title={i18n.t('layout.switch_profile')}
                 >
-                    <Users class="size-4.5 shrink-0 transition-transform duration-300 ease-out group-hover:rotate-12 group-focus-visible:rotate-12" />
+                    <UsersIcon class="size-4.5 shrink-0 transition-transform duration-300 ease-out group-hover:rotate-12 group-focus-visible:rotate-12" />
                 </Button>
             </div>
         {/if}

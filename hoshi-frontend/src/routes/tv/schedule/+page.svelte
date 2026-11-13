@@ -1,7 +1,10 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { fade } from 'svelte/transition';
-    import { Calendar as CalendarIcon, AlertCircle, ListFilter, Check } from 'lucide-svelte';
+    import CalendarIcon from 'phosphor-svelte/lib/CalendarBlankIcon';
+    import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
+    import ListFilter from 'phosphor-svelte/lib/FunnelIcon';
+    import Check from 'phosphor-svelte/lib/CheckIcon';
 
     import { i18n } from '@/stores/i18n.svelte.js';
     import { scheduleStore } from '@/app/schedule.svelte.js';

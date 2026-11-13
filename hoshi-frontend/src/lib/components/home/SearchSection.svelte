@@ -4,7 +4,7 @@
     import { homeState, labelText } from '@/app/home.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import type { HomeSection } from '@/api/home/types';
-    import { ChevronRight } from 'lucide-svelte';
+    import ChevronRight from 'phosphor-svelte/lib/CaretRightIcon';
     import { goto } from '$app/navigation';
     import { searchState } from '@/app/search.svelte.js';
 

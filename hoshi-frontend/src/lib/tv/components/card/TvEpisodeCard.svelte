@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { CheckCircle2 } from 'lucide-svelte';
+    import CheckCircle2 from 'phosphor-svelte/lib/CheckCircleIcon';
     import SmartImage from '@/components/SmartImage.svelte';
 
     let {

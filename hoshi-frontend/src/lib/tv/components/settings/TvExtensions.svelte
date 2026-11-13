@@ -1,6 +1,15 @@
 <script lang="ts">
     import { onMount, tick } from 'svelte';
-    import { Puzzle, Store, Settings, Plus, Trash2, PackageOpen, SearchX, Server, RefreshCw, AlertTriangle } from 'lucide-svelte';
+    import Puzzle from 'phosphor-svelte/lib/PuzzlePieceIcon';
+    import Store from 'phosphor-svelte/lib/StorefrontIcon';
+    import Settings from 'phosphor-svelte/lib/GearSixIcon';
+    import Plus from 'phosphor-svelte/lib/PlusIcon';
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
+    import PackageOpen from 'phosphor-svelte/lib/PackageIcon';
+    import SearchX from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import Server from 'phosphor-svelte/lib/HardDrivesIcon';
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
+    import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
     import { extensions } from '@/stores/extensions.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import type { ExtensionsConfig } from '@/api/config/types';

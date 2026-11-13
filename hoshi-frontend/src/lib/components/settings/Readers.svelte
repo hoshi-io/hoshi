@@ -7,7 +7,8 @@
     import MangaReader from "./MangaReader.svelte";
     import NovelReader from "./NovelReader.svelte";
     import type { MangaConfig, NovelConfig } from "@/api/config/types";
-    import { BookOpen, BookOpenText } from "lucide-svelte";
+    import BookOpen from 'phosphor-svelte/lib/BookOpenIcon';
+    import BookOpenText from 'phosphor-svelte/lib/BookOpenTextIcon';
 
     let {
         mangaConfig = $bindable(),

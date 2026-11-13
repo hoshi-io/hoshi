@@ -11,7 +11,10 @@
     import { Input } from '$lib/components/ui/input';
     import * as Avatar from '$lib/components/ui/avatar';
     import { Skeleton } from '$lib/components/ui/skeleton';
-    import { Plus, ArrowLeft, Lock, Check } from 'lucide-svelte';
+    import Plus from 'phosphor-svelte/lib/PlusIcon';
+    import ArrowLeft from 'phosphor-svelte/lib/ArrowLeftIcon';
+    import Lock from 'phosphor-svelte/lib/LockIcon';
+    import Check from 'phosphor-svelte/lib/CheckIcon';
     import { Spinner } from "$lib/components/ui/spinner";
     import { fly } from 'svelte/transition';
     import { cubicOut } from 'svelte/easing';

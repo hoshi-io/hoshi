@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { History } from 'lucide-svelte';
+    import ClockCounterClockwiseIcon from 'phosphor-svelte/lib/ClockCounterClockwiseIcon';
     import * as Popover from '$lib/components/ui/popover/index.js';
     import * as Drawer from '$lib/components/ui/drawer/index.js';
     import { layoutState } from '@/stores/layout.svelte.js';
@@ -21,7 +21,7 @@
 {#if layoutState.isMobile}
     <Drawer.Root bind:open>
         <Drawer.Trigger class={triggerClass} aria-label={i18n.t('history.title')}>
-            <History class="size-5" />
+            <ClockCounterClockwiseIcon class="size-5" />
         </Drawer.Trigger>
         <Drawer.Content class="max-h-[85vh]">
             <HistoryList onNavigate={() => (open = false)} />
@@ -30,7 +30,7 @@
 {:else}
     <Popover.Root bind:open>
         <Popover.Trigger class={triggerClass} aria-label={i18n.t('history.title')}>
-            <History class="size-5 transition-transform duration-200 ease-out group-hover:-rotate-12" />
+            <ClockCounterClockwiseIcon class="size-5 transition-transform duration-200 ease-out group-hover:-rotate-12" />
         </Popover.Trigger>
 
         <Popover.Content

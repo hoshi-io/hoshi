@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { ChevronLeft, ChevronRight } from 'lucide-svelte';
+    import ChevronLeft from 'phosphor-svelte/lib/CaretLeftIcon';
+    import ChevronRight from 'phosphor-svelte/lib/CaretRightIcon';
 
     let {
         value = $bindable(0),

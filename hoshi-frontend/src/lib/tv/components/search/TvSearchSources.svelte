@@ -11,7 +11,10 @@
 </script>
 
 <script lang="ts">
-    import { Plug, Check, Database, Blocks } from 'lucide-svelte';
+    import Plug from 'phosphor-svelte/lib/PlugIcon';
+    import Check from 'phosphor-svelte/lib/CheckIcon';
+    import Database from 'phosphor-svelte/lib/DatabaseIcon';
+    import Blocks from 'phosphor-svelte/lib/CubeIcon';
     import { searchState } from '@/app/search.svelte.js';
 
     let {

@@ -3,7 +3,7 @@
     import { flip } from 'svelte/animate';
     import { fade } from 'svelte/transition';
     import { cubicOut } from 'svelte/easing';
-    import { Plus } from 'lucide-svelte';
+    import Plus from 'phosphor-svelte/lib/PlusIcon';
     import { Button } from '@/components/ui/button';
     import { Spinner } from '@/components/ui/spinner';
     import * as AlertDialog from '@/components/ui/alert-dialog';

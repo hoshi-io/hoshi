@@ -3,10 +3,19 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { appConfig } from "@/stores/config.svelte";
     import { Button } from "@/components/ui/button";
-    import {
-        Star, Calendar, Tv, BookMarked, Building2, Play, BookOpen, Link, Plug, ChevronDown, ChevronUp, Clock,
-        GitMerge
-    } from "lucide-svelte";
+    import Star from 'phosphor-svelte/lib/StarIcon';
+    import Calendar from 'phosphor-svelte/lib/CalendarBlankIcon';
+    import Tv from 'phosphor-svelte/lib/TelevisionIcon';
+    import BookMarked from 'phosphor-svelte/lib/BookBookmarkIcon';
+    import Building2 from 'phosphor-svelte/lib/BuildingsIcon';
+    import Play from 'phosphor-svelte/lib/PlayIcon';
+    import BookOpen from 'phosphor-svelte/lib/BookOpenIcon';
+    import Link from 'phosphor-svelte/lib/LinkIcon';
+    import Plug from 'phosphor-svelte/lib/PlugIcon';
+    import ChevronDown from 'phosphor-svelte/lib/CaretDownIcon';
+    import ChevronUp from 'phosphor-svelte/lib/CaretUpIcon';
+    import Clock from 'phosphor-svelte/lib/ClockIcon';
+    import GitMerge from 'phosphor-svelte/lib/GitMergeIcon';
     import ListEditorButton from "@/components/ListEditorButton.svelte";
     import SmartImage from "@/components/SmartImage.svelte";
     import { formatScore } from "@/utils/normalize";
@@ -152,7 +161,7 @@
             <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 text-xs text-muted-foreground font-semibold">
                 {#if score}
                     <span class="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md font-bold shadow-sm">
-                        <Star class="w-3 h-3 fill-current" /> {score}
+                        <Star class="w-3 h-3 fill-current" weight="fill" /> {score}
                     </span>
                 {/if}
                 {#if airingEntry && countdownText}
@@ -196,9 +205,9 @@
             <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-2">
                 <Button onclick={onWatchNow} class="rounded-sm px-6 h-10 font-bold shadow-lg gap-2">
                     {#if isAnime}
-                        <Play class="w-4 h-4 fill-current" />{i18n.t('content.watch_now')}
+                        <Play class="w-4 h-4 fill-current" weight="fill" />{i18n.t('content.watch_now')}
                     {:else}
-                        <BookOpen class="w-4 h-4 fill-current" />{i18n.t('content.read_now')}
+                        <BookOpen class="w-4 h-4 fill-current" weight="fill" />{i18n.t('content.read_now')}
                     {/if}
                 </Button>
                 <div class="flex items-center bg-muted/20 p-1 rounded-md border border-border/10 backdrop-blur-md gap-1">

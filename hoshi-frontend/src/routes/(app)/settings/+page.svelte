@@ -4,10 +4,17 @@
     import { crossfade, fade, fly } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
     import { goto } from '$app/navigation';
-    import {
-        User, Link2, Settings, MonitorPlay, Puzzle, BookOpen, LayoutTemplate,
-        MessageSquare, ChevronRight, Terminal, Globe
-    } from "lucide-svelte";
+    import User from 'phosphor-svelte/lib/UserIcon';
+    import Link2 from 'phosphor-svelte/lib/LinkSimpleIcon';
+    import Settings from 'phosphor-svelte/lib/GearSixIcon';
+    import MonitorPlay from 'phosphor-svelte/lib/MonitorPlayIcon';
+    import Puzzle from 'phosphor-svelte/lib/PuzzlePieceIcon';
+    import BookOpen from 'phosphor-svelte/lib/BookOpenIcon';
+    import LayoutTemplate from 'phosphor-svelte/lib/LayoutIcon';
+    import MessageSquare from 'phosphor-svelte/lib/ChatIcon';
+    import ChevronRight from 'phosphor-svelte/lib/CaretRightIcon';
+    import Terminal from 'phosphor-svelte/lib/TerminalIcon';
+    import Globe from 'phosphor-svelte/lib/GlobeIcon';
     import { Spinner } from "$lib/components/ui/spinner";
     import * as Avatar from "$lib/components/ui/avatar";
     import SwitchProfile from "$lib/components/modals/SwitchProfile.svelte";

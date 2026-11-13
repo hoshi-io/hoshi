@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
-    import { Star } from 'lucide-svelte';
+    import Star from 'phosphor-svelte/lib/StarIcon';
     import SmartImage from '@/components/SmartImage.svelte';
     import {
         getCardTitle,
@@ -62,7 +62,7 @@
         {#if score}
             <div class="absolute right-1.5 top-1.5 flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-xs font-bold text-white">
                 {#if !isStars}
-                    <Star class="size-3 fill-yellow-400 text-yellow-400" />
+                    <Star class="size-3 fill-yellow-400 text-yellow-400" weight="fill" />
                 {/if}
                 <span class={isStars ? 'text-amber-400' : ''}>{score}</span>
             </div>

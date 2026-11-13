@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Check } from 'lucide-svelte';
+    import Check from 'phosphor-svelte/lib/CheckIcon';
     import type { UiConfig } from '@/api/config/types.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { themeManager } from '@/stores/theme.svelte.js';
@@ -62,7 +62,7 @@
                     {theme.label}
                     {#if selected}
                         <span class="absolute right-2 top-2 rounded-full bg-primary p-1">
-                            <Check class="size-3.5 text-primary-foreground" strokeWidth={3} />
+                            <Check class="size-3.5 text-primary-foreground" weight="bold" />
                         </span>
                     {/if}
                 </button>

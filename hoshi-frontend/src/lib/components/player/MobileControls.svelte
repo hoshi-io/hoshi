@@ -1,5 +1,8 @@
 <script lang="ts">
-    import { Play, Pause, SkipBack, SkipForward } from "lucide-svelte";
+    import Play from 'phosphor-svelte/lib/PlayIcon';
+    import Pause from 'phosphor-svelte/lib/PauseIcon';
+    import SkipBack from 'phosphor-svelte/lib/SkipBackIcon';
+    import SkipForward from 'phosphor-svelte/lib/SkipForwardIcon';
     import EpisodeList from "@/components/player/EpisodeList.svelte";
     import SeekBar from "@/components/player/SeekBar.svelte";
 
@@ -38,7 +41,7 @@
                     disabled={!pageState.hasPrev}
                     class="p-3 rounded-full text-white {middlePtr} disabled:opacity-30 disabled:pointer-events-none transition-transform active:scale-95"
             >
-                <SkipBack class="w-8 h-8 fill-current" />
+                <SkipBack class="w-8 h-8 fill-current" weight="fill" />
             </button>
 
             <button
@@ -46,9 +49,9 @@
                     class="p-5 rounded-full text-white {middlePtr} transition-transform active:scale-95"
             >
                 {#if pageState.isPaused}
-                    <Play class="w-12 h-12 fill-current ml-1" />
+                    <Play class="w-12 h-12 fill-current ml-1" weight="fill" />
                 {:else}
-                    <Pause class="w-12 h-12 fill-current" />
+                    <Pause class="w-12 h-12 fill-current" weight="fill" />
                 {/if}
             </button>
 
@@ -57,7 +60,7 @@
                     disabled={!pageState.hasNext}
                     class="p-3 rounded-full text-white {middlePtr} disabled:opacity-30 disabled:pointer-events-none transition-transform active:scale-95"
             >
-                <SkipForward class="w-8 h-8 fill-current" />
+                <SkipForward class="w-8 h-8 fill-current" weight="fill" />
             </button>
         </div>
     {/if}

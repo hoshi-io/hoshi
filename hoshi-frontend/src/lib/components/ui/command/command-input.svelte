@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Command as CommandPrimitive } from "bits-ui";
-	import SearchIcon from "@lucide/svelte/icons/search";
+	import SearchIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
 	import { cn } from "$lib/utils.js";
 
 	let {

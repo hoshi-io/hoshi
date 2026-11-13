@@ -1,6 +1,7 @@
 <script lang="ts">
     import { toast } from 'svelte-sonner';
-    import { Trash2, AlertTriangle } from 'lucide-svelte';
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
+    import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
     import { usersApi } from '@/api/users/users.js';
     import type { UserPrivate } from '@/api/users/types.js';
     import { i18n } from '@/stores/i18n.svelte.js';

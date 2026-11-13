@@ -6,7 +6,13 @@
     import { Input } from '@/components/ui/input';
     import * as Select from '@/components/ui/select';
     import { Spinner } from "@/components/ui/spinner";
-    import { Trash2, Plus, Pencil, Save, Link2, X, AlertCircle } from 'lucide-svelte';
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
+    import Plus from 'phosphor-svelte/lib/PlusIcon';
+    import Pencil from 'phosphor-svelte/lib/PencilSimpleIcon';
+    import Save from 'phosphor-svelte/lib/FloppyDiskIcon';
+    import Link2 from 'phosphor-svelte/lib/LinkSimpleIcon';
+    import X from 'phosphor-svelte/lib/XIcon';
+    import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
     import { toast } from "svelte-sonner";
     import { i18n } from "@/stores/i18n.svelte.js";
     import type { CoreError } from "@/api/client";

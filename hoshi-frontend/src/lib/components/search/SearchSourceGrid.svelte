@@ -1,5 +1,8 @@
 <script lang="ts">
-    import { Plug, Database, Blocks, ChevronRight } from "lucide-svelte";
+    import Plug from 'phosphor-svelte/lib/PlugIcon';
+    import Database from 'phosphor-svelte/lib/DatabaseIcon';
+    import Blocks from 'phosphor-svelte/lib/CubeIcon';
+    import ChevronRight from 'phosphor-svelte/lib/CaretRightIcon';
     import { searchState } from "@/app/search.svelte.js";
 
     let {

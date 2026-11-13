@@ -12,7 +12,7 @@
     import { homeState, labelText } from '@/app/home.svelte.js';
     import { homeEditor } from '@/app/home-editor.svelte.js';
     import HomeEditView from '@/components/home/editor/HomeEditView.svelte';
-    import { Pencil } from 'lucide-svelte';
+    import Pencil from 'phosphor-svelte/lib/PencilSimpleIcon';
     import { beforeNavigate } from '$app/navigation';
 
     const prefersReducedMotion =

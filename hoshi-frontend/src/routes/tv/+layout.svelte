@@ -3,7 +3,11 @@
     import { afterNavigate } from '$app/navigation';
     import { page } from '$app/state';
     import { fade } from 'svelte/transition';
-    import { Search, Home, Calendar, Settings, List } from 'lucide-svelte';
+    import Search from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import Home from 'phosphor-svelte/lib/HouseIcon';
+    import Calendar from 'phosphor-svelte/lib/CalendarBlankIcon';
+    import Settings from 'phosphor-svelte/lib/GearSixIcon';
+    import List from 'phosphor-svelte/lib/ListIcon';
 
     import { auth } from '@/stores/auth.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';

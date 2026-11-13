@@ -2,7 +2,12 @@
     import { onMount } from 'svelte';
     import { fade } from 'svelte/transition';
     import { goto } from '$app/navigation';
-    import { AlertCircle, Compass, List, RefreshCw, Repeat, X } from 'lucide-svelte';
+    import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
+    import Compass from 'phosphor-svelte/lib/CompassIcon';
+    import List from 'phosphor-svelte/lib/ListIcon';
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
+    import Repeat from 'phosphor-svelte/lib/RepeatIcon';
+    import X from 'phosphor-svelte/lib/XIcon';
 
     import { listStore } from '@/app/list.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';

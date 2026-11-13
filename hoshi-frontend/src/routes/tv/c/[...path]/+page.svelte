@@ -1,9 +1,16 @@
 <script lang="ts">
     import { fade } from 'svelte/transition';
-    import {
-        AlertCircle, BookMarked, Building2, Calendar, ChevronDown,
-        ChevronUp, Clock, Play, RefreshCw, Star, Tv
-    } from 'lucide-svelte';
+    import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
+    import BookMarked from 'phosphor-svelte/lib/BookBookmarkIcon';
+    import Building2 from 'phosphor-svelte/lib/BuildingsIcon';
+    import Calendar from 'phosphor-svelte/lib/CalendarBlankIcon';
+    import ChevronDown from 'phosphor-svelte/lib/CaretDownIcon';
+    import ChevronUp from 'phosphor-svelte/lib/CaretUpIcon';
+    import Clock from 'phosphor-svelte/lib/ClockIcon';
+    import Play from 'phosphor-svelte/lib/PlayIcon';
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
+    import Star from 'phosphor-svelte/lib/StarIcon';
+    import Tv from 'phosphor-svelte/lib/TelevisionIcon';
 
     import { ContentDetailState } from '@/app/content.svelte';
     import { listStore } from '@/app/list.svelte.js';
@@ -214,7 +221,7 @@
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-semibold text-muted-foreground">
                     {#if score}
                         <span class="flex items-center gap-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 font-bold text-emerald-400">
-                            <Star class="size-4 fill-current" />{score}
+                            <Star class="size-4 fill-current" weight="fill" />{score}
                         </span>
                     {/if}
                     {#if airingEntry && countdownText}
@@ -266,7 +273,7 @@
                                 class="flex h-14 scroll-my-24 items-center gap-3 rounded-lg bg-primary px-8 text-lg font-black text-primary-foreground outline-none
                                        transition-transform duration-150 focus:scale-105 focus:ring-4 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background"
                         >
-                            <Play class="size-5 fill-current" />
+                            <Play class="size-5 fill-current" weight="fill" />
                             {resumeInProgress ? i18n.t('content.resume') : i18n.t('content.watch_now')}
                             {#if !isMovie}
                                 <span class="text-sm font-bold opacity-80">· {i18n.t('content.episode_title', { num: resumeEpisode })}</span>

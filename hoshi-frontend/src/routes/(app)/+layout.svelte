@@ -2,7 +2,11 @@
     import { afterNavigate } from '$app/navigation';
     import { page } from '$app/state';
     import { slide, fade } from 'svelte/transition';
-    import { Search, Home, Calendar, Settings, List } from 'lucide-svelte';
+    import HouseIcon from 'phosphor-svelte/lib/HouseIcon';
+    import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import BookmarksSimpleIcon from 'phosphor-svelte/lib/BookmarksSimpleIcon';
+    import CalendarBlankIcon from 'phosphor-svelte/lib/CalendarBlankIcon';
+    import GearSixIcon from 'phosphor-svelte/lib/GearSixIcon';
 
     import { handleDiscordActivity } from '$lib/app/app';
     import { auth } from '@/stores/auth.svelte.js';
@@ -24,14 +28,14 @@
     });
 
     const mainRoutes = $derived([
-        { name: i18n.t('layout.home'), path: '/', icon: Home },
-        { name: i18n.t('layout.search'), path: '/search', icon: Search },
-        { name: i18n.t('layout.list'), path: '/list', icon: List },
-        { name: i18n.t('layout.schedule'), path: '/schedule', icon: Calendar }
+        { name: i18n.t('layout.home'), path: '/', icon: HouseIcon },
+        { name: i18n.t('layout.search'), path: '/search', icon: MagnifyingGlassIcon },
+        { name: i18n.t('layout.list'), path: '/list', icon: BookmarksSimpleIcon },
+        { name: i18n.t('layout.schedule'), path: '/schedule', icon: CalendarBlankIcon }
     ]);
 
     const profileRoutes = $derived([
-        { name: i18n.t('layout.settings'), path: '/settings', icon: Settings }
+        { name: i18n.t('layout.settings'), path: '/settings', icon: GearSixIcon }
     ]);
 
     const mobileRoutes = $derived([...mainRoutes, ...profileRoutes]);

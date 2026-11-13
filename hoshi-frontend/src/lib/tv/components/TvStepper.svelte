@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { Minus, Plus } from 'lucide-svelte';
+    import Minus from 'phosphor-svelte/lib/MinusIcon';
+    import Plus from 'phosphor-svelte/lib/PlusIcon';
 
     let {
         value = $bindable(0),

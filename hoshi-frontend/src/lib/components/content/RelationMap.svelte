@@ -3,7 +3,9 @@
     import { scale as scaleTransition, draw } from 'svelte/transition';
     import { cubicOut } from 'svelte/easing';
     import { Button } from '$lib/components/ui/button';
-    import { ZoomIn, ZoomOut, LocateFixed } from 'lucide-svelte';
+    import ZoomIn from 'phosphor-svelte/lib/MagnifyingGlassPlusIcon';
+    import ZoomOut from 'phosphor-svelte/lib/MagnifyingGlassMinusIcon';
+    import LocateFixed from 'phosphor-svelte/lib/CrosshairIcon';
     import type { RelationGraph } from "@/api/content/types";
     import { computeLayout, NODE_H, NODE_W, relationColor, relationLabel } from "@/relationLayout";
 

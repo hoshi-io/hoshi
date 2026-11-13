@@ -1,7 +1,9 @@
 <script lang="ts">
     import { browser } from '$app/environment';
     import { type } from '@tauri-apps/plugin-os';
-    import { Minus, Square, X } from 'lucide-svelte';
+    import Minus from 'phosphor-svelte/lib/MinusIcon';
+    import Square from 'phosphor-svelte/lib/SquareIcon';
+    import X from 'phosphor-svelte/lib/XIcon';
 
     let { title = '', iconSrc = '' }: { title?: string; iconSrc?: string } = $props();
 

@@ -3,7 +3,15 @@
     import {invoke} from "@tauri-apps/api/core";
     import {toast} from "svelte-sonner";
     import {Button} from "$lib/components/ui/button";
-    import {ArrowLeft, Check, Copy, Download, FileText, RefreshCw, Search, Terminal, Trash2} from "lucide-svelte";
+    import ArrowLeft from 'phosphor-svelte/lib/ArrowLeftIcon';
+    import Check from 'phosphor-svelte/lib/CheckIcon';
+    import Copy from 'phosphor-svelte/lib/CopyIcon';
+    import Download from 'phosphor-svelte/lib/DownloadSimpleIcon';
+    import FileText from 'phosphor-svelte/lib/FileTextIcon';
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
+    import Search from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import Terminal from 'phosphor-svelte/lib/TerminalIcon';
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
     import {onMount} from "svelte";
     import {fly} from "svelte/transition";
     import {cubicOut} from "svelte/easing";

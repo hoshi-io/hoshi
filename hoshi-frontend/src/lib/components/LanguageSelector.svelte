@@ -6,7 +6,10 @@
     import * as Popover from "$lib/components/ui/popover";
     import * as Drawer from "$lib/components/ui/drawer";
     import { Button } from "$lib/components/ui/button";
-    import { Check, ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-svelte";
+    import Check from 'phosphor-svelte/lib/CheckIcon';
+    import ChevronDown from 'phosphor-svelte/lib/CaretDownIcon';
+    import ChevronUp from 'phosphor-svelte/lib/CaretUpIcon';
+    import ChevronsUpDown from 'phosphor-svelte/lib/CaretUpDownIcon';
     import { tick } from "svelte";
 
     let {

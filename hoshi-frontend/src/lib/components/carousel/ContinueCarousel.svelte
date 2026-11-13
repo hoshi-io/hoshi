@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { BookOpen, FileText } from "lucide-svelte";
+    import BookOpen from 'phosphor-svelte/lib/BookOpenIcon';
+    import FileText from 'phosphor-svelte/lib/FileTextIcon';
     import type { ContinueItem } from '@/api/progress/types';
     import type { ContentType } from '@/api/content/types';
     import { i18n } from "@/stores/i18n.svelte.js";

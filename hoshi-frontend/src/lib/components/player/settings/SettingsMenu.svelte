@@ -1,35 +1,33 @@
 <script lang="ts">
     import { fly, fade } from "svelte/transition";
     import { appConfig } from "@/stores/config.svelte.js";
-    import {
-        PuzzleIcon,
-        Server,
-        Mic2,
-        AudioLines,
-        Captions,
-        Gauge,
-        Cpu,
-        Palette,
-        Type,
-        AlignCenter,
-        Activity,
-        Contrast,
-        Sparkles,
-        SlidersHorizontal,
-        Maximize,
-        Maximize2,
-        Baseline,
-        Brush,
-        Ruler,
-        Square,
-        PaintBucket,
-        MoveVertical,
-        Timer,
-        Droplet,
-        Layers,
-        Lock,
-        EyeOff
-    } from "lucide-svelte";
+    import PuzzleIcon from 'phosphor-svelte/lib/PuzzlePieceIcon';
+    import Server from 'phosphor-svelte/lib/HardDrivesIcon';
+    import Mic2 from 'phosphor-svelte/lib/MicrophoneIcon';
+    import AudioLines from 'phosphor-svelte/lib/WaveformIcon';
+    import Captions from 'phosphor-svelte/lib/ClosedCaptioningIcon';
+    import Gauge from 'phosphor-svelte/lib/GaugeIcon';
+    import Cpu from 'phosphor-svelte/lib/CpuIcon';
+    import Palette from 'phosphor-svelte/lib/PaletteIcon';
+    import Type from 'phosphor-svelte/lib/TextTIcon';
+    import AlignCenter from 'phosphor-svelte/lib/TextAlignCenterIcon';
+    import Activity from 'phosphor-svelte/lib/PulseIcon';
+    import Contrast from 'phosphor-svelte/lib/CircleHalfIcon';
+    import Sparkles from 'phosphor-svelte/lib/SparkleIcon';
+    import SlidersHorizontal from 'phosphor-svelte/lib/SlidersHorizontalIcon';
+    import Maximize from 'phosphor-svelte/lib/CornersOutIcon';
+    import Maximize2 from 'phosphor-svelte/lib/ArrowsOutSimpleIcon';
+    import Baseline from 'phosphor-svelte/lib/TextUnderlineIcon';
+    import Brush from 'phosphor-svelte/lib/PaintBrushIcon';
+    import Ruler from 'phosphor-svelte/lib/RulerIcon';
+    import Square from 'phosphor-svelte/lib/SquareIcon';
+    import PaintBucket from 'phosphor-svelte/lib/PaintBucketIcon';
+    import MoveVertical from 'phosphor-svelte/lib/ArrowsVerticalIcon';
+    import Timer from 'phosphor-svelte/lib/TimerIcon';
+    import Droplet from 'phosphor-svelte/lib/DropIcon';
+    import Layers from 'phosphor-svelte/lib/StackIcon';
+    import Lock from 'phosphor-svelte/lib/LockIcon';
+    import EyeOff from 'phosphor-svelte/lib/EyeSlashIcon';
     import SettingsRow from "@/components/player/settings/SettingsRow.svelte";
     import SettingsOptionList from "@/components/player/settings/SettingsOptionList.svelte";
     import SettingsHeader from "@/components/player/settings/SettingsHeader.svelte";

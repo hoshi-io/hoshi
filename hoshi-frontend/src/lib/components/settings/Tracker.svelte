@@ -8,7 +8,14 @@
     import { i18n } from '@/stores/i18n.svelte.js';
     import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
     import { openUrl } from "@tauri-apps/plugin-opener";
-    import { Trash2, Plus, AlertTriangle, ExternalLink, User, Settings2, BarChart2, Calendar } from "lucide-svelte";
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
+    import Plus from 'phosphor-svelte/lib/PlusIcon';
+    import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
+    import ExternalLink from 'phosphor-svelte/lib/ArrowSquareOutIcon';
+    import User from 'phosphor-svelte/lib/UserIcon';
+    import Settings2 from 'phosphor-svelte/lib/SlidersIcon';
+    import BarChart2 from 'phosphor-svelte/lib/ChartBarIcon';
+    import Calendar from 'phosphor-svelte/lib/CalendarBlankIcon';
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
     import * as Dialog from "$lib/components/ui/dialog";
     import { Button } from "$lib/components/ui/button";

@@ -1,5 +1,10 @@
 <script lang="ts">
-    import { Settings2, Trash2, Download, RefreshCw, Check, ArrowRight } from 'lucide-svelte';
+    import Settings2 from 'phosphor-svelte/lib/SlidersIcon';
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
+    import Download from 'phosphor-svelte/lib/DownloadSimpleIcon';
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
+    import Check from 'phosphor-svelte/lib/CheckIcon';
+    import ArrowRight from 'phosphor-svelte/lib/ArrowRightIcon';
     import { Spinner } from '@/components/ui/spinner';
     import { i18n } from '@/stores/i18n.svelte.js';
     import {

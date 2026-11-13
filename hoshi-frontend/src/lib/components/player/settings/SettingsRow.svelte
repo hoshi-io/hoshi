@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ChevronRight } from "lucide-svelte";
+    import ChevronRight from 'phosphor-svelte/lib/CaretRightIcon';
     import type { Component } from "svelte";
     import SettingsIconTile from "@/components/player/settings/SettingsIconTile.svelte";
 

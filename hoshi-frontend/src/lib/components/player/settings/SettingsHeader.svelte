@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ChevronLeft } from "lucide-svelte";
+    import ChevronLeft from 'phosphor-svelte/lib/CaretLeftIcon';
 
     let { title, onclick }: { title: string; onclick: () => void } = $props();
 </script>

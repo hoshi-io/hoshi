@@ -4,7 +4,13 @@
     import { Button } from "$lib/components/ui/button";
     import * as Drawer from "$lib/components/ui/drawer";
     import { Spinner } from "@/components/ui/spinner";
-    import { Settings2, X, Trash2, Download, RefreshCw, Check, ArrowRight } from "lucide-svelte";
+    import Settings2 from 'phosphor-svelte/lib/SlidersIcon';
+    import X from 'phosphor-svelte/lib/XIcon';
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
+    import Download from 'phosphor-svelte/lib/DownloadSimpleIcon';
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
+    import Check from 'phosphor-svelte/lib/CheckIcon';
+    import ArrowRight from 'phosphor-svelte/lib/ArrowRightIcon';
     import { i18n } from "@/stores/i18n.svelte.js";
     import {
         SOURCE_LABELS,

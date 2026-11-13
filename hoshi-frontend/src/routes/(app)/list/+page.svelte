@@ -8,9 +8,15 @@
     import { Label } from "$lib/components/ui/label";
     import { Skeleton } from "$lib/components/ui/skeleton";
     import { Button } from "$lib/components/ui/button";
-    import {
-        Search, List, AlertCircle, SlidersHorizontal, X, RefreshCw, Compass, ListChecks, CloudUpload
-    } from "lucide-svelte";
+    import Search from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import List from 'phosphor-svelte/lib/ListIcon';
+    import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
+    import SlidersHorizontal from 'phosphor-svelte/lib/SlidersHorizontalIcon';
+    import X from 'phosphor-svelte/lib/XIcon';
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
+    import Compass from 'phosphor-svelte/lib/CompassIcon';
+    import ListChecks from 'phosphor-svelte/lib/ListChecksIcon';
+    import CloudUpload from 'phosphor-svelte/lib/CloudArrowUpIcon';
 
     import { fade } from "svelte/transition";
 

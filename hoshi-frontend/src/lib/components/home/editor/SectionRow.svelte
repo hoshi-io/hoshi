@@ -1,5 +1,13 @@
 <script lang="ts">
-    import { ArrowDown, ArrowUp, Eye, EyeOff, GripVertical, MoreHorizontal, Pencil, Settings2, Trash2 } from 'lucide-svelte';
+    import ArrowDown from 'phosphor-svelte/lib/ArrowDownIcon';
+    import ArrowUp from 'phosphor-svelte/lib/ArrowUpIcon';
+    import Eye from 'phosphor-svelte/lib/EyeIcon';
+    import EyeOff from 'phosphor-svelte/lib/EyeSlashIcon';
+    import GripVertical from 'phosphor-svelte/lib/DotsSixVerticalIcon';
+    import MoreHorizontal from 'phosphor-svelte/lib/DotsThreeIcon';
+    import Pencil from 'phosphor-svelte/lib/PencilSimpleIcon';
+    import Settings2 from 'phosphor-svelte/lib/SlidersIcon';
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
     import * as DropdownMenu from '@/components/ui/dropdown-menu';
     import SegmentedControl from '@/components/settings/parts/SegmentedControl.svelte';
     import { homeEditor } from '@/app/home-editor.svelte.js';

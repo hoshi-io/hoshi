@@ -5,7 +5,8 @@
     import type { UiConfig } from "@/api/config/types";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { themeManager } from "@/stores/theme.svelte";
-    import { Check, Pencil } from "lucide-svelte";
+    import Check from 'phosphor-svelte/lib/CheckIcon';
+    import Pencil from 'phosphor-svelte/lib/PencilSimpleIcon';
     import { goto } from "$app/navigation";
     import { Button } from "$lib/components/ui/button";
     import { homeState } from "@/app/home.svelte.js";
@@ -125,7 +126,7 @@
                         style="background-color: {preset.value}; --tw-ring-color: {preset.value}"
                 >
                     {#if selected}
-                        <Check class="size-4 text-white drop-shadow" strokeWidth={3} />
+                        <Check class="size-4 text-white drop-shadow" weight="bold" />
                     {/if}
                 </button>
             {/each}
@@ -151,7 +152,7 @@
                         class="absolute inset-0 size-full opacity-0 cursor-pointer"
                 />
                 {#if !isPreset && accent}
-                    <Check class="size-4 text-white drop-shadow pointer-events-none" strokeWidth={3} />
+                    <Check class="size-4 text-white drop-shadow pointer-events-none" weight="bold" />
                 {/if}
             </label>
 

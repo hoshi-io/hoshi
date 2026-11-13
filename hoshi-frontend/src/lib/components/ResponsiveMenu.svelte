@@ -3,7 +3,9 @@
     import * as Drawer from "$lib/components/ui/drawer";
     import type { Snippet } from "svelte";
     import {layoutState} from "@/stores/layout.svelte";
-    import { Info, Plus, Trash2 } from "lucide-svelte";
+    import Info from 'phosphor-svelte/lib/InfoIcon';
+    import Plus from 'phosphor-svelte/lib/PlusIcon';
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
 
     interface Props {
         trigger: Snippet;

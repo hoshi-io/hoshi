@@ -5,10 +5,13 @@
     import * as Sheet from "@/components/ui/sheet";
     import * as Popover from "@/components/ui/popover";
     import { Spinner } from "@/components/ui/spinner";
-    import {
-        AlertCircle, ChevronLeft, Settings2,
-        ArrowLeft, ArrowRight, Check, ChevronsUpDown
-    } from "lucide-svelte";
+    import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
+    import ChevronLeft from 'phosphor-svelte/lib/CaretLeftIcon';
+    import Settings2 from 'phosphor-svelte/lib/SlidersIcon';
+    import ArrowLeft from 'phosphor-svelte/lib/ArrowLeftIcon';
+    import ArrowRight from 'phosphor-svelte/lib/ArrowRightIcon';
+    import Check from 'phosphor-svelte/lib/CheckIcon';
+    import ChevronsUpDown from 'phosphor-svelte/lib/CaretUpDownIcon';
     import type { Snippet } from "svelte";
     import { i18n } from '@/stores/i18n.svelte.js';
     import { discordApi } from "@/api/discord/discord";

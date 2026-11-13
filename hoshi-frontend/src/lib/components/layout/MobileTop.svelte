@@ -1,6 +1,6 @@
 <script lang="ts">
     import { auth } from '@/stores/auth.svelte.js';
-    import { ChevronLeft } from 'lucide-svelte';
+    import ChevronLeft from 'phosphor-svelte/lib/CaretLeftIcon';
     import { goto } from '$app/navigation';
     import { layoutState } from '@/stores/layout.svelte.js';
     import * as Avatar from '$lib/components/ui/avatar';

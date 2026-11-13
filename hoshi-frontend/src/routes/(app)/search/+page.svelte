@@ -12,7 +12,13 @@
     import * as Drawer from "$lib/components/ui/drawer";
     import { Input } from "$lib/components/ui/input";
     import { Button } from "$lib/components/ui/button";
-    import { Search, SearchX, ListFilter, X, Tv, Book, BookOpen } from "lucide-svelte";
+    import Search from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import SearchX from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import ListFilter from 'phosphor-svelte/lib/FunnelIcon';
+    import X from 'phosphor-svelte/lib/XIcon';
+    import Tv from 'phosphor-svelte/lib/TelevisionIcon';
+    import Book from 'phosphor-svelte/lib/BookIcon';
+    import BookOpen from 'phosphor-svelte/lib/BookOpenIcon';
     import CardWrapper from "@/components/card/CardWrapper.svelte";
     import LazyCardGrid from "@/components/card/LazyCardGrid.svelte";
 

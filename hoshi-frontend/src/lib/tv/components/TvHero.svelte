@@ -1,6 +1,7 @@
 <script lang="ts">
     import { fade } from 'svelte/transition';
-    import { Play, Star } from 'lucide-svelte';
+    import Play from 'phosphor-svelte/lib/PlayIcon';
+    import Star from 'phosphor-svelte/lib/StarIcon';
     import { i18n } from '@/stores/i18n.svelte.js';
     import {
         getCardTitle,
@@ -76,7 +77,7 @@
                             {/if}
                             {#if score}
                                 <span class="flex items-center gap-1 rounded bg-emerald-500/15 px-2 py-0.5 text-emerald-400">
-                                    <Star class="size-3 fill-current" /> {score}
+                                    <Star class="size-3 fill-current" weight="fill" /> {score}
                                 </span>
                             {/if}
                             {#if current.year}
@@ -105,7 +106,7 @@
                                     class="flex h-11 items-center gap-2 rounded-md bg-primary px-7 text-sm font-bold text-primary-foreground outline-none
                                    transition-transform duration-150 focus:scale-105 focus:ring-4 focus:ring-primary/60"
                             >
-                                <Play class="size-4 fill-current" />
+                                <Play class="size-4 fill-current" weight="fill" />
                                 {i18n.t('home.hero.watch')}
                             </a>
 

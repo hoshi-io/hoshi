@@ -9,10 +9,10 @@
     import type { TorrentCacheEntry, TorrentStorageStats } from "@/api/torrent/types";
     import { torrentApi } from "@/api/torrent/torrent";
     import { i18n } from "@/stores/i18n.svelte.js";
-    import {
-        RefreshCw, FolderOpen,
-        Trash2, ChevronRight
-    } from "lucide-svelte";
+    import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
+    import FolderOpen from 'phosphor-svelte/lib/FolderOpenIcon';
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
+    import ChevronRight from 'phosphor-svelte/lib/CaretRightIcon';
     import { platform } from "@tauri-apps/plugin-os";
     import { openPath } from "@tauri-apps/plugin-opener";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";

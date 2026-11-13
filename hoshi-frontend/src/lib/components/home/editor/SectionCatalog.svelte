@@ -1,6 +1,7 @@
 <script lang="ts">
     import { untrack } from 'svelte';
-    import { Check, Plus } from 'lucide-svelte';
+    import Check from 'phosphor-svelte/lib/CheckIcon';
+    import Plus from 'phosphor-svelte/lib/PlusIcon';
     import SegmentedControl from '@/components/settings/parts/SegmentedControl.svelte';
     import { homeEditor, MAX_SECTIONS } from '@/app/home-editor.svelte.js';
     import { labelText } from '@/app/home.svelte.js';

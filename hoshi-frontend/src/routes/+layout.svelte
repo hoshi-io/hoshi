@@ -13,6 +13,7 @@
     import ImportStatus from '@/components/ImportStatus.svelte';
     import SwitchProfile from '@/components/modals/SwitchProfile.svelte';
     import ListEditor from '@/components/modals/ListEditor.svelte';
+    import IconContext from 'phosphor-svelte/lib/IconContext';
 
     let { children } = $props();
 
@@ -88,22 +89,25 @@
 
 <svelte:document onclickcapture={handleGlobalLinks} />
 
-{#if ready}
-    {@render children()}
-{/if}
-
-{#if !isIde}
-    <ImportStatus />
-    <Toaster />
-    <SwitchProfile bind:open={layoutState.switchProfileOpen} />
-
-    {#if layoutState.listEditor}
-        <ListEditor
-                bind:open={layoutState.listEditorOpen}
-                cid={layoutState.listEditor.cid}
-                title={layoutState.listEditor.title}
-                contentType={layoutState.listEditor.contentType}
-                coverImage={layoutState.listEditor.coverImage}
-        />
+<!-- Phosphor defaults to 1em; 24px matches what icons rendered before (Lucide) -->
+<IconContext values={{ size: 24 }}>
+    {#if ready}
+        {@render children()}
     {/if}
-{/if}
+
+    {#if !isIde}
+        <ImportStatus />
+        <Toaster />
+        <SwitchProfile bind:open={layoutState.switchProfileOpen} />
+
+        {#if layoutState.listEditor}
+            <ListEditor
+                    bind:open={layoutState.listEditorOpen}
+                    cid={layoutState.listEditor.cid}
+                    title={layoutState.listEditor.title}
+                    contentType={layoutState.listEditor.contentType}
+                    coverImage={layoutState.listEditor.coverImage}
+            />
+        {/if}
+    {/if}
+</IconContext>

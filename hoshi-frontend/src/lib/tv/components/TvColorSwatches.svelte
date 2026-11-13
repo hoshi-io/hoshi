@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Check } from 'lucide-svelte';
+    import Check from 'phosphor-svelte/lib/CheckIcon';
 
     const DEFAULT_PRESETS = [
         '#ffffff', '#ffff00', '#00ffff', '#00ff00', '#ffa500', '#ff0000', '#808080', '#000000'
@@ -50,7 +50,7 @@
                 style="background-color: {color}"
         >
             {#if selected}
-                <Check class="size-5" strokeWidth={3} style="color: {checkColor(color)}" />
+                <Check class="size-5" weight="bold" style="color: {checkColor(color)}" />
             {/if}
         </button>
     {/each}

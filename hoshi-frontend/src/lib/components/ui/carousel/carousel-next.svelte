@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
+	import ArrowRightIcon from 'phosphor-svelte/lib/ArrowRightIcon';
 	import type { WithoutChildren } from "bits-ui";
 	import { getEmblaContext } from "./context.js";
 	import { cn } from "$lib/utils.js";

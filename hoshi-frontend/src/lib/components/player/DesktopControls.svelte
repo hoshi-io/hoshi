@@ -1,8 +1,12 @@
 <script lang="ts">
-    import {
-        Play, Pause, RotateCw, SkipBack, SkipForward,
-        Settings, Maximize, Minimize
-    } from "lucide-svelte";
+    import Play from 'phosphor-svelte/lib/PlayIcon';
+    import Pause from 'phosphor-svelte/lib/PauseIcon';
+    import RotateCw from 'phosphor-svelte/lib/ArrowClockwiseIcon';
+    import SkipBack from 'phosphor-svelte/lib/SkipBackIcon';
+    import SkipForward from 'phosphor-svelte/lib/SkipForwardIcon';
+    import Settings from 'phosphor-svelte/lib/GearSixIcon';
+    import Maximize from 'phosphor-svelte/lib/CornersOutIcon';
+    import Minimize from 'phosphor-svelte/lib/CornersInIcon';
     import VolumeControl from "@/components/player/VolumeControl.svelte";
     import SettingsMenu from "@/components/player/settings/SettingsMenu.svelte";
     import EpisodesButton from "@/components/player/EpisodesButton.svelte";
@@ -34,9 +38,9 @@
         <div class="flex items-center gap-1">
             <button onclick={() => pageState.togglePlay()} class="p-2 rounded-lg hover:bg-white/10 transition text-white">
                 {#if pageState.isPaused}
-                    <Play class="w-5 h-5 fill-current" />
+                    <Play class="w-5 h-5 fill-current" weight="fill" />
                 {:else}
-                    <Pause class="w-5 h-5 fill-current" />
+                    <Pause class="w-5 h-5 fill-current" weight="fill" />
                 {/if}
             </button>
             <button onclick={() => pageState.seekRelative(appConfig.data?.player.seekStep ?? 10)} class="p-2 rounded-lg hover:bg-white/10 transition text-white">
@@ -52,10 +56,10 @@
         <div class="relative flex items-center gap-1">
             <div class="flex items-center gap-0.5 mr-1 pr-1.5 border-r border-white/20">
                 <button onclick={() => pageState.goToEpisode(pageState.epNumber - 1)} disabled={!pageState.hasPrev} class="p-2 rounded-lg hover:bg-white/10 transition text-white disabled:opacity-30">
-                    <SkipBack class="w-4 h-4 fill-current" />
+                    <SkipBack class="w-4 h-4 fill-current" weight="fill" />
                 </button>
                 <button onclick={() => pageState.goToEpisode(pageState.epNumber + 1)} disabled={!pageState.hasNext} class="p-2 rounded-lg hover:bg-white/10 transition text-white disabled:opacity-30">
-                    <SkipForward class="w-4 h-4 fill-current" />
+                    <SkipForward class="w-4 h-4 fill-current" weight="fill" />
                 </button>
             </div>
             {#if onToggleEpisodes}

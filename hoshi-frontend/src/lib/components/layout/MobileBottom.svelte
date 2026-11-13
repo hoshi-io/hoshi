@@ -52,7 +52,7 @@
                         {active ? 'scale-110' : 'scale-100'}
                         {isScrolled ? 'translate-y-0' : '-translate-y-2'}"
                     >
-                        <Icon class="size-[20px]" stroke-width={active ? 2.25 : 1.75} />
+                        <Icon class="size-[22px]" weight={active ? 'fill' : 'regular'} />
                     </div>
 
                     <span class="absolute bottom-[8px] inset-x-0 text-center leading-3 text-[9px] tracking-normal pointer-events-none long-press-none

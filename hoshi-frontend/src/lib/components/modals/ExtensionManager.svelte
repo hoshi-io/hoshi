@@ -5,7 +5,15 @@
     import { extensions as extensionsStore } from "@/stores/extensions.svelte.js";
     import { Button } from '@/components/ui/button';
     import { Input } from '@/components/ui/input';
-    import { Component, Pencil, Plus, Search, X, CheckCircle2, Globe, AlertCircle, ChevronRight } from 'lucide-svelte';
+    import Component from 'phosphor-svelte/lib/DiamondsFourIcon';
+    import Pencil from 'phosphor-svelte/lib/PencilSimpleIcon';
+    import Plus from 'phosphor-svelte/lib/PlusIcon';
+    import Search from 'phosphor-svelte/lib/MagnifyingGlassIcon';
+    import X from 'phosphor-svelte/lib/XIcon';
+    import CheckCircle2 from 'phosphor-svelte/lib/CheckCircleIcon';
+    import Globe from 'phosphor-svelte/lib/GlobeIcon';
+    import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
+    import ChevronRight from 'phosphor-svelte/lib/CaretRightIcon';
     import { toast } from "svelte-sonner";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { Spinner } from "@/components/ui/spinner";

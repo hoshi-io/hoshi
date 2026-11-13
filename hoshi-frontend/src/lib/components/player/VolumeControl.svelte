@@ -1,5 +1,7 @@
 <script lang="ts">
-    import { Volume2, Volume1, VolumeX } from "lucide-svelte";
+    import Volume2 from 'phosphor-svelte/lib/SpeakerHighIcon';
+    import Volume1 from 'phosphor-svelte/lib/SpeakerLowIcon';
+    import VolumeX from 'phosphor-svelte/lib/SpeakerSlashIcon';
     import type { WatchState } from "@/app/watch.svelte.js";
     import {i18n} from "@/stores/i18n.svelte.js";
 

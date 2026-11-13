@@ -4,18 +4,16 @@
     import SettingSlider from "@/components/settings/parts/SettingSlider.svelte";
     import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
     import * as Kbd from "$lib/components/ui/kbd/index.js";
-    import {
-        Type,
-        AlignLeft,
-        AlignJustify,
-        Palette,
-        Expand,
-        Monitor,
-        Info,
-        ALargeSmall,
-        Baseline,
-        Space
-    } from "lucide-svelte";
+    import Type from 'phosphor-svelte/lib/TextTIcon';
+    import AlignLeft from 'phosphor-svelte/lib/TextAlignLeftIcon';
+    import AlignJustify from 'phosphor-svelte/lib/TextAlignJustifyIcon';
+    import Palette from 'phosphor-svelte/lib/PaletteIcon';
+    import Expand from 'phosphor-svelte/lib/ArrowsOutIcon';
+    import Monitor from 'phosphor-svelte/lib/MonitorIcon';
+    import Info from 'phosphor-svelte/lib/InfoIcon';
+    import ALargeSmall from 'phosphor-svelte/lib/TextAaIcon';
+    import Baseline from 'phosphor-svelte/lib/TextUnderlineIcon';
+    import Space from 'phosphor-svelte/lib/ArrowsOutLineHorizontalIcon';
     import type { NovelConfig, NovelTheme, FontFamily } from "@/api/config/types";
     import { i18n } from '@/stores/i18n.svelte.js';
 

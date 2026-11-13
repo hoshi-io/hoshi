@@ -6,7 +6,13 @@
     import * as AlertDialog from '$lib/components/ui/alert-dialog';
     import { Button } from '$lib/components/ui/button';
     import { ScrollArea } from '$lib/components/ui/scroll-area';
-    import { Plus, Play, Trash2, BookOpen, Terminal, FolderCode, SquareFunction } from 'lucide-svelte';
+    import Plus from 'phosphor-svelte/lib/PlusIcon';
+    import Play from 'phosphor-svelte/lib/PlayIcon';
+    import Trash2 from 'phosphor-svelte/lib/TrashIcon';
+    import BookOpen from 'phosphor-svelte/lib/BookOpenIcon';
+    import Terminal from 'phosphor-svelte/lib/TerminalIcon';
+    import FolderCode from 'phosphor-svelte/lib/FileCodeIcon';
+    import SquareFunction from 'phosphor-svelte/lib/FunctionIcon';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import CodeEditor from '@/components/ide/CodeEditor.svelte';
     import ParamInput from '@/components/ide/ParamInput.svelte';

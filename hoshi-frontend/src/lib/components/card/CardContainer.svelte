@@ -1,6 +1,6 @@
 <script lang="ts">
     import { AspectRatio } from '@/components/ui/aspect-ratio';
-    import { Star } from 'lucide-svelte';
+    import Star from 'phosphor-svelte/lib/StarIcon';
     import SmartImage from "@/components/SmartImage.svelte";
 
     let {
@@ -38,7 +38,7 @@
         {#if !overlay}
         <div class="score-badge" class:stars={isStars}>
             {#if !isStars}
-                <Star class="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
+                <Star class="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" weight="fill" />
             {/if}
             <span class={isStars ? 'text-amber-400' : ''}>{score}</span>
         </div>

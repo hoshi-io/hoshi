@@ -2,7 +2,8 @@
     import { listStore } from "@/app/list.svelte";
     import { Button } from "@/components/ui/button";
     import { Spinner } from "@/components/ui/spinner";
-    import { Check, BookmarkPlus } from "lucide-svelte";
+    import Check from 'phosphor-svelte/lib/CheckIcon';
+    import BookmarkPlus from 'phosphor-svelte/lib/BookmarkSimpleIcon';
     import {cn} from "@/utils";
     import { layoutState, openListEditor } from "@/stores/layout.svelte";
     import { contentApi } from "@/api/content/content";

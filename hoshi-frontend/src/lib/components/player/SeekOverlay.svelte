@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { Rewind, FastForward } from "lucide-svelte";
+    import Rewind from 'phosphor-svelte/lib/RewindIcon';
+    import FastForward from 'phosphor-svelte/lib/FastForwardIcon';
     import { scale } from "svelte/transition";
 
     let {
@@ -20,9 +21,9 @@
                 class="bg-black/50 rounded-full w-24 h-24 flex flex-col items-center justify-center shadow-2xl"
         >
             {#if side === 'left'}
-                <Rewind class="w-8 h-8 text-white fill-current mb-1" />
+                <Rewind class="w-8 h-8 text-white fill-current mb-1" weight="fill" />
             {:else}
-                <FastForward class="w-8 h-8 text-white fill-current mb-1" />
+                <FastForward class="w-8 h-8 text-white fill-current mb-1" weight="fill" />
             {/if}
             <span class="text-white font-bold text-sm tracking-wide">
                 {amount > 0 ? `+${amount}` : amount}s
