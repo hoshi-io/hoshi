@@ -377,7 +377,9 @@
     "manage_repos": "Manage repositories",
     "all_languages": "All languages",
     "add_repo": "Add repo",
-    "repositories": "Repositories"
+    "repositories": "Repositories",
+    "invalid_url": "Invalid repository URL",
+    "invalid_url_desc": "The URL doesn't point to a valid extension repository."
   },
   "reader": {
     "loading": "loading",
@@ -422,7 +424,8 @@
     "paragraph_spacing": "Paragraph Spacing",
     "content_width": "Content Width",
     "align_left": "Left",
-    "align_justify": "Justify"
+    "align_justify": "Justify",
+    "no_content": "This chapter has no content."
   },
   "schedule": {
     "title": "Schedule",
@@ -508,6 +511,7 @@
     "loading": "Loading...",
     "loading_metadata": "Loading metadata...",
     "playback_error": "Playback Error",
+    "fix_match": "Choose the right title",
     "back_to_details": "Back to details",
     "torrent_change": "change",
     "torrent_seeders": "seeders",
@@ -586,7 +590,12 @@
         "hide_sdh": "Hide sound descriptions",
         "sdh_aggressive": "More aggressive"
       }
-    }
+    },
+    "no_extensions": "No anime or torrent extensions are installed.",
+    "no_metadata_for_query": "Not enough information to search for a torrent.",
+    "no_stream": "The extension didn't return a stream.",
+    "no_torrent_match": "No matching torrent was found.",
+    "stream_load_failed": "The stream couldn't be loaded."
   },
   "content": {
     "details": "Details",
@@ -1453,15 +1462,21 @@
     "STORY": "Story"
   },
   "error": {
-    "network": "Network error",
     "system": {
-      "db_lock": "The local database is locked.",
       "setup_failed": "Critical error during application setup.",
       "io": "Disk read/write error.",
       "serialization": "Failed to process internal data.",
       "database": "Internal database error.",
       "internal": "An unexpected internal server error occurred.",
-      "external": "External service failed to respond."
+      "bad_request": "Invalid request.",
+      "http_client_failed": "Couldn't initialize the network client.",
+      "migration_run_failed": "The database couldn't be updated.",
+      "network": "Network error. Check your connection.",
+      "not_found": "Not found.",
+      "parse": "Received data couldn't be read.",
+      "rate_limited": "Too many requests. Try again in a moment.",
+      "unknown": "An unknown error occurred.",
+      "validation": "Some values are not valid."
     },
     "auth": {
       "no_active_profile": "No active profile found.",
@@ -1471,17 +1486,14 @@
       "password_verification_failed": "Password verification failed.",
       "incorrect_password": "Incorrect password.",
       "username_required": "Username is required.",
-      "unauthorized": "Unauthorized access."
-    },
-    "backup": {
-      "not_found": "Backup not found.",
-      "file_not_found": "Backup file not found on disk.",
-      "creation_failed": "Failed to create backup.",
-      "missing_tracker_name": "Tracker name is missing.",
-      "invalid_trigger": "Invalid backup trigger."
+      "unauthorized": "Unauthorized access.",
+      "failed": "Authentication failed.",
+      "hashing_failed": "Couldn't secure the password."
     },
     "config": {
-      "invalid_patch_format": "Invalid configuration patch format."
+      "invalid_patch_format": "Invalid configuration patch format.",
+      "invalid": "The configuration is not valid.",
+      "invalid_patch": "Invalid settings change."
     },
     "tracker": {
       "unknown_tracker": "Unknown tracker.",
@@ -1495,24 +1507,35 @@
       "invalid_credentials": "Invalid credentials.",
       "missing_credentials": "Missing credentials.",
       "not_registered": "Tracker is not registered.",
-      "id_not_found": "ID not found on the tracker.",
       "anilist_not_registered": "AniList is not configured.",
-      "simkl_not_registered": "Simkl is not configured.",
-      "no_provider_available": "No suitable tracker provider available."
+      "no_provider_available": "No suitable tracker provider available.",
+      "bad_request": "The tracker rejected the request.",
+      "connect_failed": "Couldn't connect the tracker.",
+      "http_error": "The tracker returned an error.",
+      "insufficient_scope": "The tracker didn't grant the required permissions.",
+      "integration_not_found": "This tracker isn't connected.",
+      "invalid_id": "Invalid tracker ID.",
+      "invalid_status": "Invalid list status for this tracker.",
+      "not_found": "Not found on the tracker.",
+      "not_in_registry": "This tracker isn't available.",
+      "parse_failed": "Couldn't read the tracker's response.",
+      "rate_limited": "The tracker is rate limiting requests. Try again later.",
+      "reauth_required": "Your tracker session expired. Please reconnect it.",
+      "refresh_failed": "Couldn't refresh the tracker session.",
+      "request_failed": "Couldn't reach the tracker.",
+      "score_format_unknown": "Unknown score format on the tracker."
     },
     "list": {
       "content_not_found": "Content not found.",
-      "entry_not_found": "List entry not found."
+      "entry_not_found": "List entry not found.",
+      "missing_id": "This entry is missing its tracker ID."
     },
     "proxy": {
       "no_url_provided": "No URL provided.",
       "upstream_error": "Upstream server error.",
       "upstream_timeout": "Upstream server timeout.",
       "invalid_header": "Invalid request header.",
-      "body_read_failed": "Failed to read response body.",
-      "invalid_upstream_url": "Invalid upstream URL.",
-      "binary_not_supported": "Binary streams are not supported for this action."
-    },
+      "body_read_failed": "Failed to read response body."},
     "user": {
       "not_found": "User not found.",
       "already_exists": "User already exists.",
@@ -1532,24 +1555,28 @@
       "invalid_media_type": "Invalid media type.",
       "extension_search_failed": "Search via extension failed.",
       "no_match_found": "No match found.",
-      "invalid_items_list": "Invalid items list format.",
       "item_number_not_found": "Item number not found.",
       "link_failed": "Failed to link content.",
-      "tracker_mapping_invalid": "Cannot link tracker to extension-only content.",
       "mapping_not_found": "Mapping not found.",
-      "data_missing": "Content data is missing.",
-      "extension_only": "Action not permitted on extension-only content."
+      "extension_metadata_failed": "The extension couldn't load this title's details.",
+      "extension_no_match": "The extension's entry doesn't match this title.",
+      "invalid_content_type": "Invalid content type.",
+      "invalid_extension_response": "The extension returned an invalid response.",
+      "merge_type_mismatch": "Entries of different types can't be merged.",
+      "serialization": "Failed to process content data.",
+      "tracker_media_not_found": "This title wasn't found on the tracker."
     },
     "extension": {
       "not_found": "Extension not found.",
-      "metadata_fetch_failed": "Failed to fetch metadata from extension.",
-      "load_failed": "Failed to load extension.",
       "install_network_failed": "Network error during extension installation.",
       "invalid_manifest": "Invalid extension manifest.",
       "unsupported_type": "Unsupported extension type.",
       "invalid_script": "Invalid extension script.",
-      "io_error": "Extension I/O error.",
-      "script_missing": "Extension script is missing."
+      "script_missing": "Extension script is missing.",
+      "already_exists": "An extension with this ID already exists.",
+      "id_mismatch": "The extension ID doesn't match its manifest.",
+      "invalid_id": "Invalid extension ID.",
+      "manifest_serialize": "Couldn't save the extension manifest."
     },
     "home": {
       "invalid_layout": "This home layout is not valid"
@@ -1564,16 +1591,56 @@
     "sandbox": {
       "serialization_failed": "Failed to serialize sandbox data.",
       "runtime_init_failed": "Failed to initialize sandbox runtime.",
-      "execution_failed": "Extension execution failed.",
       "bad_json_response": "Invalid JSON response from sandbox.",
-      "thread_panicked": "Sandbox thread panicked."
+      "thread_panicked": "Sandbox thread panicked.",
+      "js_exception": "The extension ran into an error."
     },
     "torrent": {
       "invalid_cache_key": "Invalid cache entry.",
       "cache_entry_in_use": "This torrent is being played and can't be deleted.",
       "cache_entry_not_found": "This cache entry no longer exists.",
       "cache_delete_failed": "Couldn't delete the cached files.",
-      "cache_scan_failed": "Couldn't read the torrent cache."
+      "cache_scan_failed": "Couldn't read the torrent cache.",
+      "add_failed": "Couldn't add the torrent.",
+      "add_failed_no_handle": "The torrent was added but couldn't be opened.",
+      "concurrency_limit_reached": "Too many torrents are streaming at once.",
+      "disk_check_failed": "Couldn't check the available disk space.",
+      "episode_not_in_torrent": "This episode isn't in the torrent.",
+      "init_timeout": "The torrent took too long to start.",
+      "insufficient_disk_space": "Not enough disk space for this torrent.",
+      "invalid_magnet": "Invalid magnet link.",
+      "metadata_resolve_failed": "Couldn't read the torrent's metadata.",
+      "metadata_timeout": "Timed out waiting for the torrent's metadata.",
+      "session_init_failed": "The torrent client couldn't start."
+    },
+    "generic": "Something went wrong",
+    "enrichment": {
+      "bad_id_dump": "The ID mapping data is invalid.",
+      "rate_limited": "Too many requests to the ID mapping service. Try again later.",
+      "unsupported_tracker": "This tracker isn't supported for ID mapping."
+    },
+    "import": {
+      "already_running": "An import is already running."
+    },
+    "logs": {
+      "delete_failed": "Couldn't delete the log file.",
+      "fetch_failed": "Couldn't load the logs.",
+      "invalid_file": "Invalid log file name.",
+      "read_failed": "Couldn't read the log file."
+    },
+    "playback": {
+      "chapters_file_failed": "Couldn't prepare the chapter markers.",
+      "command_failed": "The player didn't accept the command.",
+      "init_failed": "The player couldn't start.",
+      "not_initialized": "The player isn't ready yet.",
+      "shutdown_failed": "The player couldn't stop cleanly."
+    },
+    "schedule": {
+      "cache_deserialize_failed": "Couldn't read the cached schedule.",
+      "cache_serialize_failed": "Couldn't cache the schedule."
+    },
+    "sync": {
+      "tracker_not_connected": "This tracker isn't connected."
     }
   }
 }

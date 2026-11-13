@@ -65,6 +65,7 @@ impl MappingService {
         source.updated_at = now;
 
         let id = ExtensionRepository::add_source(&state.pool, &source).await?;
+        ExtensionService::invalidate_items(&state.pool, &source.cid, &source.extension_name).await;
         info!(cid = %source.cid, ext = %source.extension_name, "Extension source added");
         Ok(id)
     }
@@ -90,6 +91,7 @@ impl MappingService {
             }).await?;
         }
 
+        ExtensionService::invalidate_items(&state.pool, cid, ext_name).await;
         ExtensionService::save_extension_metadata(state, cid, ext_name, ext_id).await;
 
         ContentRepository::get_full_content(&state.pool, cid).await?

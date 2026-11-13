@@ -663,9 +663,7 @@ impl ContentResolverService {
         tracker_id: &str,
     ) -> CoreResult<TrackerMedia> {
         let provider = state.tracker_registry.get(tracker)
-            .ok_or_else(|| CoreError::Internal(
-                format!("error.tracker.{}_not_registered", tracker).into()
-            ))?;
+            .ok_or_else(|| CoreError::Internal(format!("error.tracker.not_registered: {tracker}")))?;
         provider.get_by_id(tracker_id)
             .await
             .map_err(|e| {
@@ -744,7 +742,7 @@ impl ContentResolverService {
         };
 
         let provider = state.tracker_registry.get(preferred)
-            .ok_or_else(|| CoreError::NotFound(format!("Tracker provider '{}' not found", preferred)))?;
+            .ok_or_else(|| CoreError::NotFound(format!("error.tracker.not_registered: {preferred}")))?;
 
         let meta = provider.to_core_metadata(cid, &media);
         ContentRepository::upsert_metadata(&state.pool, &meta).await?;

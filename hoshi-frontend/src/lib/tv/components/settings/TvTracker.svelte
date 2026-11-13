@@ -140,7 +140,7 @@
             const index = trackers.findIndex((t) => t.name === trackerName);
             if (index !== -1) trackers[index].syncEnabled = enabled;
         } catch (error) {
-            toast.error(i18n.t('errors.network'));
+            toast.error(i18n.t('error.system.network'));
             await loadTrackers();
         }
     }
@@ -173,7 +173,7 @@
                     redirectPrefixes: ['hoshi://auth']
                 });
             } catch (error: any) {
-                toast.error(typeof error === 'string' ? error : i18n.t('errors.auth_error'));
+                toast.error(error?.key ? i18n.t(error.key) : i18n.t('error.auth.failed'));
                 console.log(error);
                 return;
             }
@@ -181,7 +181,7 @@
             if (!result) return;
             const code = new URL(result).searchParams.get('code');
             if (code) await finalizeAuth(code);
-            else toast.error(i18n.t('errors.auth_error'));
+            else toast.error(i18n.t('error.auth.failed'));
         } else if (newTrackerAuth?.oauthFlow === 'pkce') {
             const verifier = generateVerifier();
             localStorage.setItem(`${newTrackerName}_verifier`, verifier);
@@ -204,7 +204,7 @@
                     redirectPrefixes: ['hoshi://auth']
                 });
             } catch (error: any) {
-                toast.error(typeof error === 'string' ? error : i18n.t('errors.auth_error'));
+                toast.error(error?.key ? i18n.t(error.key) : i18n.t('error.auth.failed'));
                 console.log(error);
                 return;
             }
@@ -216,7 +216,7 @@
 
             const code = new URL(result).searchParams.get('code');
             if (code) await finalizeAuth(code);
-            else toast.error(i18n.t('errors.auth_error'));
+            else toast.error(i18n.t('error.auth.failed'));
         } else {
             // Token flow (AniList, Simkl). With a TV client whose redirect is hoshi://auth the token
             // is caught automatically; without one the person copies it and pastes it in the field.
@@ -231,10 +231,10 @@
                     // Implicit grant: hoshi://auth#access_token=...&token_type=Bearer&...
                     const token = new URLSearchParams(new URL(result).hash.slice(1)).get('access_token');
                     if (token) await finalizeAuth(token);
-                    else toast.error(i18n.t('errors.auth_error'));
+                    else toast.error(i18n.t('error.auth.failed'));
                 }
             } catch (error: any) {
-                toast.error(typeof error === 'string' ? error : i18n.t('errors.auth_error'));
+                toast.error(error?.key ? i18n.t(error.key) : i18n.t('error.auth.failed'));
                 console.log(error);
             }
         }
@@ -252,7 +252,7 @@
             showAddTrackerDialog = false;
             await loadTrackers();
         } catch (error: any) {
-            toast.error(typeof error === 'string' ? error : i18n.t('errors.auth_error'));
+            toast.error(error?.key ? i18n.t(error.key) : i18n.t('error.auth.failed'));
             console.log(error);
         } finally {
             addingTracker = false;
@@ -278,7 +278,7 @@
             showAddTrackerDialog = false;
             await loadTrackers();
         } catch (error: any) {
-            toast.error(typeof error === 'string' ? error : i18n.t('errors.connect_error'));
+            toast.error(error?.key ? i18n.t(error.key) : i18n.t('error.tracker.connect_failed'));
         } finally {
             addingTracker = false;
         }
@@ -298,7 +298,7 @@
             await integrationsApi.remove(name);
             await loadTrackers();
         } catch (error) {
-            toast.error(i18n.t('errors.network'));
+            toast.error(i18n.t('error.system.network'));
         } finally {
             removing = null;
         }

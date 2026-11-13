@@ -65,7 +65,7 @@
 
         {#if installed.view === "noMatch"}
             <div in:fade={{ duration: 150 }}>
-                <EmptyState icon={SearchX} title={i18n.t('errors.content.no_match_found')} />
+                <EmptyState icon={SearchX} title={i18n.t('error.content.no_match_found')} />
             </div>
         {:else}
             <div class="space-y-8" in:fade={{ duration: 150 }}>

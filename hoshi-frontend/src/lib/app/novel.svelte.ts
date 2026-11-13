@@ -156,7 +156,7 @@ export class NovelReaderState extends BaseReaderState {
                 .updateChapterProgress({ cid: currentCid, chapter: currentChapterNum, completed: false })
                 .catch(e => console.error("History sync failed", e));
         } catch (e: any) {
-            if (!stale()) this.error = e?.key ? e : { key: "errors.unknown_error" };
+            if (!stale()) this.error = e?.key ? e : { key: "error.system.unknown" };
         } finally {
             if (!stale()) this.isLoading = false;
         }

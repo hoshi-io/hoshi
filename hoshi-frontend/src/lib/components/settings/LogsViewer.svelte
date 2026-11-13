@@ -71,7 +71,7 @@
         try {
             logs = await invoke<LogEntry[]>("get_system_logs");
         } catch (e: any) {
-            toast.error(i18n.t(e.key || 'errors.unknown_error'));
+            toast.error(i18n.t(e.key || 'error.system.unknown'));
         } finally {
             isLoading = false;
         }
@@ -89,7 +89,7 @@
         try {
             logFiles = await invoke<LogFileInfo[]>("list_log_files");
         } catch (e: any) {
-            toast.error(i18n.t('errors.fetch_failed'));
+            toast.error(i18n.t('error.logs.fetch_failed'));
         } finally {
             isFileLoading = false;
         }
@@ -101,7 +101,7 @@
             selectedFileContent = await invoke<string>("get_log_file", {name});
             selectedFileName = name;
         } catch (e: any) {
-            toast.error(i18n.t('errors.file_read_failed'));
+            toast.error(i18n.t('error.logs.read_failed'));
         } finally {
             isFileLoading = false;
         }
@@ -112,7 +112,7 @@
             await invoke("delete_log_file", { name });
             fetchLogFiles();
         } catch (e: any) {
-            toast.error(i18n.t('errors.delete_failed'));
+            toast.error(i18n.t('error.logs.delete_failed'));
         }
     }
 

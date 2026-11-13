@@ -27,6 +27,12 @@ export interface EpisodeChapter {
     title: string;
 }
 
+
+/** Backend keys meaning "this extension has no (valid) entry for the title". */
+const NO_MATCH_KEYS = new Set([
+    "error.content.no_match_found",
+    "error.content.extension_no_match",
+]);
 /** Shape of `contentApi.play()`'s `data` payload when the result is a video. */
 interface PlayVideoData {
     source: {
@@ -147,6 +153,12 @@ export class WatchState {
     videoTracks = $derived(this.tracks.filter(t => t.track_type === "video"));
 
     isMappingError = $derived(!!this.error?.key?.includes("match"));
+
+    /** The extension couldn't find (or link) this title: the user can pick the right entry. */
+    isNoMatchError = $derived(
+        !this.isTorrent && !!this.error?.key && NO_MATCH_KEYS.has(this.error.key)
+    );
+    showMatchDialog = $state(false);
 
     // ---- torrent playback ------------------------------------------------
     torrentSessionId = $state<string | null>(null);
@@ -527,6 +539,17 @@ export class WatchState {
         goto(segments.join("/"));
     }
 
+    /** After a manual match: refresh the content (new extension source) and retry this episode. */
+    async onMatched() {
+        this.showMatchDialog = false;
+        try {
+            this.animeData = await contentApi.get_by_cid(this.cid);
+        } catch (e) {
+            console.error("Failed to refresh content after match", e);
+        }
+        await this.loadPlay();
+    }
+
     async loadPageData(targetCid: string, targetEp: number) {
         try {
             this.forcedTorrent = null;
@@ -576,7 +599,7 @@ export class WatchState {
 
         } catch (e: any) {
             console.error("Error in loadPageData:", e);
-            this.error = e.key ? e : { key: "errors.unknown_error", message: e.message };
+            this.error = e.key ? e : { key: "error.system.unknown", message: e.message };
             this.isLoadingMeta = false;
         }
     }
@@ -786,10 +809,12 @@ export class WatchState {
         } catch (e: any) {
             console.error("loadPlay failed", e);
             if (token !== this.loadToken) return;
-            this.error = e?.key ? e : { key: "errors.unknown_error" };
+            this.error = e?.key ? e : { key: "error.system.unknown" };
 
             if (this.isTorrent && (e?.key === "watch.no_torrent_match" || this.isMappingError)) {
                 this.showTorrentPicker = true;
+            } else if (this.isNoMatchError) {
+                this.showMatchDialog = true;
             }
         } finally {
             if (token === this.loadToken) this.isLoadingPlay = false;

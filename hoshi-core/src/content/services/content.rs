@@ -70,6 +70,6 @@ impl ContentService {
 
         ContentRepository::get_full_content(&state.pool, survivor_cid)
             .await?
-            .ok_or_else(|| CoreError::NotFound("survivor cid not found after merge".into()))
+            .ok_or_else(|| CoreError::NotFound("error.content.not_found".into()))
     }
 }

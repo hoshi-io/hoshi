@@ -185,7 +185,7 @@
     {:else if market.view === "error"}
         <EmptyState
                 icon={AlertTriangle}
-                title={i18n.t('errors.error')}
+                title={i18n.t('error.generic')}
                 description={market.error ?? ""}
         >
             <Button variant="outline" class="gap-2 rounded-lg" onclick={market.reload}>
@@ -202,7 +202,7 @@
         />
 
     {:else if market.view === "noMatch"}
-        <EmptyState icon={SearchX} title={i18n.t('errors.content.no_match_found')} />
+        <EmptyState icon={SearchX} title={i18n.t('error.content.no_match_found')} />
 
     {:else}
         <div class="space-y-8" in:fade={{ duration: 150 }}>

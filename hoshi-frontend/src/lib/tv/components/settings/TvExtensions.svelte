@@ -300,7 +300,7 @@
             </div>
 
             {#if installed.view === 'noMatch' || installedSections.length === 0}
-                <EmptyState icon={SearchX} title={i18n.t('errors.content.no_match_found')} />
+                <EmptyState icon={SearchX} title={i18n.t('error.content.no_match_found')} />
             {:else}
                 <div class="space-y-8">
                     {#each installedSections as section (section.type)}
@@ -398,7 +398,7 @@
         {:else if market.view === 'loading'}
             {@render skeletons(5)}
         {:else if market.view === 'error'}
-            <EmptyState icon={AlertTriangle} title={i18n.t('errors.error')} description={market.error ?? ''}>
+            <EmptyState icon={AlertTriangle} title={i18n.t('error.generic')} description={market.error ?? ''}>
                 <button type="button" data-sn class={outlineBtn} onclick={market.reload}>
                     <RefreshCw class="size-5" />
                     {i18n.t('content.retry')}
@@ -411,7 +411,7 @@
                     description={i18n.t('marketplace.empty_desc')}
             />
         {:else if market.view === 'noMatch' || (marketSections.length === 0 && !market.hasMore)}
-            <EmptyState icon={SearchX} title={i18n.t('errors.content.no_match_found')} />
+            <EmptyState icon={SearchX} title={i18n.t('error.content.no_match_found')} />
         {:else if marketSections.length === 0}
             {@render skeletons(3)}
         {:else}

@@ -41,25 +41,62 @@ pub enum CoreError {
     Validation(String),
 }
 
+/// Looks like a translation key: `error.<area>.<name>` (lowercase, digits, `_`).
+fn is_key(s: &str) -> bool {
+    s.starts_with("error.")
+        && !s.ends_with('.')
+        && !s.contains("..")
+        && s.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_' || b == b'.')
+}
+
+impl CoreError {
+    /// Key used when the payload isn't a translation key (raw `e.to_string()`, free text).
+    fn generic_key(&self) -> &'static str {
+        match self {
+            CoreError::Database(_)      => "error.system.database",
+            CoreError::Io(_)            => "error.system.io",
+            CoreError::Serialization(_) => "error.system.serialization",
+            CoreError::Config(_)        => "error.config.invalid",
+            CoreError::NotFound(_)      => "error.system.not_found",
+            CoreError::Internal(_)      => "error.system.internal",
+            CoreError::BadRequest(_)    => "error.system.bad_request",
+            CoreError::AuthError(_)     => "error.auth.failed",
+            CoreError::Network(_)       => "error.system.network",
+            CoreError::RateLimited(_)   => "error.system.rate_limited",
+            CoreError::Parse(_)         => "error.system.parse",
+            CoreError::Validation(_)    => "error.system.validation",
+        }
+    }
+
+    fn payload(&self) -> Option<&str> {
+        match self {
+            CoreError::Config(s) | CoreError::NotFound(s) | CoreError::Internal(s)
+            | CoreError::BadRequest(s) | CoreError::AuthError(s) | CoreError::Network(s)
+            | CoreError::RateLimited(s) | CoreError::Parse(s) | CoreError::Validation(s) => Some(s),
+            CoreError::Database(_) | CoreError::Io(_) | CoreError::Serialization(_) => None,
+        }
+    }
+
+    /// `(key, message)` sent to the frontend. The payload may be a key, `"key: detail"`,
+    /// or plain text (falls back to the variant's generic key, text kept as the message).
+    pub fn key_and_message(&self) -> (&str, String) {
+        match self.payload() {
+            Some(p) if is_key(p) => (p, self.to_string()),
+            Some(p) => match p.split_once(": ") {
+                Some((k, detail)) if is_key(k) => (k, detail.to_string()),
+                _ => (self.generic_key(), p.to_string()),
+            },
+            None => (self.generic_key(), self.to_string()),
+        }
+    }
+}
+
 impl Serialize for CoreError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        let (key, message) = match self {
-            CoreError::Database(e)     => ("error.system.database", e.to_string()),
-            CoreError::Io(e)           => ("error.system.io", e.to_string()),
-            CoreError::Serialization(e)=> ("error.system.serialization", e.to_string()),
-            CoreError::Config(key)     => (key.as_str(), self.to_string()),
-            CoreError::NotFound(key)   => (key.as_str(), self.to_string()),
-            CoreError::Internal(key)   => (key.as_str(), self.to_string()),
-            CoreError::BadRequest(key) => (key.as_str(), self.to_string()),
-            CoreError::AuthError(key)  => (key.as_str(), self.to_string()),
-            CoreError::Network(key)    => (key.as_str(), self.to_string()),
-            CoreError::RateLimited(key) => (key.as_str(), self.to_string()),
-            CoreError::Parse(key)      => (key.as_str(), self.to_string()),
-            CoreError::Validation(key) => (key.as_str(), self.to_string()),
-        };
+        let (key, message) = self.key_and_message();
 
         use serde::ser::SerializeStruct;
         let mut state = serializer.serialize_struct("CoreError", 2)?;

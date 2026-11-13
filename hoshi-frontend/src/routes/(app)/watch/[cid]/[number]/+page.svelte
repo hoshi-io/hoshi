@@ -20,6 +20,8 @@
     import { type as OsType } from "@tauri-apps/plugin-os";
     import EpisodeList from "@/components/player/EpisodeList.svelte";
     import { fly } from "svelte/transition";
+    import ExtensionManager from "@/components/modals/ExtensionManager.svelte";
+    import { primaryMetadata } from "@/api/content/types";
 
     const pageState = new WatchState();
 
@@ -51,6 +53,7 @@
             pageState.isScrubbing ||
             showSettings ||
             pageState.showTorrentPicker ||
+            pageState.showMatchDialog ||
             showEpisodes ||
             isHoveringControls
         ) {
@@ -74,7 +77,7 @@
     }
 
     function handleKeydown(e: KeyboardEvent) {
-        if (pageState.showTorrentPicker) return;
+        if (pageState.showTorrentPicker || pageState.showMatchDialog) return;
         const target = e.target as HTMLElement;
         if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
         if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -382,6 +385,7 @@
             <LoadingError
                     isLoading={pageState.isLoadingMeta || pageState.isLoadingPlay}
                     error={pageState.error}
+                    onFixMatch={pageState.isNoMatchError ? () => (pageState.showMatchDialog = true) : undefined}
             />
 
             <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -468,6 +472,7 @@
             <LoadingError
                     isLoading={pageState.isLoadingMeta || pageState.isLoadingPlay}
                     error={pageState.error}
+                    onFixMatch={pageState.isNoMatchError ? () => (pageState.showMatchDialog = true) : undefined}
             />
 
             <MobileControls
@@ -493,3 +498,15 @@
 
 </div>
 <TorrentPickerDialog bind:open={pageState.showTorrentPicker} {pageState} />
+{#if pageState.animeData}
+    <ExtensionManager
+            bind:open={pageState.showMatchDialog}
+            cid={pageState.cid}
+            metadata={primaryMetadata(pageState.animeData, appConfig.data?.content?.preferredMetadataProvider)}
+            isNsfw={pageState.animeData.content?.nsfw ?? false}
+            extensions={pageState.animeData.extensionSources ?? []}
+            contentType="anime"
+            focusExtension={pageState.selectedExtension}
+            onSuccess={() => pageState.onMatched()}
+    />
+{/if}

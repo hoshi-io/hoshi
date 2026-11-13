@@ -20,6 +20,7 @@
     import type { CoreError } from "@/api/client";
     import { slide, fade } from 'svelte/transition';
     import SmartImage from "@/components/SmartImage.svelte";
+    import { untrack } from "svelte";
 
     let {
         open = $bindable(false),
@@ -29,6 +30,7 @@
         extensions,
         contentType = "anime",
         headers,
+        focusExtension = null,
         onSuccess
     }: {
         open?: boolean;
@@ -38,6 +40,8 @@
         extensions: ExtensionSource[];
         contentType: "anime" | "manga" | "novel";
         headers?: any;
+        /** Opens straight into editing this extension and searches by title (used by the player on "no match"). */
+        focusExtension?: string | null;
         onSuccess?: () => void;
     } = $props();
 
@@ -57,6 +61,22 @@
             isLinked: !!mapping
         };
     }));
+
+    let focusedThisOpen = false;
+    $effect(() => {
+        if (!open) {
+            focusedThisOpen = false;
+            return;
+        }
+        if (focusExtension && !focusedThisOpen) {
+            focusedThisOpen = true;
+            untrack(() => {
+                editingExtName = null;
+                startEdit(focusExtension);
+                handleSearch();
+            });
+        }
+    });
 
     function startEdit(extName: string) {
         if (editingExtName === extName) {

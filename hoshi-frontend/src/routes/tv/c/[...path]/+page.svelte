@@ -168,7 +168,7 @@
 {:else if detail.error}
     <div class="flex h-[80vh] flex-col items-center justify-center gap-6 text-center">
         <AlertCircle class="size-16 text-destructive/60" />
-        <p class="text-2xl font-bold text-muted-foreground">{i18n.t(detail.error?.key || 'errors.error')}</p>
+        <p class="text-2xl font-bold text-muted-foreground">{i18n.t(detail.error?.key || 'error.generic')}</p>
         <button
                 type="button"
                 data-sn

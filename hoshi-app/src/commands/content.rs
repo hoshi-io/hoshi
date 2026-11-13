@@ -46,7 +46,7 @@ pub async fn search_local_content(
         "anime" => ContentType::Anime,
         "manga" => ContentType::Manga,
         "novel" => ContentType::Novel,
-        _ => return Err(CoreError::Internal("invalid content_type".into())),
+        _ => return Err(CoreError::BadRequest("error.content.invalid_content_type".into())),
     };
     SearchService::search_local(state.inner(), &query, &content_type).await
 }

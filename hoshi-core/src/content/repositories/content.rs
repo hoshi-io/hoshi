@@ -412,13 +412,13 @@ impl ContentRepository {
         let (survivor, loser) = match (survivor, loser) {
             (Some(s), Some(l)) => (s, l),
             _ => {
-                return Err(CoreError::NotFound("survivor or loser cid not found".into()));
+                return Err(CoreError::NotFound("error.content.not_found".into()));
             }
         };
 
         if survivor.content_type != loser.content_type {
-            return Err(CoreError::NotFound(
-                "cannot merge entries of different content types".into(),
+            return Err(CoreError::BadRequest(
+                "error.content.merge_type_mismatch".into(),
             ));
         }
 

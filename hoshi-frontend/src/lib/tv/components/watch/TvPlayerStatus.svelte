@@ -38,7 +38,7 @@
     <div class="absolute inset-0 z-40 flex items-center justify-center bg-black/70">
         <div bind:this={box} class="flex max-w-xl flex-col items-center gap-6 text-center">
             <AlertCircle class="size-16 text-destructive/80" />
-            <p class="text-2xl font-bold">{i18n.t(pageState.error.key || 'errors.unknown_error')}</p>
+            <p class="text-2xl font-bold">{i18n.t(pageState.error.key || 'error.system.unknown')}</p>
             <div class="flex flex-wrap justify-center gap-3">
                 <button type="button" data-sn class={btn} onclick={() => pageState.loadPlay()}>
                     <RefreshCw class="size-5" />

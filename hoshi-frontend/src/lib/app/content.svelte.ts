@@ -103,7 +103,7 @@ export class ContentDetailState {
     private handleError(e: any) {
         this.error = e;
         console.error(e);
-        layoutState.title = i18n.t('errors.error');
+        layoutState.title = i18n.t('error.generic');
     }
 
     watchNow() {

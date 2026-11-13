@@ -96,7 +96,7 @@
     {:else if detail.error}
         <div class="flex h-[85vh] flex-col items-center justify-center gap-4">
             <AlertCircle class="w-12 h-12 text-destructive opacity-20" />
-            <p class="text-lg text-muted-foreground font-medium">{i18n.t(detail.error?.key || 'errors.error')}</p>
+            <p class="text-lg text-muted-foreground font-medium">{i18n.t(detail.error?.key || 'error.generic')}</p>
             <Button variant="outline" class="rounded-full" onclick={() => detail.retry()}>
                 {i18n.t('content.retry')}
             </Button>

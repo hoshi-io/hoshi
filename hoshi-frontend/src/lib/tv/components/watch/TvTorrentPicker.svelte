@@ -43,7 +43,7 @@
             results = [...res.results].sort((a, b) => (b.seeders ?? 0) - (a.seeders ?? 0));
         } catch (e: any) {
             if (mine !== seq) return;
-            error = e?.key ? i18n.t(e.key) : i18n.t('errors.unknown_error');
+            error = e?.key ? i18n.t(e.key) : i18n.t('error.system.unknown');
             results = [];
         } finally {
             if (mine === seq) {

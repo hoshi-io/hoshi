@@ -140,7 +140,7 @@
             const index = trackers.findIndex(t => t.name === trackerName);
             if (index !== -1) trackers[index].syncEnabled = enabled;
         } catch (error) {
-            toast.error(i18n.t('errors.network'));
+            toast.error(i18n.t('error.system.network'));
             await loadTrackers();
         }
     }
@@ -203,7 +203,7 @@
             showAddTrackerDialog = false;
             await loadTrackers();
         } catch (error: any) {
-            toast.error(typeof error === 'string' ? error : i18n.t('errors.auth_error'));
+            toast.error(error?.key ? i18n.t(error.key) : i18n.t('error.auth.failed'));
             console.log(error);
         } finally {
             addingTracker = false;
@@ -229,7 +229,7 @@
             showAddTrackerDialog = false;
             await loadTrackers();
         } catch (error: any) {
-            toast.error(typeof error === 'string' ? error : i18n.t('errors.connect_error'));
+            toast.error(error?.key ? i18n.t(error.key) : i18n.t('error.tracker.connect_failed'));
         } finally {
             addingTracker = false;
         }
@@ -242,7 +242,7 @@
             await integrationsApi.remove(trackerToRemove);
             await loadTrackers();
         } catch (error) {
-            toast.error(i18n.t('errors.network'));
+            toast.error(i18n.t('error.system.network'));
         } finally {
             removingTracker = false;
             showRemoveTrackerAlert = false;

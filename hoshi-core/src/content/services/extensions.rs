@@ -70,13 +70,24 @@ impl ExtensionService {
         Ok(value)
     }
 
+    fn items_cache_key(cid: &str, ext_name: &str) -> String {
+        format!("items:{}:{}", ext_name, cid)
+    }
+
+    /// Drops the cached episode/chapter list, e.g. after the extension mapping changed.
+    pub async fn invalidate_items(pool: &SqlitePool, cid: &str, ext_name: &str) {
+        if let Err(e) = CacheRepository::delete(pool, &Self::items_cache_key(cid, ext_name)).await {
+            warn!(cid = %cid, ext = %ext_name, error = ?e, "Failed to invalidate items cache");
+        }
+    }
+
     #[instrument(skip(state))]
     pub async fn get_content_items(
         state: &Arc<AppState>,
         cid: &str,
         ext_name: &str,
     ) -> CoreResult<ContentItems> {
-        let cache_key = format!("items:{}:{}", ext_name, cid);
+        let cache_key = Self::items_cache_key(cid, ext_name);
 
         let cached: CachedContentItems = Self::cached_or(&state.pool, &cache_key, ext_name, "content_items", || async {
             let (content_type, ext_id) = ContentResolverService::ensure_extension_link(state, cid, ext_name).await?;

@@ -91,7 +91,7 @@ pub async fn get_log_file(
     name: String,
 ) -> Result<String, CoreError> {
     if name.contains('/') || name.contains('\\') || name.contains("..") {
-        return Err(CoreError::NotFound("Invalid log file name".into()));
+        return Err(CoreError::BadRequest("error.logs.invalid_file".into()));
     }
     let path = logs_dir(&state).join(&name);
     std::fs::read_to_string(&path).map_err(CoreError::Io)
@@ -103,7 +103,7 @@ pub async fn delete_log_file(
     name: String,
 ) -> Result<(), CoreError> {
     if name.contains('/') || name.contains('\\') || name.contains("..") {
-        return Err(CoreError::NotFound("Invalid log file name".into()));
+        return Err(CoreError::BadRequest("error.logs.invalid_file".into()));
     }
     let path = logs_dir(&state).join(&name);
     std::fs::remove_file(&path).map_err(CoreError::Io)

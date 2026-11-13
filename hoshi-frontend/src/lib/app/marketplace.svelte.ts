@@ -39,7 +39,9 @@ type InstalledExt = (typeof extensions.installed)[number];
 
 export function errorMessage(error: unknown): string {
     if (typeof error === 'string') return error;
-    return (error as any)?.message || i18n.t('errors.unknown');
+    const key = (error as any)?.key;
+    if (key) return i18n.t(key);
+    return (error as any)?.message || i18n.t('error.system.unknown');
 }
 
 export function sourceOfId(id: string): Source {
@@ -372,7 +374,7 @@ export function useMarketplace(opts: MarketplaceOptions) {
 
         try {
             const res = await fetch(url);
-            if (!res.ok) throw new Error(i18n.t('errors.network'));
+            if (!res.ok) throw new Error(i18n.t('error.system.network'));
             const data = await res.json();
             if (id !== reqId) return; // a newer request took over
             items = Array.isArray(data) ? data : (data.extensions ?? []);
@@ -465,7 +467,7 @@ export function useMarketplace(opts: MarketplaceOptions) {
 
     function applyResult(res: { ok?: boolean; extension?: any }) {
         if (res.ok && res.extension) upsertInstalled(res.extension);
-        else if (!res.ok) toast.error(i18n.t('errors.unknown'));
+        else if (!res.ok) toast.error(i18n.t('error.system.unknown'));
     }
 
     async function install(item: AnyMarketplaceEntry) {
