@@ -357,7 +357,8 @@
       "title": "Sync",
       "trackers": "Trackers",
       "waiting": "{{n}} waiting"
-    }
+    },
+    "missing_mangaupdates": "Missing on MangaUpdates"
   },
   "marketplace": {
     "title": "Marketplace",
@@ -514,7 +515,14 @@
     "search_settings": "Search settings",
     "type": "Type",
     "source": "Source / Extension",
-    "clear": "Clear"
+    "clear": "Clear",
+    "manhwa": "Manhwa",
+    "manhua": "Manhua",
+    "doujin": "Doujinshi",
+    "light_novel": "Light Novel",
+    "one_shot": "One-shot",
+    "other": "Other",
+    "upcoming": "Upcoming"
   },
   "watch": {
     "episode_with_title": "Episode {{num}} - {{title}}",
@@ -826,7 +834,8 @@
       "conflict_kitsu": "Prioritize Kitsu",
       "conflict_simkl": "Prioritize Simkl",
       "conflict_shikimori": "Prioritize Shikimori",
-      "conflict_mangabaka": "Prioritize Mangabaka"
+      "conflict_mangabaka": "Prioritize Mangabaka",
+      "conflict_mangaupdates": "Prioritize MangaUpdates"
     },
 
     "general_section": {

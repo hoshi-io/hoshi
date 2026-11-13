@@ -115,12 +115,13 @@
     async function loadTrackers() {
         loading = true;
         try {
-            const TRACKER_ORDER = ['anilist', 'mal', 'kitsu', 'shikimori'];
+            const TRACKER_ORDER = ['anilist', 'mal', 'kitsu', 'shikimori', 'simkl'];
             const all = (await integrationsApi.getAll()) || [];
             listStore.updateConnectedTrackers(all);
 
             trackers = all
-                .filter((t) => t.name.toLowerCase())
+                // TV is anime-only: manga-only trackers (MangaBaka, MangaUpdates) don't apply.
+                .filter((t) => t.supportedTypes?.some((ty) => ty.toLowerCase() === 'anime'))
                 .sort((a, b) => {
                     const ai = TRACKER_ORDER.indexOf(a.name.toLowerCase());
                     const bi = TRACKER_ORDER.indexOf(b.name.toLowerCase());

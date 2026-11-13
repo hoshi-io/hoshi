@@ -135,26 +135,32 @@ impl TrackerService {
             if auth_config.oauth_flow != "password" {
                 return Err(CoreError::AuthError("error.tracker.password_login_unsupported".into()));
             }
-            let token_url = auth_config.token_url.as_ref()
-                .ok_or_else(|| CoreError::Internal("error.tracker.missing_token_url".into()))?;
-            let client_id = auth_config.client_id.as_deref().unwrap_or_default();
+            match provider.password_login(&username, &password).await? {
+                // Providers with their own login endpoint hand back the token directly.
+                Some(access_token) => TokenResponse { access_token, refresh_token: None, expires_in: None },
+                None => {
+                    let token_url = auth_config.token_url.as_ref()
+                        .ok_or_else(|| CoreError::Internal("error.tracker.missing_token_url".into()))?;
+                    let client_id = auth_config.client_id.as_deref().unwrap_or_default();
 
-            let res = state.http_client
-                .post(token_url)
-                .form(&[
-                    ("grant_type", "password"),
-                    ("username", username.as_str()),
-                    ("password", password.as_str()),
-                    ("client_id", client_id),
-                ])
-                .send().await
-                .map_err(|e| core_err!(Network, "error.tracker.auth_network_error", e))?;
+                    let res = state.http_client
+                        .post(token_url)
+                        .form(&[
+                            ("grant_type", "password"),
+                            ("username", username.as_str()),
+                            ("password", password.as_str()),
+                            ("client_id", client_id),
+                        ])
+                        .send().await
+                        .map_err(|e| core_err!(Network, "error.tracker.auth_network_error", e))?;
 
-            if !res.status().is_success() {
-                return Err(CoreError::AuthError("error.tracker.invalid_credentials".into()));
+                    if !res.status().is_success() {
+                        return Err(CoreError::AuthError("error.tracker.invalid_credentials".into()));
+                }
+                res.json::<TokenResponse>().await
+                    .map_err(|e| core_err!(Parse, "error.system.serialization", e))?
+                }
             }
-            res.json::<TokenResponse>().await
-                .map_err(|e| core_err!(Parse, "error.system.serialization", e))?
         } else {
             return Err(CoreError::AuthError("error.tracker.missing_credentials".into()));
         };

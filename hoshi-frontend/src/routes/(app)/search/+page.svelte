@@ -78,9 +78,9 @@
         }
     });
 
-    // MangaBaka has no anime, so fall back to AniList when the type switches to anime.
+    // MangaBaka and MangaUpdates have no anime, so fall back to AniList when the type switches to anime.
     $effect(() => {
-        if (searchState.contentType === "anime" && searchState.tracker === "mangabaka") {
+        if (searchState.contentType === "anime" && (searchState.tracker === "mangabaka" || searchState.tracker === "mangaupdates")) {
             untrack(() => {
                 searchState.tags = [];
                 searchState.tracker = "anilist";
@@ -103,7 +103,7 @@
         handleSearch();
     };
 
-    const selectSource = (mode: "tracker" | "extension", extId: string = "", tracker: "anilist" | "mal" | "kitsu" | "simkl" | "shikimori" | "mangabaka" = "anilist", isMobile = false) => {
+    const selectSource = (mode: "tracker" | "extension", extId: string = "", tracker: "anilist" | "mal" | "kitsu" | "simkl" | "shikimori" | "mangabaka" | "mangaupdates" = "anilist", isMobile = false) => {
         searchState.searchMode = mode;
         if (mode === "extension") searchState.selectedExtension = extId;
         else {

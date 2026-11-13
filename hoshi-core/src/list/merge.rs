@@ -165,9 +165,15 @@ impl MergeService {
                 entry.start_date.clone(), entry.end_date.clone(),
                 entry.notes.clone(), entry.repeat_count,
             ),
+            MergeStrategy::MangaupdatesFirst if remote_wins("mangaupdates") => (
+                entry.progress, remote_status, entry.score,
+                entry.start_date.clone(), entry.end_date.clone(),
+                entry.notes.clone(), entry.repeat_count,
+            ),
             // Any *First strategy where this tracker isn't the preferred one
             MergeStrategy::AnilistFirst | MergeStrategy::MalFirst
-            | MergeStrategy::KitsuFirst | MergeStrategy::SimklFirst | MergeStrategy::MangabakaFirst | MergeStrategy::ShikimoriFirst => (
+            | MergeStrategy::KitsuFirst | MergeStrategy::SimklFirst | MergeStrategy::MangabakaFirst | MergeStrategy::ShikimoriFirst
+            | MergeStrategy::MangaupdatesFirst => (
                 l.progress, l.status.clone(), l.score,
                 l.start_date.clone(), l.end_date.clone(),
                 l.notes.clone(), l.repeat_count,

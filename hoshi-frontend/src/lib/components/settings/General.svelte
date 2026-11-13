@@ -20,11 +20,12 @@
 
     const metadataProviders = [
         { value: "anilist", label: "AniList" },
-        { value: "myanimelist", label: "MyAnimeList" },
+        { value: "mal", label: "MyAnimeList" },
         { value: "kitsu", label: "Kitsu" },
         { value: "simkl", label: "Simkl" },
         { value: "shikimori", label: "Shikimori" },
-        { value: "mangabaka", label: "Mangabaka" },
+        { value: "mangabaka", label: "MangaBaka" },
+        { value: "mangaupdates", label: "MangaUpdates" },
     ];
 
     const scoreFormats = [

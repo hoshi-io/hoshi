@@ -11,6 +11,7 @@ import type { DiscoverQuery } from "@/api/home/types";
 const STATUS_BY_TRACKER: Record<string, Record<string, string>> = {
     anilist: { ongoing: "RELEASING", upcoming: "NOT_YET_RELEASED", completed: "FINISHED" },
     mangabaka: { ongoing: "releasing", upcoming: "upcoming", completed: "completed" },
+    mangaupdates: { completed: "completed" },
 };
 
 
@@ -35,7 +36,7 @@ class SearchState {
     nsfw = $state<boolean>(false);
     tags = $state<string[]>([]);
     sort = $state<string>("");
-    tracker = $state<"anilist" | "mal" | "kitsu" | "simkl" | "shikimori" | "mangabaka">("anilist");
+    tracker = $state<"anilist" | "mal" | "kitsu" | "simkl" | "shikimori" | "mangabaka" | "mangaupdates">("anilist");
 
     extFilterValues = $state<Record<string, any>>({});
 

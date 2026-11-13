@@ -70,6 +70,7 @@
         { value: "kitsu", label: i18n.t('list.missing_kitsu') },
         { value: "simkl", label: i18n.t('list.missing_simkl') },
         { value: "mangabaka", label: i18n.t('list.missing_mangabaka') },
+        { value: "mangaupdates", label: i18n.t('list.missing_mangaupdates') },
         { value: "shikimori", label: i18n.t('list.missing_shikimori') }
     ];
 

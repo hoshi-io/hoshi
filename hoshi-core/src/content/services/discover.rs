@@ -104,6 +104,7 @@ impl DiscoverService {
     ) -> CoreResult<Vec<FullContent>> {
         let (tracker, sort) = match tracker {
             "mangabaka" => ("mangabaka", "trending"),
+            "mangaupdates" => ("mangaupdates", "trending"),
             "mal" => ("mal", "trending"),
             "shikimori" => ("shikimori", "trending"),
             "kitsu" => ("kitsu", "popularityRank"),

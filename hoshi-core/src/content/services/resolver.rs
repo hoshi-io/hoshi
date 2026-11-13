@@ -22,7 +22,7 @@ use crate::tracker::provider::TrackerMedia;
 use crate::tracker::repository::TrackerRepository;
 use crate::tracker::types::TrackerMapping;
 
-const TRACKER_SOURCES: &[&str] = &["anilist", "mal", "kitsu", "simkl", "mangabaka", "shikimori"];
+const TRACKER_SOURCES: &[&str] = &["anilist", "mal", "kitsu", "simkl", "mangabaka", "shikimori", "mangaupdates"];
 const FUZZY_SCORE_THRESHOLD: f64 = 0.85;
 const MAX_FUZZY_CANDIDATES: usize = 3;
 const ACTIVE_REFRESH_SECS: i64 = 24 * 60 * 60;
@@ -696,9 +696,17 @@ impl ContentResolverService {
             .unwrap_or(ContentType::Anime)
     }
 
+    /// Tracker name of the preferred metadata provider. Older configs saved MAL as "myanimelist".
+    fn preferred_provider(configured: &str) -> String {
+        match configured {
+            "myanimelist" => "mal".to_string(),
+            other => other.to_string(),
+        }
+    }
+
     pub async fn backfill_via_preferred_mapping(state: Arc<AppState>, cid: String) {
         let Ok(config) = ConfigRepository::get_active_user_config(&state.pool).await else { return };
-        let preferred = config.content.preferred_metadata_provider.clone();
+        let preferred = Self::preferred_provider(&config.content.preferred_metadata_provider);
 
         let Ok(mappings) = TrackerRepository::get_mappings_by_cid(&state.pool, &cid).await else { return };
 
@@ -792,8 +800,8 @@ impl ContentResolverService {
         current_tracker_id: &str,
     ) -> CoreResult<()> {
         let config = ConfigRepository::get_active_user_config(&state.pool).await?;
-        let preferred = &config.content.preferred_metadata_provider;
-        Self::ensure_preferred_metadata(state, cid, &full.metadata, preferred, current_tracker, current_tracker_id).await
+        let preferred = Self::preferred_provider(&config.content.preferred_metadata_provider);
+        Self::ensure_preferred_metadata(state, cid, &full.metadata, &preferred, current_tracker, current_tracker_id).await
     }
 
     async fn backfill_preferred_metadata_by_cid(

@@ -62,6 +62,7 @@
         { value: 'kitsuFirst', label: i18n.t("settings.trackers_section.conflict_kitsu") },
         { value: 'simklFirst', label: i18n.t("settings.trackers_section.conflict_simkl") },
         { value: 'mangabakaFirst', label: i18n.t("settings.trackers_section.conflict_mangabaka") },
+        { value: 'mangaupdatesFirst', label: i18n.t("settings.trackers_section.conflict_mangaupdates") },
         { value: 'shikimoriFirst', label: i18n.t("settings.trackers_section.conflict_shikimori") },
     ];
 
@@ -112,7 +113,7 @@
     async function loadTrackers() {
         loading = true;
         try {
-            const TRACKER_ORDER = ['anilist', 'mal', 'kitsu', 'shikimori', 'mangabaka'];
+            const TRACKER_ORDER = ['anilist', 'mal', 'kitsu', 'shikimori', 'mangabaka', 'mangaupdates'];
             const allTrackers = await integrationsApi.getAll() || [];
             listStore.updateConnectedTrackers(allTrackers);
 

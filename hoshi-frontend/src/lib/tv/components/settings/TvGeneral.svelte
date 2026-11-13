@@ -18,7 +18,7 @@
 
     const metadataProviders = [
         { value: 'anilist', label: 'AniList' },
-        { value: 'myanimelist', label: 'MyAnimeList' },
+        { value: 'mal', label: 'MyAnimeList' },
         { value: 'kitsu', label: 'Kitsu' },
         { value: 'simkl', label: 'Simkl' }
     ];

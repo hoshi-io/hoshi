@@ -11,7 +11,7 @@ import {integrationsApi} from "@/api/tracker/tracker";
 export type SortOption = "SCORE_DESC" | "TITLE_ASC" | "TITLE_DESC" | "PROGRESS_DESC" | "PROGRESS_ASC";
 export type StatusFilter = "ALL" | "CURRENT" | "COMPLETED" | "PLANNING" | "PAUSED" | "DROPPED";
 export type TypeFilter = "ALL" | "anime" | "manga" | "novel";
-export type MissingTrackerFilter = "ALL" | "anilist" | "mal" | "kitsu" | "simkl" | "mangabaka" | "shikimori";
+export type MissingTrackerFilter = "ALL" | "anilist" | "mal" | "kitsu" | "simkl" | "mangabaka" | "mangaupdates" | "shikimori";
 
 const TRACKER_LABELS: Record<string, string> = {
     anilist: "AniList",
@@ -19,6 +19,7 @@ const TRACKER_LABELS: Record<string, string> = {
     kitsu: "Kitsu",
     simkl: "Simkl",
     mangabaka: "MangaBaka",
+    mangaupdates: "MangaUpdates",
     shikimori: "Shikimori",
 };
 
@@ -26,6 +27,7 @@ const TRACKER_LABELS: Record<string, string> = {
 const TRACKER_TYPES: Record<string, string[]> = {
     simkl: ["ANIME"],
     mangabaka: ["MANGA", "NOVEL"],
+    mangaupdates: ["MANGA", "NOVEL"],
 };
 
 export const trackerLabel = (tracker: string) => TRACKER_LABELS[tracker] ?? tracker;

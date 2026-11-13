@@ -12,7 +12,7 @@
     }: {
         isMobile?: boolean;
         availableExtensions: any[];
-        onSelectSource: (mode: "tracker" | "extension", extId: string, tracker: "anilist" | "mal" | "kitsu" | "simkl" | "shikimori" | "mangabaka", isMobile: boolean) => void;
+        onSelectSource: (mode: "tracker" | "extension", extId: string, tracker: "anilist" | "mal" | "kitsu" | "simkl" | "shikimori" | "mangabaka" | "mangaupdates", isMobile: boolean) => void;
     } = $props();
 
     let trackersOpen = $state(true);
@@ -45,7 +45,8 @@
             'kitsu': 'kitsu.io',
             'simkl': 'simkl.com',
             'shikimori': 'shikimori.io',
-            'mangabaka': 'mangabaka.org'
+            'mangabaka': 'mangabaka.org',
+            'mangaupdates': 'mangaupdates.com'
         };
 
         const domain = domains[trackerName.toLowerCase()] || 'google.com';
@@ -116,6 +117,15 @@
                     >
                         <img src={getTrackerFavicon('mangabaka')} alt="MangaBaka" class="w-5 h-5 rounded-sm object-contain {searchState.searchMode === 'tracker' && searchState.tracker === 'mangabaka' ? '' : 'grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100'}" />
                         <span class="truncate">MangaBaka</span>
+                    </button>
+
+                    <button
+                            type="button"
+                            onclick={() => onSelectSource('tracker', '', 'mangaupdates', isMobile)}
+                            class="{rowClasses} {searchState.searchMode === 'tracker' && searchState.tracker === 'mangaupdates' ? activeRow : inactiveRow}"
+                    >
+                        <img src={getTrackerFavicon('mangaupdates')} alt="MangaUpdates" class="w-5 h-5 rounded-sm object-contain {searchState.searchMode === 'tracker' && searchState.tracker === 'mangaupdates' ? '' : 'grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100'}" />
+                        <span class="truncate">MangaUpdates</span>
                     </button>
                 {/if}
 

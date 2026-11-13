@@ -136,7 +136,7 @@ export interface SearchQuery {
     sort?: string;
     genre?: string;
     format?: string;
-    tracker?: "anilist" | "mal" | "kitsu" | "simkl" | "mangabaka" | "shikimori";
+    tracker?: "anilist" | "mal" | "kitsu" | "simkl" | "mangabaka" | "mangaupdates" | "shikimori";
     extensionFilters?: string;
     tags?: string[];
 }
@@ -217,9 +217,9 @@ export function primaryMetadata(
     if (!fullContent || !fullContent.metadata || fullContent.metadata.length === 0) {
         return undefined;
     }
-    const preferred = fullContent.metadata.find(m =>
-        m.sourceName.toLowerCase() === preferredProvider.toLowerCase()
-    );
+    // Older configs saved MAL as "myanimelist"; metadata rows use the tracker name "mal".
+    const wanted = preferredProvider.toLowerCase() === 'myanimelist' ? 'mal' : preferredProvider.toLowerCase();
+    const preferred = fullContent.metadata.find(m => m.sourceName.toLowerCase() === wanted);
     if (preferred) return preferred;
 
     const anilist = fullContent.metadata.find(m =>

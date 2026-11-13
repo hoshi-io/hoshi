@@ -4,6 +4,7 @@ pub mod kitsu;
 pub mod simkl;
 pub mod mangabaka;
 pub mod shikimori;
+pub mod mangaupdates;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -164,6 +165,12 @@ pub trait TrackerProvider: Send + Sync {
         token_type: &str,
     ) -> CoreResult<TokenData>;
 
+    /// Username/password login for trackers whose login isn't an OAuth2 password grant.
+    /// Returns the access token; `None` means "use the standard grant against `token_url`".
+    async fn password_login(&self, _username: &str, _password: &str) -> CoreResult<Option<String>> {
+        Ok(None)
+    }
+
     async fn search(
         &self,
         query: Option<&str>,
@@ -264,5 +271,6 @@ pub fn build_registry(client: Client) -> TrackerRegistry {
     registry.register(Arc::new(simkl::SimklProvider::new(client.clone())));
     registry.register(Arc::new(mangabaka::MangaBakaProvider::new(client.clone())));
     registry.register(Arc::new(shikimori::ShikimoriProvider::new(client.clone())));
+    registry.register(Arc::new(mangaupdates::MangaUpdatesProvider::new(client.clone())));
     registry
 }
