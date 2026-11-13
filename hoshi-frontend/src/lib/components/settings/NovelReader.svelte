@@ -122,7 +122,7 @@
         <div class="bg-muted/30 border border-border/50 rounded-sm p-3 flex gap-3">
             <Info class="size-4 text-muted-foreground shrink-0 mt-0.5"/>
             <p class="text-[11px] text-muted-foreground leading-relaxed italic">
-                {i18n.t('settings.novel_preview_desc.novel_preview_desc', {width: localWidth})}
+                {i18n.t('settings.readers_section.novel_preview_desc', {width: localWidth})}
             </p>
         </div>
     </aside>
@@ -215,7 +215,7 @@
                     <div class="flex justify-between items-center">
                         <div class="flex items-center gap-2">
                             <Expand class="size-4 text-primary"/>
-                            <Label class="font-bold text-sm">{i18n.t('content_width')}</Label>
+                            <Label class="font-bold text-sm">{i18n.t('reader.content_width')}</Label>
                         </div>
                         <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{localWidth}px</span>
                     </div>

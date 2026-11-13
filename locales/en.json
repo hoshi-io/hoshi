@@ -197,7 +197,8 @@
       "eps": "{{count}} eps",
       "chaps": "{{count}} chaps",
       "more_info": "Info",
-      "trailer": "Trailer"
+      "trailer": "Trailer",
+      "chapters": "{{count}} ch"
     }
   },
 
@@ -285,7 +286,8 @@
       "merge": "Merge",
       "conflict": "Conflict",
       "history": "history",
-      "no_history": "no history"
+      "no_history": "no history",
+      "saving": "Saving..."
     },
     "browse": "Browse content",
     "no_matches_desc": "Nothing fits the current search or filters.",
@@ -353,7 +355,8 @@
       "show_details": "Show details",
       "syncing": "Syncing",
       "title": "Sync",
-      "trackers": "Trackers"
+      "trackers": "Trackers",
+      "waiting": "{{n}} waiting"
     }
   },
   "marketplace": {
@@ -379,7 +382,14 @@
     "add_repo": "Add repo",
     "repositories": "Repositories",
     "invalid_url": "Invalid repository URL",
-    "invalid_url_desc": "The URL doesn't point to a valid extension repository."
+    "invalid_url_desc": "The URL doesn't point to a valid extension repository.",
+    "load_more": "Load more",
+    "new_repo": "New repository",
+    "remove_repo": "Remove repository",
+    "repositories_desc": "Extension repositories to browse. Pick one to show its extensions.",
+    "update": "Update",
+    "updates_available": "Updates available",
+    "use_repo": "Use this repository"
   },
   "reader": {
     "loading": "loading",
@@ -442,7 +452,9 @@
     "empty_desc": "There are no episodes scheduled for the selected time frame.",
     "airing_today": "Airing Today",
     "watching": "Watching",
-    "planning": "Planning"
+    "planning": "Planning",
+    "show_my_list": "Show only my list",
+    "showing_my_list": "Showing only my list"
   },
   "search": {
     "title": "Search",
@@ -696,7 +708,9 @@
     "no_results": "No matching entries found",
     "merge_warning": "{{title}} will be merged into this entry and permanently deleted. This cannot be undone.",
     "merge_success": "Entries merged successfully",
-    "confirm_merge": "Confirm Merge"
+    "confirm_merge": "Confirm Merge",
+    "chapter": "Chapter",
+    "confirm_delete_mapping": "Remove this tracker mapping?"
   },
 
   "discord": {
@@ -856,7 +870,8 @@
       "metadata_provider_desc": "Select the primary source used for titles, descriptions, and cover images.",
       "auto_update_progress": "Auto-Update Progress",
       "score_format": "Score format",
-      "score_format_desc": "Choose how scores are displayed on hoshi."
+      "score_format_desc": "Choose how scores are displayed on hoshi.",
+      "auto_update_progress_desc": "Update your tracker progress automatically as you watch or read."
     },
 
     "extension_section": {
@@ -873,7 +888,11 @@
       "unsupported_type": "Unsupported Type",
       "extension_config": "{{name}} Settings",
       "all_sources": "All sources",
-      "confirm_uninstall": "Confirm"
+      "confirm_uninstall": "Confirm",
+      "no_installed_desc": "Install extensions from the Marketplace to start watching and reading.",
+      "saving": "Saving...",
+      "select_option": "Select an option",
+      "uninstall": "Uninstall"
     },
 
     "player_section": {
@@ -1642,5 +1661,8 @@
     "sync": {
       "tracker_not_connected": "This tracker isn't connected."
     }
+  },
+  "history": {
+    "title": "History"
   }
 }

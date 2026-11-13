@@ -237,7 +237,7 @@
             <BookOpen class="w-8 h-8 text-muted-foreground/20" />
             <div class="text-center space-y-0.5">
                 <p class="text-sm font-semibold text-muted-foreground/60">{i18n.t('content.no_sources')}</p>
-                <p class="text-[11px] text-muted-foreground/40">{i18n.t('install_extension')}</p>
+                <p class="text-[11px] text-muted-foreground/40">{i18n.t('content.install_extension')}</p>
             </div>
         </div>
     {:else if loading}

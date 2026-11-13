@@ -106,7 +106,7 @@
                 {/if}
             </span>
         {:else}
-            {i18n.t('settings.select_language')}
+            {i18n.t('settings.general_section.select_language')}
         {/if}
 
         {#if !compact}
@@ -144,7 +144,7 @@
 
 {#if layoutState.isTV}
     <!-- TV: no popover or search box, just a row of big buttons (Left/Right moves, OK selects). -->
-    <div role="radiogroup" aria-label={i18n.t('settings.select_language')} class="flex flex-wrap gap-3">
+    <div role="radiogroup" aria-label={i18n.t('settings.general_section.select_language')} class="flex flex-wrap gap-3">
         {#each tvVisible as lang, i (lang.code)}
             {@const isSelected = i18n.locale === lang.code}
             <button

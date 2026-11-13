@@ -115,12 +115,12 @@
                                  style="column-gap: {localGapX/3}px; flex-direction: {config.direction === 'rtl' ? 'row-reverse' : 'row'}">
 
                                 <div class="flex-1 min-w-0 aspect-[2/3] bg-background border-2 border-border rounded-md flex items-center justify-center text-[10px] font-black text-muted-foreground shadow-sm shrink-0">
-                                    {i18n.t('settings.page')}
+                                    {i18n.t('settings.readers_section.page')}
                                 </div>
 
                                 {#if config.pagesPerView === 2}
                                     <div class="flex-1 min-w-0 aspect-[2/3] bg-background border-2 border-border rounded-md flex items-center justify-center text-[10px] font-black text-muted-foreground shadow-sm shrink-0" in:fade>
-                                        {i18n.t('settings.page')}
+                                        {i18n.t('settings.readers_section.page')}
                                     </div>
                                 {/if}
                             </div>
@@ -158,7 +158,7 @@
             <Info class="size-4 text-muted-foreground shrink-0 mt-0.5"/>
             <p class="text-[11px] text-muted-foreground leading-relaxed italic">
                 Preview: <b>{config.layout.toUpperCase()}</b> + <b>{config.pagesPerView === 1 ? 'SINGLE' : 'DOUBLE'}</b>.
-                {i18n.t('settings.reader_preview.preview_desc')}
+                {i18n.t('settings.readers_section.preview_desc')}
             </p>
         </div>
     </aside>
