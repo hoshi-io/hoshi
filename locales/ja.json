@@ -192,7 +192,8 @@
       "eps": "{{count}}話",
       "chaps": "{{count}}章",
       "more_info": "詳細",
-      "trailer": "トレーラー"
+      "trailer": "トレーラー",
+      "chapters": "{{count}}話"
     }
   },
   "card": {
@@ -277,7 +278,8 @@
       "merge": "統合",
       "conflict": "競合",
       "history": "履歴",
-      "no_history": "履歴なし"
+      "no_history": "履歴なし",
+      "saving": "保存中..."
     },
     "browse": "コンテンツを探す",
     "no_matches_desc": "現在の検索やフィルターに一致するものはありません。",
@@ -345,8 +347,10 @@
       "show_details": "詳細を表示",
       "syncing": "同期中",
       "title": "同期",
-      "trackers": "トラッカー"
-    }
+      "trackers": "トラッカー",
+      "waiting": "待機中 {{n}}件"
+    },
+    "missing_mangaupdates": "MangaUpdatesに未登録"
   },
   "marketplace": {
     "title": "マーケットプレイス",
@@ -369,7 +373,16 @@
     "manage_repos": "リポジトリを管理",
     "all_languages": "すべての言語",
     "add_repo": "リポジトリを追加",
-    "repositories": "リポジトリ"
+    "repositories": "リポジトリ",
+    "invalid_url": "無効なリポジトリURL",
+    "invalid_url_desc": "このURLは有効な拡張機能リポジトリを指していません。",
+    "load_more": "さらに読み込む",
+    "new_repo": "新しいリポジトリ",
+    "remove_repo": "リポジトリを削除",
+    "repositories_desc": "閲覧できる拡張機能リポジトリです。選択するとその拡張機能が表示されます。",
+    "update": "更新",
+    "updates_available": "アップデートがあります",
+    "use_repo": "このリポジトリを使用"
   },
   "reader": {
     "loading": "読み込み中",
@@ -411,7 +424,8 @@
     "paragraph_spacing": "段落間隔",
     "content_width": "コンテンツ幅",
     "align_left": "左揃え",
-    "align_justify": "両端揃え"
+    "align_justify": "両端揃え",
+    "no_content": "この章には内容がありません。"
   },
   "schedule": {
     "title": "スケジュール",
@@ -428,7 +442,9 @@
     "empty_desc": "選択した期間に予定されているエピソードはありません。",
     "airing_today": "本日放送",
     "watching": "視聴中",
-    "planning": "予定"
+    "planning": "予定",
+    "show_my_list": "自分のリストのみ表示",
+    "showing_my_list": "自分のリストのみ表示中"
   },
   "search": {
     "title": "検索",
@@ -488,7 +504,14 @@
     "search_settings": "検索設定",
     "type": "タイプ",
     "source": "ソース / 拡張機能",
-    "clear": "クリア"
+    "clear": "クリア",
+    "manhwa": "マンファ",
+    "manhua": "マンホワ",
+    "doujin": "同人誌",
+    "light_novel": "ライトノベル",
+    "one_shot": "読み切り",
+    "other": "その他",
+    "upcoming": "近日公開"
   },
   "watch": {
     "episode_with_title": "第{{num}}話 - {{title}}",
@@ -497,6 +520,7 @@
     "loading": "読み込み中...",
     "loading_metadata": "メタデータを読み込み中...",
     "playback_error": "再生エラー",
+    "fix_match": "正しいタイトルを選択",
     "back_to_details": "詳細に戻る",
     "torrent_change": "変更",
     "torrent_seeders": "シーダー",
@@ -571,7 +595,12 @@
         "hide_sdh": "音声説明を非表示",
         "sdh_aggressive": "より強力に適用"
       }
-    }
+    },
+    "no_extensions": "アニメまたはトレントの拡張機能がインストールされていません。",
+    "no_metadata_for_query": "トレントを検索するための情報が不足しています。",
+    "no_stream": "拡張機能からストリームが返されませんでした。",
+    "no_torrent_match": "一致するトレントが見つかりませんでした。",
+    "stream_load_failed": "ストリームを読み込めませんでした。"
   },
   "content": {
     "details": "詳細",
@@ -672,7 +701,9 @@
     "no_results": "一致するエントリが見つかりません",
     "merge_warning": "{{title}}をこのエントリに統合し、完全に削除します。この操作は元に戻せません。",
     "merge_success": "エントリを正常に統合しました",
-    "confirm_merge": "統合を確認"
+    "confirm_merge": "統合を確認",
+    "chapter": "章",
+    "confirm_delete_mapping": "このトラッカーの紐付けを削除しますか？"
   },
   "discord": {
     "browsing": "アプリ内"
@@ -783,7 +814,8 @@
       "conflict_kitsu": "Kitsuを優先",
       "conflict_simkl": "Simklを優先",
       "conflict_shikimori": "Shikimoriを優先",
-      "conflict_mangabaka": "MangaBakaを優先"
+      "conflict_mangabaka": "MangaBakaを優先",
+      "conflict_mangaupdates": "MangaUpdatesを優先"
     },
     "general_section": {
       "general_desc": "アプリ全体の設定を管理します。",
@@ -824,7 +856,8 @@
       "metadata_provider_desc": "タイトル・説明・カバー画像の主な取得元を選択します。",
       "auto_update_progress": "進行状況を自動更新",
       "score_format": "スコア形式",
-      "score_format_desc": "hoshiでのスコアの表示形式を選択します。"
+      "score_format_desc": "hoshiでのスコアの表示形式を選択します。",
+      "auto_update_progress_desc": "視聴・読書中にトラッカーの進捗を自動で更新します。"
     },
     "extension_section": {
       "extensions_desc": "インストール済み拡張機能と設定を管理します。",
@@ -840,7 +873,11 @@
       "unsupported_type": "未対応タイプ",
       "extension_config": "{{name}} 設定",
       "all_sources": "すべてのソース",
-      "confirm_uninstall": "確認"
+      "confirm_uninstall": "確認",
+      "no_installed_desc": "Marketplaceから拡張機能をインストールして、視聴や読書を始めましょう。",
+      "saving": "保存中...",
+      "select_option": "オプションを選択",
+      "uninstall": "アンインストール"
     },
     "player_section": {
       "player_desc": "再生環境を設定します",
@@ -1426,15 +1463,21 @@
     "STORY": "原作"
   },
   "error": {
-    "network": "ネットワークエラー",
     "system": {
-      "db_lock": "ローカルデータベースがロックされています。",
       "setup_failed": "セットアップ中に致命的なエラーが発生しました。",
       "io": "ディスクの読み書きエラーが発生しました。",
       "serialization": "内部データの処理に失敗しました。",
       "database": "内部データベースエラーが発生しました。",
       "internal": "予期しない内部サーバーエラーが発生しました。",
-      "external": "外部サービスの応答に失敗しました。"
+      "bad_request": "無効なリクエストです。",
+      "http_client_failed": "ネットワーククライアントを初期化できませんでした。",
+      "migration_run_failed": "データベースを更新できませんでした。",
+      "network": "ネットワークエラーです。接続を確認してください。",
+      "not_found": "見つかりません。",
+      "parse": "受信したデータを読み取れませんでした。",
+      "rate_limited": "リクエストが多すぎます。しばらくしてから再試行してください。",
+      "unknown": "不明なエラーが発生しました。",
+      "validation": "一部の値が無効です。"
     },
     "auth": {
       "no_active_profile": "アクティブなプロフィールが見つかりません。",
@@ -1444,17 +1487,14 @@
       "password_verification_failed": "パスワードの検証に失敗しました。",
       "incorrect_password": "パスワードが間違っています。",
       "username_required": "ユーザー名が必要です。",
-      "unauthorized": "不正なアクセスです。"
-    },
-    "backup": {
-      "not_found": "バックアップが見つかりません。",
-      "file_not_found": "バックアップファイルがディスク上に見つかりません。",
-      "creation_failed": "バックアップの作成に失敗しました。",
-      "missing_tracker_name": "トラッカー名が指定されていません。",
-      "invalid_trigger": "無効なバックアップトリガーです。"
+      "unauthorized": "不正なアクセスです。",
+      "failed": "認証に失敗しました。",
+      "hashing_failed": "パスワードを保護できませんでした。"
     },
     "config": {
-      "invalid_patch_format": "無効な設定パッチ形式です。"
+      "invalid_patch_format": "無効な設定パッチ形式です。",
+      "invalid": "設定が無効です。",
+      "invalid_patch": "無効な設定変更です。"
     },
     "tracker": {
       "unknown_tracker": "不明なトラッカーです。",
@@ -1468,23 +1508,35 @@
       "invalid_credentials": "無効な資格情報です。",
       "missing_credentials": "資格情報がありません。",
       "not_registered": "トラッカーが登録されていません。",
-      "id_not_found": "トラッカー上にIDが見つかりません。",
       "anilist_not_registered": "AniListが設定されていません。",
-      "simkl_not_registered": "Simklが設定されていません。",
-      "no_provider_available": "利用可能なトラッカープロバイダーがありません。"
+      "no_provider_available": "利用可能なトラッカープロバイダーがありません。",
+      "bad_request": "トラッカーがリクエストを拒否しました。",
+      "connect_failed": "トラッカーに接続できませんでした。",
+      "http_error": "トラッカーがエラーを返しました。",
+      "insufficient_scope": "トラッカーが必要な権限を付与しませんでした。",
+      "integration_not_found": "このトラッカーは接続されていません。",
+      "invalid_id": "無効なトラッカーIDです。",
+      "invalid_status": "このトラッカーでは無効なリストステータスです。",
+      "not_found": "トラッカーに見つかりません。",
+      "not_in_registry": "このトラッカーは利用できません。",
+      "parse_failed": "トラッカーの応答を読み取れませんでした。",
+      "rate_limited": "トラッカーがリクエストを制限しています。後でもう一度お試しください。",
+      "reauth_required": "トラッカーのセッションが期限切れです。再接続してください。",
+      "refresh_failed": "トラッカーのセッションを更新できませんでした。",
+      "request_failed": "トラッカーに接続できませんでした。",
+      "score_format_unknown": "トラッカーのスコア形式が不明です。"
     },
     "list": {
       "content_not_found": "コンテンツが見つかりません。",
-      "entry_not_found": "リストのエントリが見つかりません。"
+      "entry_not_found": "リストのエントリが見つかりません。",
+      "missing_id": "このエントリーにはトラッカーIDがありません。"
     },
     "proxy": {
       "no_url_provided": "URLが提供されていません。",
       "upstream_error": "アップストリームサーバーエラーです。",
       "upstream_timeout": "アップストリームサーバーがタイムアウトしました。",
       "invalid_header": "無効なリクエストヘッダーです。",
-      "body_read_failed": "レスポンス本文の読み取りに失敗しました。",
-      "invalid_upstream_url": "無効なアップストリームURLです。",
-      "binary_not_supported": "このアクションではバイナリストリームはサポートされていません。"
+      "body_read_failed": "レスポンス本文の読み取りに失敗しました。"
     },
     "user": {
       "not_found": "ユーザーが見つかりません。",
@@ -1505,24 +1557,28 @@
       "invalid_media_type": "無効なメディアタイプです。",
       "extension_search_failed": "拡張機能による検索に失敗しました。",
       "no_match_found": "一致するものが見つかりませんでした。",
-      "invalid_items_list": "無効なアイテムリスト形式です。",
       "item_number_not_found": "アイテム番号が見つかりません。",
       "link_failed": "コンテンツのリンクに失敗しました。",
-      "tracker_mapping_invalid": "拡張機能専用コンテンツにトラッカーをリンクすることはできません。",
       "mapping_not_found": "マッピングが見つかりません。",
-      "data_missing": "コンテンツデータが不足しています。",
-      "extension_only": "このアクションは拡張機能専用コンテンツでは許可されていません。"
+      "extension_metadata_failed": "拡張機能がこのタイトルの詳細を読み込めませんでした。",
+      "extension_no_match": "拡張機能のエントリーがこのタイトルと一致しません。",
+      "invalid_content_type": "無効なコンテンツタイプです。",
+      "invalid_extension_response": "拡張機能が無効な応答を返しました。",
+      "merge_type_mismatch": "種類の異なるエントリーは統合できません。",
+      "serialization": "コンテンツデータを処理できませんでした。",
+      "tracker_media_not_found": "このタイトルはトラッカーで見つかりませんでした。"
     },
     "extension": {
       "not_found": "拡張機能が見つかりません。",
-      "metadata_fetch_failed": "拡張機能からのメタデータ取得に失敗しました。",
-      "load_failed": "拡張機能の読み込みに失敗しました。",
       "install_network_failed": "拡張機能のインストール中にネットワークエラーが発生しました。",
       "invalid_manifest": "無効な拡張機能マニフェストです。",
       "unsupported_type": "サポートされていない拡張機能のタイプです。",
       "invalid_script": "無効な拡張機能スクリプトです。",
-      "io_error": "拡張機能の入出力エラーです。",
-      "script_missing": "拡張機能スクリプトが見つかりません。"
+      "script_missing": "拡張機能スクリプトが見つかりません。",
+      "already_exists": "このIDの拡張機能はすでに存在します。",
+      "id_mismatch": "拡張機能のIDがマニフェストと一致しません。",
+      "invalid_id": "無効な拡張機能IDです。",
+      "manifest_serialize": "拡張機能のマニフェストを保存できませんでした。"
     },
     "home": {
       "invalid_layout": "このホームレイアウトは無効です"
@@ -1537,16 +1593,59 @@
     "sandbox": {
       "serialization_failed": "サンドボックスデータのシリアライズに失敗しました。",
       "runtime_init_failed": "サンドボックスランタイムの初期化に失敗しました。",
-      "execution_failed": "拡張機能の実行に失敗しました。",
       "bad_json_response": "サンドボックスからの無効なJSONレスポンスです。",
-      "thread_panicked": "サンドボックススレッドがパニックを起こしました。"
+      "thread_panicked": "サンドボックススレッドがパニックを起こしました。",
+      "js_exception": "拡張機能でエラーが発生しました。"
     },
     "torrent": {
       "invalid_cache_key": "無効なキャッシュエントリです。",
       "cache_entry_in_use": "このトレントは再生中のため削除できません。",
       "cache_entry_not_found": "このキャッシュエントリは存在しません。",
       "cache_delete_failed": "キャッシュファイルを削除できませんでした。",
-      "cache_scan_failed": "トレントキャッシュを読み込めませんでした。"
+      "cache_scan_failed": "トレントキャッシュを読み込めませんでした。",
+      "add_failed": "トレントを追加できませんでした。",
+      "add_failed_no_handle": "トレントは追加されましたが、開けませんでした。",
+      "concurrency_limit_reached": "同時にストリーミングしているトレントが多すぎます。",
+      "disk_check_failed": "空きディスク容量を確認できませんでした。",
+      "episode_not_in_torrent": "このエピソードはトレントに含まれていません。",
+      "init_timeout": "トレントの開始に時間がかかりすぎました。",
+      "insufficient_disk_space": "このトレントに必要なディスク容量が不足しています。",
+      "invalid_magnet": "無効なマグネットリンクです。",
+      "metadata_resolve_failed": "トレントのメタデータを読み取れませんでした。",
+      "metadata_timeout": "トレントのメタデータの待機がタイムアウトしました。",
+      "session_init_failed": "トレントクライアントを起動できませんでした。"
+    },
+    "generic": "問題が発生しました",
+    "enrichment": {
+      "bad_id_dump": "IDマッピングデータが無効です。",
+      "rate_limited": "IDマッピングサービスへのリクエストが多すぎます。後でもう一度お試しください。",
+      "unsupported_tracker": "このトラッカーはIDマッピングに対応していません。"
+    },
+    "import": {
+      "already_running": "インポートはすでに実行中です。"
+    },
+    "logs": {
+      "delete_failed": "ログファイルを削除できませんでした。",
+      "fetch_failed": "ログを読み込めませんでした。",
+      "invalid_file": "無効なログファイル名です。",
+      "read_failed": "ログファイルを読み取れませんでした。"
+    },
+    "playback": {
+      "chapters_file_failed": "チャプターマーカーを準備できませんでした。",
+      "command_failed": "プレイヤーがコマンドを受け付けませんでした。",
+      "init_failed": "プレイヤーを起動できませんでした。",
+      "not_initialized": "プレイヤーの準備がまだできていません。",
+      "shutdown_failed": "プレイヤーを正常に停止できませんでした。"
+    },
+    "schedule": {
+      "cache_deserialize_failed": "キャッシュされたスケジュールを読み取れませんでした。",
+      "cache_serialize_failed": "スケジュールをキャッシュできませんでした。"
+    },
+    "sync": {
+      "tracker_not_connected": "このトラッカーは接続されていません。"
     }
+  },
+  "history": {
+    "title": "履歴"
   }
 }

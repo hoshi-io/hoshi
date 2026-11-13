@@ -192,7 +192,8 @@
       "eps": "{{count}} Ep.",
       "chaps": "{{count}} Kap.",
       "more_info": "Info",
-      "trailer": "Trailer"
+      "trailer": "Trailer",
+      "chapters": "{{count}} Kap."
     }
   },
   "card": {
@@ -277,7 +278,8 @@
       "merge": "Zusammenführen",
       "conflict": "Konflikt",
       "history": "Verlauf",
-      "no_history": "Kein Verlauf"
+      "no_history": "Kein Verlauf",
+      "saving": "Wird gespeichert..."
     },
     "browse": "Inhalte durchsuchen",
     "no_matches_desc": "Nichts passt zur aktuellen Suche oder zu den Filtern.",
@@ -345,8 +347,10 @@
       "show_details": "Details anzeigen",
       "syncing": "Synchronisiere",
       "title": "Synchronisierung",
-      "trackers": "Tracker"
-    }
+      "trackers": "Tracker",
+      "waiting": "{{n}} wartend"
+    },
+    "missing_mangaupdates": "Fehlt auf MangaUpdates"
   },
   "marketplace": {
     "title": "Marktplatz",
@@ -369,7 +373,16 @@
     "manage_repos": "Repositories verwalten",
     "all_languages": "Alle Sprachen",
     "add_repo": "Repository hinzufügen",
-    "repositories": "Repositories"
+    "repositories": "Repositories",
+    "invalid_url": "Ungültige Repository-URL",
+    "invalid_url_desc": "Die URL verweist auf kein gültiges Erweiterungs-Repository.",
+    "load_more": "Mehr laden",
+    "new_repo": "Neues Repository",
+    "remove_repo": "Repository entfernen",
+    "repositories_desc": "Erweiterungs-Repositories zum Durchsuchen. Wähle eines, um seine Erweiterungen anzuzeigen.",
+    "update": "Aktualisieren",
+    "updates_available": "Updates verfügbar",
+    "use_repo": "Dieses Repository verwenden"
   },
   "reader": {
     "loading": "Lädt",
@@ -411,7 +424,8 @@
     "paragraph_spacing": "Absatzabstand",
     "content_width": "Inhaltsbreite",
     "align_left": "Links",
-    "align_justify": "Blocksatz"
+    "align_justify": "Blocksatz",
+    "no_content": "Dieses Kapitel hat keinen Inhalt."
   },
   "schedule": {
     "title": "Sendeplan",
@@ -428,7 +442,9 @@
     "empty_desc": "Für den gewählten Zeitraum sind keine Episoden geplant.",
     "airing_today": "Heute im TV",
     "watching": "Schaut gerade",
-    "planning": "Geplant"
+    "planning": "Geplant",
+    "show_my_list": "Nur meine Liste anzeigen",
+    "showing_my_list": "Nur meine Liste wird angezeigt"
   },
   "search": {
     "title": "Suche",
@@ -488,7 +504,14 @@
     "search_settings": "Sucheinstellungen",
     "type": "Typ",
     "source": "Quelle / Erweiterung",
-    "clear": "Leeren"
+    "clear": "Leeren",
+    "manhwa": "Manhwa",
+    "manhua": "Manhua",
+    "doujin": "Doujinshi",
+    "light_novel": "Light Novel",
+    "one_shot": "One-Shot",
+    "other": "Sonstiges",
+    "upcoming": "Demnächst"
   },
   "watch": {
     "episode_with_title": "Episode {{num}} - {{title}}",
@@ -497,6 +520,7 @@
     "loading": "Wird geladen...",
     "loading_metadata": "Metadaten werden geladen...",
     "playback_error": "Wiedergabefehler",
+    "fix_match": "Richtigen Titel auswählen",
     "back_to_details": "Zurück zu den Details",
     "torrent_change": "ändern",
     "torrent_seeders": "Seeder",
@@ -571,7 +595,12 @@
         "hide_sdh": "Audiobeschreibungen ausblenden",
         "sdh_aggressive": "Stärker"
       }
-    }
+    },
+    "no_extensions": "Es sind keine Anime- oder Torrent-Erweiterungen installiert.",
+    "no_metadata_for_query": "Nicht genug Informationen, um nach einem Torrent zu suchen.",
+    "no_stream": "Die Erweiterung hat keinen Stream zurückgegeben.",
+    "no_torrent_match": "Kein passender Torrent gefunden.",
+    "stream_load_failed": "Der Stream konnte nicht geladen werden."
   },
   "content": {
     "details": "Details",
@@ -672,7 +701,9 @@
     "no_results": "Keine passenden Einträge gefunden",
     "merge_warning": "{{title}} wird mit diesem Eintrag zusammengeführt und dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.",
     "merge_success": "Einträge erfolgreich zusammengeführt",
-    "confirm_merge": "Zusammenführung bestätigen"
+    "confirm_merge": "Zusammenführung bestätigen",
+    "chapter": "Kapitel",
+    "confirm_delete_mapping": "Diese Tracker-Zuordnung entfernen?"
   },
   "discord": {
     "browsing": "In der App"
@@ -783,7 +814,8 @@
       "conflict_kitsu": "Kitsu priorisieren",
       "conflict_simkl": "Simkl priorisieren",
       "conflict_shikimori": "Shikimori priorisieren",
-      "conflict_mangabaka": "MangaBaka priorisieren"
+      "conflict_mangabaka": "MangaBaka priorisieren",
+      "conflict_mangaupdates": "MangaUpdates bevorzugen"
     },
     "general_section": {
       "general_desc": "Verwalte deine globalen App-Einstellungen.",
@@ -824,7 +856,8 @@
       "metadata_provider_desc": "Wähle die Primärquelle für Titel, Beschreibungen und Cover.",
       "auto_update_progress": "Fortschritt automatisch aktualisieren",
       "score_format": "Bewertungsformat",
-      "score_format_desc": "Wähle, wie Bewertungen in hoshi angezeigt werden."
+      "score_format_desc": "Wähle, wie Bewertungen in hoshi angezeigt werden.",
+      "auto_update_progress_desc": "Aktualisiert deinen Tracker-Fortschritt automatisch, während du schaust oder liest."
     },
     "extension_section": {
       "extensions_desc": "Verwalte deine installierten Erweiterungen und deren Einstellungen.",
@@ -840,7 +873,11 @@
       "unsupported_type": "Nicht unterstützter Typ",
       "extension_config": "{{name}} Einstellungen",
       "all_sources": "Alle Quellen",
-      "confirm_uninstall": "Bestätigen"
+      "confirm_uninstall": "Bestätigen",
+      "no_installed_desc": "Installiere Erweiterungen aus dem Marketplace, um mit dem Schauen und Lesen zu beginnen.",
+      "saving": "Wird gespeichert...",
+      "select_option": "Option auswählen",
+      "uninstall": "Deinstallieren"
     },
     "player_section": {
       "player_desc": "Konfiguriere deine Wiedergabe",
@@ -1426,15 +1463,21 @@
     "STORY": "Story"
   },
   "error": {
-    "network": "Netzwerkfehler",
     "system": {
-      "db_lock": "Die lokale Datenbank ist gesperrt.",
       "setup_failed": "Kritischer Fehler bei der Anwendungseinrichtung.",
       "io": "Lese-/Schreibfehler auf dem Datenträger.",
       "serialization": "Interne Daten konnten nicht verarbeitet werden.",
       "database": "Interner Datenbankfehler.",
       "internal": "Ein unerwarteter interner Serverfehler ist aufgetreten.",
-      "external": "Externer Dienst hat nicht geantwortet."
+      "bad_request": "Ungültige Anfrage.",
+      "http_client_failed": "Der Netzwerk-Client konnte nicht initialisiert werden.",
+      "migration_run_failed": "Die Datenbank konnte nicht aktualisiert werden.",
+      "network": "Netzwerkfehler. Überprüfe deine Verbindung.",
+      "not_found": "Nicht gefunden.",
+      "parse": "Empfangene Daten konnten nicht gelesen werden.",
+      "rate_limited": "Zu viele Anfragen. Versuche es gleich noch einmal.",
+      "unknown": "Ein unbekannter Fehler ist aufgetreten.",
+      "validation": "Einige Werte sind ungültig."
     },
     "auth": {
       "no_active_profile": "Kein aktives Profil gefunden.",
@@ -1444,17 +1487,14 @@
       "password_verification_failed": "Passwortüberprüfung fehlgeschlagen.",
       "incorrect_password": "Falsches Passwort.",
       "username_required": "Benutzername ist erforderlich.",
-      "unauthorized": "Unbefugter Zugriff."
-    },
-    "backup": {
-      "not_found": "Backup nicht gefunden.",
-      "file_not_found": "Backup-Datei wurde nicht auf dem Datenträger gefunden.",
-      "creation_failed": "Backup konnte nicht erstellt werden.",
-      "missing_tracker_name": "Tracker-Name fehlt.",
-      "invalid_trigger": "Ungültiger Backup-Auslöser."
+      "unauthorized": "Unbefugter Zugriff.",
+      "failed": "Authentifizierung fehlgeschlagen.",
+      "hashing_failed": "Das Passwort konnte nicht gesichert werden."
     },
     "config": {
-      "invalid_patch_format": "Ungültiges Format für das Konfigurations-Update."
+      "invalid_patch_format": "Ungültiges Format für das Konfigurations-Update.",
+      "invalid": "Die Konfiguration ist ungültig.",
+      "invalid_patch": "Ungültige Einstellungsänderung."
     },
     "tracker": {
       "unknown_tracker": "Unbekannter Tracker.",
@@ -1468,23 +1508,35 @@
       "invalid_credentials": "Ungültige Anmeldedaten.",
       "missing_credentials": "Fehlende Anmeldedaten.",
       "not_registered": "Tracker ist nicht registriert.",
-      "id_not_found": "ID wurde auf dem Tracker nicht gefunden.",
       "anilist_not_registered": "AniList ist nicht konfiguriert.",
-      "simkl_not_registered": "Simkl ist nicht konfiguriert.",
-      "no_provider_available": "Kein geeigneter Tracker-Anbieter verfügbar."
+      "no_provider_available": "Kein geeigneter Tracker-Anbieter verfügbar.",
+      "bad_request": "Der Tracker hat die Anfrage abgelehnt.",
+      "connect_failed": "Der Tracker konnte nicht verbunden werden.",
+      "http_error": "Der Tracker hat einen Fehler zurückgegeben.",
+      "insufficient_scope": "Der Tracker hat die erforderlichen Berechtigungen nicht erteilt.",
+      "integration_not_found": "Dieser Tracker ist nicht verbunden.",
+      "invalid_id": "Ungültige Tracker-ID.",
+      "invalid_status": "Ungültiger Listenstatus für diesen Tracker.",
+      "not_found": "Auf dem Tracker nicht gefunden.",
+      "not_in_registry": "Dieser Tracker ist nicht verfügbar.",
+      "parse_failed": "Die Antwort des Trackers konnte nicht gelesen werden.",
+      "rate_limited": "Der Tracker begrenzt die Anfragen. Versuche es später erneut.",
+      "reauth_required": "Deine Tracker-Sitzung ist abgelaufen. Bitte verbinde ihn erneut.",
+      "refresh_failed": "Die Tracker-Sitzung konnte nicht erneuert werden.",
+      "request_failed": "Der Tracker ist nicht erreichbar.",
+      "score_format_unknown": "Unbekanntes Bewertungsformat auf dem Tracker."
     },
     "list": {
       "content_not_found": "Inhalt nicht gefunden.",
-      "entry_not_found": "Listeneintrag nicht gefunden."
+      "entry_not_found": "Listeneintrag nicht gefunden.",
+      "missing_id": "Diesem Eintrag fehlt die Tracker-ID."
     },
     "proxy": {
       "no_url_provided": "Keine URL angegeben.",
       "upstream_error": "Upstream-Serverfehler.",
       "upstream_timeout": "Zeitüberschreitung des Upstream-Servers.",
       "invalid_header": "Ungültiger Anfrage-Header.",
-      "body_read_failed": "Antworttext konnte nicht gelesen werden.",
-      "invalid_upstream_url": "Ungültige Upstream-URL.",
-      "binary_not_supported": "Binäre Streams werden für diese Aktion nicht unterstützt."
+      "body_read_failed": "Antworttext konnte nicht gelesen werden."
     },
     "user": {
       "not_found": "Benutzer nicht gefunden.",
@@ -1505,24 +1557,28 @@
       "invalid_media_type": "Ungültiger Medientyp.",
       "extension_search_failed": "Suche über Erweiterung fehlgeschlagen.",
       "no_match_found": "Keine Übereinstimmung gefunden.",
-      "invalid_items_list": "Ungültiges Format der Elementliste.",
       "item_number_not_found": "Elementnummer nicht gefunden.",
       "link_failed": "Inhalt konnte nicht verknüpft werden.",
-      "tracker_mapping_invalid": "Tracker kann nicht mit reinen Erweiterungsinhalten verknüpft werden.",
       "mapping_not_found": "Verknüpfung nicht gefunden.",
-      "data_missing": "Inhaltsdaten fehlen.",
-      "extension_only": "Diese Aktion ist für reine Erweiterungsinhalte nicht zulässig."
+      "extension_metadata_failed": "Die Erweiterung konnte die Details dieses Titels nicht laden.",
+      "extension_no_match": "Der Eintrag der Erweiterung passt nicht zu diesem Titel.",
+      "invalid_content_type": "Ungültiger Inhaltstyp.",
+      "invalid_extension_response": "Die Erweiterung hat eine ungültige Antwort zurückgegeben.",
+      "merge_type_mismatch": "Einträge unterschiedlicher Typen können nicht zusammengeführt werden.",
+      "serialization": "Die Inhaltsdaten konnten nicht verarbeitet werden.",
+      "tracker_media_not_found": "Dieser Titel wurde auf dem Tracker nicht gefunden."
     },
     "extension": {
       "not_found": "Erweiterung nicht gefunden.",
-      "metadata_fetch_failed": "Metadaten konnten nicht von der Erweiterung abgerufen werden.",
-      "load_failed": "Erweiterung konnte nicht geladen werden.",
       "install_network_failed": "Netzwerkfehler während der Installation der Erweiterung.",
       "invalid_manifest": "Ungültiges Erweiterungsmanifest.",
       "unsupported_type": "Nicht unterstützter Erweiterungstyp.",
       "invalid_script": "Ungültiges Erweiterungsskript.",
-      "io_error": "Erweiterungs-E/A-Fehler.",
-      "script_missing": "Erweiterungsskript fehlt."
+      "script_missing": "Erweiterungsskript fehlt.",
+      "already_exists": "Eine Erweiterung mit dieser ID existiert bereits.",
+      "id_mismatch": "Die Erweiterungs-ID stimmt nicht mit ihrem Manifest überein.",
+      "invalid_id": "Ungültige Erweiterungs-ID.",
+      "manifest_serialize": "Das Manifest der Erweiterung konnte nicht gespeichert werden."
     },
     "home": {
       "invalid_layout": "Dieses Startseiten-Layout ist ungültig"
@@ -1537,16 +1593,59 @@
     "sandbox": {
       "serialization_failed": "Sandbox-Daten konnten nicht serialisiert werden.",
       "runtime_init_failed": "Sandbox-Laufzeit konnte nicht initialisiert werden.",
-      "execution_failed": "Ausführung der Erweiterung fehlgeschlagen.",
       "bad_json_response": "Ungültige JSON-Antwort aus der Sandbox.",
-      "thread_panicked": "Sandbox-Thread ist abgestürzt."
+      "thread_panicked": "Sandbox-Thread ist abgestürzt.",
+      "js_exception": "In der Erweiterung ist ein Fehler aufgetreten."
     },
     "torrent": {
       "invalid_cache_key": "Ungültiger Cache-Eintrag.",
       "cache_entry_in_use": "Dieser Torrent wird gerade wiedergegeben und kann nicht gelöscht werden.",
       "cache_entry_not_found": "Dieser Cache-Eintrag existiert nicht mehr.",
       "cache_delete_failed": "Die zwischengespeicherten Dateien konnten nicht gelöscht werden.",
-      "cache_scan_failed": "Der Torrent-Cache konnte nicht gelesen werden."
+      "cache_scan_failed": "Der Torrent-Cache konnte nicht gelesen werden.",
+      "add_failed": "Der Torrent konnte nicht hinzugefügt werden.",
+      "add_failed_no_handle": "Der Torrent wurde hinzugefügt, konnte aber nicht geöffnet werden.",
+      "concurrency_limit_reached": "Zu viele Torrents werden gleichzeitig gestreamt.",
+      "disk_check_failed": "Der freie Speicherplatz konnte nicht geprüft werden.",
+      "episode_not_in_torrent": "Diese Folge ist nicht im Torrent enthalten.",
+      "init_timeout": "Der Torrent hat zu lange zum Starten gebraucht.",
+      "insufficient_disk_space": "Nicht genug Speicherplatz für diesen Torrent.",
+      "invalid_magnet": "Ungültiger Magnet-Link.",
+      "metadata_resolve_failed": "Die Metadaten des Torrents konnten nicht gelesen werden.",
+      "metadata_timeout": "Zeitüberschreitung beim Warten auf die Metadaten des Torrents.",
+      "session_init_failed": "Der Torrent-Client konnte nicht gestartet werden."
+    },
+    "generic": "Etwas ist schiefgelaufen",
+    "enrichment": {
+      "bad_id_dump": "Die ID-Zuordnungsdaten sind ungültig.",
+      "rate_limited": "Zu viele Anfragen an den ID-Zuordnungsdienst. Versuche es später erneut.",
+      "unsupported_tracker": "Dieser Tracker wird für die ID-Zuordnung nicht unterstützt."
+    },
+    "import": {
+      "already_running": "Es läuft bereits ein Import."
+    },
+    "logs": {
+      "delete_failed": "Die Protokolldatei konnte nicht gelöscht werden.",
+      "fetch_failed": "Die Protokolle konnten nicht geladen werden.",
+      "invalid_file": "Ungültiger Name der Protokolldatei.",
+      "read_failed": "Die Protokolldatei konnte nicht gelesen werden."
+    },
+    "playback": {
+      "chapters_file_failed": "Die Kapitelmarken konnten nicht vorbereitet werden.",
+      "command_failed": "Der Player hat den Befehl nicht angenommen.",
+      "init_failed": "Der Player konnte nicht starten.",
+      "not_initialized": "Der Player ist noch nicht bereit.",
+      "shutdown_failed": "Der Player konnte nicht sauber beendet werden."
+    },
+    "schedule": {
+      "cache_deserialize_failed": "Der zwischengespeicherte Kalender konnte nicht gelesen werden.",
+      "cache_serialize_failed": "Der Kalender konnte nicht zwischengespeichert werden."
+    },
+    "sync": {
+      "tracker_not_connected": "Dieser Tracker ist nicht verbunden."
     }
+  },
+  "history": {
+    "title": "Verlauf"
   }
 }

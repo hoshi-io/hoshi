@@ -192,7 +192,8 @@
       "eps": "{{count}} eps",
       "chaps": "{{count}} bab",
       "more_info": "Info",
-      "trailer": "Trailer"
+      "trailer": "Trailer",
+      "chapters": "{{count}} bab"
     }
   },
   "card": {
@@ -277,7 +278,8 @@
       "merge": "Gabungkan",
       "conflict": "Konflik",
       "history": "Riwayat",
-      "no_history": "Tidak ada riwayat"
+      "no_history": "Tidak ada riwayat",
+      "saving": "Menyimpan..."
     },
     "browse": "Jelajahi konten",
     "no_matches_desc": "Tidak ada yang cocok dengan pencarian atau filter saat ini.",
@@ -345,8 +347,10 @@
       "show_details": "Tampilkan detail",
       "syncing": "Menyinkronkan",
       "title": "Sinkronisasi",
-      "trackers": "Tracker"
-    }
+      "trackers": "Tracker",
+      "waiting": "{{n}} menunggu"
+    },
+    "missing_mangaupdates": "Tidak ada di MangaUpdates"
   },
   "marketplace": {
     "title": "Marketplace",
@@ -369,7 +373,16 @@
     "manage_repos": "Kelola repositori",
     "all_languages": "Semua bahasa",
     "add_repo": "Tambah repositori",
-    "repositories": "Repositori"
+    "repositories": "Repositori",
+    "invalid_url": "URL repositori tidak valid",
+    "invalid_url_desc": "URL tidak mengarah ke repositori ekstensi yang valid.",
+    "load_more": "Muat lebih banyak",
+    "new_repo": "Repositori baru",
+    "remove_repo": "Hapus repositori",
+    "repositories_desc": "Repositori ekstensi untuk dijelajahi. Pilih salah satu untuk melihat ekstensinya.",
+    "update": "Perbarui",
+    "updates_available": "Pembaruan tersedia",
+    "use_repo": "Gunakan repositori ini"
   },
   "reader": {
     "loading": "memuat",
@@ -411,7 +424,8 @@
     "paragraph_spacing": "Jarak Paragraf",
     "content_width": "Lebar Konten",
     "align_left": "Kiri",
-    "align_justify": "Rata Kanan Kiri"
+    "align_justify": "Rata Kanan Kiri",
+    "no_content": "Bab ini tidak memiliki konten."
   },
   "schedule": {
     "title": "Jadwal",
@@ -428,7 +442,9 @@
     "empty_desc": "Tidak ada episode yang dijadwalkan untuk jangka waktu yang dipilih.",
     "airing_today": "Tayang Hari Ini",
     "watching": "Menonton",
-    "planning": "Direncanakan"
+    "planning": "Direncanakan",
+    "show_my_list": "Tampilkan hanya daftar saya",
+    "showing_my_list": "Menampilkan hanya daftar saya"
   },
   "search": {
     "title": "Cari",
@@ -488,7 +504,14 @@
     "search_settings": "Pengaturan pencarian",
     "type": "Tipe",
     "source": "Sumber / Ekstensi",
-    "clear": "Bersihkan"
+    "clear": "Bersihkan",
+    "manhwa": "Manhwa",
+    "manhua": "Manhua",
+    "doujin": "Doujinshi",
+    "light_novel": "Light novel",
+    "one_shot": "One-shot",
+    "other": "Lainnya",
+    "upcoming": "Akan datang"
   },
   "watch": {
     "episode_with_title": "Episode {{num}} - {{title}}",
@@ -497,6 +520,7 @@
     "loading": "Memuat...",
     "loading_metadata": "Memuat metadata...",
     "playback_error": "Kesalahan Pemutaran",
+    "fix_match": "Pilih judul yang benar",
     "back_to_details": "Kembali ke detail",
     "torrent_change": "ubah",
     "torrent_seeders": "seeder",
@@ -571,7 +595,12 @@
         "hide_sdh": "Sembunyikan deskripsi suara",
         "sdh_aggressive": "Lebih agresif"
       }
-    }
+    },
+    "no_extensions": "Tidak ada ekstensi anime atau torrent yang terpasang.",
+    "no_metadata_for_query": "Informasi tidak cukup untuk mencari torrent.",
+    "no_stream": "Ekstensi tidak mengembalikan stream.",
+    "no_torrent_match": "Tidak ditemukan torrent yang cocok.",
+    "stream_load_failed": "Stream tidak dapat dimuat."
   },
   "content": {
     "details": "Detail",
@@ -672,7 +701,9 @@
     "no_results": "Tidak ditemukan entri yang cocok",
     "merge_warning": "{{title}} akan digabungkan ke entri ini dan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.",
     "merge_success": "Entri berhasil digabungkan",
-    "confirm_merge": "Konfirmasi Penggabungan"
+    "confirm_merge": "Konfirmasi Penggabungan",
+    "chapter": "Bab",
+    "confirm_delete_mapping": "Hapus pemetaan tracker ini?"
   },
   "discord": {
     "browsing": "Dalam Aplikasi"
@@ -783,7 +814,8 @@
       "conflict_kitsu": "Prioritaskan Kitsu",
       "conflict_simkl": "Prioritaskan Simkl",
       "conflict_shikimori": "Prioritaskan Shikimori",
-      "conflict_mangabaka": "Prioritaskan MangaBaka"
+      "conflict_mangabaka": "Prioritaskan MangaBaka",
+      "conflict_mangaupdates": "Prioritaskan MangaUpdates"
     },
     "general_section": {
       "general_desc": "Kelola preferensi aplikasi global Anda.",
@@ -824,7 +856,8 @@
       "metadata_provider_desc": "Pilih sumber utama yang digunakan untuk judul, deskripsi, dan gambar sampul.",
       "auto_update_progress": "Perbarui Progres Otomatis",
       "score_format": "Format skor",
-      "score_format_desc": "Pilih bagaimana skor ditampilkan di hoshi."
+      "score_format_desc": "Pilih bagaimana skor ditampilkan di hoshi.",
+      "auto_update_progress_desc": "Perbarui progres tracker secara otomatis saat menonton atau membaca."
     },
     "extension_section": {
       "extensions_desc": "Kelola ekstensi yang terpasang dan pengaturannya.",
@@ -840,7 +873,11 @@
       "unsupported_type": "Tipe Tidak Didukung",
       "extension_config": "Pengaturan {{name}}",
       "all_sources": "Semua sumber",
-      "confirm_uninstall": "Konfirmasi"
+      "confirm_uninstall": "Konfirmasi",
+      "no_installed_desc": "Pasang ekstensi dari Marketplace untuk mulai menonton dan membaca.",
+      "saving": "Menyimpan...",
+      "select_option": "Pilih opsi",
+      "uninstall": "Copot"
     },
     "player_section": {
       "player_desc": "Konfigurasikan pengalaman pemutaran Anda",
@@ -1426,15 +1463,21 @@
     "STORY": "Cerita"
   },
   "error": {
-    "network": "Kesalahan jaringan",
     "system": {
-      "db_lock": "Database lokal terkunci.",
       "setup_failed": "Kesalahan kritis saat penyiapan aplikasi.",
       "io": "Kesalahan baca/tulis disk.",
       "serialization": "Gagal memproses data internal.",
       "database": "Kesalahan database internal.",
       "internal": "Terjadi kesalahan server internal yang tidak terduga.",
-      "external": "Layanan eksternal gagal merespons."
+      "bad_request": "Permintaan tidak valid.",
+      "http_client_failed": "Klien jaringan tidak dapat diinisialisasi.",
+      "migration_run_failed": "Database tidak dapat diperbarui.",
+      "network": "Kesalahan jaringan. Periksa koneksi Anda.",
+      "not_found": "Tidak ditemukan.",
+      "parse": "Data yang diterima tidak dapat dibaca.",
+      "rate_limited": "Terlalu banyak permintaan. Coba lagi sebentar lagi.",
+      "unknown": "Terjadi kesalahan yang tidak diketahui.",
+      "validation": "Beberapa nilai tidak valid."
     },
     "auth": {
       "no_active_profile": "Tidak ada profil aktif yang ditemukan.",
@@ -1444,17 +1487,14 @@
       "password_verification_failed": "Verifikasi kata sandi gagal.",
       "incorrect_password": "Kata sandi salah.",
       "username_required": "Nama pengguna diperlukan.",
-      "unauthorized": "Akses tidak sah."
-    },
-    "backup": {
-      "not_found": "Cadangan tidak ditemukan.",
-      "file_not_found": "File cadangan tidak ditemukan di disk.",
-      "creation_failed": "Gagal membuat cadangan.",
-      "missing_tracker_name": "Nama pelacak tidak ada.",
-      "invalid_trigger": "Pemicu cadangan tidak valid."
+      "unauthorized": "Akses tidak sah.",
+      "failed": "Autentikasi gagal.",
+      "hashing_failed": "Kata sandi tidak dapat diamankan."
     },
     "config": {
-      "invalid_patch_format": "Format pembaruan konfigurasi tidak valid."
+      "invalid_patch_format": "Format pembaruan konfigurasi tidak valid.",
+      "invalid": "Konfigurasi tidak valid.",
+      "invalid_patch": "Perubahan pengaturan tidak valid."
     },
     "tracker": {
       "unknown_tracker": "Pelacak tidak dikenal.",
@@ -1468,23 +1508,35 @@
       "invalid_credentials": "Kredensial tidak valid.",
       "missing_credentials": "Kredensial tidak ada.",
       "not_registered": "Pelacak belum terdaftar.",
-      "id_not_found": "ID tidak ditemukan di pelacak.",
       "anilist_not_registered": "AniList belum dikonfigurasi.",
-      "simkl_not_registered": "Simkl belum dikonfigurasi.",
-      "no_provider_available": "Tidak ada penyedia pelacak yang tersedia."
+      "no_provider_available": "Tidak ada penyedia pelacak yang tersedia.",
+      "bad_request": "Tracker menolak permintaan.",
+      "connect_failed": "Tracker tidak dapat dihubungkan.",
+      "http_error": "Tracker mengembalikan kesalahan.",
+      "insufficient_scope": "Tracker tidak memberikan izin yang diperlukan.",
+      "integration_not_found": "Tracker ini tidak terhubung.",
+      "invalid_id": "ID tracker tidak valid.",
+      "invalid_status": "Status daftar tidak valid untuk tracker ini.",
+      "not_found": "Tidak ditemukan di tracker.",
+      "not_in_registry": "Tracker ini tidak tersedia.",
+      "parse_failed": "Respons tracker tidak dapat dibaca.",
+      "rate_limited": "Tracker membatasi permintaan. Coba lagi nanti.",
+      "reauth_required": "Sesi tracker Anda telah berakhir. Silakan hubungkan kembali.",
+      "refresh_failed": "Sesi tracker tidak dapat diperbarui.",
+      "request_failed": "Tracker tidak dapat dijangkau.",
+      "score_format_unknown": "Format skor tidak dikenal di tracker."
     },
     "list": {
       "content_not_found": "Konten tidak ditemukan.",
-      "entry_not_found": "Entri daftar tidak ditemukan."
+      "entry_not_found": "Entri daftar tidak ditemukan.",
+      "missing_id": "Entri ini tidak memiliki ID tracker."
     },
     "proxy": {
       "no_url_provided": "Tidak ada URL yang diberikan.",
       "upstream_error": "Kesalahan server upstream.",
       "upstream_timeout": "Batas waktu server upstream habis.",
       "invalid_header": "Header permintaan tidak valid.",
-      "body_read_failed": "Gagal membaca isi respons.",
-      "invalid_upstream_url": "URL upstream tidak valid.",
-      "binary_not_supported": "Aliran biner tidak didukung untuk tindakan ini."
+      "body_read_failed": "Gagal membaca isi respons."
     },
     "user": {
       "not_found": "Pengguna tidak ditemukan.",
@@ -1505,24 +1557,28 @@
       "invalid_media_type": "Jenis media tidak valid.",
       "extension_search_failed": "Pencarian via ekstensi gagal.",
       "no_match_found": "Tidak ada kecocokan yang ditemukan.",
-      "invalid_items_list": "Format daftar item tidak valid.",
       "item_number_not_found": "Nomor item tidak ditemukan.",
       "link_failed": "Gagal menautkan konten.",
-      "tracker_mapping_invalid": "Pelacak tidak dapat ditautkan ke konten eksklusif ekstensi.",
       "mapping_not_found": "Tautan tidak ditemukan.",
-      "data_missing": "Data konten tidak ada.",
-      "extension_only": "Tindakan ini tidak diizinkan pada konten eksklusif ekstensi."
+      "extension_metadata_failed": "Ekstensi tidak dapat memuat detail judul ini.",
+      "extension_no_match": "Entri ekstensi tidak cocok dengan judul ini.",
+      "invalid_content_type": "Jenis konten tidak valid.",
+      "invalid_extension_response": "Ekstensi mengembalikan respons yang tidak valid.",
+      "merge_type_mismatch": "Entri dengan jenis berbeda tidak dapat digabungkan.",
+      "serialization": "Data konten tidak dapat diproses.",
+      "tracker_media_not_found": "Judul ini tidak ditemukan di tracker."
     },
     "extension": {
       "not_found": "Ekstensi tidak ditemukan.",
-      "metadata_fetch_failed": "Gagal mengambil metadata dari ekstensi.",
-      "load_failed": "Gagal memuat ekstensi.",
       "install_network_failed": "Kesalahan jaringan selama instalasi ekstensi.",
       "invalid_manifest": "Manifes ekstensi tidak valid.",
       "unsupported_type": "Jenis ekstensi tidak didukung.",
       "invalid_script": "Skrip ekstensi tidak valid.",
-      "io_error": "Kesalahan I/O ekstensi.",
-      "script_missing": "Skrip ekstensi hilang."
+      "script_missing": "Skrip ekstensi hilang.",
+      "already_exists": "Ekstensi dengan ID ini sudah ada.",
+      "id_mismatch": "ID ekstensi tidak cocok dengan manifesnya.",
+      "invalid_id": "ID ekstensi tidak valid.",
+      "manifest_serialize": "Manifes ekstensi tidak dapat disimpan."
     },
     "home": {
       "invalid_layout": "Tata letak beranda ini tidak valid"
@@ -1537,16 +1593,59 @@
     "sandbox": {
       "serialization_failed": "Gagal menyiapkan data untuk sandbox.",
       "runtime_init_failed": "Gagal menginisialisasi mesin sandbox.",
-      "execution_failed": "Eksekusi ekstensi gagal.",
       "bad_json_response": "Respons JSON tidak valid dari sandbox.",
-      "thread_panicked": "Thread sandbox berhenti mendadak."
+      "thread_panicked": "Thread sandbox berhenti mendadak.",
+      "js_exception": "Ekstensi mengalami kesalahan."
     },
     "torrent": {
       "invalid_cache_key": "Entri cache tidak valid.",
       "cache_entry_in_use": "Torrent ini sedang diputar dan tidak dapat dihapus.",
       "cache_entry_not_found": "Entri cache ini sudah tidak ada.",
       "cache_delete_failed": "Tidak dapat menghapus file yang di-cache.",
-      "cache_scan_failed": "Tidak dapat membaca cache torrent."
+      "cache_scan_failed": "Tidak dapat membaca cache torrent.",
+      "add_failed": "Torrent tidak dapat ditambahkan.",
+      "add_failed_no_handle": "Torrent sudah ditambahkan tetapi tidak dapat dibuka.",
+      "concurrency_limit_reached": "Terlalu banyak torrent yang di-stream sekaligus.",
+      "disk_check_failed": "Ruang disk yang tersedia tidak dapat diperiksa.",
+      "episode_not_in_torrent": "Episode ini tidak ada di torrent.",
+      "init_timeout": "Torrent terlalu lama untuk dimulai.",
+      "insufficient_disk_space": "Ruang disk tidak cukup untuk torrent ini.",
+      "invalid_magnet": "Tautan magnet tidak valid.",
+      "metadata_resolve_failed": "Metadata torrent tidak dapat dibaca.",
+      "metadata_timeout": "Waktu habis saat menunggu metadata torrent.",
+      "session_init_failed": "Klien torrent tidak dapat dimulai."
+    },
+    "generic": "Terjadi kesalahan",
+    "enrichment": {
+      "bad_id_dump": "Data pemetaan ID tidak valid.",
+      "rate_limited": "Terlalu banyak permintaan ke layanan pemetaan ID. Coba lagi nanti.",
+      "unsupported_tracker": "Tracker ini tidak didukung untuk pemetaan ID."
+    },
+    "import": {
+      "already_running": "Impor sedang berjalan."
+    },
+    "logs": {
+      "delete_failed": "File log tidak dapat dihapus.",
+      "fetch_failed": "Log tidak dapat dimuat.",
+      "invalid_file": "Nama file log tidak valid.",
+      "read_failed": "File log tidak dapat dibaca."
+    },
+    "playback": {
+      "chapters_file_failed": "Penanda bab tidak dapat disiapkan.",
+      "command_failed": "Pemutar tidak menerima perintah.",
+      "init_failed": "Pemutar tidak dapat dimulai.",
+      "not_initialized": "Pemutar belum siap.",
+      "shutdown_failed": "Pemutar tidak dapat berhenti dengan benar."
+    },
+    "schedule": {
+      "cache_deserialize_failed": "Jadwal tersimpan tidak dapat dibaca.",
+      "cache_serialize_failed": "Jadwal tidak dapat disimpan ke cache."
+    },
+    "sync": {
+      "tracker_not_connected": "Tracker ini tidak terhubung."
     }
+  },
+  "history": {
+    "title": "Riwayat"
   }
 }

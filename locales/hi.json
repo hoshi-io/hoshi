@@ -192,7 +192,8 @@
       "eps": "{{count}} एपिसोड",
       "chaps": "{{count}} अध्याय",
       "more_info": "जानकारी",
-      "trailer": "ट्रेलर"
+      "trailer": "ट्रेलर",
+      "chapters": "{{count}} अध्याय"
     }
   },
   "card": {
@@ -277,7 +278,8 @@
       "merge": "मिलाएं (Merge)",
       "conflict": "विरोध (Conflict)",
       "history": "इतिहास",
-      "no_history": "कोई इतिहास नहीं"
+      "no_history": "कोई इतिहास नहीं",
+      "saving": "सहेजा जा रहा है..."
     },
     "browse": "कंटेंट ब्राउज़ करें",
     "no_matches_desc": "मौजूदा खोज या फ़िल्टर से कुछ भी मेल नहीं खाता।",
@@ -345,8 +347,10 @@
       "show_details": "विवरण दिखाएँ",
       "syncing": "सिंक हो रहा है",
       "title": "सिंक",
-      "trackers": "ट्रैकर्स"
-    }
+      "trackers": "ट्रैकर्स",
+      "waiting": "{{n}} प्रतीक्षा में"
+    },
+    "missing_mangaupdates": "MangaUpdates पर नहीं है"
   },
   "marketplace": {
     "title": "मार्केटप्लेस",
@@ -369,7 +373,16 @@
     "manage_repos": "रिपॉज़िटरी प्रबंधित करें",
     "all_languages": "सभी भाषाएँ",
     "add_repo": "रिपॉज़िटरी जोड़ें",
-    "repositories": "रिपॉज़िटरी"
+    "repositories": "रिपॉज़िटरी",
+    "invalid_url": "अमान्य रिपॉज़िटरी URL",
+    "invalid_url_desc": "यह URL किसी मान्य एक्सटेंशन रिपॉज़िटरी की ओर इशारा नहीं करता।",
+    "load_more": "और लोड करें",
+    "new_repo": "नई रिपॉज़िटरी",
+    "remove_repo": "रिपॉज़िटरी हटाएँ",
+    "repositories_desc": "ब्राउज़ करने के लिए एक्सटेंशन रिपॉज़िटरी। उसके एक्सटेंशन देखने के लिए एक चुनें।",
+    "update": "अपडेट करें",
+    "updates_available": "अपडेट उपलब्ध हैं",
+    "use_repo": "यह रिपॉज़िटरी इस्तेमाल करें"
   },
   "reader": {
     "loading": "लोड हो रहा है",
@@ -411,7 +424,8 @@
     "paragraph_spacing": "अनुच्छेद रिक्ति",
     "content_width": "सामग्री की चौड़ाई",
     "align_left": "बाएं",
-    "align_justify": "जस्टिफाई"
+    "align_justify": "जस्टिफाई",
+    "no_content": "इस अध्याय में कोई सामग्री नहीं है।"
   },
   "schedule": {
     "title": "शेड्यूल",
@@ -428,7 +442,9 @@
     "empty_desc": "चयनित समय सीमा के लिए कोई एपिसोड शेड्यूल नहीं किया गया है।",
     "airing_today": "आज प्रसारित हो रहा है",
     "watching": "देख रहे हैं",
-    "planning": "योजना"
+    "planning": "योजना",
+    "show_my_list": "सिर्फ़ मेरी सूची दिखाएँ",
+    "showing_my_list": "सिर्फ़ मेरी सूची दिखाई जा रही है"
   },
   "search": {
     "title": "खोजें",
@@ -488,7 +504,14 @@
     "search_settings": "खोज सेटिंग्स",
     "type": "प्रकार",
     "source": "स्रोत / एक्सटेंशन",
-    "clear": "साफ़ करें"
+    "clear": "साफ़ करें",
+    "manhwa": "मनहवा",
+    "manhua": "मनहुआ",
+    "doujin": "डोजिंशी",
+    "light_novel": "लाइट नॉवेल",
+    "one_shot": "वन-शॉट",
+    "other": "अन्य",
+    "upcoming": "जल्द आ रहा है"
   },
   "watch": {
     "episode_with_title": "एपिसोड {{num}} - {{title}}",
@@ -497,6 +520,7 @@
     "loading": "लोड हो रहा है...",
     "loading_metadata": "मेटाडेटा लोड हो रहा है...",
     "playback_error": "प्लेबैक त्रुटि",
+    "fix_match": "सही टाइटल चुनें",
     "back_to_details": "विवरण पर वापस जाएँ",
     "torrent_change": "बदलें",
     "torrent_seeders": "सीडर्स",
@@ -571,7 +595,12 @@
         "hide_sdh": "ध्वनि विवरण छिपाएँ",
         "sdh_aggressive": "अधिक आक्रामक"
       }
-    }
+    },
+    "no_extensions": "कोई एनीमे या टोरेंट एक्सटेंशन इंस्टॉल नहीं है।",
+    "no_metadata_for_query": "टोरेंट खोजने के लिए पर्याप्त जानकारी नहीं है।",
+    "no_stream": "एक्सटेंशन ने कोई स्ट्रीम नहीं दी।",
+    "no_torrent_match": "कोई मेल खाता टोरेंट नहीं मिला।",
+    "stream_load_failed": "स्ट्रीम लोड नहीं हो सकी।"
   },
   "content": {
     "details": "विवरण",
@@ -672,7 +701,9 @@
     "no_results": "कोई मिलती-जुलती एंट्री नहीं मिली",
     "merge_warning": "{{title}} को इस एंट्री में मर्ज करके स्थायी रूप से हटा दिया जाएगा। इसे पूर्ववत नहीं किया जा सकता।",
     "merge_success": "एंट्री सफलतापूर्वक मर्ज की गईं",
-    "confirm_merge": "मर्ज की पुष्टि करें"
+    "confirm_merge": "मर्ज की पुष्टि करें",
+    "chapter": "अध्याय",
+    "confirm_delete_mapping": "यह ट्रैकर मैपिंग हटाएँ?"
   },
   "discord": {
     "browsing": "ऐप में"
@@ -783,7 +814,8 @@
       "conflict_kitsu": "Kitsu को प्राथमिकता दें",
       "conflict_simkl": "Simkl को प्राथमिकता दें",
       "conflict_shikimori": "Shikimori को प्राथमिकता दें",
-      "conflict_mangabaka": "MangaBaka को प्राथमिकता दें"
+      "conflict_mangabaka": "MangaBaka को प्राथमिकता दें",
+      "conflict_mangaupdates": "MangaUpdates को प्राथमिकता दें"
     },
     "general_section": {
       "general_desc": "अपनी वैश्विक ऐप प्राथमिकताएं प्रबंधित करें।",
@@ -824,7 +856,8 @@
       "metadata_provider_desc": "शीर्षक, विवरण और कवर चित्रों के लिए उपयोग किए जाने वाले प्राथमिक स्रोत का चयन करें।",
       "auto_update_progress": "प्रगति ऑटो-अपडेट करें",
       "score_format": "स्कोर प्रारूप",
-      "score_format_desc": "चुनें कि hoshi पर स्कोर कैसे प्रदर्शित किए जाएँ।"
+      "score_format_desc": "चुनें कि hoshi पर स्कोर कैसे प्रदर्शित किए जाएँ।",
+      "auto_update_progress_desc": "देखते या पढ़ते समय अपनी ट्रैकर प्रगति अपने आप अपडेट करें।"
     },
     "extension_section": {
       "extensions_desc": "अपने इंस्टॉल किए गए एक्सटेंशन और उनकी सेटिंग्स प्रबंधित करें।",
@@ -840,7 +873,11 @@
       "unsupported_type": "असमर्थित प्रकार",
       "extension_config": "{{name}} सेटिंग्स",
       "all_sources": "सभी स्रोत",
-      "confirm_uninstall": "पुष्टि करें"
+      "confirm_uninstall": "पुष्टि करें",
+      "no_installed_desc": "देखना और पढ़ना शुरू करने के लिए Marketplace से एक्सटेंशन इंस्टॉल करें।",
+      "saving": "सहेजा जा रहा है...",
+      "select_option": "एक विकल्प चुनें",
+      "uninstall": "अनइंस्टॉल करें"
     },
     "player_section": {
       "player_desc": "अपने प्लेबैक अनुभव को कॉन्फ़िगर करें",
@@ -1426,15 +1463,21 @@
     "STORY": "कहानी"
   },
   "error": {
-    "network": "नेटवर्क त्रुटि",
     "system": {
-      "db_lock": "स्थानीय डेटाबेस लॉक है।",
       "setup_failed": "एप्लिकेशन सेटअप के दौरान गंभीर त्रुटि।",
       "io": "डिस्क रीड/राइट त्रुटि।",
       "serialization": "आंतरिक डेटा संसाधित करने में विफल।",
       "database": "आंतरिक डेटाबेस त्रुटि।",
       "internal": "एक अप्रत्याशित आंतरिक सर्वर त्रुटि हुई।",
-      "external": "बाहरी सेवा प्रतिक्रिया देने में विफल रही।"
+      "bad_request": "अमान्य अनुरोध।",
+      "http_client_failed": "नेटवर्क क्लाइंट शुरू नहीं हो सका।",
+      "migration_run_failed": "डेटाबेस अपडेट नहीं हो सका।",
+      "network": "नेटवर्क त्रुटि। अपना कनेक्शन जाँचें।",
+      "not_found": "नहीं मिला।",
+      "parse": "प्राप्त डेटा पढ़ा नहीं जा सका।",
+      "rate_limited": "बहुत ज़्यादा अनुरोध। थोड़ी देर में फिर से कोशिश करें।",
+      "unknown": "एक अज्ञात त्रुटि हुई।",
+      "validation": "कुछ मान मान्य नहीं हैं।"
     },
     "auth": {
       "no_active_profile": "कोई सक्रिय प्रोफ़ाइल नहीं मिली।",
@@ -1444,17 +1487,14 @@
       "password_verification_failed": "पासवर्ड सत्यापन विफल रहा।",
       "incorrect_password": "गलत पासवर्ड।",
       "username_required": "उपयोगकर्ता नाम आवश्यक है।",
-      "unauthorized": "अनधिकृत पहुंच।"
-    },
-    "backup": {
-      "not_found": "बैकअप नहीं मिला।",
-      "file_not_found": "डिस्क पर बैकअप फ़ाइल नहीं मिली।",
-      "creation_failed": "बैकअप बनाने में विफल।",
-      "missing_tracker_name": "ट्रैकर का नाम गायब है।",
-      "invalid_trigger": "अमान्य बैकअप ट्रिगर।"
+      "unauthorized": "अनधिकृत पहुंच।",
+      "failed": "प्रमाणीकरण विफल रहा।",
+      "hashing_failed": "पासवर्ड सुरक्षित नहीं किया जा सका।"
     },
     "config": {
-      "invalid_patch_format": "अमान्य कॉन्फ़िगरेशन पैच प्रारूप।"
+      "invalid_patch_format": "अमान्य कॉन्फ़िगरेशन पैच प्रारूप।",
+      "invalid": "कॉन्फ़िगरेशन मान्य नहीं है।",
+      "invalid_patch": "अमान्य सेटिंग बदलाव।"
     },
     "tracker": {
       "unknown_tracker": "अज्ञात ट्रैकर।",
@@ -1468,23 +1508,35 @@
       "invalid_credentials": "अमान्य क्रेडेंशियल।",
       "missing_credentials": "क्रेडेंशियल गायब हैं।",
       "not_registered": "ट्रैकर पंजीकृत नहीं है।",
-      "id_not_found": "ट्रैकर पर आईडी नहीं मिली।",
       "anilist_not_registered": "AniList कॉन्फ़िगर नहीं किया गया है।",
-      "simkl_not_registered": "Simkl कॉन्फ़िगर नहीं किया गया है।",
-      "no_provider_available": "कोई उपयुक्त ट्रैकर प्रदाता उपलब्ध नहीं है।"
+      "no_provider_available": "कोई उपयुक्त ट्रैकर प्रदाता उपलब्ध नहीं है।",
+      "bad_request": "ट्रैकर ने अनुरोध अस्वीकार कर दिया।",
+      "connect_failed": "ट्रैकर कनेक्ट नहीं हो सका।",
+      "http_error": "ट्रैकर ने त्रुटि लौटाई।",
+      "insufficient_scope": "ट्रैकर ने ज़रूरी अनुमतियाँ नहीं दीं।",
+      "integration_not_found": "यह ट्रैकर कनेक्ट नहीं है।",
+      "invalid_id": "अमान्य ट्रैकर ID।",
+      "invalid_status": "इस ट्रैकर के लिए अमान्य सूची स्थिति।",
+      "not_found": "ट्रैकर पर नहीं मिला।",
+      "not_in_registry": "यह ट्रैकर उपलब्ध नहीं है।",
+      "parse_failed": "ट्रैकर का जवाब पढ़ा नहीं जा सका।",
+      "rate_limited": "ट्रैकर अनुरोध सीमित कर रहा है। बाद में कोशिश करें।",
+      "reauth_required": "आपका ट्रैकर सेशन समाप्त हो गया है। कृपया इसे फिर से कनेक्ट करें।",
+      "refresh_failed": "ट्रैकर सेशन रिफ़्रेश नहीं हो सका।",
+      "request_failed": "ट्रैकर तक नहीं पहुँचा जा सका।",
+      "score_format_unknown": "ट्रैकर पर अज्ञात स्कोर फ़ॉर्मैट।"
     },
     "list": {
       "content_not_found": "सामग्री नहीं मिली।",
-      "entry_not_found": "सूची प्रविष्टि नहीं मिली।"
+      "entry_not_found": "सूची प्रविष्टि नहीं मिली।",
+      "missing_id": "इस एंट्री में ट्रैकर ID नहीं है।"
     },
     "proxy": {
       "no_url_provided": "कोई URL प्रदान नहीं किया गया।",
       "upstream_error": "अपस्ट्रीम सर्वर त्रुटि।",
       "upstream_timeout": "अपस्ट्रीम सर्वर टाइमआउट।",
       "invalid_header": "अमान्य अनुरोध हेडर।",
-      "body_read_failed": "प्रतिक्रिया निकाय को पढ़ने में विफल।",
-      "invalid_upstream_url": "अमान्य अपस्ट्रीम URL।",
-      "binary_not_supported": "इस क्रिया के लिए बाइनरी स्ट्रीम समर्थित नहीं हैं।"
+      "body_read_failed": "प्रतिक्रिया निकाय को पढ़ने में विफल।"
     },
     "user": {
       "not_found": "उपयोगकर्ता नहीं मिला।",
@@ -1505,24 +1557,28 @@
       "invalid_media_type": "अमान्य मीडिया प्रकार।",
       "extension_search_failed": "एक्सटेंशन के माध्यम से खोज विफल रही।",
       "no_match_found": "कोई मेल नहीं मिला।",
-      "invalid_items_list": "अमान्य आइटम सूची प्रारूप।",
       "item_number_not_found": "आइटम नंबर नहीं मिला।",
       "link_failed": "सामग्री को लिंक करने में विफल।",
-      "tracker_mapping_invalid": "ट्रैकर को केवल-एक्सटेंशन सामग्री से लिंक नहीं किया जा सकता।",
       "mapping_not_found": "मैपिंग नहीं मिली।",
-      "data_missing": "सामग्री डेटा गायब है।",
-      "extension_only": "यह कार्रवाई केवल-एक्सटेंशन सामग्री पर अनुमत नहीं है।"
+      "extension_metadata_failed": "एक्सटेंशन इस टाइटल का विवरण लोड नहीं कर सका।",
+      "extension_no_match": "एक्सटेंशन की एंट्री इस टाइटल से मेल नहीं खाती।",
+      "invalid_content_type": "अमान्य सामग्री प्रकार।",
+      "invalid_extension_response": "एक्सटेंशन ने अमान्य जवाब लौटाया।",
+      "merge_type_mismatch": "अलग-अलग प्रकार की एंट्री मर्ज नहीं की जा सकतीं।",
+      "serialization": "सामग्री का डेटा प्रोसेस नहीं हो सका।",
+      "tracker_media_not_found": "यह टाइटल ट्रैकर पर नहीं मिला।"
     },
     "extension": {
       "not_found": "एक्सटेंशन नहीं मिला।",
-      "metadata_fetch_failed": "एक्सटेंशन से मेटाडेटा लाने में विफल।",
-      "load_failed": "एक्सटेंशन लोड करने में विफल।",
       "install_network_failed": "एक्सटेंशन इंस्टॉलेशन के दौरान नेटवर्क त्रुटि।",
       "invalid_manifest": "अमान्य एक्सटेंशन मेनिफेस्ट।",
       "unsupported_type": "असमर्थित एक्सटेंशन प्रकार।",
       "invalid_script": "अमान्य एक्सटेंशन स्क्रिप्ट।",
-      "io_error": "एक्सटेंशन I/O त्रुटि।",
-      "script_missing": "एक्सटेंशन स्क्रिप्ट गायब है।"
+      "script_missing": "एक्सटेंशन स्क्रिप्ट गायब है।",
+      "already_exists": "इस ID वाला एक्सटेंशन पहले से मौजूद है।",
+      "id_mismatch": "एक्सटेंशन ID उसके मैनिफ़ेस्ट से मेल नहीं खाती।",
+      "invalid_id": "अमान्य एक्सटेंशन ID।",
+      "manifest_serialize": "एक्सटेंशन मैनिफ़ेस्ट सहेजा नहीं जा सका।"
     },
     "home": {
       "invalid_layout": "यह होम लेआउट मान्य नहीं है"
@@ -1537,16 +1593,59 @@
     "sandbox": {
       "serialization_failed": "सैंडबॉक्स डेटा को क्रमबद्ध करने में विफल।",
       "runtime_init_failed": "सैंडबॉक्स रनटाइम को आरंभ करने में विफल।",
-      "execution_failed": "एक्सटेंशन निष्पादन विफल रहा।",
       "bad_json_response": "सैंडबॉक्स से अमान्य JSON प्रतिक्रिया।",
-      "thread_panicked": "सैंडबॉक्स थ्रेड क्रैश हो गया।"
+      "thread_panicked": "सैंडबॉक्स थ्रेड क्रैश हो गया।",
+      "js_exception": "एक्सटेंशन में त्रुटि आई।"
     },
     "torrent": {
       "invalid_cache_key": "अमान्य कैश एंट्री।",
       "cache_entry_in_use": "यह टोरेंट चल रहा है और इसे हटाया नहीं जा सकता।",
       "cache_entry_not_found": "यह कैश एंट्री अब मौजूद नहीं है।",
       "cache_delete_failed": "कैश की गई फ़ाइलें हटाई नहीं जा सकीं।",
-      "cache_scan_failed": "टोरेंट कैश पढ़ा नहीं जा सका।"
+      "cache_scan_failed": "टोरेंट कैश पढ़ा नहीं जा सका।",
+      "add_failed": "टोरेंट जोड़ा नहीं जा सका।",
+      "add_failed_no_handle": "टोरेंट जोड़ा गया, लेकिन खोला नहीं जा सका।",
+      "concurrency_limit_reached": "एक साथ बहुत ज़्यादा टोरेंट स्ट्रीम हो रहे हैं।",
+      "disk_check_failed": "उपलब्ध डिस्क स्पेस जाँचा नहीं जा सका।",
+      "episode_not_in_torrent": "यह एपिसोड टोरेंट में नहीं है।",
+      "init_timeout": "टोरेंट शुरू होने में बहुत समय लगा।",
+      "insufficient_disk_space": "इस टोरेंट के लिए पर्याप्त डिस्क स्पेस नहीं है।",
+      "invalid_magnet": "अमान्य मैग्नेट लिंक।",
+      "metadata_resolve_failed": "टोरेंट का मेटाडेटा पढ़ा नहीं जा सका।",
+      "metadata_timeout": "टोरेंट मेटाडेटा का इंतज़ार करते हुए समय समाप्त हो गया।",
+      "session_init_failed": "टोरेंट क्लाइंट शुरू नहीं हो सका।"
+    },
+    "generic": "कुछ गलत हो गया",
+    "enrichment": {
+      "bad_id_dump": "ID मैपिंग डेटा अमान्य है।",
+      "rate_limited": "ID मैपिंग सेवा को बहुत ज़्यादा अनुरोध। बाद में कोशिश करें।",
+      "unsupported_tracker": "ID मैपिंग के लिए यह ट्रैकर समर्थित नहीं है।"
+    },
+    "import": {
+      "already_running": "एक इंपोर्ट पहले से चल रहा है।"
+    },
+    "logs": {
+      "delete_failed": "लॉग फ़ाइल हटाई नहीं जा सकी।",
+      "fetch_failed": "लॉग लोड नहीं हो सके।",
+      "invalid_file": "अमान्य लॉग फ़ाइल नाम।",
+      "read_failed": "लॉग फ़ाइल पढ़ी नहीं जा सकी।"
+    },
+    "playback": {
+      "chapters_file_failed": "अध्याय मार्कर तैयार नहीं हो सके।",
+      "command_failed": "प्लेयर ने कमांड स्वीकार नहीं की।",
+      "init_failed": "प्लेयर शुरू नहीं हो सका।",
+      "not_initialized": "प्लेयर अभी तैयार नहीं है।",
+      "shutdown_failed": "प्लेयर ठीक से बंद नहीं हो सका।"
+    },
+    "schedule": {
+      "cache_deserialize_failed": "कैश किया गया शेड्यूल पढ़ा नहीं जा सका।",
+      "cache_serialize_failed": "शेड्यूल कैश नहीं हो सका।"
+    },
+    "sync": {
+      "tracker_not_connected": "यह ट्रैकर कनेक्ट नहीं है।"
     }
+  },
+  "history": {
+    "title": "इतिहास"
   }
 }

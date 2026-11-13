@@ -192,7 +192,8 @@
       "eps": "{{count}} eps",
       "chaps": "{{count}} kabanata",
       "more_info": "Impormasyon",
-      "trailer": "Trailer"
+      "trailer": "Trailer",
+      "chapters": "{{count}} kab."
     }
   },
   "card": {
@@ -277,7 +278,8 @@
       "merge": "Pagsamahin",
       "conflict": "Hidwaan",
       "history": "Kasaysayan",
-      "no_history": "Walang kasaysayan"
+      "no_history": "Walang kasaysayan",
+      "saving": "Sine-save..."
     },
     "browse": "Mag-browse ng content",
     "no_matches_desc": "Walang tumutugma sa kasalukuyang paghahanap o mga filter.",
@@ -345,8 +347,10 @@
       "show_details": "Ipakita ang mga detalye",
       "syncing": "Nagsi-sync",
       "title": "Sync",
-      "trackers": "Mga tracker"
-    }
+      "trackers": "Mga tracker",
+      "waiting": "{{n}} naghihintay"
+    },
+    "missing_mangaupdates": "Wala sa MangaUpdates"
   },
   "marketplace": {
     "title": "Marketplace",
@@ -369,7 +373,16 @@
     "manage_repos": "Pamahalaan ang mga repository",
     "all_languages": "Lahat ng wika",
     "add_repo": "Magdagdag ng repo",
-    "repositories": "Mga repository"
+    "repositories": "Mga repository",
+    "invalid_url": "Hindi valid na URL ng repository",
+    "invalid_url_desc": "Hindi tumuturo ang URL sa isang valid na repository ng extension.",
+    "load_more": "Mag-load pa",
+    "new_repo": "Bagong repository",
+    "remove_repo": "Alisin ang repository",
+    "repositories_desc": "Mga repository ng extension na puwedeng tingnan. Pumili ng isa para makita ang mga extension nito.",
+    "update": "I-update",
+    "updates_available": "May mga update",
+    "use_repo": "Gamitin ang repository na ito"
   },
   "reader": {
     "loading": "naglo-load",
@@ -411,7 +424,8 @@
     "paragraph_spacing": "Spacing ng Parapo",
     "content_width": "Lapad ng Nilalaman",
     "align_left": "Kaliwa",
-    "align_justify": "Justify"
+    "align_justify": "Justify",
+    "no_content": "Walang laman ang kabanatang ito."
   },
   "schedule": {
     "title": "Iskedyul",
@@ -428,7 +442,9 @@
     "empty_desc": "Walang naka-iskedyul na mga episode para sa napiling panahon.",
     "airing_today": "Ipapalabas Ngayon",
     "watching": "Nanonood",
-    "planning": "Plano"
+    "planning": "Plano",
+    "show_my_list": "Ipakita lang ang aking listahan",
+    "showing_my_list": "Ipinapakita lang ang aking listahan"
   },
   "search": {
     "title": "Maghanap",
@@ -488,7 +504,14 @@
     "search_settings": "Mga setting ng paghahanap",
     "type": "Uri",
     "source": "Source / Extension",
-    "clear": "I-clear"
+    "clear": "I-clear",
+    "manhwa": "Manhwa",
+    "manhua": "Manhua",
+    "doujin": "Doujinshi",
+    "light_novel": "Light novel",
+    "one_shot": "One-shot",
+    "other": "Iba pa",
+    "upcoming": "Paparating"
   },
   "watch": {
     "episode_with_title": "Episode {{num}} - {{title}}",
@@ -497,6 +520,7 @@
     "loading": "Naglo-load...",
     "loading_metadata": "Naglo-load ng metadata...",
     "playback_error": "Error sa Pag-playback",
+    "fix_match": "Piliin ang tamang pamagat",
     "back_to_details": "Bumalik sa detalye",
     "torrent_change": "baguhin",
     "torrent_seeders": "mga seeder",
@@ -571,7 +595,12 @@
         "hide_sdh": "Itago ang mga paglalarawan ng tunog",
         "sdh_aggressive": "Mas agresibo"
       }
-    }
+    },
+    "no_extensions": "Walang naka-install na extension para sa anime o torrent.",
+    "no_metadata_for_query": "Kulang ang impormasyon para maghanap ng torrent.",
+    "no_stream": "Walang ibinalik na stream ang extension.",
+    "no_torrent_match": "Walang nahanap na tugmang torrent.",
+    "stream_load_failed": "Hindi ma-load ang stream."
   },
   "content": {
     "details": "Mga Detalye",
@@ -672,7 +701,9 @@
     "no_results": "Walang nakitang katugmang entry",
     "merge_warning": "Ang {{title}} ay isasama sa entry na ito at permanenteng tatanggalin. Hindi na ito maaaring ibalik.",
     "merge_success": "Matagumpay na napagsama ang mga entry",
-    "confirm_merge": "Kumpirmahin ang Pagsasama"
+    "confirm_merge": "Kumpirmahin ang Pagsasama",
+    "chapter": "Kabanata",
+    "confirm_delete_mapping": "Alisin ang tracker mapping na ito?"
   },
   "discord": {
     "browsing": "Nasa App"
@@ -783,7 +814,8 @@
       "conflict_kitsu": "Unahin ang Kitsu",
       "conflict_simkl": "Unahin ang Simkl",
       "conflict_shikimori": "Unahin ang Shikimori",
-      "conflict_mangabaka": "Unahin ang MangaBaka"
+      "conflict_mangabaka": "Unahin ang MangaBaka",
+      "conflict_mangaupdates": "Unahin ang MangaUpdates"
     },
     "general_section": {
       "general_desc": "Pamahalaan ang iyong mga pangkalahatang kagustuhan sa app.",
@@ -824,7 +856,8 @@
       "metadata_provider_desc": "Pumili ng pangunahing source na gagamitin para sa mga pamagat, deskripsyon, at mga cover image.",
       "auto_update_progress": "Auto-Update ng Progress",
       "score_format": "Format ng score",
-      "score_format_desc": "Piliin kung paano ipinapakita ang mga score sa hoshi."
+      "score_format_desc": "Piliin kung paano ipinapakita ang mga score sa hoshi.",
+      "auto_update_progress_desc": "Awtomatikong i-update ang iyong progreso sa tracker habang nanonood o nagbabasa."
     },
     "extension_section": {
       "extensions_desc": "Pamahalaan ang iyong mga naka-install na extension at ang kanilang mga setting.",
@@ -840,7 +873,11 @@
       "unsupported_type": "Hindi Suportadong Uri",
       "extension_config": "Mga Setting ng {{name}}",
       "all_sources": "Lahat ng source",
-      "confirm_uninstall": "Kumpirmahin"
+      "confirm_uninstall": "Kumpirmahin",
+      "no_installed_desc": "Mag-install ng mga extension mula sa Marketplace para makapagsimulang manood at magbasa.",
+      "saving": "Sine-save...",
+      "select_option": "Pumili ng opsyon",
+      "uninstall": "I-uninstall"
     },
     "player_section": {
       "player_desc": "I-configure ang mga setting ng playback, mga wika, at automation.",
@@ -1426,15 +1463,21 @@
     "STORY": "Kuwento"
   },
   "error": {
-    "network": "Error sa network",
     "system": {
-      "db_lock": "Naka-lock ang lokal na database.",
       "setup_failed": "Kritikal na error habang nagse-setup ang app.",
       "io": "Error sa pagbasa o pagsulat sa disk.",
       "serialization": "Nabigong iproseso ang panloob na data.",
       "database": "Internal na error sa database.",
       "internal": "Nagkaroon ng hindi inaasahang internal server error.",
-      "external": "Hindi sumagot ang panlabas na serbisyo."
+      "bad_request": "Hindi valid na request.",
+      "http_client_failed": "Hindi ma-initialize ang network client.",
+      "migration_run_failed": "Hindi ma-update ang database.",
+      "network": "Error sa network. Suriin ang iyong koneksyon.",
+      "not_found": "Hindi nahanap.",
+      "parse": "Hindi mabasa ang natanggap na data.",
+      "rate_limited": "Masyadong maraming request. Subukan ulit mamaya.",
+      "unknown": "May hindi kilalang error na naganap.",
+      "validation": "May mga value na hindi valid."
     },
     "auth": {
       "no_active_profile": "Walang nahanap na aktibong profile.",
@@ -1444,17 +1487,14 @@
       "password_verification_failed": "Nabigo ang pag-verify ng password.",
       "incorrect_password": "Maling password.",
       "username_required": "Kailangan ng username.",
-      "unauthorized": "Hindi awtorisadong pag-access."
-    },
-    "backup": {
-      "not_found": "Hindi nahanap ang backup.",
-      "file_not_found": "Hindi nahanap ang backup file sa disk.",
-      "creation_failed": "Nabigong gumawa ng backup.",
-      "missing_tracker_name": "Nawawala ang pangalan ng tracker.",
-      "invalid_trigger": "Imbalidong backup trigger."
+      "unauthorized": "Hindi awtorisadong pag-access.",
+      "failed": "Nabigo ang authentication.",
+      "hashing_failed": "Hindi ma-secure ang password."
     },
     "config": {
-      "invalid_patch_format": "Imbalidong format ng config patch."
+      "invalid_patch_format": "Imbalidong format ng config patch.",
+      "invalid": "Hindi valid ang configuration.",
+      "invalid_patch": "Hindi valid na pagbabago sa setting."
     },
     "tracker": {
       "unknown_tracker": "Hindi kilalang tracker.",
@@ -1468,23 +1508,35 @@
       "invalid_credentials": "Imbalidong credentials.",
       "missing_credentials": "Nawawala ang credentials.",
       "not_registered": "Hindi nakarehistro ang tracker.",
-      "id_not_found": "Hindi nahanap ang ID sa tracker.",
       "anilist_not_registered": "Hindi naka-configure ang AniList.",
-      "simkl_not_registered": "Hindi naka-configure ang Simkl.",
-      "no_provider_available": "Walang available na tracker provider."
+      "no_provider_available": "Walang available na tracker provider.",
+      "bad_request": "Tinanggihan ng tracker ang request.",
+      "connect_failed": "Hindi maikonekta ang tracker.",
+      "http_error": "Nagbalik ng error ang tracker.",
+      "insufficient_scope": "Hindi ibinigay ng tracker ang mga kinakailangang pahintulot.",
+      "integration_not_found": "Hindi nakakonekta ang tracker na ito.",
+      "invalid_id": "Hindi valid na tracker ID.",
+      "invalid_status": "Hindi valid na status ng listahan para sa tracker na ito.",
+      "not_found": "Hindi nahanap sa tracker.",
+      "not_in_registry": "Hindi available ang tracker na ito.",
+      "parse_failed": "Hindi mabasa ang tugon ng tracker.",
+      "rate_limited": "Nililimitahan ng tracker ang mga request. Subukan ulit mamaya.",
+      "reauth_required": "Nag-expire na ang session mo sa tracker. Pakikonekta ulit.",
+      "refresh_failed": "Hindi ma-refresh ang session ng tracker.",
+      "request_failed": "Hindi maabot ang tracker.",
+      "score_format_unknown": "Hindi kilalang format ng score sa tracker."
     },
     "list": {
       "content_not_found": "Hindi nahanap ang content.",
-      "entry_not_found": "Hindi nahanap ang list entry."
+      "entry_not_found": "Hindi nahanap ang list entry.",
+      "missing_id": "Walang tracker ID ang entry na ito."
     },
     "proxy": {
       "no_url_provided": "Walang ibinigay na URL.",
       "upstream_error": "Error sa upstream server.",
       "upstream_timeout": "Nag-timeout ang upstream server.",
       "invalid_header": "Imbalidong request header.",
-      "body_read_failed": "Nabigong basahin ang response body.",
-      "invalid_upstream_url": "Imbalidong upstream URL.",
-      "binary_not_supported": "Hindi suportado ang binary streams para sa aksyong ito."
+      "body_read_failed": "Nabigong basahin ang response body."
     },
     "user": {
       "not_found": "Hindi nahanap ang user.",
@@ -1505,24 +1557,28 @@
       "invalid_media_type": "Imbalidong media type.",
       "extension_search_failed": "Nabigo ang paghahanap gamit ang extension.",
       "no_match_found": "Walang nahanap na tugma.",
-      "invalid_items_list": "Imbalidong format ng listahan.",
       "item_number_not_found": "Hindi nahanap ang item number.",
       "link_failed": "Nabigong i-link ang content.",
-      "tracker_mapping_invalid": "Hindi pwedeng i-link ang tracker sa extension-only na content.",
       "mapping_not_found": "Hindi nahanap ang mapping.",
-      "data_missing": "Nawawala ang data ng content.",
-      "extension_only": "Hindi pinapayagan ang aksyong ito sa extension-only na content."
+      "extension_metadata_failed": "Hindi ma-load ng extension ang mga detalye ng pamagat na ito.",
+      "extension_no_match": "Hindi tugma ang entry ng extension sa pamagat na ito.",
+      "invalid_content_type": "Hindi valid na uri ng content.",
+      "invalid_extension_response": "Nagbalik ang extension ng hindi valid na tugon.",
+      "merge_type_mismatch": "Hindi puwedeng pagsamahin ang mga entry na magkaiba ang uri.",
+      "serialization": "Hindi maproseso ang data ng content.",
+      "tracker_media_not_found": "Hindi nahanap ang pamagat na ito sa tracker."
     },
     "extension": {
       "not_found": "Hindi nahanap ang extension.",
-      "metadata_fetch_failed": "Nabigong kumuha ng metadata mula sa extension.",
-      "load_failed": "Nabigong i-load ang extension.",
       "install_network_failed": "Error sa network habang ini-install ang extension.",
       "invalid_manifest": "Imbalidong extension manifest.",
       "unsupported_type": "Hindi suportadong uri ng extension.",
       "invalid_script": "Imbalidong extension script.",
-      "io_error": "I/O error sa extension.",
-      "script_missing": "Nawawala ang extension script."
+      "script_missing": "Nawawala ang extension script.",
+      "already_exists": "May extension na may ganitong ID.",
+      "id_mismatch": "Hindi tugma ang extension ID sa manifest nito.",
+      "invalid_id": "Hindi valid na extension ID.",
+      "manifest_serialize": "Hindi ma-save ang manifest ng extension."
     },
     "home": {
       "invalid_layout": "Hindi valid ang layout ng home na ito"
@@ -1537,16 +1593,59 @@
     "sandbox": {
       "serialization_failed": "Nabigong i-serialize ang sandbox data.",
       "runtime_init_failed": "Nabigong simulan ang sandbox runtime.",
-      "execution_failed": "Nabigo ang pagpapatakbo ng extension.",
       "bad_json_response": "Imbalidong JSON response mula sa sandbox.",
-      "thread_panicked": "Nag-crash ang sandbox thread."
+      "thread_panicked": "Nag-crash ang sandbox thread.",
+      "js_exception": "Nagkaroon ng error ang extension."
     },
     "torrent": {
       "invalid_cache_key": "Di-wastong cache entry.",
       "cache_entry_in_use": "Kasalukuyang pinapatugtog ang torrent na ito at hindi ito maaaring tanggalin.",
       "cache_entry_not_found": "Hindi na umiiral ang cache entry na ito.",
       "cache_delete_failed": "Hindi matanggal ang mga naka-cache na file.",
-      "cache_scan_failed": "Hindi mabasa ang torrent cache."
+      "cache_scan_failed": "Hindi mabasa ang torrent cache.",
+      "add_failed": "Hindi maidagdag ang torrent.",
+      "add_failed_no_handle": "Naidagdag ang torrent pero hindi ito mabuksan.",
+      "concurrency_limit_reached": "Masyadong maraming torrent ang sabay na nag-i-stream.",
+      "disk_check_failed": "Hindi masuri ang available na disk space.",
+      "episode_not_in_torrent": "Wala sa torrent ang episode na ito.",
+      "init_timeout": "Masyadong natagalan bago nagsimula ang torrent.",
+      "insufficient_disk_space": "Kulang ang disk space para sa torrent na ito.",
+      "invalid_magnet": "Hindi valid na magnet link.",
+      "metadata_resolve_failed": "Hindi mabasa ang metadata ng torrent.",
+      "metadata_timeout": "Nag-time out habang hinihintay ang metadata ng torrent.",
+      "session_init_failed": "Hindi masimulan ang torrent client."
+    },
+    "generic": "May nangyaring mali",
+    "enrichment": {
+      "bad_id_dump": "Hindi valid ang data ng ID mapping.",
+      "rate_limited": "Masyadong maraming request sa ID mapping service. Subukan ulit mamaya.",
+      "unsupported_tracker": "Hindi suportado ang tracker na ito para sa ID mapping."
+    },
+    "import": {
+      "already_running": "May import na tumatakbo na."
+    },
+    "logs": {
+      "delete_failed": "Hindi mabura ang log file.",
+      "fetch_failed": "Hindi ma-load ang mga log.",
+      "invalid_file": "Hindi valid na pangalan ng log file.",
+      "read_failed": "Hindi mabasa ang log file."
+    },
+    "playback": {
+      "chapters_file_failed": "Hindi maihanda ang mga chapter marker.",
+      "command_failed": "Hindi tinanggap ng player ang command.",
+      "init_failed": "Hindi masimulan ang player.",
+      "not_initialized": "Hindi pa handa ang player.",
+      "shutdown_failed": "Hindi maayos na huminto ang player."
+    },
+    "schedule": {
+      "cache_deserialize_failed": "Hindi mabasa ang naka-cache na iskedyul.",
+      "cache_serialize_failed": "Hindi ma-cache ang iskedyul."
+    },
+    "sync": {
+      "tracker_not_connected": "Hindi nakakonekta ang tracker na ito."
     }
+  },
+  "history": {
+    "title": "History"
   }
 }

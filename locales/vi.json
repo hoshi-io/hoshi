@@ -192,7 +192,8 @@
       "eps": "{{count}} tập",
       "chaps": "{{count}} chương",
       "more_info": "Thông tin",
-      "trailer": "Trailer"
+      "trailer": "Trailer",
+      "chapters": "{{count}} chương"
     }
   },
   "card": {
@@ -277,7 +278,8 @@
       "merge": "Hợp nhất",
       "conflict": "Xung đột",
       "history": "Lịch sử",
-      "no_history": "Không có lịch sử"
+      "no_history": "Không có lịch sử",
+      "saving": "Đang lưu..."
     },
     "browse": "Duyệt nội dung",
     "no_matches_desc": "Không có gì khớp với tìm kiếm hoặc bộ lọc hiện tại.",
@@ -345,8 +347,10 @@
       "show_details": "Hiện chi tiết",
       "syncing": "Đang đồng bộ",
       "title": "Đồng bộ",
-      "trackers": "Tracker"
-    }
+      "trackers": "Tracker",
+      "waiting": "{{n}} đang chờ"
+    },
+    "missing_mangaupdates": "Thiếu trên MangaUpdates"
   },
   "marketplace": {
     "title": "Chợ tiện ích",
@@ -369,7 +373,16 @@
     "manage_repos": "Quản lý kho",
     "all_languages": "Tất cả ngôn ngữ",
     "add_repo": "Thêm kho",
-    "repositories": "Kho"
+    "repositories": "Kho",
+    "invalid_url": "URL kho không hợp lệ",
+    "invalid_url_desc": "URL không trỏ đến kho tiện ích hợp lệ.",
+    "load_more": "Tải thêm",
+    "new_repo": "Kho mới",
+    "remove_repo": "Xóa kho",
+    "repositories_desc": "Các kho tiện ích để duyệt. Chọn một kho để xem tiện ích của nó.",
+    "update": "Cập nhật",
+    "updates_available": "Có bản cập nhật",
+    "use_repo": "Dùng kho này"
   },
   "reader": {
     "loading": "đang tải",
@@ -411,7 +424,8 @@
     "paragraph_spacing": "Khoảng cách đoạn",
     "content_width": "Chiều rộng nội dung",
     "align_left": "Căn trái",
-    "align_justify": "Căn đều"
+    "align_justify": "Căn đều",
+    "no_content": "Chương này không có nội dung."
   },
   "schedule": {
     "title": "Lịch chiếu",
@@ -428,7 +442,9 @@
     "empty_desc": "Không có tập phim nào được lên lịch trong khoảng thời gian đã chọn.",
     "airing_today": "Chiếu hôm nay",
     "watching": "Đang xem",
-    "planning": "Kế hoạch"
+    "planning": "Kế hoạch",
+    "show_my_list": "Chỉ hiện danh sách của tôi",
+    "showing_my_list": "Đang chỉ hiện danh sách của tôi"
   },
   "search": {
     "title": "Tìm kiếm",
@@ -488,7 +504,14 @@
     "search_settings": "Cài đặt tìm kiếm",
     "type": "Loại",
     "source": "Nguồn / Tiện ích",
-    "clear": "Xóa"
+    "clear": "Xóa",
+    "manhwa": "Manhwa",
+    "manhua": "Manhua",
+    "doujin": "Doujinshi",
+    "light_novel": "Light novel",
+    "one_shot": "Oneshot",
+    "other": "Khác",
+    "upcoming": "Sắp ra mắt"
   },
   "watch": {
     "episode_with_title": "Tập {{num}} - {{title}}",
@@ -497,6 +520,7 @@
     "loading": "Đang tải...",
     "loading_metadata": "Đang tải siêu dữ liệu...",
     "playback_error": "Lỗi phát lại",
+    "fix_match": "Chọn đúng tựa",
     "back_to_details": "Quay lại chi tiết",
     "torrent_change": "thay đổi",
     "torrent_seeders": "seed",
@@ -571,7 +595,12 @@
         "hide_sdh": "Ẩn mô tả âm thanh",
         "sdh_aggressive": "Mạnh hơn"
       }
-    }
+    },
+    "no_extensions": "Chưa cài tiện ích anime hoặc torrent nào.",
+    "no_metadata_for_query": "Không đủ thông tin để tìm torrent.",
+    "no_stream": "Tiện ích không trả về luồng phát nào.",
+    "no_torrent_match": "Không tìm thấy torrent phù hợp.",
+    "stream_load_failed": "Không thể tải luồng phát."
   },
   "content": {
     "details": "Chi tiết",
@@ -672,7 +701,9 @@
     "no_results": "Không tìm thấy mục phù hợp",
     "merge_warning": "{{title}} sẽ được gộp vào mục này và bị xóa vĩnh viễn. Không thể hoàn tác.",
     "merge_success": "Đã gộp các mục thành công",
-    "confirm_merge": "Xác nhận gộp"
+    "confirm_merge": "Xác nhận gộp",
+    "chapter": "Chương",
+    "confirm_delete_mapping": "Xóa liên kết tracker này?"
   },
   "discord": {
     "browsing": "Trong ứng dụng"
@@ -783,7 +814,8 @@
       "conflict_kitsu": "Ưu tiên Kitsu",
       "conflict_simkl": "Ưu tiên Simkl",
       "conflict_shikimori": "Ưu tiên Shikimori",
-      "conflict_mangabaka": "Ưu tiên MangaBaka"
+      "conflict_mangabaka": "Ưu tiên MangaBaka",
+      "conflict_mangaupdates": "Ưu tiên MangaUpdates"
     },
     "general_section": {
       "general_desc": "Quản lý các tùy chọn ứng dụng chung.",
@@ -824,7 +856,8 @@
       "metadata_provider_desc": "Chọn nguồn chính dùng cho tiêu đề, mô tả và ảnh bìa.",
       "auto_update_progress": "Tự động cập nhật tiến trình",
       "score_format": "Định dạng điểm",
-      "score_format_desc": "Chọn cách hiển thị điểm trên hoshi."
+      "score_format_desc": "Chọn cách hiển thị điểm trên hoshi.",
+      "auto_update_progress_desc": "Tự động cập nhật tiến độ trên tracker khi bạn xem hoặc đọc."
     },
     "extension_section": {
       "extensions_desc": "Quản lý các tiện ích đã cài đặt và cài đặt của chúng.",
@@ -840,7 +873,11 @@
       "unsupported_type": "Loại không hỗ trợ",
       "extension_config": "Cài đặt của {{name}}",
       "all_sources": "Tất cả nguồn",
-      "confirm_uninstall": "Xác nhận"
+      "confirm_uninstall": "Xác nhận",
+      "no_installed_desc": "Cài tiện ích từ Marketplace để bắt đầu xem và đọc.",
+      "saving": "Đang lưu...",
+      "select_option": "Chọn một tùy chọn",
+      "uninstall": "Gỡ cài đặt"
     },
     "player_section": {
       "player_desc": "Cấu hình trải nghiệm phát lại",
@@ -1426,15 +1463,21 @@
     "STORY": "Cốt truyện"
   },
   "error": {
-    "network": "Lỗi mạng",
     "system": {
-      "db_lock": "Cơ sở dữ liệu cục bộ bị khóa.",
       "setup_failed": "Lỗi nghiêm trọng trong quá trình thiết lập ứng dụng.",
       "io": "Lỗi đọc/ghi đĩa.",
       "serialization": "Không thể xử lý dữ liệu nội bộ.",
       "database": "Lỗi cơ sở dữ liệu nội bộ.",
       "internal": "Đã xảy ra lỗi máy chủ nội bộ không mong muốn.",
-      "external": "Dịch vụ bên ngoài không phản hồi."
+      "bad_request": "Yêu cầu không hợp lệ.",
+      "http_client_failed": "Không thể khởi tạo trình kết nối mạng.",
+      "migration_run_failed": "Không thể cập nhật cơ sở dữ liệu.",
+      "network": "Lỗi mạng. Hãy kiểm tra kết nối của bạn.",
+      "not_found": "Không tìm thấy.",
+      "parse": "Không thể đọc dữ liệu nhận được.",
+      "rate_limited": "Quá nhiều yêu cầu. Hãy thử lại sau giây lát.",
+      "unknown": "Đã xảy ra lỗi không xác định.",
+      "validation": "Một số giá trị không hợp lệ."
     },
     "auth": {
       "no_active_profile": "Không tìm thấy hồ sơ hoạt động.",
@@ -1444,17 +1487,14 @@
       "password_verification_failed": "Xác minh mật khẩu không thành công.",
       "incorrect_password": "Mật khẩu không chính xác.",
       "username_required": "Cần có tên người dùng.",
-      "unauthorized": "Truy cập trái phép."
-    },
-    "backup": {
-      "not_found": "Không tìm thấy bản sao lưu.",
-      "file_not_found": "Không tìm thấy tệp sao lưu trên đĩa.",
-      "creation_failed": "Không thể tạo bản sao lưu.",
-      "missing_tracker_name": "Thiếu tên trình theo dõi (tracker).",
-      "invalid_trigger": "Trình kích hoạt sao lưu không hợp lệ."
+      "unauthorized": "Truy cập trái phép.",
+      "failed": "Xác thực thất bại.",
+      "hashing_failed": "Không thể bảo mật mật khẩu."
     },
     "config": {
-      "invalid_patch_format": "Định dạng bản vá cấu hình không hợp lệ."
+      "invalid_patch_format": "Định dạng bản vá cấu hình không hợp lệ.",
+      "invalid": "Cấu hình không hợp lệ.",
+      "invalid_patch": "Thay đổi cài đặt không hợp lệ."
     },
     "tracker": {
       "unknown_tracker": "Trình theo dõi không xác định.",
@@ -1468,23 +1508,35 @@
       "invalid_credentials": "Thông tin đăng nhập không hợp lệ.",
       "missing_credentials": "Thiếu thông tin đăng nhập.",
       "not_registered": "Trình theo dõi chưa được đăng ký.",
-      "id_not_found": "Không tìm thấy ID trên trình theo dõi.",
       "anilist_not_registered": "AniList chưa được cấu hình.",
-      "simkl_not_registered": "Simkl chưa được cấu hình.",
-      "no_provider_available": "Không có nhà cung cấp trình theo dõi phù hợp."
+      "no_provider_available": "Không có nhà cung cấp trình theo dõi phù hợp.",
+      "bad_request": "Tracker đã từ chối yêu cầu.",
+      "connect_failed": "Không thể kết nối tracker.",
+      "http_error": "Tracker trả về lỗi.",
+      "insufficient_scope": "Tracker không cấp các quyền cần thiết.",
+      "integration_not_found": "Tracker này chưa được kết nối.",
+      "invalid_id": "ID tracker không hợp lệ.",
+      "invalid_status": "Trạng thái danh sách không hợp lệ cho tracker này.",
+      "not_found": "Không tìm thấy trên tracker.",
+      "not_in_registry": "Tracker này không khả dụng.",
+      "parse_failed": "Không thể đọc phản hồi của tracker.",
+      "rate_limited": "Tracker đang giới hạn yêu cầu. Hãy thử lại sau.",
+      "reauth_required": "Phiên tracker của bạn đã hết hạn. Hãy kết nối lại.",
+      "refresh_failed": "Không thể làm mới phiên tracker.",
+      "request_failed": "Không thể liên hệ tracker.",
+      "score_format_unknown": "Định dạng điểm không xác định trên tracker."
     },
     "list": {
       "content_not_found": "Không tìm thấy nội dung.",
-      "entry_not_found": "Không tìm thấy mục trong danh sách."
+      "entry_not_found": "Không tìm thấy mục trong danh sách.",
+      "missing_id": "Mục này thiếu ID tracker."
     },
     "proxy": {
       "no_url_provided": "Không có URL nào được cung cấp.",
       "upstream_error": "Lỗi máy chủ ngược dòng (upstream).",
       "upstream_timeout": "Hết thời gian chờ máy chủ ngược dòng.",
       "invalid_header": "Tiêu đề yêu cầu không hợp lệ.",
-      "body_read_failed": "Không thể đọc nội dung phản hồi.",
-      "invalid_upstream_url": "URL ngược dòng không hợp lệ.",
-      "binary_not_supported": "Luồng nhị phân không được hỗ trợ cho hành động này."
+      "body_read_failed": "Không thể đọc nội dung phản hồi."
     },
     "user": {
       "not_found": "Không tìm thấy người dùng.",
@@ -1505,24 +1557,28 @@
       "invalid_media_type": "Loại phương tiện không hợp lệ.",
       "extension_search_failed": "Tìm kiếm qua tiện ích mở rộng không thành công.",
       "no_match_found": "Không tìm thấy kết quả phù hợp.",
-      "invalid_items_list": "Định dạng danh sách mục không hợp lệ.",
       "item_number_not_found": "Không tìm thấy số thứ tự của mục.",
       "link_failed": "Không thể liên kết nội dung.",
-      "tracker_mapping_invalid": "Không thể liên kết trình theo dõi với nội dung chỉ có trong tiện ích mở rộng.",
       "mapping_not_found": "Không tìm thấy bản đồ liên kết (mapping).",
-      "data_missing": "Dữ liệu nội dung bị thiếu.",
-      "extension_only": "Hành động này không được phép đối với nội dung chỉ có trong tiện ích mở rộng."
+      "extension_metadata_failed": "Tiện ích không thể tải thông tin của tựa này.",
+      "extension_no_match": "Mục của tiện ích không khớp với tựa này.",
+      "invalid_content_type": "Loại nội dung không hợp lệ.",
+      "invalid_extension_response": "Tiện ích trả về phản hồi không hợp lệ.",
+      "merge_type_mismatch": "Không thể gộp các mục khác loại.",
+      "serialization": "Không thể xử lý dữ liệu nội dung.",
+      "tracker_media_not_found": "Không tìm thấy tựa này trên tracker."
     },
     "extension": {
       "not_found": "Không tìm thấy tiện ích mở rộng.",
-      "metadata_fetch_failed": "Không thể lấy siêu dữ liệu từ tiện ích mở rộng.",
-      "load_failed": "Không thể tải tiện ích mở rộng.",
       "install_network_failed": "Lỗi mạng trong quá trình cài đặt tiện ích mở rộng.",
       "invalid_manifest": "Tệp kê khai (manifest) của tiện ích mở rộng không hợp lệ.",
       "unsupported_type": "Loại tiện ích mở rộng không được hỗ trợ.",
       "invalid_script": "Tập lệnh (script) tiện ích mở rộng không hợp lệ.",
-      "io_error": "Lỗi I/O của tiện ích mở rộng.",
-      "script_missing": "Thiếu tập lệnh tiện ích mở rộng."
+      "script_missing": "Thiếu tập lệnh tiện ích mở rộng.",
+      "already_exists": "Đã có tiện ích với ID này.",
+      "id_mismatch": "ID tiện ích không khớp với manifest của nó.",
+      "invalid_id": "ID tiện ích không hợp lệ.",
+      "manifest_serialize": "Không thể lưu manifest của tiện ích."
     },
     "home": {
       "invalid_layout": "Bố cục trang chủ này không hợp lệ"
@@ -1537,16 +1593,59 @@
     "sandbox": {
       "serialization_failed": "Không thể chuẩn bị dữ liệu cho môi trường hộp cát (sandbox).",
       "runtime_init_failed": "Không thể khởi tạo môi trường chạy hộp cát.",
-      "execution_failed": "Thực thi tiện ích mở rộng không thành công.",
       "bad_json_response": "Phản hồi JSON không hợp lệ từ hộp cát.",
-      "thread_panicked": "Luồng hộp cát gặp sự cố."
+      "thread_panicked": "Luồng hộp cát gặp sự cố.",
+      "js_exception": "Tiện ích gặp lỗi."
     },
     "torrent": {
       "invalid_cache_key": "Mục bộ nhớ đệm không hợp lệ.",
       "cache_entry_in_use": "Torrent này đang được phát và không thể xóa.",
       "cache_entry_not_found": "Mục bộ nhớ đệm này không còn tồn tại.",
       "cache_delete_failed": "Không thể xóa các tệp trong bộ nhớ đệm.",
-      "cache_scan_failed": "Không thể đọc bộ nhớ đệm torrent."
+      "cache_scan_failed": "Không thể đọc bộ nhớ đệm torrent.",
+      "add_failed": "Không thể thêm torrent.",
+      "add_failed_no_handle": "Đã thêm torrent nhưng không thể mở.",
+      "concurrency_limit_reached": "Có quá nhiều torrent đang phát cùng lúc.",
+      "disk_check_failed": "Không thể kiểm tra dung lượng đĩa còn trống.",
+      "episode_not_in_torrent": "Tập này không có trong torrent.",
+      "init_timeout": "Torrent mất quá nhiều thời gian để khởi động.",
+      "insufficient_disk_space": "Không đủ dung lượng đĩa cho torrent này.",
+      "invalid_magnet": "Liên kết magnet không hợp lệ.",
+      "metadata_resolve_failed": "Không thể đọc metadata của torrent.",
+      "metadata_timeout": "Hết thời gian chờ metadata của torrent.",
+      "session_init_failed": "Không thể khởi động trình tải torrent."
+    },
+    "generic": "Đã xảy ra lỗi",
+    "enrichment": {
+      "bad_id_dump": "Dữ liệu ánh xạ ID không hợp lệ.",
+      "rate_limited": "Quá nhiều yêu cầu đến dịch vụ ánh xạ ID. Hãy thử lại sau.",
+      "unsupported_tracker": "Tracker này không được hỗ trợ để ánh xạ ID."
+    },
+    "import": {
+      "already_running": "Đang có một lần nhập khác chạy."
+    },
+    "logs": {
+      "delete_failed": "Không thể xóa tệp nhật ký.",
+      "fetch_failed": "Không thể tải nhật ký.",
+      "invalid_file": "Tên tệp nhật ký không hợp lệ.",
+      "read_failed": "Không thể đọc tệp nhật ký."
+    },
+    "playback": {
+      "chapters_file_failed": "Không thể chuẩn bị các mốc chương.",
+      "command_failed": "Trình phát không chấp nhận lệnh.",
+      "init_failed": "Không thể khởi động trình phát.",
+      "not_initialized": "Trình phát chưa sẵn sàng.",
+      "shutdown_failed": "Trình phát không thể dừng đúng cách."
+    },
+    "schedule": {
+      "cache_deserialize_failed": "Không thể đọc lịch đã lưu trong bộ nhớ đệm.",
+      "cache_serialize_failed": "Không thể lưu lịch vào bộ nhớ đệm."
+    },
+    "sync": {
+      "tracker_not_connected": "Tracker này chưa được kết nối."
     }
+  },
+  "history": {
+    "title": "Lịch sử"
   }
 }

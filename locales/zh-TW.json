@@ -192,7 +192,8 @@
       "eps": "{{count}} 集",
       "chaps": "{{count}} 話",
       "more_info": "詳情",
-      "trailer": "預告片"
+      "trailer": "預告片",
+      "chapters": "{{count}} 話"
     }
   },
   "card": {
@@ -277,7 +278,8 @@
       "merge": "合併",
       "conflict": "衝突",
       "history": "歷史紀錄",
-      "no_history": "暫無歷史紀錄"
+      "no_history": "暫無歷史紀錄",
+      "saving": "儲存中..."
     },
     "browse": "瀏覽內容",
     "no_matches_desc": "沒有符合目前搜尋或篩選條件的內容。",
@@ -345,8 +347,10 @@
       "show_details": "顯示詳細資訊",
       "syncing": "同步中",
       "title": "同步",
-      "trackers": "追蹤器"
-    }
+      "trackers": "追蹤器",
+      "waiting": "{{n}} 個等待中"
+    },
+    "missing_mangaupdates": "MangaUpdates 上缺少"
   },
   "marketplace": {
     "title": "市集",
@@ -369,7 +373,16 @@
     "manage_repos": "管理儲存庫",
     "all_languages": "所有語言",
     "add_repo": "新增儲存庫",
-    "repositories": "儲存庫"
+    "repositories": "儲存庫",
+    "invalid_url": "無效的儲存庫 URL",
+    "invalid_url_desc": "此 URL 未指向有效的擴充功能儲存庫。",
+    "load_more": "載入更多",
+    "new_repo": "新儲存庫",
+    "remove_repo": "移除儲存庫",
+    "repositories_desc": "可瀏覽的擴充功能儲存庫。選擇一個以查看其擴充功能。",
+    "update": "更新",
+    "updates_available": "有可用的更新",
+    "use_repo": "使用此儲存庫"
   },
   "reader": {
     "loading": "載入中",
@@ -411,7 +424,8 @@
     "paragraph_spacing": "段落間距",
     "content_width": "內容寬度",
     "align_left": "靠左",
-    "align_justify": "左右對齊"
+    "align_justify": "左右對齊",
+    "no_content": "本章沒有內容。"
   },
   "schedule": {
     "title": "播放表",
@@ -428,7 +442,9 @@
     "empty_desc": "所選時間段內沒有排定的集數。",
     "airing_today": "今日放送",
     "watching": "觀看中",
-    "planning": "計畫中"
+    "planning": "計畫中",
+    "show_my_list": "僅顯示我的清單",
+    "showing_my_list": "正在僅顯示我的清單"
   },
   "search": {
     "title": "搜尋",
@@ -488,7 +504,14 @@
     "search_settings": "搜尋設定",
     "type": "類型",
     "source": "來源 / 擴充功能",
-    "clear": "清除"
+    "clear": "清除",
+    "manhwa": "韓漫",
+    "manhua": "國漫",
+    "doujin": "同人誌",
+    "light_novel": "輕小說",
+    "one_shot": "短篇",
+    "other": "其他",
+    "upcoming": "即將推出"
   },
   "watch": {
     "episode_with_title": "第 {{num}} 集 - {{title}}",
@@ -497,6 +520,7 @@
     "loading": "載入中…",
     "loading_metadata": "正在載入中繼資料…",
     "playback_error": "播放錯誤",
+    "fix_match": "選擇正確的作品",
     "back_to_details": "返回詳細資訊",
     "torrent_change": "變更",
     "torrent_seeders": "做種者",
@@ -571,7 +595,12 @@
         "hide_sdh": "隱藏聲音描述",
         "sdh_aggressive": "更強力"
       }
-    }
+    },
+    "no_extensions": "未安裝任何動畫或種子擴充功能。",
+    "no_metadata_for_query": "資訊不足，無法搜尋種子。",
+    "no_stream": "擴充功能未傳回任何串流。",
+    "no_torrent_match": "找不到符合的種子。",
+    "stream_load_failed": "無法載入串流。"
   },
   "content": {
     "details": "詳情",
@@ -672,7 +701,9 @@
     "no_results": "找不到符合的項目",
     "merge_warning": "{{title}} 將會合併至此項目並永久刪除。此操作無法復原。",
     "merge_success": "項目合併成功",
-    "confirm_merge": "確認合併"
+    "confirm_merge": "確認合併",
+    "chapter": "章節",
+    "confirm_delete_mapping": "要移除此追蹤器對應嗎？"
   },
   "discord": {
     "browsing": "應用程式中"
@@ -783,7 +814,8 @@
       "conflict_kitsu": "優先 Kitsu",
       "conflict_simkl": "優先 Simkl",
       "conflict_shikimori": "優先 Shikimori",
-      "conflict_mangabaka": "優先 MangaBaka"
+      "conflict_mangabaka": "優先 MangaBaka",
+      "conflict_mangaupdates": "優先 MangaUpdates"
     },
     "general_section": {
       "general_desc": "管理全域應用程式偏好。",
@@ -824,7 +856,8 @@
       "metadata_provider_desc": "選擇標題、描述和封面圖片的主要來源。",
       "auto_update_progress": "自動更新進度",
       "score_format": "評分格式",
-      "score_format_desc": "選擇 hoshi 上的評分顯示方式。"
+      "score_format_desc": "選擇 hoshi 上的評分顯示方式。",
+      "auto_update_progress_desc": "觀看或閱讀時自動更新追蹤器上的進度。"
     },
     "extension_section": {
       "extensions_desc": "管理已安裝的擴充功能及其設定。",
@@ -840,7 +873,11 @@
       "unsupported_type": "不支援的類型",
       "extension_config": "{{name}} 設定",
       "all_sources": "所有來源",
-      "confirm_uninstall": "確認"
+      "confirm_uninstall": "確認",
+      "no_installed_desc": "從 Marketplace 安裝擴充功能以開始觀看和閱讀。",
+      "saving": "儲存中...",
+      "select_option": "選擇一個選項",
+      "uninstall": "解除安裝"
     },
     "player_section": {
       "player_desc": "設定你的播放體驗",
@@ -1426,15 +1463,21 @@
     "STORY": "原作故事"
   },
   "error": {
-    "network": "網路錯誤",
     "system": {
-      "db_lock": "本機資料庫被鎖定。",
       "setup_failed": "應用程式設定過程中發生嚴重錯誤。",
       "io": "磁碟讀寫錯誤。",
       "serialization": "無法處理內部資料。",
       "database": "內部資料庫錯誤。",
       "internal": "發生了意外的內部伺服器錯誤。",
-      "external": "外部服務未回應。"
+      "bad_request": "無效的請求。",
+      "http_client_failed": "無法初始化網路用戶端。",
+      "migration_run_failed": "無法更新資料庫。",
+      "network": "網路錯誤，請檢查你的連線。",
+      "not_found": "找不到。",
+      "parse": "無法讀取收到的資料。",
+      "rate_limited": "請求過多，請稍後再試。",
+      "unknown": "發生未知錯誤。",
+      "validation": "部分數值無效。"
     },
     "auth": {
       "no_active_profile": "找不到活動的設定檔。",
@@ -1444,17 +1487,14 @@
       "password_verification_failed": "密碼驗證失敗。",
       "incorrect_password": "密碼不正確。",
       "username_required": "需要使用者名稱。",
-      "unauthorized": "未經授權的存取。"
-    },
-    "backup": {
-      "not_found": "找不到備份。",
-      "file_not_found": "在磁碟上找不到備份檔案。",
-      "creation_failed": "建立備份失敗。",
-      "missing_tracker_name": "缺少追蹤器名稱。",
-      "invalid_trigger": "無效的備份觸發器。"
+      "unauthorized": "未經授權的存取。",
+      "failed": "驗證失敗。",
+      "hashing_failed": "無法保護密碼。"
     },
     "config": {
-      "invalid_patch_format": "設定更新格式無效。"
+      "invalid_patch_format": "設定更新格式無效。",
+      "invalid": "設定無效。",
+      "invalid_patch": "無效的設定變更。"
     },
     "tracker": {
       "unknown_tracker": "未知的追蹤器。",
@@ -1468,23 +1508,35 @@
       "invalid_credentials": "憑證無效。",
       "missing_credentials": "缺少憑證。",
       "not_registered": "追蹤器未註冊。",
-      "id_not_found": "在追蹤器上找不到該 ID。",
       "anilist_not_registered": "尚未設定 AniList。",
-      "simkl_not_registered": "尚未設定 Simkl。",
-      "no_provider_available": "沒有可用的追蹤器供應商。"
+      "no_provider_available": "沒有可用的追蹤器供應商。",
+      "bad_request": "追蹤器拒絕了請求。",
+      "connect_failed": "無法連接追蹤器。",
+      "http_error": "追蹤器傳回了錯誤。",
+      "insufficient_scope": "追蹤器未授予所需權限。",
+      "integration_not_found": "此追蹤器未連接。",
+      "invalid_id": "無效的追蹤器 ID。",
+      "invalid_status": "此追蹤器不支援該清單狀態。",
+      "not_found": "追蹤器上找不到。",
+      "not_in_registry": "此追蹤器無法使用。",
+      "parse_failed": "無法讀取追蹤器的回應。",
+      "rate_limited": "追蹤器正在限制請求，請稍後再試。",
+      "reauth_required": "你的追蹤器工作階段已過期，請重新連接。",
+      "refresh_failed": "無法重新整理追蹤器工作階段。",
+      "request_failed": "無法連線到追蹤器。",
+      "score_format_unknown": "追蹤器上的評分格式不明。"
     },
     "list": {
       "content_not_found": "找不到內容。",
-      "entry_not_found": "找不到列表項目。"
+      "entry_not_found": "找不到列表項目。",
+      "missing_id": "此項目缺少追蹤器 ID。"
     },
     "proxy": {
       "no_url_provided": "未提供 URL。",
       "upstream_error": "上游伺服器錯誤。",
       "upstream_timeout": "上游伺服器逾時。",
       "invalid_header": "無效的請求標頭。",
-      "body_read_failed": "無法讀取回應主體。",
-      "invalid_upstream_url": "無效的上游 URL。",
-      "binary_not_supported": "此操作不支援二進位串流。"
+      "body_read_failed": "無法讀取回應主體。"
     },
     "user": {
       "not_found": "找不到使用者。",
@@ -1505,24 +1557,28 @@
       "invalid_media_type": "無效的媒體類型。",
       "extension_search_failed": "透過擴充功能搜尋失敗。",
       "no_match_found": "找不到符合項。",
-      "invalid_items_list": "無效的項目列表格式。",
       "item_number_not_found": "找不到項目編號。",
       "link_failed": "連結內容失敗。",
-      "tracker_mapping_invalid": "無法將追蹤器連結到僅限擴充功能的內容。",
       "mapping_not_found": "找不到對應關係。",
-      "data_missing": "內容資料遺失。",
-      "extension_only": "不允許對僅限擴充功能的內容執行此操作。"
+      "extension_metadata_failed": "擴充功能無法載入此作品的詳細資料。",
+      "extension_no_match": "擴充功能的項目與此作品不符。",
+      "invalid_content_type": "無效的內容類型。",
+      "invalid_extension_response": "擴充功能傳回了無效的回應。",
+      "merge_type_mismatch": "無法合併不同類型的項目。",
+      "serialization": "無法處理內容資料。",
+      "tracker_media_not_found": "追蹤器上找不到此作品。"
     },
     "extension": {
       "not_found": "找不到擴充功能。",
-      "metadata_fetch_failed": "無法從擴充功能取得中繼資料。",
-      "load_failed": "無法載入擴充功能。",
       "install_network_failed": "安裝擴充功能時發生網路錯誤。",
       "invalid_manifest": "無效的擴充功能資訊清單 (manifest)。",
       "unsupported_type": "不支援的擴充功能類型。",
       "invalid_script": "無效的擴充功能指令碼。",
-      "io_error": "擴充功能 I/O 錯誤。",
-      "script_missing": "缺少擴充功能指令碼。"
+      "script_missing": "缺少擴充功能指令碼。",
+      "already_exists": "已存在使用此 ID 的擴充功能。",
+      "id_mismatch": "擴充功能 ID 與其資訊清單不符。",
+      "invalid_id": "無效的擴充功能 ID。",
+      "manifest_serialize": "無法儲存擴充功能資訊清單。"
     },
     "home": {
       "invalid_layout": "此首頁版面配置無效"
@@ -1537,16 +1593,59 @@
     "sandbox": {
       "serialization_failed": "序列化沙盒資料失敗。",
       "runtime_init_failed": "無法初始化沙盒執行階段。",
-      "execution_failed": "擴充功能執行失敗。",
       "bad_json_response": "沙盒傳回了無效的 JSON 回應。",
-      "thread_panicked": "沙盒執行緒崩潰。"
+      "thread_panicked": "沙盒執行緒崩潰。",
+      "js_exception": "擴充功能發生錯誤。"
     },
     "torrent": {
       "invalid_cache_key": "無效的快取項目。",
       "cache_entry_in_use": "此 Torrent 正在播放，無法刪除。",
       "cache_entry_not_found": "此快取項目已不存在。",
       "cache_delete_failed": "無法刪除快取檔案。",
-      "cache_scan_failed": "無法讀取 Torrent 快取。"
+      "cache_scan_failed": "無法讀取 Torrent 快取。",
+      "add_failed": "無法新增種子。",
+      "add_failed_no_handle": "種子已新增但無法開啟。",
+      "concurrency_limit_reached": "同時串流的種子過多。",
+      "disk_check_failed": "無法檢查可用磁碟空間。",
+      "episode_not_in_torrent": "種子中沒有這一集。",
+      "init_timeout": "種子啟動時間過長。",
+      "insufficient_disk_space": "磁碟空間不足，無法下載此種子。",
+      "invalid_magnet": "無效的磁力連結。",
+      "metadata_resolve_failed": "無法讀取種子的中繼資料。",
+      "metadata_timeout": "等待種子中繼資料逾時。",
+      "session_init_failed": "無法啟動種子用戶端。"
+    },
+    "generic": "發生了一些問題",
+    "enrichment": {
+      "bad_id_dump": "ID 對應資料無效。",
+      "rate_limited": "ID 對應服務請求過多，請稍後再試。",
+      "unsupported_tracker": "此追蹤器不支援 ID 對應。"
+    },
+    "import": {
+      "already_running": "已有匯入正在進行。"
+    },
+    "logs": {
+      "delete_failed": "無法刪除記錄檔。",
+      "fetch_failed": "無法載入記錄。",
+      "invalid_file": "無效的記錄檔名稱。",
+      "read_failed": "無法讀取記錄檔。"
+    },
+    "playback": {
+      "chapters_file_failed": "無法準備章節標記。",
+      "command_failed": "播放器未接受該指令。",
+      "init_failed": "無法啟動播放器。",
+      "not_initialized": "播放器尚未就緒。",
+      "shutdown_failed": "播放器未能正常停止。"
+    },
+    "schedule": {
+      "cache_deserialize_failed": "無法讀取快取的時間表。",
+      "cache_serialize_failed": "無法快取時間表。"
+    },
+    "sync": {
+      "tracker_not_connected": "此追蹤器未連接。"
     }
+  },
+  "history": {
+    "title": "歷史記錄"
   }
 }

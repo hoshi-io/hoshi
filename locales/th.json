@@ -192,7 +192,8 @@
       "eps": "{{count}} ตอน",
       "chaps": "{{count}} ตอน",
       "more_info": "รายละเอียด",
-      "trailer": "ตัวอย่าง"
+      "trailer": "ตัวอย่าง",
+      "chapters": "{{count}} ตอน"
     }
   },
   "card": {
@@ -277,7 +278,8 @@
       "merge": "ผสาน",
       "conflict": "ข้อขัดแย้ง",
       "history": "ประวัติ",
-      "no_history": "ไม่มีประวัติ"
+      "no_history": "ไม่มีประวัติ",
+      "saving": "กำลังบันทึก..."
     },
     "browse": "เรียกดูเนื้อหา",
     "no_matches_desc": "ไม่มีรายการที่ตรงกับการค้นหาหรือตัวกรองปัจจุบัน",
@@ -345,8 +347,10 @@
       "show_details": "แสดงรายละเอียด",
       "syncing": "กำลังซิงค์",
       "title": "ซิงค์",
-      "trackers": "แทร็กเกอร์"
-    }
+      "trackers": "แทร็กเกอร์",
+      "waiting": "รออยู่ {{n}}"
+    },
+    "missing_mangaupdates": "ไม่มีใน MangaUpdates"
   },
   "marketplace": {
     "title": "ตลาดส่วนขยาย",
@@ -369,7 +373,16 @@
     "manage_repos": "จัดการคลัง",
     "all_languages": "ทุกภาษา",
     "add_repo": "เพิ่มคลัง",
-    "repositories": "คลัง"
+    "repositories": "คลัง",
+    "invalid_url": "URL คลังไม่ถูกต้อง",
+    "invalid_url_desc": "URL นี้ไม่ได้ชี้ไปยังคลังส่วนขยายที่ถูกต้อง",
+    "load_more": "โหลดเพิ่ม",
+    "new_repo": "คลังใหม่",
+    "remove_repo": "ลบคลัง",
+    "repositories_desc": "คลังส่วนขยายสำหรับเรียกดู เลือกคลังเพื่อดูส่วนขยายในคลังนั้น",
+    "update": "อัปเดต",
+    "updates_available": "มีอัปเดตใหม่",
+    "use_repo": "ใช้คลังนี้"
   },
   "reader": {
     "loading": "กำลังโหลด",
@@ -411,7 +424,8 @@
     "paragraph_spacing": "ระยะห่างระหว่างย่อหน้า",
     "content_width": "ความกว้างเนื้อหา",
     "align_left": "ชิดซ้าย",
-    "align_justify": "จัดพอดีหน้า"
+    "align_justify": "จัดพอดีหน้า",
+    "no_content": "ตอนนี้ไม่มีเนื้อหา"
   },
   "schedule": {
     "title": "ตารางเวลา",
@@ -428,7 +442,9 @@
     "empty_desc": "ไม่มีตอนที่มีกำหนดการฉายในช่วงเวลาที่เลือก",
     "airing_today": "ฉายวันนี้",
     "watching": "กำลังดู",
-    "planning": "วางแผนจะดู"
+    "planning": "วางแผนจะดู",
+    "show_my_list": "แสดงเฉพาะรายการของฉัน",
+    "showing_my_list": "กำลังแสดงเฉพาะรายการของฉัน"
   },
   "search": {
     "title": "ค้นหา",
@@ -488,7 +504,14 @@
     "search_settings": "ตั้งค่าการค้นหา",
     "type": "ประเภท",
     "source": "แหล่งข้อมูล / ส่วนขยาย",
-    "clear": "ล้าง"
+    "clear": "ล้าง",
+    "manhwa": "มังฮวา",
+    "manhua": "มังฮัว",
+    "doujin": "โดจินชิ",
+    "light_novel": "ไลท์โนเวล",
+    "one_shot": "วันช็อต",
+    "other": "อื่นๆ",
+    "upcoming": "เร็วๆ นี้"
   },
   "watch": {
     "episode_with_title": "ตอนที่ {{num}} - {{title}}",
@@ -497,6 +520,7 @@
     "loading": "กำลังโหลด...",
     "loading_metadata": "กำลังโหลดข้อมูลเมตา...",
     "playback_error": "เกิดข้อผิดพลาดในการเล่น",
+    "fix_match": "เลือกเรื่องที่ถูกต้อง",
     "back_to_details": "กลับไปยังรายละเอียด",
     "torrent_change": "เปลี่ยน",
     "torrent_seeders": "ผู้ปล่อย",
@@ -571,7 +595,12 @@
         "hide_sdh": "ซ่อนคำอธิบายเสียง",
         "sdh_aggressive": "เข้มงวดมากขึ้น"
       }
-    }
+    },
+    "no_extensions": "ยังไม่ได้ติดตั้งส่วนขยายอนิเมะหรือทอร์เรนต์",
+    "no_metadata_for_query": "ข้อมูลไม่เพียงพอสำหรับค้นหาทอร์เรนต์",
+    "no_stream": "ส่วนขยายไม่ได้ส่งสตรีมกลับมา",
+    "no_torrent_match": "ไม่พบทอร์เรนต์ที่ตรงกัน",
+    "stream_load_failed": "ไม่สามารถโหลดสตรีมได้"
   },
   "content": {
     "details": "รายละเอียด",
@@ -672,7 +701,9 @@
     "no_results": "ไม่พบรายการที่ตรงกัน",
     "merge_warning": "{{title}} จะถูกรวมเข้ากับรายการนี้และถูกลบอย่างถาวร การดำเนินการนี้ไม่สามารถย้อนกลับได้",
     "merge_success": "รวมรายการเรียบร้อยแล้ว",
-    "confirm_merge": "ยืนยันการรวม"
+    "confirm_merge": "ยืนยันการรวม",
+    "chapter": "ตอน",
+    "confirm_delete_mapping": "ลบการเชื่อมโยงตัวติดตามนี้หรือไม่?"
   },
   "discord": {
     "browsing": "ในแอป"
@@ -783,7 +814,8 @@
       "conflict_kitsu": "ให้ความสำคัญกับ Kitsu ก่อน",
       "conflict_simkl": "ให้ความสำคัญกับ Simkl",
       "conflict_shikimori": "ให้ความสำคัญกับ Shikimori",
-      "conflict_mangabaka": "ให้ความสำคัญกับ MangaBaka"
+      "conflict_mangabaka": "ให้ความสำคัญกับ MangaBaka",
+      "conflict_mangaupdates": "ให้ความสำคัญกับ MangaUpdates"
     },
     "general_section": {
       "general_desc": "จัดการการตั้งค่าแอปโดยรวม",
@@ -824,7 +856,8 @@
       "metadata_provider_desc": "เลือกแหล่งข้อมูลหลักที่ใช้สำหรับชื่อเรื่อง คำอธิบาย และรูปหน้าปก",
       "auto_update_progress": "อัปเดตความคืบหน้าอัตโนมัติ",
       "score_format": "รูปแบบคะแนน",
-      "score_format_desc": "เลือกรูปแบบการแสดงคะแนนบน hoshi"
+      "score_format_desc": "เลือกรูปแบบการแสดงคะแนนบน hoshi",
+      "auto_update_progress_desc": "อัปเดตความคืบหน้าบนตัวติดตามโดยอัตโนมัติขณะดูหรืออ่าน"
     },
     "extension_section": {
       "extensions_desc": "จัดการส่วนขยายที่ติดตั้งและตั้งค่าต่างๆ",
@@ -840,7 +873,11 @@
       "unsupported_type": "ประเภทที่ไม่รองรับ",
       "extension_config": "ตั้งค่า {{name}}",
       "all_sources": "ทุกแหล่ง",
-      "confirm_uninstall": "ยืนยัน"
+      "confirm_uninstall": "ยืนยัน",
+      "no_installed_desc": "ติดตั้งส่วนขยายจาก Marketplace เพื่อเริ่มดูและอ่าน",
+      "saving": "กำลังบันทึก...",
+      "select_option": "เลือกตัวเลือก",
+      "uninstall": "ถอนการติดตั้ง"
     },
     "player_section": {
       "player_desc": "กำหนดค่าการเล่น ภาษา และระบบอัตโนมัติ",
@@ -1426,15 +1463,21 @@
     "STORY": "เรื่อง"
   },
   "error": {
-    "network": "ข้อผิดพลาดของเครือข่าย",
     "system": {
-      "db_lock": "ฐานข้อมูลในเครื่องถูกล็อก",
       "setup_failed": "เกิดข้อผิดพลาดร้ายแรงระหว่างการตั้งค่าแอปพลิเคชัน",
       "io": "ข้อผิดพลาดในการอ่าน/เขียนดิสก์",
       "serialization": "ล้มเหลวในการประมวลผลข้อมูลภายใน",
       "database": "ข้อผิดพลาดของฐานข้อมูลภายใน",
       "internal": "เกิดข้อผิดพลาดเซิร์ฟเวอร์ภายในที่ไม่คาดคิด",
-      "external": "บริการภายนอกไม่ตอบสนอง"
+      "bad_request": "คำขอไม่ถูกต้อง",
+      "http_client_failed": "ไม่สามารถเริ่มต้นไคลเอนต์เครือข่ายได้",
+      "migration_run_failed": "ไม่สามารถอัปเดตฐานข้อมูลได้",
+      "network": "ข้อผิดพลาดเครือข่าย โปรดตรวจสอบการเชื่อมต่อ",
+      "not_found": "ไม่พบ",
+      "parse": "ไม่สามารถอ่านข้อมูลที่ได้รับได้",
+      "rate_limited": "คำขอมากเกินไป โปรดลองอีกครั้งในอีกสักครู่",
+      "unknown": "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ",
+      "validation": "ค่าบางค่าไม่ถูกต้อง"
     },
     "auth": {
       "no_active_profile": "ไม่พบโปรไฟล์ที่ใช้งานอยู่",
@@ -1444,17 +1487,14 @@
       "password_verification_failed": "การตรวจสอบรหัสผ่านล้มเหลว",
       "incorrect_password": "รหัสผ่านไม่ถูกต้อง",
       "username_required": "จำเป็นต้องระบุชื่อผู้ใช้",
-      "unauthorized": "การเข้าถึงที่ไม่ได้รับอนุญาต"
-    },
-    "backup": {
-      "not_found": "ไม่พบข้อมูลสำรอง",
-      "file_not_found": "ไม่พบไฟล์ข้อมูลสำรองบนดิสก์",
-      "creation_failed": "ล้มเหลวในการสร้างข้อมูลสำรอง",
-      "missing_tracker_name": "ไม่มีชื่อตัวติดตาม (tracker)",
-      "invalid_trigger": "ตัวเรียกใช้งานการสำรองข้อมูลไม่ถูกต้อง"
+      "unauthorized": "การเข้าถึงที่ไม่ได้รับอนุญาต",
+      "failed": "การยืนยันตัวตนล้มเหลว",
+      "hashing_failed": "ไม่สามารถรักษาความปลอดภัยรหัสผ่านได้"
     },
     "config": {
-      "invalid_patch_format": "รูปแบบการอัปเดตการตั้งค่าไม่ถูกต้อง"
+      "invalid_patch_format": "รูปแบบการอัปเดตการตั้งค่าไม่ถูกต้อง",
+      "invalid": "การกำหนดค่าไม่ถูกต้อง",
+      "invalid_patch": "การเปลี่ยนการตั้งค่าไม่ถูกต้อง"
     },
     "tracker": {
       "unknown_tracker": "ตัวติดตามที่ไม่รู้จัก",
@@ -1468,23 +1508,35 @@
       "invalid_credentials": "ข้อมูลประจำตัวไม่ถูกต้อง",
       "missing_credentials": "ไม่มีข้อมูลประจำตัว",
       "not_registered": "ตัวติดตามไม่ได้ลงทะเบียน",
-      "id_not_found": "ไม่พบ ID ในตัวติดตาม",
       "anilist_not_registered": "AniList ไม่ได้ตั้งค่า",
-      "simkl_not_registered": "Simkl ไม่ได้ตั้งค่า",
-      "no_provider_available": "ไม่มีผู้ให้บริการตัวติดตามที่เหมาะสม"
+      "no_provider_available": "ไม่มีผู้ให้บริการตัวติดตามที่เหมาะสม",
+      "bad_request": "ตัวติดตามปฏิเสธคำขอ",
+      "connect_failed": "ไม่สามารถเชื่อมต่อตัวติดตามได้",
+      "http_error": "ตัวติดตามส่งข้อผิดพลาดกลับมา",
+      "insufficient_scope": "ตัวติดตามไม่ได้ให้สิทธิ์ที่จำเป็น",
+      "integration_not_found": "ตัวติดตามนี้ยังไม่ได้เชื่อมต่อ",
+      "invalid_id": "ID ตัวติดตามไม่ถูกต้อง",
+      "invalid_status": "สถานะรายการไม่ถูกต้องสำหรับตัวติดตามนี้",
+      "not_found": "ไม่พบในตัวติดตาม",
+      "not_in_registry": "ตัวติดตามนี้ใช้งานไม่ได้",
+      "parse_failed": "ไม่สามารถอ่านการตอบกลับของตัวติดตามได้",
+      "rate_limited": "ตัวติดตามกำลังจำกัดคำขอ โปรดลองอีกครั้งภายหลัง",
+      "reauth_required": "เซสชันตัวติดตามของคุณหมดอายุแล้ว โปรดเชื่อมต่อใหม่",
+      "refresh_failed": "ไม่สามารถต่ออายุเซสชันตัวติดตามได้",
+      "request_failed": "ไม่สามารถติดต่อตัวติดตามได้",
+      "score_format_unknown": "รูปแบบคะแนนที่ไม่รู้จักบนตัวติดตาม"
     },
     "list": {
       "content_not_found": "ไม่พบเนื้อหา",
-      "entry_not_found": "ไม่พบรายการนี้"
+      "entry_not_found": "ไม่พบรายการนี้",
+      "missing_id": "รายการนี้ไม่มี ID ตัวติดตาม"
     },
     "proxy": {
       "no_url_provided": "ไม่ได้ระบุ URL",
       "upstream_error": "ข้อผิดพลาดเซิร์ฟเวอร์ต้นทาง (Upstream)",
       "upstream_timeout": "เซิร์ฟเวอร์ต้นทางหมดเวลาตอบสนอง",
       "invalid_header": "ส่วนหัวคำขอไม่ถูกต้อง",
-      "body_read_failed": "ล้มเหลวในการอ่านเนื้อหาการตอบสนอง",
-      "invalid_upstream_url": "URL ต้นทางไม่ถูกต้อง",
-      "binary_not_supported": "ไม่รองรับสตรีมไบนารีสำหรับการดำเนินการนี้"
+      "body_read_failed": "ล้มเหลวในการอ่านเนื้อหาการตอบสนอง"
     },
     "user": {
       "not_found": "ไม่พบผู้ใช้",
@@ -1505,24 +1557,28 @@
       "invalid_media_type": "ประเภทสื่อไม่ถูกต้อง",
       "extension_search_failed": "การค้นหาผ่านส่วนขยายล้มเหลว",
       "no_match_found": "ไม่พบข้อมูลที่ตรงกัน",
-      "invalid_items_list": "รูปแบบรายการไม่ถูกต้อง",
       "item_number_not_found": "ไม่พบหมายเลขรายการ",
       "link_failed": "ล้มเหลวในการเชื่อมโยงเนื้อหา",
-      "tracker_mapping_invalid": "ไม่สามารถเชื่อมโยงตัวติดตามกับเนื้อหาที่มีเฉพาะในส่วนขยาย",
       "mapping_not_found": "ไม่พบการเชื่อมโยง",
-      "data_missing": "ข้อมูลเนื้อหาขาดหายไป",
-      "extension_only": "ไม่อนุญาตให้ดำเนินการนี้บนเนื้อหาที่มีเฉพาะในส่วนขยาย"
+      "extension_metadata_failed": "ส่วนขยายไม่สามารถโหลดรายละเอียดของเรื่องนี้ได้",
+      "extension_no_match": "รายการของส่วนขยายไม่ตรงกับเรื่องนี้",
+      "invalid_content_type": "ประเภทเนื้อหาไม่ถูกต้อง",
+      "invalid_extension_response": "ส่วนขยายส่งการตอบกลับที่ไม่ถูกต้อง",
+      "merge_type_mismatch": "ไม่สามารถรวมรายการที่ต่างประเภทกันได้",
+      "serialization": "ไม่สามารถประมวลผลข้อมูลเนื้อหาได้",
+      "tracker_media_not_found": "ไม่พบเรื่องนี้ในตัวติดตาม"
     },
     "extension": {
       "not_found": "ไม่พบส่วนขยาย",
-      "metadata_fetch_failed": "ล้มเหลวในการดึงข้อมูลเมตาจากส่วนขยาย",
-      "load_failed": "ล้มเหลวในการโหลดส่วนขยาย",
       "install_network_failed": "ข้อผิดพลาดของเครือข่ายระหว่างการติดตั้งส่วนขยาย",
       "invalid_manifest": "ไฟล์ Manifest ของส่วนขยายไม่ถูกต้อง",
       "unsupported_type": "ไม่รองรับประเภทส่วนขยายนี้",
       "invalid_script": "สคริปต์ส่วนขยายไม่ถูกต้อง",
-      "io_error": "ข้อผิดพลาด I/O ของส่วนขยาย",
-      "script_missing": "สคริปต์ส่วนขยายหายไป"
+      "script_missing": "สคริปต์ส่วนขยายหายไป",
+      "already_exists": "มีส่วนขยายที่ใช้ ID นี้อยู่แล้ว",
+      "id_mismatch": "ID ส่วนขยายไม่ตรงกับไฟล์ manifest",
+      "invalid_id": "ID ส่วนขยายไม่ถูกต้อง",
+      "manifest_serialize": "ไม่สามารถบันทึกไฟล์ manifest ของส่วนขยายได้"
     },
     "home": {
       "invalid_layout": "เลย์เอาต์หน้าแรกนี้ไม่ถูกต้อง"
@@ -1537,16 +1593,59 @@
     "sandbox": {
       "serialization_failed": "ล้มเหลวในการแปลงข้อมูลสำหรับ Sandbox",
       "runtime_init_failed": "ล้มเหลวในการเริ่มต้น Sandbox runtime",
-      "execution_failed": "การทำงานของส่วนขยายล้มเหลว",
       "bad_json_response": "การตอบสนอง JSON จาก Sandbox ไม่ถูกต้อง",
-      "thread_panicked": "เธรด (Thread) ของ Sandbox เกิดข้อผิดพลาดร้ายแรง"
+      "thread_panicked": "เธรด (Thread) ของ Sandbox เกิดข้อผิดพลาดร้ายแรง",
+      "js_exception": "ส่วนขยายพบข้อผิดพลาด"
     },
     "torrent": {
       "invalid_cache_key": "รายการแคชไม่ถูกต้อง",
       "cache_entry_in_use": "ทอร์เรนต์นี้กำลังเล่นอยู่และไม่สามารถลบได้",
       "cache_entry_not_found": "ไม่มีรายการแคชนี้แล้ว",
       "cache_delete_failed": "ไม่สามารถลบไฟล์ที่อยู่ในแคชได้",
-      "cache_scan_failed": "ไม่สามารถอ่านแคชทอร์เรนต์ได้"
+      "cache_scan_failed": "ไม่สามารถอ่านแคชทอร์เรนต์ได้",
+      "add_failed": "ไม่สามารถเพิ่มทอร์เรนต์ได้",
+      "add_failed_no_handle": "เพิ่มทอร์เรนต์แล้วแต่ไม่สามารถเปิดได้",
+      "concurrency_limit_reached": "มีทอร์เรนต์สตรีมพร้อมกันมากเกินไป",
+      "disk_check_failed": "ไม่สามารถตรวจสอบพื้นที่ดิสก์ที่เหลือได้",
+      "episode_not_in_torrent": "ตอนนี้ไม่มีอยู่ในทอร์เรนต์",
+      "init_timeout": "ทอร์เรนต์ใช้เวลาเริ่มต้นนานเกินไป",
+      "insufficient_disk_space": "พื้นที่ดิสก์ไม่เพียงพอสำหรับทอร์เรนต์นี้",
+      "invalid_magnet": "ลิงก์ magnet ไม่ถูกต้อง",
+      "metadata_resolve_failed": "ไม่สามารถอ่านเมทาดาทาของทอร์เรนต์ได้",
+      "metadata_timeout": "หมดเวลารอเมทาดาทาของทอร์เรนต์",
+      "session_init_failed": "ไม่สามารถเริ่มไคลเอนต์ทอร์เรนต์ได้"
+    },
+    "generic": "เกิดข้อผิดพลาดบางอย่าง",
+    "enrichment": {
+      "bad_id_dump": "ข้อมูลการจับคู่ ID ไม่ถูกต้อง",
+      "rate_limited": "คำขอไปยังบริการจับคู่ ID มากเกินไป โปรดลองอีกครั้งภายหลัง",
+      "unsupported_tracker": "ตัวติดตามนี้ไม่รองรับการจับคู่ ID"
+    },
+    "import": {
+      "already_running": "มีการนำเข้ากำลังทำงานอยู่แล้ว"
+    },
+    "logs": {
+      "delete_failed": "ไม่สามารถลบไฟล์บันทึกได้",
+      "fetch_failed": "ไม่สามารถโหลดบันทึกได้",
+      "invalid_file": "ชื่อไฟล์บันทึกไม่ถูกต้อง",
+      "read_failed": "ไม่สามารถอ่านไฟล์บันทึกได้"
+    },
+    "playback": {
+      "chapters_file_failed": "ไม่สามารถเตรียมเครื่องหมายบทได้",
+      "command_failed": "เครื่องเล่นไม่รับคำสั่ง",
+      "init_failed": "ไม่สามารถเริ่มเครื่องเล่นได้",
+      "not_initialized": "เครื่องเล่นยังไม่พร้อม",
+      "shutdown_failed": "เครื่องเล่นหยุดทำงานไม่สมบูรณ์"
+    },
+    "schedule": {
+      "cache_deserialize_failed": "ไม่สามารถอ่านตารางที่แคชไว้ได้",
+      "cache_serialize_failed": "ไม่สามารถแคชตารางได้"
+    },
+    "sync": {
+      "tracker_not_connected": "ตัวติดตามนี้ยังไม่ได้เชื่อมต่อ"
     }
+  },
+  "history": {
+    "title": "ประวัติ"
   }
 }

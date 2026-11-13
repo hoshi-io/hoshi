@@ -121,6 +121,7 @@
             case 'kitsu': return id.includes(':') ? `https://kitsu.io/${id.replace(':', '/')}` : `https://kitsu.io/${mediaType}/${id}`;
             case 'shikimori': return `https://shikimori.one/${mediaType}s/${id}`;
             case 'mangaupdates': return `https://www.mangaupdates.com/series/${id}`;
+            case 'mangabaka': return `https://mangabaka.org/${id}`;
             default: return '#';
         }
     }

@@ -192,7 +192,8 @@
       "eps": "{{count}}화",
       "chaps": "{{count}}화",
       "more_info": "정보",
-      "trailer": "트레일러"
+      "trailer": "트레일러",
+      "chapters": "{{count}}화"
     }
   },
   "card": {
@@ -277,7 +278,8 @@
       "merge": "병합",
       "conflict": "충돌",
       "history": "기록",
-      "no_history": "기록 없음"
+      "no_history": "기록 없음",
+      "saving": "저장 중..."
     },
     "browse": "콘텐츠 둘러보기",
     "no_matches_desc": "현재 검색 또는 필터와 일치하는 항목이 없습니다.",
@@ -345,8 +347,10 @@
       "show_details": "세부 정보 보기",
       "syncing": "동기화 중",
       "title": "동기화",
-      "trackers": "트래커"
-    }
+      "trackers": "트래커",
+      "waiting": "{{n}}개 대기 중"
+    },
+    "missing_mangaupdates": "MangaUpdates에 없음"
   },
   "marketplace": {
     "title": "마켓플레이스",
@@ -369,7 +373,16 @@
     "manage_repos": "저장소 관리",
     "all_languages": "모든 언어",
     "add_repo": "저장소 추가",
-    "repositories": "저장소"
+    "repositories": "저장소",
+    "invalid_url": "잘못된 저장소 URL",
+    "invalid_url_desc": "URL이 유효한 확장 프로그램 저장소를 가리키지 않습니다.",
+    "load_more": "더 불러오기",
+    "new_repo": "새 저장소",
+    "remove_repo": "저장소 제거",
+    "repositories_desc": "둘러볼 확장 프로그램 저장소입니다. 하나를 선택하면 해당 확장 프로그램이 표시됩니다.",
+    "update": "업데이트",
+    "updates_available": "업데이트 가능",
+    "use_repo": "이 저장소 사용"
   },
   "reader": {
     "loading": "로딩 중",
@@ -411,7 +424,8 @@
     "paragraph_spacing": "단락 간격",
     "content_width": "본문 너비",
     "align_left": "왼쪽 정렬",
-    "align_justify": "양끝 정렬"
+    "align_justify": "양끝 정렬",
+    "no_content": "이 챕터에는 내용이 없습니다."
   },
   "schedule": {
     "title": "편성표",
@@ -428,7 +442,9 @@
     "empty_desc": "선택한 기간 내에 예정된 에피소드가 없습니다.",
     "airing_today": "오늘 방영",
     "watching": "시청 중",
-    "planning": "시청 예정"
+    "planning": "시청 예정",
+    "show_my_list": "내 목록만 보기",
+    "showing_my_list": "내 목록만 표시 중"
   },
   "search": {
     "title": "검색",
@@ -488,7 +504,14 @@
     "search_settings": "검색 설정",
     "type": "유형",
     "source": "소스 / 확장 프로그램",
-    "clear": "지우기"
+    "clear": "지우기",
+    "manhwa": "만화(한국)",
+    "manhua": "만화(중국)",
+    "doujin": "동인지",
+    "light_novel": "라이트 노벨",
+    "one_shot": "단편",
+    "other": "기타",
+    "upcoming": "공개 예정"
   },
   "watch": {
     "episode_with_title": "{{num}}화 - {{title}}",
@@ -497,6 +520,7 @@
     "loading": "로딩 중...",
     "loading_metadata": "메타데이터 로딩 중...",
     "playback_error": "재생 오류",
+    "fix_match": "올바른 작품 선택",
     "back_to_details": "상세 정보로 돌아가기",
     "torrent_change": "변경",
     "torrent_seeders": "시더",
@@ -571,7 +595,12 @@
         "hide_sdh": "음향 설명 숨기기",
         "sdh_aggressive": "더 강하게"
       }
-    }
+    },
+    "no_extensions": "설치된 애니메이션 또는 토렌트 확장 프로그램이 없습니다.",
+    "no_metadata_for_query": "토렌트를 검색할 정보가 부족합니다.",
+    "no_stream": "확장 프로그램이 스트림을 반환하지 않았습니다.",
+    "no_torrent_match": "일치하는 토렌트를 찾지 못했습니다.",
+    "stream_load_failed": "스트림을 불러올 수 없습니다."
   },
   "content": {
     "details": "상세 정보",
@@ -672,7 +701,9 @@
     "no_results": "일치하는 항목을 찾을 수 없습니다",
     "merge_warning": "{{title}}이(가) 이 항목에 병합된 후 영구적으로 삭제됩니다. 이 작업은 취소할 수 없습니다.",
     "merge_success": "항목이 성공적으로 병합되었습니다",
-    "confirm_merge": "병합 확인"
+    "confirm_merge": "병합 확인",
+    "chapter": "챕터",
+    "confirm_delete_mapping": "이 트래커 연결을 삭제할까요?"
   },
   "discord": {
     "browsing": "앱 시청 중"
@@ -783,7 +814,8 @@
       "conflict_kitsu": "Kitsu 우선",
       "conflict_simkl": "Simkl 우선",
       "conflict_shikimori": "Shikimori 우선",
-      "conflict_mangabaka": "MangaBaka 우선"
+      "conflict_mangabaka": "MangaBaka 우선",
+      "conflict_mangaupdates": "MangaUpdates 우선"
     },
     "general_section": {
       "general_desc": "글로벌 앱 설정을 관리합니다.",
@@ -824,7 +856,8 @@
       "metadata_provider_desc": "제목, 설명 및 표지 이미지에 사용할 기본 소스를 선택하세요.",
       "auto_update_progress": "진행 상황 자동 업데이트",
       "score_format": "점수 형식",
-      "score_format_desc": "hoshi에서 점수가 표시되는 방식을 선택합니다."
+      "score_format_desc": "hoshi에서 점수가 표시되는 방식을 선택합니다.",
+      "auto_update_progress_desc": "시청하거나 읽는 동안 트래커 진행 상황을 자동으로 업데이트합니다."
     },
     "extension_section": {
       "extensions_desc": "설치된 확장 프로그램과 설정을 관리합니다.",
@@ -840,7 +873,11 @@
       "unsupported_type": "지원되지 않는 유형",
       "extension_config": "{{name}} 설정",
       "all_sources": "모든 소스",
-      "confirm_uninstall": "확인"
+      "confirm_uninstall": "확인",
+      "no_installed_desc": "Marketplace에서 확장 프로그램을 설치하여 시청과 읽기를 시작하세요.",
+      "saving": "저장 중...",
+      "select_option": "옵션 선택",
+      "uninstall": "제거"
     },
     "player_section": {
       "player_desc": "재생 환경을 설정합니다",
@@ -1426,15 +1463,21 @@
     "STORY": "스토리"
   },
   "error": {
-    "network": "네트워크 오류",
     "system": {
-      "db_lock": "로컬 데이터베이스가 잠겨 있습니다.",
       "setup_failed": "애플리케이션 설정 중 치명적인 오류가 발생했습니다.",
       "io": "디스크 읽기/쓰기 오류입니다.",
       "serialization": "내부 데이터를 처리하지 못했습니다.",
       "database": "내부 데이터베이스 오류입니다.",
       "internal": "예기치 않은 내부 서버 오류가 발생했습니다.",
-      "external": "외부 서비스가 응답하지 않습니다."
+      "bad_request": "잘못된 요청입니다.",
+      "http_client_failed": "네트워크 클라이언트를 초기화할 수 없습니다.",
+      "migration_run_failed": "데이터베이스를 업데이트할 수 없습니다.",
+      "network": "네트워크 오류입니다. 연결을 확인하세요.",
+      "not_found": "찾을 수 없습니다.",
+      "parse": "받은 데이터를 읽을 수 없습니다.",
+      "rate_limited": "요청이 너무 많습니다. 잠시 후 다시 시도하세요.",
+      "unknown": "알 수 없는 오류가 발생했습니다.",
+      "validation": "일부 값이 유효하지 않습니다."
     },
     "auth": {
       "no_active_profile": "활성 프로필을 찾을 수 없습니다.",
@@ -1444,17 +1487,14 @@
       "password_verification_failed": "비밀번호 확인에 실패했습니다.",
       "incorrect_password": "잘못된 비밀번호입니다.",
       "username_required": "사용자 이름이 필요합니다.",
-      "unauthorized": "무단 액세스입니다."
-    },
-    "backup": {
-      "not_found": "백업을 찾을 수 없습니다.",
-      "file_not_found": "디스크에서 백업 파일을 찾을 수 없습니다.",
-      "creation_failed": "백업을 생성하지 못했습니다.",
-      "missing_tracker_name": "트래커 이름이 누락되었습니다.",
-      "invalid_trigger": "잘못된 백업 트리거입니다."
+      "unauthorized": "무단 액세스입니다.",
+      "failed": "인증에 실패했습니다.",
+      "hashing_failed": "비밀번호를 보호할 수 없습니다."
     },
     "config": {
-      "invalid_patch_format": "잘못된 구성 업데이트 형식입니다."
+      "invalid_patch_format": "잘못된 구성 업데이트 형식입니다.",
+      "invalid": "구성이 유효하지 않습니다.",
+      "invalid_patch": "잘못된 설정 변경입니다."
     },
     "tracker": {
       "unknown_tracker": "알 수 없는 트래커입니다.",
@@ -1468,23 +1508,35 @@
       "invalid_credentials": "잘못된 자격 증명입니다.",
       "missing_credentials": "자격 증명이 누락되었습니다.",
       "not_registered": "트래커가 등록되지 않았습니다.",
-      "id_not_found": "트래커에서 ID를 찾을 수 없습니다.",
       "anilist_not_registered": "AniList가 구성되지 않았습니다.",
-      "simkl_not_registered": "Simkl이 구성되지 않았습니다.",
-      "no_provider_available": "사용 가능한 트래커 제공자가 없습니다."
+      "no_provider_available": "사용 가능한 트래커 제공자가 없습니다.",
+      "bad_request": "트래커가 요청을 거부했습니다.",
+      "connect_failed": "트래커를 연결할 수 없습니다.",
+      "http_error": "트래커가 오류를 반환했습니다.",
+      "insufficient_scope": "트래커가 필요한 권한을 허용하지 않았습니다.",
+      "integration_not_found": "이 트래커는 연결되어 있지 않습니다.",
+      "invalid_id": "잘못된 트래커 ID입니다.",
+      "invalid_status": "이 트래커에 유효하지 않은 목록 상태입니다.",
+      "not_found": "트래커에서 찾을 수 없습니다.",
+      "not_in_registry": "이 트래커를 사용할 수 없습니다.",
+      "parse_failed": "트래커 응답을 읽을 수 없습니다.",
+      "rate_limited": "트래커가 요청을 제한하고 있습니다. 나중에 다시 시도하세요.",
+      "reauth_required": "트래커 세션이 만료되었습니다. 다시 연결하세요.",
+      "refresh_failed": "트래커 세션을 갱신할 수 없습니다.",
+      "request_failed": "트래커에 연결할 수 없습니다.",
+      "score_format_unknown": "트래커의 점수 형식을 알 수 없습니다."
     },
     "list": {
       "content_not_found": "콘텐츠를 찾을 수 없습니다.",
-      "entry_not_found": "목록 항목을 찾을 수 없습니다."
+      "entry_not_found": "목록 항목을 찾을 수 없습니다.",
+      "missing_id": "이 항목에 트래커 ID가 없습니다."
     },
     "proxy": {
       "no_url_provided": "URL이 제공되지 않았습니다.",
       "upstream_error": "업스트림 서버 오류입니다.",
       "upstream_timeout": "업스트림 서버 시간이 초과되었습니다.",
       "invalid_header": "잘못된 요청 헤더입니다.",
-      "body_read_failed": "응답 본문을 읽지 못했습니다.",
-      "invalid_upstream_url": "잘못된 업스트림 URL입니다.",
-      "binary_not_supported": "이 작업에는 바이너리 스트림이 지원되지 않습니다."
+      "body_read_failed": "응답 본문을 읽지 못했습니다."
     },
     "user": {
       "not_found": "사용자를 찾을 수 없습니다.",
@@ -1505,24 +1557,28 @@
       "invalid_media_type": "잘못된 미디어 유형입니다.",
       "extension_search_failed": "확장 프로그램을 통한 검색에 실패했습니다.",
       "no_match_found": "일치하는 항목을 찾을 수 없습니다.",
-      "invalid_items_list": "잘못된 항목 목록 형식입니다.",
       "item_number_not_found": "항목 번호를 찾을 수 없습니다.",
       "link_failed": "콘텐츠를 연결하지 못했습니다.",
-      "tracker_mapping_invalid": "트래커를 확장 프로그램 전용 콘텐츠에 연결할 수 없습니다.",
       "mapping_not_found": "매핑을 찾을 수 없습니다.",
-      "data_missing": "콘텐츠 데이터가 누락되었습니다.",
-      "extension_only": "이 작업은 확장 프로그램 전용 콘텐츠에서 허용되지 않습니다."
+      "extension_metadata_failed": "확장 프로그램이 이 작품의 세부 정보를 불러오지 못했습니다.",
+      "extension_no_match": "확장 프로그램의 항목이 이 작품과 일치하지 않습니다.",
+      "invalid_content_type": "잘못된 콘텐츠 유형입니다.",
+      "invalid_extension_response": "확장 프로그램이 잘못된 응답을 반환했습니다.",
+      "merge_type_mismatch": "유형이 다른 항목은 병합할 수 없습니다.",
+      "serialization": "콘텐츠 데이터를 처리할 수 없습니다.",
+      "tracker_media_not_found": "트래커에서 이 작품을 찾을 수 없습니다."
     },
     "extension": {
       "not_found": "확장 프로그램을 찾을 수 없습니다.",
-      "metadata_fetch_failed": "확장 프로그램에서 메타데이터를 가져오지 못했습니다.",
-      "load_failed": "확장 프로그램을 로드하지 못했습니다.",
       "install_network_failed": "확장 프로그램 설치 중 네트워크 오류가 발생했습니다.",
       "invalid_manifest": "잘못된 확장 프로그램 매니페스트입니다.",
       "unsupported_type": "지원되지 않는 확장 프로그램 유형입니다.",
       "invalid_script": "잘못된 확장 프로그램 스크립트입니다.",
-      "io_error": "확장 프로그램 I/O 오류입니다.",
-      "script_missing": "확장 프로그램 스크립트가 누락되었습니다."
+      "script_missing": "확장 프로그램 스크립트가 누락되었습니다.",
+      "already_exists": "이 ID를 가진 확장 프로그램이 이미 있습니다.",
+      "id_mismatch": "확장 프로그램 ID가 매니페스트와 일치하지 않습니다.",
+      "invalid_id": "잘못된 확장 프로그램 ID입니다.",
+      "manifest_serialize": "확장 프로그램 매니페스트를 저장할 수 없습니다."
     },
     "home": {
       "invalid_layout": "이 홈 레이아웃은 유효하지 않습니다"
@@ -1537,16 +1593,59 @@
     "sandbox": {
       "serialization_failed": "샌드박스 데이터를 직렬화하지 못했습니다.",
       "runtime_init_failed": "샌드박스 런타임을 초기화하지 못했습니다.",
-      "execution_failed": "확장 프로그램 실행에 실패했습니다.",
       "bad_json_response": "샌드박스에서 잘못된 JSON 응답이 반환되었습니다.",
-      "thread_panicked": "샌드박스 스레드가 예기치 않게 종료되었습니다."
+      "thread_panicked": "샌드박스 스레드가 예기치 않게 종료되었습니다.",
+      "js_exception": "확장 프로그램에서 오류가 발생했습니다."
     },
     "torrent": {
       "invalid_cache_key": "잘못된 캐시 항목입니다.",
       "cache_entry_in_use": "이 토렌트는 재생 중이므로 삭제할 수 없습니다.",
       "cache_entry_not_found": "이 캐시 항목은 더 이상 존재하지 않습니다.",
       "cache_delete_failed": "캐시된 파일을 삭제할 수 없습니다.",
-      "cache_scan_failed": "토렌트 캐시를 읽을 수 없습니다."
+      "cache_scan_failed": "토렌트 캐시를 읽을 수 없습니다.",
+      "add_failed": "토렌트를 추가할 수 없습니다.",
+      "add_failed_no_handle": "토렌트가 추가되었지만 열 수 없습니다.",
+      "concurrency_limit_reached": "동시에 스트리밍 중인 토렌트가 너무 많습니다.",
+      "disk_check_failed": "사용 가능한 디스크 공간을 확인할 수 없습니다.",
+      "episode_not_in_torrent": "이 에피소드는 토렌트에 없습니다.",
+      "init_timeout": "토렌트 시작에 너무 오래 걸렸습니다.",
+      "insufficient_disk_space": "이 토렌트에 필요한 디스크 공간이 부족합니다.",
+      "invalid_magnet": "잘못된 마그넷 링크입니다.",
+      "metadata_resolve_failed": "토렌트 메타데이터를 읽을 수 없습니다.",
+      "metadata_timeout": "토렌트 메타데이터를 기다리는 중 시간이 초과되었습니다.",
+      "session_init_failed": "토렌트 클라이언트를 시작할 수 없습니다."
+    },
+    "generic": "문제가 발생했습니다",
+    "enrichment": {
+      "bad_id_dump": "ID 매핑 데이터가 유효하지 않습니다.",
+      "rate_limited": "ID 매핑 서비스에 요청이 너무 많습니다. 나중에 다시 시도하세요.",
+      "unsupported_tracker": "이 트래커는 ID 매핑을 지원하지 않습니다."
+    },
+    "import": {
+      "already_running": "이미 가져오기가 진행 중입니다."
+    },
+    "logs": {
+      "delete_failed": "로그 파일을 삭제할 수 없습니다.",
+      "fetch_failed": "로그를 불러올 수 없습니다.",
+      "invalid_file": "잘못된 로그 파일 이름입니다.",
+      "read_failed": "로그 파일을 읽을 수 없습니다."
+    },
+    "playback": {
+      "chapters_file_failed": "챕터 마커를 준비할 수 없습니다.",
+      "command_failed": "플레이어가 명령을 받아들이지 않았습니다.",
+      "init_failed": "플레이어를 시작할 수 없습니다.",
+      "not_initialized": "플레이어가 아직 준비되지 않았습니다.",
+      "shutdown_failed": "플레이어가 정상적으로 종료되지 않았습니다."
+    },
+    "schedule": {
+      "cache_deserialize_failed": "캐시된 일정을 읽을 수 없습니다.",
+      "cache_serialize_failed": "일정을 캐시할 수 없습니다."
+    },
+    "sync": {
+      "tracker_not_connected": "이 트래커는 연결되어 있지 않습니다."
     }
+  },
+  "history": {
+    "title": "기록"
   }
 }

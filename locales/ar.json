@@ -192,7 +192,8 @@
       "eps": "{{count}} حلقة",
       "chaps": "{{count}} فصل",
       "more_info": "معلومات",
-      "trailer": "العرض الدعائي"
+      "trailer": "العرض الدعائي",
+      "chapters": "{{count}} فصل"
     }
   },
   "card": {
@@ -277,7 +278,8 @@
       "merge": "دمج",
       "conflict": "تعارض",
       "history": "السجل",
-      "no_history": "لا يوجد سجل"
+      "no_history": "لا يوجد سجل",
+      "saving": "جارٍ الحفظ..."
     },
     "browse": "تصفح المحتوى",
     "no_matches_desc": "لا شيء يطابق البحث أو عوامل التصفية الحالية.",
@@ -345,8 +347,10 @@
       "show_details": "عرض التفاصيل",
       "syncing": "جارٍ المزامنة",
       "title": "المزامنة",
-      "trackers": "المتتبعات"
-    }
+      "trackers": "المتتبعات",
+      "waiting": "{{n}} قيد الانتظار"
+    },
+    "missing_mangaupdates": "غير موجود في MangaUpdates"
   },
   "marketplace": {
     "title": "المتجر",
@@ -369,7 +373,16 @@
     "manage_repos": "إدارة المستودعات",
     "all_languages": "كل اللغات",
     "add_repo": "إضافة مستودع",
-    "repositories": "المستودعات"
+    "repositories": "المستودعات",
+    "invalid_url": "رابط المستودع غير صالح",
+    "invalid_url_desc": "الرابط لا يشير إلى مستودع إضافات صالح.",
+    "load_more": "تحميل المزيد",
+    "new_repo": "مستودع جديد",
+    "remove_repo": "إزالة المستودع",
+    "repositories_desc": "مستودعات الإضافات للتصفح. اختر واحدًا لعرض إضافاته.",
+    "update": "تحديث",
+    "updates_available": "تحديثات متاحة",
+    "use_repo": "استخدام هذا المستودع"
   },
   "reader": {
     "loading": "جاري التحميل",
@@ -411,7 +424,8 @@
     "paragraph_spacing": "تباعد الفقرات",
     "content_width": "عرض المحتوى",
     "align_left": "يسار",
-    "align_justify": "ضبط"
+    "align_justify": "ضبط",
+    "no_content": "هذا الفصل لا يحتوي على محتوى."
   },
   "schedule": {
     "title": "الجدول",
@@ -428,7 +442,9 @@
     "empty_desc": "لا توجد حلقات مجدولة للإطار الزمني المحدد.",
     "airing_today": "يعرض اليوم",
     "watching": "أتابعه",
-    "planning": "أخطط لمتابعته"
+    "planning": "أخطط لمتابعته",
+    "show_my_list": "إظهار قائمتي فقط",
+    "showing_my_list": "يتم عرض قائمتي فقط"
   },
   "search": {
     "title": "بحث",
@@ -488,7 +504,14 @@
     "search_settings": "إعدادات البحث",
     "type": "النوع",
     "source": "المصدر / الإضافة",
-    "clear": "مسح"
+    "clear": "مسح",
+    "manhwa": "مانهوا",
+    "manhua": "مانهوا صينية",
+    "doujin": "دوجينشي",
+    "light_novel": "رواية خفيفة",
+    "one_shot": "قصة قصيرة",
+    "other": "أخرى",
+    "upcoming": "قريبًا"
   },
   "watch": {
     "episode_with_title": "الحلقة {{num}} - {{title}}",
@@ -497,6 +520,7 @@
     "loading": "جارٍ التحميل...",
     "loading_metadata": "جارٍ تحميل البيانات الوصفية...",
     "playback_error": "خطأ في التشغيل",
+    "fix_match": "اختر العنوان الصحيح",
     "back_to_details": "العودة إلى التفاصيل",
     "torrent_change": "تغيير",
     "torrent_seeders": "المشاركون",
@@ -571,7 +595,12 @@
         "hide_sdh": "إخفاء أوصاف الأصوات",
         "sdh_aggressive": "أكثر شمولًا"
       }
-    }
+    },
+    "no_extensions": "لا توجد إضافات أنمي أو تورنت مثبتة.",
+    "no_metadata_for_query": "لا توجد معلومات كافية للبحث عن تورنت.",
+    "no_stream": "لم تُرجع الإضافة أي بث.",
+    "no_torrent_match": "لم يتم العثور على تورنت مطابق.",
+    "stream_load_failed": "تعذر تحميل البث."
   },
   "content": {
     "details": "التفاصيل",
@@ -672,7 +701,9 @@
     "no_results": "لم يتم العثور على إدخالات مطابقة",
     "merge_warning": "سيتم دمج {{title}} في هذا الإدخال وحذفه نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
     "merge_success": "تم دمج الإدخالات بنجاح",
-    "confirm_merge": "تأكيد الدمج"
+    "confirm_merge": "تأكيد الدمج",
+    "chapter": "الفصل",
+    "confirm_delete_mapping": "إزالة ربط المتتبع هذا؟"
   },
   "discord": {
     "browsing": "في التطبيق"
@@ -783,7 +814,8 @@
       "conflict_kitsu": "إعطاء الأولوية لـ Kitsu",
       "conflict_simkl": "إعطاء الأولوية لـ Simkl",
       "conflict_shikimori": "إعطاء الأولوية لـ Shikimori",
-      "conflict_mangabaka": "إعطاء الأولوية لـ MangaBaka"
+      "conflict_mangabaka": "إعطاء الأولوية لـ MangaBaka",
+      "conflict_mangaupdates": "إعطاء الأولوية لـ MangaUpdates"
     },
     "general_section": {
       "general_desc": "إدارة تفضيلات التطبيق العامة.",
@@ -824,7 +856,8 @@
       "metadata_provider_desc": "اختر المصدر الأساسي المستخدم للعناوين والأوصاف وصور الغلاف.",
       "auto_update_progress": "تحديث التقدم تلقائياً",
       "score_format": "تنسيق التقييم",
-      "score_format_desc": "اختر كيفية عرض التقييمات في hoshi."
+      "score_format_desc": "اختر كيفية عرض التقييمات في hoshi.",
+      "auto_update_progress_desc": "حدّث تقدمك في المتتبعات تلقائيًا أثناء المشاهدة أو القراءة."
     },
     "extension_section": {
       "extensions_desc": "إدارة الإضافات المثبتة وإعداداتها.",
@@ -840,7 +873,11 @@
       "unsupported_type": "نوع غير مدعوم",
       "extension_config": "إعدادات {{name}}",
       "all_sources": "كل المصادر",
-      "confirm_uninstall": "تأكيد"
+      "confirm_uninstall": "تأكيد",
+      "no_installed_desc": "ثبّت إضافات من المتجر لبدء المشاهدة والقراءة.",
+      "saving": "جارٍ الحفظ...",
+      "select_option": "اختر خيارًا",
+      "uninstall": "إلغاء التثبيت"
     },
     "player_section": {
       "player_desc": "اضبط تجربة التشغيل الخاصة بك",
@@ -1426,15 +1463,21 @@
     "STORY": "القصة"
   },
   "error": {
-    "network": "خطأ في الشبكة",
     "system": {
-      "db_lock": "قاعدة البيانات المحلية مقفلة.",
       "setup_failed": "خطأ فادح أثناء إعداد التطبيق.",
       "io": "خطأ في القراءة أو الكتابة على القرص.",
       "serialization": "فشلت معالجة البيانات الداخلية.",
       "database": "خطأ داخلي في قاعدة البيانات.",
       "internal": "حدث خطأ داخلي غير متوقع في الخادم.",
-      "external": "فشلت الخدمة الخارجية في الرد."
+      "bad_request": "طلب غير صالح.",
+      "http_client_failed": "تعذر تهيئة عميل الشبكة.",
+      "migration_run_failed": "تعذر تحديث قاعدة البيانات.",
+      "network": "خطأ في الشبكة. تحقق من اتصالك.",
+      "not_found": "غير موجود.",
+      "parse": "تعذرت قراءة البيانات المستلمة.",
+      "rate_limited": "طلبات كثيرة جدًا. حاول مرة أخرى بعد قليل.",
+      "unknown": "حدث خطأ غير معروف.",
+      "validation": "بعض القيم غير صالحة."
     },
     "auth": {
       "no_active_profile": "لم يتم العثور على ملف شخصي نشط.",
@@ -1444,17 +1487,14 @@
       "password_verification_failed": "فشل التحقق من كلمة المرور.",
       "incorrect_password": "كلمة المرور غير صحيحة.",
       "username_required": "اسم المستخدم مطلوب.",
-      "unauthorized": "وصول غير مصرح به."
-    },
-    "backup": {
-      "not_found": "النسخة الاحتياطية غير موجودة.",
-      "file_not_found": "ملف النسخة الاحتياطية غير موجود على القرص.",
-      "creation_failed": "فشل إنشاء النسخة الاحتياطية.",
-      "missing_tracker_name": "اسم المتعقب (tracker) مفقود.",
-      "invalid_trigger": "مشغل النسخة الاحتياطية غير صالح."
+      "unauthorized": "وصول غير مصرح به.",
+      "failed": "فشلت المصادقة.",
+      "hashing_failed": "تعذر تأمين كلمة المرور."
     },
     "config": {
-      "invalid_patch_format": "تنسيق تحديث التكوين غير صالح."
+      "invalid_patch_format": "تنسيق تحديث التكوين غير صالح.",
+      "invalid": "الإعدادات غير صالحة.",
+      "invalid_patch": "تغيير إعدادات غير صالح."
     },
     "tracker": {
       "unknown_tracker": "متعقب غير معروف.",
@@ -1468,23 +1508,35 @@
       "invalid_credentials": "بيانات الاعتماد غير صالحة.",
       "missing_credentials": "بيانات الاعتماد مفقودة.",
       "not_registered": "المتعقب غير مسجل.",
-      "id_not_found": "المعرف غير موجود في المتعقب.",
       "anilist_not_registered": "لم يتم تكوين AniList.",
-      "simkl_not_registered": "لم يتم تكوين Simkl.",
-      "no_provider_available": "لا يوجد مزود متعقب متاح."
+      "no_provider_available": "لا يوجد مزود متعقب متاح.",
+      "bad_request": "رفض المتتبع الطلب.",
+      "connect_failed": "تعذر ربط المتتبع.",
+      "http_error": "أرجع المتتبع خطأً.",
+      "insufficient_scope": "لم يمنح المتتبع الأذونات المطلوبة.",
+      "integration_not_found": "هذا المتتبع غير متصل.",
+      "invalid_id": "معرّف متتبع غير صالح.",
+      "invalid_status": "حالة قائمة غير صالحة لهذا المتتبع.",
+      "not_found": "غير موجود في المتتبع.",
+      "not_in_registry": "هذا المتتبع غير متاح.",
+      "parse_failed": "تعذرت قراءة استجابة المتتبع.",
+      "rate_limited": "المتتبع يحد من الطلبات. حاول لاحقًا.",
+      "reauth_required": "انتهت جلستك في المتتبع. يرجى إعادة ربطه.",
+      "refresh_failed": "تعذر تجديد جلسة المتتبع.",
+      "request_failed": "تعذر الوصول إلى المتتبع.",
+      "score_format_unknown": "تنسيق تقييم غير معروف في المتتبع."
     },
     "list": {
       "content_not_found": "المحتوى غير موجود.",
-      "entry_not_found": "عنصر القائمة غير موجود."
+      "entry_not_found": "عنصر القائمة غير موجود.",
+      "missing_id": "هذا الإدخال يفتقد معرّف المتتبع."
     },
     "proxy": {
       "no_url_provided": "لم يتم توفير أي رابط (URL).",
       "upstream_error": "خطأ في الخادم المصدر.",
       "upstream_timeout": "انتهت مهلة الخادم المصدر.",
       "invalid_header": "ترويسة الطلب غير صالحة.",
-      "body_read_failed": "فشلت قراءة نص الاستجابة.",
-      "invalid_upstream_url": "رابط المصدر غير صالح.",
-      "binary_not_supported": "التدفقات الثنائية غير مدعومة لهذا الإجراء."
+      "body_read_failed": "فشلت قراءة نص الاستجابة."
     },
     "user": {
       "not_found": "المستخدم غير موجود.",
@@ -1505,24 +1557,28 @@
       "invalid_media_type": "نوع الوسائط غير صالح.",
       "extension_search_failed": "فشل البحث عبر الإضافة.",
       "no_match_found": "لم يتم العثور على نتائج مطابقة.",
-      "invalid_items_list": "تنسيق قائمة العناصر غير صالح.",
       "item_number_not_found": "رقم العنصر غير موجود.",
       "link_failed": "فشل ربط المحتوى.",
-      "tracker_mapping_invalid": "لا يمكن ربط متعقب بمحتوى يقتصر على الإضافات فقط.",
       "mapping_not_found": "الرابط غير موجود.",
-      "data_missing": "بيانات المحتوى مفقودة.",
-      "extension_only": "هذا الإجراء غير مسموح به في المحتوى الذي يقتصر على الإضافات فقط."
+      "extension_metadata_failed": "تعذر على الإضافة تحميل تفاصيل هذا العنوان.",
+      "extension_no_match": "إدخال الإضافة لا يطابق هذا العنوان.",
+      "invalid_content_type": "نوع محتوى غير صالح.",
+      "invalid_extension_response": "أرجعت الإضافة استجابة غير صالحة.",
+      "merge_type_mismatch": "لا يمكن دمج إدخالات من أنواع مختلفة.",
+      "serialization": "تعذرت معالجة بيانات المحتوى.",
+      "tracker_media_not_found": "لم يتم العثور على هذا العنوان في المتتبع."
     },
     "extension": {
       "not_found": "الإضافة غير موجودة.",
-      "metadata_fetch_failed": "فشل جلب البيانات الوصفية من الإضافة.",
-      "load_failed": "فشل تحميل الإضافة.",
       "install_network_failed": "خطأ في الشبكة أثناء تثبيت الإضافة.",
       "invalid_manifest": "بيان الإضافة (manifest) غير صالح.",
       "unsupported_type": "نوع الإضافة غير مدعوم.",
       "invalid_script": "نص الإضافة (script) غير صالح.",
-      "io_error": "خطأ في إدخال/إخراج الإضافة.",
-      "script_missing": "نص الإضافة مفقود."
+      "script_missing": "نص الإضافة مفقود.",
+      "already_exists": "توجد إضافة بهذا المعرّف بالفعل.",
+      "id_mismatch": "معرّف الإضافة لا يطابق ملف التعريف الخاص بها.",
+      "invalid_id": "معرّف إضافة غير صالح.",
+      "manifest_serialize": "تعذر حفظ ملف تعريف الإضافة."
     },
     "home": {
       "invalid_layout": "تخطيط الصفحة الرئيسية هذا غير صالح"
@@ -1537,16 +1593,59 @@
     "sandbox": {
       "serialization_failed": "فشل تجهيز البيانات لبيئة العزل (Sandbox).",
       "runtime_init_failed": "فشل تهيئة بيئة تشغيل العزل.",
-      "execution_failed": "فشل تنفيذ الإضافة.",
       "bad_json_response": "استجابة JSON غير صالحة من بيئة العزل.",
-      "thread_panicked": "توقفت سلسلة بيئة العزل عن العمل بشكل غير متوقع."
+      "thread_panicked": "توقفت سلسلة بيئة العزل عن العمل بشكل غير متوقع.",
+      "js_exception": "واجهت الإضافة خطأً."
     },
     "torrent": {
       "invalid_cache_key": "إدخال ذاكرة التخزين المؤقت غير صالح.",
       "cache_entry_in_use": "هذا التورنت قيد التشغيل ولا يمكن حذفه.",
       "cache_entry_not_found": "إدخال ذاكرة التخزين المؤقت هذا لم يعد موجودًا.",
       "cache_delete_failed": "تعذر حذف الملفات المخزنة مؤقتًا.",
-      "cache_scan_failed": "تعذرت قراءة ذاكرة التخزين المؤقت للتورنت."
+      "cache_scan_failed": "تعذرت قراءة ذاكرة التخزين المؤقت للتورنت.",
+      "add_failed": "تعذرت إضافة التورنت.",
+      "add_failed_no_handle": "تمت إضافة التورنت لكن تعذر فتحه.",
+      "concurrency_limit_reached": "يتم بث عدد كبير جدًا من التورنتات في الوقت نفسه.",
+      "disk_check_failed": "تعذر التحقق من مساحة القرص المتاحة.",
+      "episode_not_in_torrent": "هذه الحلقة غير موجودة في التورنت.",
+      "init_timeout": "استغرق التورنت وقتًا طويلًا للبدء.",
+      "insufficient_disk_space": "لا توجد مساحة كافية على القرص لهذا التورنت.",
+      "invalid_magnet": "رابط magnet غير صالح.",
+      "metadata_resolve_failed": "تعذرت قراءة بيانات التورنت الوصفية.",
+      "metadata_timeout": "انتهت مهلة انتظار بيانات التورنت الوصفية.",
+      "session_init_failed": "تعذر تشغيل عميل التورنت."
+    },
+    "generic": "حدث خطأ ما",
+    "enrichment": {
+      "bad_id_dump": "بيانات ربط المعرّفات غير صالحة.",
+      "rate_limited": "طلبات كثيرة جدًا إلى خدمة ربط المعرّفات. حاول لاحقًا.",
+      "unsupported_tracker": "هذا المتتبع غير مدعوم في ربط المعرّفات."
+    },
+    "import": {
+      "already_running": "هناك عملية استيراد قيد التشغيل بالفعل."
+    },
+    "logs": {
+      "delete_failed": "تعذر حذف ملف السجل.",
+      "fetch_failed": "تعذر تحميل السجلات.",
+      "invalid_file": "اسم ملف السجل غير صالح.",
+      "read_failed": "تعذرت قراءة ملف السجل."
+    },
+    "playback": {
+      "chapters_file_failed": "تعذر تجهيز علامات الفصول.",
+      "command_failed": "لم يقبل المشغل الأمر.",
+      "init_failed": "تعذر تشغيل المشغل.",
+      "not_initialized": "المشغل غير جاهز بعد.",
+      "shutdown_failed": "تعذر إيقاف المشغل بشكل صحيح."
+    },
+    "schedule": {
+      "cache_deserialize_failed": "تعذرت قراءة الجدول المخزن مؤقتًا.",
+      "cache_serialize_failed": "تعذر تخزين الجدول مؤقتًا."
+    },
+    "sync": {
+      "tracker_not_connected": "هذا المتتبع غير متصل."
     }
+  },
+  "history": {
+    "title": "السجل"
   }
 }

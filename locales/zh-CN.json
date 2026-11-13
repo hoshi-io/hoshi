@@ -192,7 +192,8 @@
       "eps": "共 {{count}} 话",
       "chaps": "共 {{count}} 章",
       "more_info": "详情",
-      "trailer": "预告片转换"
+      "trailer": "预告片转换",
+      "chapters": "{{count}} 话"
     }
   },
   "card": {
@@ -277,7 +278,8 @@
       "merge": "合并",
       "conflict": "冲突",
       "history": "历史记录",
-      "no_history": "暂无历史记录"
+      "no_history": "暂无历史记录",
+      "saving": "保存中..."
     },
     "browse": "浏览内容",
     "no_matches_desc": "没有符合当前搜索或筛选条件的内容。",
@@ -345,8 +347,10 @@
       "show_details": "显示详情",
       "syncing": "正在同步",
       "title": "同步",
-      "trackers": "追踪器"
-    }
+      "trackers": "追踪器",
+      "waiting": "{{n}} 个等待中"
+    },
+    "missing_mangaupdates": "MangaUpdates 上缺失"
   },
   "marketplace": {
     "title": "插件市场",
@@ -369,7 +373,16 @@
     "manage_repos": "管理仓库",
     "all_languages": "所有语言",
     "add_repo": "添加仓库",
-    "repositories": "仓库"
+    "repositories": "仓库",
+    "invalid_url": "无效的仓库 URL",
+    "invalid_url_desc": "该 URL 未指向有效的扩展插件仓库。",
+    "load_more": "加载更多",
+    "new_repo": "新仓库",
+    "remove_repo": "移除仓库",
+    "repositories_desc": "可浏览的扩展插件仓库。选择一个以查看其扩展插件。",
+    "update": "更新",
+    "updates_available": "有可用更新",
+    "use_repo": "使用此仓库"
   },
   "reader": {
     "loading": "正在加载",
@@ -411,7 +424,8 @@
     "paragraph_spacing": "段落间距",
     "content_width": "内容宽度",
     "align_left": "左对齐",
-    "align_justify": "两端对齐"
+    "align_justify": "两端对齐",
+    "no_content": "本章没有内容。"
   },
   "schedule": {
     "title": "时间表",
@@ -428,7 +442,9 @@
     "empty_desc": "所选时间段内没有计划播出的剧集。",
     "airing_today": "今日放送",
     "watching": "正在看",
-    "planning": "计划看"
+    "planning": "计划看",
+    "show_my_list": "仅显示我的列表",
+    "showing_my_list": "正在仅显示我的列表"
   },
   "search": {
     "title": "搜索",
@@ -488,7 +504,14 @@
     "search_settings": "搜索设置",
     "type": "类型",
     "source": "来源 / 扩展",
-    "clear": "清除"
+    "clear": "清除",
+    "manhwa": "韩漫",
+    "manhua": "国漫",
+    "doujin": "同人志",
+    "light_novel": "轻小说",
+    "one_shot": "短篇",
+    "other": "其他",
+    "upcoming": "即将推出"
   },
   "watch": {
     "episode_with_title": "第 {{num}} 话 - {{title}}",
@@ -497,6 +520,7 @@
     "loading": "加载中...",
     "loading_metadata": "正在加载元数据...",
     "playback_error": "播放错误",
+    "fix_match": "选择正确的作品",
     "back_to_details": "返回详情",
     "torrent_change": "更改",
     "torrent_seeders": "做种数",
@@ -571,7 +595,12 @@
         "hide_sdh": "隐藏声音描述",
         "sdh_aggressive": "更强力"
       }
-    }
+    },
+    "no_extensions": "未安装任何动画或种子扩展插件。",
+    "no_metadata_for_query": "信息不足，无法搜索种子。",
+    "no_stream": "扩展插件未返回任何视频流。",
+    "no_torrent_match": "未找到匹配的种子。",
+    "stream_load_failed": "无法加载视频流。"
   },
   "content": {
     "details": "详细信息",
@@ -672,7 +701,9 @@
     "no_results": "未找到匹配的条目",
     "merge_warning": "{{title}} 将被合并到此条目中，并永久删除。此操作无法撤销。",
     "merge_success": "条目合并成功",
-    "confirm_merge": "确认合并"
+    "confirm_merge": "确认合并",
+    "chapter": "章节",
+    "confirm_delete_mapping": "要移除此追踪器映射吗？"
   },
   "discord": {
     "browsing": "应用中"
@@ -783,7 +814,8 @@
       "conflict_kitsu": "优先 Kitsu",
       "conflict_simkl": "优先 Simkl",
       "conflict_shikimori": "优先 Shikimori",
-      "conflict_mangabaka": "优先 MangaBaka"
+      "conflict_mangabaka": "优先 MangaBaka",
+      "conflict_mangaupdates": "优先 MangaUpdates"
     },
     "general_section": {
       "general_desc": "管理全局应用偏好。",
@@ -824,7 +856,8 @@
       "metadata_provider_desc": "选择用于获取标题、描述和封面的首选来源。",
       "auto_update_progress": "自动更新进度",
       "score_format": "评分格式",
-      "score_format_desc": "选择 hoshi 中评分的显示方式。"
+      "score_format_desc": "选择 hoshi 中评分的显示方式。",
+      "auto_update_progress_desc": "观看或阅读时自动更新追踪器上的进度。"
     },
     "extension_section": {
       "extensions_desc": "管理已安装的扩展插件及其设置。",
@@ -840,7 +873,11 @@
       "unsupported_type": "不支持的类型",
       "extension_config": "{{name}} 设置",
       "all_sources": "所有来源",
-      "confirm_uninstall": "确认"
+      "confirm_uninstall": "确认",
+      "no_installed_desc": "从 Marketplace 安装扩展插件以开始观看和阅读。",
+      "saving": "保存中...",
+      "select_option": "选择一个选项",
+      "uninstall": "卸载"
     },
     "player_section": {
       "player_desc": "配置播放体验",
@@ -1426,15 +1463,21 @@
     "STORY": "剧本"
   },
   "error": {
-    "network": "网络错误",
     "system": {
-      "db_lock": "本地数据库被锁定。",
       "setup_failed": "应用程序设置过程中发生严重错误。",
       "io": "磁盘读写错误。",
       "serialization": "无法处理内部数据。",
       "database": "内部数据库错误。",
       "internal": "发生了意外的内部服务器错误。",
-      "external": "外部服务未响应。"
+      "bad_request": "无效的请求。",
+      "http_client_failed": "无法初始化网络客户端。",
+      "migration_run_failed": "无法更新数据库。",
+      "network": "网络错误，请检查你的连接。",
+      "not_found": "未找到。",
+      "parse": "无法读取收到的数据。",
+      "rate_limited": "请求过多，请稍后再试。",
+      "unknown": "发生未知错误。",
+      "validation": "部分数值无效。"
     },
     "auth": {
       "no_active_profile": "未找到活动的配置文件。",
@@ -1444,17 +1487,14 @@
       "password_verification_failed": "密码验证失败。",
       "incorrect_password": "密码不正确。",
       "username_required": "需要用户名。",
-      "unauthorized": "未经授权的访问。"
-    },
-    "backup": {
-      "not_found": "未找到备份。",
-      "file_not_found": "在磁盘上找不到备份文件。",
-      "creation_failed": "创建备份失败。",
-      "missing_tracker_name": "缺少追踪器名称。",
-      "invalid_trigger": "无效的备份触发器。"
+      "unauthorized": "未经授权的访问。",
+      "failed": "身份验证失败。",
+      "hashing_failed": "无法保护密码。"
     },
     "config": {
-      "invalid_patch_format": "配置更新格式无效。"
+      "invalid_patch_format": "配置更新格式无效。",
+      "invalid": "配置无效。",
+      "invalid_patch": "无效的设置更改。"
     },
     "tracker": {
       "unknown_tracker": "未知的追踪器。",
@@ -1468,23 +1508,35 @@
       "invalid_credentials": "凭据无效。",
       "missing_credentials": "缺少凭据。",
       "not_registered": "追踪器未注册。",
-      "id_not_found": "在追踪器上找不到该 ID。",
       "anilist_not_registered": "尚未配置 AniList。",
-      "simkl_not_registered": "尚未配置 Simkl。",
-      "no_provider_available": "没有可用的追踪器提供商。"
+      "no_provider_available": "没有可用的追踪器提供商。",
+      "bad_request": "追踪器拒绝了请求。",
+      "connect_failed": "无法连接追踪器。",
+      "http_error": "追踪器返回了错误。",
+      "insufficient_scope": "追踪器未授予所需权限。",
+      "integration_not_found": "此追踪器未连接。",
+      "invalid_id": "无效的追踪器 ID。",
+      "invalid_status": "此追踪器不支持该列表状态。",
+      "not_found": "追踪器上未找到。",
+      "not_in_registry": "此追踪器不可用。",
+      "parse_failed": "无法读取追踪器的响应。",
+      "rate_limited": "追踪器正在限制请求，请稍后再试。",
+      "reauth_required": "你的追踪器会话已过期，请重新连接。",
+      "refresh_failed": "无法刷新追踪器会话。",
+      "request_failed": "无法连接到追踪器。",
+      "score_format_unknown": "追踪器上的评分格式未知。"
     },
     "list": {
       "content_not_found": "未找到内容。",
-      "entry_not_found": "未找到列表项。"
+      "entry_not_found": "未找到列表项。",
+      "missing_id": "此条目缺少追踪器 ID。"
     },
     "proxy": {
       "no_url_provided": "未提供 URL。",
       "upstream_error": "上游服务器错误。",
       "upstream_timeout": "上游服务器超时。",
       "invalid_header": "无效的请求头。",
-      "body_read_failed": "无法读取响应正文。",
-      "invalid_upstream_url": "无效的上游 URL。",
-      "binary_not_supported": "此操作不支持二进制流。"
+      "body_read_failed": "无法读取响应正文。"
     },
     "user": {
       "not_found": "找不到用户。",
@@ -1505,24 +1557,28 @@
       "invalid_media_type": "无效的媒体类型。",
       "extension_search_failed": "通过扩展搜索失败。",
       "no_match_found": "未找到匹配项。",
-      "invalid_items_list": "无效的项目列表格式。",
       "item_number_not_found": "未找到项目编号。",
       "link_failed": "关联内容失败。",
-      "tracker_mapping_invalid": "无法将追踪器关联到仅限扩展的内容。",
       "mapping_not_found": "未找到关联映射。",
-      "data_missing": "内容数据缺失。",
-      "extension_only": "不允许对仅限扩展的内容执行此操作。"
+      "extension_metadata_failed": "扩展插件无法加载此作品的详细信息。",
+      "extension_no_match": "扩展插件的条目与此作品不匹配。",
+      "invalid_content_type": "无效的内容类型。",
+      "invalid_extension_response": "扩展插件返回了无效的响应。",
+      "merge_type_mismatch": "无法合并不同类型的条目。",
+      "serialization": "无法处理内容数据。",
+      "tracker_media_not_found": "追踪器上未找到此作品。"
     },
     "extension": {
       "not_found": "未找到扩展。",
-      "metadata_fetch_failed": "无法从扩展获取元数据。",
-      "load_failed": "无法加载扩展。",
       "install_network_failed": "安装扩展时发生网络错误。",
       "invalid_manifest": "无效的扩展清单 (manifest)。",
       "unsupported_type": "不支持的扩展类型。",
       "invalid_script": "无效的扩展脚本。",
-      "io_error": "扩展 I/O 错误。",
-      "script_missing": "缺少扩展脚本。"
+      "script_missing": "缺少扩展脚本。",
+      "already_exists": "已存在使用此 ID 的扩展插件。",
+      "id_mismatch": "扩展插件 ID 与其清单不匹配。",
+      "invalid_id": "无效的扩展插件 ID。",
+      "manifest_serialize": "无法保存扩展插件清单。"
     },
     "home": {
       "invalid_layout": "此主页布局无效"
@@ -1537,16 +1593,59 @@
     "sandbox": {
       "serialization_failed": "序列化沙盒数据失败。",
       "runtime_init_failed": "无法初始化沙盒运行时。",
-      "execution_failed": "扩展执行失败。",
       "bad_json_response": "沙盒返回了无效的 JSON 响应。",
-      "thread_panicked": "沙盒线程崩溃。"
+      "thread_panicked": "沙盒线程崩溃。",
+      "js_exception": "扩展插件发生错误。"
     },
     "torrent": {
       "invalid_cache_key": "无效的缓存条目。",
       "cache_entry_in_use": "此种子正在播放，无法删除。",
       "cache_entry_not_found": "此缓存条目已不存在。",
       "cache_delete_failed": "无法删除缓存文件。",
-      "cache_scan_failed": "无法读取种子缓存。"
+      "cache_scan_failed": "无法读取种子缓存。",
+      "add_failed": "无法添加种子。",
+      "add_failed_no_handle": "种子已添加但无法打开。",
+      "concurrency_limit_reached": "同时串流的种子过多。",
+      "disk_check_failed": "无法检查可用磁盘空间。",
+      "episode_not_in_torrent": "种子中没有这一集。",
+      "init_timeout": "种子启动时间过长。",
+      "insufficient_disk_space": "磁盘空间不足，无法下载此种子。",
+      "invalid_magnet": "无效的磁力链接。",
+      "metadata_resolve_failed": "无法读取种子的元数据。",
+      "metadata_timeout": "等待种子元数据超时。",
+      "session_init_failed": "无法启动种子客户端。"
+    },
+    "generic": "出了点问题",
+    "enrichment": {
+      "bad_id_dump": "ID 映射数据无效。",
+      "rate_limited": "ID 映射服务请求过多，请稍后再试。",
+      "unsupported_tracker": "此追踪器不支持 ID 映射。"
+    },
+    "import": {
+      "already_running": "已有导入正在进行。"
+    },
+    "logs": {
+      "delete_failed": "无法删除日志文件。",
+      "fetch_failed": "无法加载日志。",
+      "invalid_file": "无效的日志文件名。",
+      "read_failed": "无法读取日志文件。"
+    },
+    "playback": {
+      "chapters_file_failed": "无法准备章节标记。",
+      "command_failed": "播放器未接受该命令。",
+      "init_failed": "无法启动播放器。",
+      "not_initialized": "播放器尚未就绪。",
+      "shutdown_failed": "播放器未能正常停止。"
+    },
+    "schedule": {
+      "cache_deserialize_failed": "无法读取缓存的时间表。",
+      "cache_serialize_failed": "无法缓存时间表。"
+    },
+    "sync": {
+      "tracker_not_connected": "此追踪器未连接。"
     }
+  },
+  "history": {
+    "title": "历史记录"
   }
 }

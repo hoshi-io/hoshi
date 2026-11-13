@@ -192,7 +192,8 @@
       "eps": "{{count}} böl.",
       "chaps": "{{count}} böl.",
       "more_info": "Bilgi",
-      "trailer": "Fragman"
+      "trailer": "Fragman",
+      "chapters": "{{count}} bölüm"
     }
   },
   "card": {
@@ -277,7 +278,8 @@
       "merge": "Birleştir",
       "conflict": "Çakışma",
       "history": "Geçmiş",
-      "no_history": "Geçmiş yok"
+      "no_history": "Geçmiş yok",
+      "saving": "Kaydediliyor..."
     },
     "browse": "İçeriklere göz at",
     "no_matches_desc": "Mevcut arama veya filtrelerle eşleşen bir şey yok.",
@@ -345,8 +347,10 @@
       "show_details": "Ayrıntıları göster",
       "syncing": "Senkronize ediliyor",
       "title": "Senkronizasyon",
-      "trackers": "Takipçiler"
-    }
+      "trackers": "Takipçiler",
+      "waiting": "{{n}} bekliyor"
+    },
+    "missing_mangaupdates": "MangaUpdates'te eksik"
   },
   "marketplace": {
     "title": "Mağaza",
@@ -369,7 +373,16 @@
     "manage_repos": "Depoları yönet",
     "all_languages": "Tüm diller",
     "add_repo": "Depo ekle",
-    "repositories": "Depolar"
+    "repositories": "Depolar",
+    "invalid_url": "Geçersiz depo URL'si",
+    "invalid_url_desc": "URL geçerli bir eklenti deposunu göstermiyor.",
+    "load_more": "Daha fazla yükle",
+    "new_repo": "Yeni depo",
+    "remove_repo": "Depoyu kaldır",
+    "repositories_desc": "Göz atılacak eklenti depoları. Eklentilerini görmek için birini seçin.",
+    "update": "Güncelle",
+    "updates_available": "Güncellemeler mevcut",
+    "use_repo": "Bu depoyu kullan"
   },
   "reader": {
     "loading": "yükleniyor",
@@ -411,7 +424,8 @@
     "paragraph_spacing": "Paragraf Boşluğu",
     "content_width": "İçerik Genişliği",
     "align_left": "Sol",
-    "align_justify": "Yasla"
+    "align_justify": "Yasla",
+    "no_content": "Bu bölümde içerik yok."
   },
   "schedule": {
     "title": "Takvim",
@@ -428,7 +442,9 @@
     "empty_desc": "Seçilen zaman dilimi için planlanmış bölüm yok.",
     "airing_today": "Bugün Yayınlanıyor",
     "watching": "İzliyor",
-    "planning": "Planlanıyor"
+    "planning": "Planlanıyor",
+    "show_my_list": "Yalnızca listemi göster",
+    "showing_my_list": "Yalnızca listem gösteriliyor"
   },
   "search": {
     "title": "Ara",
@@ -488,7 +504,14 @@
     "search_settings": "Arama ayarları",
     "type": "Tür",
     "source": "Kaynak / Uzantı",
-    "clear": "Temizle"
+    "clear": "Temizle",
+    "manhwa": "Manhwa",
+    "manhua": "Manhua",
+    "doujin": "Doujinshi",
+    "light_novel": "Hafif roman",
+    "one_shot": "Tek bölüm",
+    "other": "Diğer",
+    "upcoming": "Yakında"
   },
   "watch": {
     "episode_with_title": "Bölüm {{num}} - {{title}}",
@@ -497,6 +520,7 @@
     "loading": "Yükleniyor...",
     "loading_metadata": "Meta veriler yükleniyor...",
     "playback_error": "Oynatma Hatası",
+    "fix_match": "Doğru başlığı seç",
     "back_to_details": "Ayrıntılara dön",
     "torrent_change": "değiştir",
     "torrent_seeders": "seed sayısı",
@@ -571,7 +595,12 @@
         "hide_sdh": "Ses açıklamalarını gizle",
         "sdh_aggressive": "Daha agresif"
       }
-    }
+    },
+    "no_extensions": "Yüklü anime veya torrent eklentisi yok.",
+    "no_metadata_for_query": "Torrent aramak için yeterli bilgi yok.",
+    "no_stream": "Eklenti bir yayın döndürmedi.",
+    "no_torrent_match": "Eşleşen torrent bulunamadı.",
+    "stream_load_failed": "Yayın yüklenemedi."
   },
   "content": {
     "details": "Detaylar",
@@ -672,7 +701,9 @@
     "no_results": "Eşleşen kayıt bulunamadı",
     "merge_warning": "{{title}} bu kayıtla birleştirilecek ve kalıcı olarak silinecek. Bu işlem geri alınamaz.",
     "merge_success": "Kayıtlar başarıyla birleştirildi",
-    "confirm_merge": "Birleştirmeyi Onayla"
+    "confirm_merge": "Birleştirmeyi Onayla",
+    "chapter": "Bölüm",
+    "confirm_delete_mapping": "Bu takip eşlemesi kaldırılsın mı?"
   },
   "discord": {
     "browsing": "Uygulamada"
@@ -783,7 +814,8 @@
       "conflict_kitsu": "Kitsu'ya Öncelik Ver",
       "conflict_simkl": "Simkl'e öncelik ver",
       "conflict_shikimori": "Shikimori'ye öncelik ver",
-      "conflict_mangabaka": "MangaBaka'ya öncelik ver"
+      "conflict_mangabaka": "MangaBaka'ya öncelik ver",
+      "conflict_mangaupdates": "MangaUpdates'e öncelik ver"
     },
     "general_section": {
       "general_desc": "Global uygulama tercihlerinizi yönetin.",
@@ -824,7 +856,8 @@
       "metadata_provider_desc": "Başlıklar, açıklamalar ve kapak resimleri için kullanılan birincil kaynağı seçin.",
       "auto_update_progress": "İlerlemeyi Otomatik Güncelle",
       "score_format": "Puan biçimi",
-      "score_format_desc": "Puanların hoshi'de nasıl gösterileceğini seçin."
+      "score_format_desc": "Puanların hoshi'de nasıl gösterileceğini seçin.",
+      "auto_update_progress_desc": "İzlerken veya okurken takip ilerlemenizi otomatik olarak güncelleyin."
     },
     "extension_section": {
       "extensions_desc": "Yüklü uzantılarınızı ve ayarlarını yönetin.",
@@ -840,7 +873,11 @@
       "unsupported_type": "Desteklenmeyen Tür",
       "extension_config": "{{name}} Ayarları",
       "all_sources": "Tüm kaynaklar",
-      "confirm_uninstall": "Onayla"
+      "confirm_uninstall": "Onayla",
+      "no_installed_desc": "İzlemeye ve okumaya başlamak için Marketplace'ten eklenti yükleyin.",
+      "saving": "Kaydediliyor...",
+      "select_option": "Bir seçenek seçin",
+      "uninstall": "Kaldır"
     },
     "player_section": {
       "player_desc": "Oynatma ayarlarını, dilleri ve otomasyonu yapılandırın.",
@@ -1426,15 +1463,21 @@
     "STORY": "Hikaye"
   },
   "error": {
-    "network": "Ağ hatası",
     "system": {
-      "db_lock": "Yerel veritabanı kilitli.",
       "setup_failed": "Uygulama kurulumu sırasında kritik bir hata oluştu.",
       "io": "Disk okuma/yazma hatası.",
       "serialization": "Dahili veriler işlenemedi.",
       "database": "Dahili veritabanı hatası.",
       "internal": "Beklenmeyen bir dahili sunucu hatası oluştu.",
-      "external": "Harici hizmet yanıt vermedi."
+      "bad_request": "Geçersiz istek.",
+      "http_client_failed": "Ağ istemcisi başlatılamadı.",
+      "migration_run_failed": "Veritabanı güncellenemedi.",
+      "network": "Ağ hatası. Bağlantınızı kontrol edin.",
+      "not_found": "Bulunamadı.",
+      "parse": "Alınan veriler okunamadı.",
+      "rate_limited": "Çok fazla istek. Biraz sonra tekrar deneyin.",
+      "unknown": "Bilinmeyen bir hata oluştu.",
+      "validation": "Bazı değerler geçerli değil."
     },
     "auth": {
       "no_active_profile": "Etkin profil bulunamadı.",
@@ -1444,17 +1487,14 @@
       "password_verification_failed": "Parola doğrulama başarısız oldu.",
       "incorrect_password": "Hatalı parola.",
       "username_required": "Kullanıcı adı gereklidir.",
-      "unauthorized": "Yetkisiz erişim."
-    },
-    "backup": {
-      "not_found": "Yedekleme bulunamadı.",
-      "file_not_found": "Yedekleme dosyası diskte bulunamadı.",
-      "creation_failed": "Yedekleme oluşturulamadı.",
-      "missing_tracker_name": "İzleyici (tracker) adı eksik.",
-      "invalid_trigger": "Geçersiz yedekleme tetikleyicisi."
+      "unauthorized": "Yetkisiz erişim.",
+      "failed": "Kimlik doğrulama başarısız.",
+      "hashing_failed": "Parola güvenli hâle getirilemedi."
     },
     "config": {
-      "invalid_patch_format": "Geçersiz yapılandırma güncelleme biçimi."
+      "invalid_patch_format": "Geçersiz yapılandırma güncelleme biçimi.",
+      "invalid": "Yapılandırma geçerli değil.",
+      "invalid_patch": "Geçersiz ayar değişikliği."
     },
     "tracker": {
       "unknown_tracker": "Bilinmeyen izleyici.",
@@ -1468,23 +1508,35 @@
       "invalid_credentials": "Geçersiz kimlik bilgileri.",
       "missing_credentials": "Kimlik bilgileri eksik.",
       "not_registered": "İzleyici kayıtlı değil.",
-      "id_not_found": "ID izleyicide bulunamadı.",
       "anilist_not_registered": "AniList yapılandırılmadı.",
-      "simkl_not_registered": "Simkl yapılandırılmadı.",
-      "no_provider_available": "Uygun bir izleyici sağlayıcı bulunamadı."
+      "no_provider_available": "Uygun bir izleyici sağlayıcı bulunamadı.",
+      "bad_request": "Takip sitesi isteği reddetti.",
+      "connect_failed": "Takip sitesi bağlanamadı.",
+      "http_error": "Takip sitesi bir hata döndürdü.",
+      "insufficient_scope": "Takip sitesi gerekli izinleri vermedi.",
+      "integration_not_found": "Bu takip sitesi bağlı değil.",
+      "invalid_id": "Geçersiz takip kimliği.",
+      "invalid_status": "Bu takip sitesi için geçersiz liste durumu.",
+      "not_found": "Takip sitesinde bulunamadı.",
+      "not_in_registry": "Bu takip sitesi kullanılamıyor.",
+      "parse_failed": "Takip sitesinin yanıtı okunamadı.",
+      "rate_limited": "Takip sitesi istekleri sınırlıyor. Daha sonra tekrar deneyin.",
+      "reauth_required": "Takip oturumunuzun süresi doldu. Lütfen yeniden bağlayın.",
+      "refresh_failed": "Takip oturumu yenilenemedi.",
+      "request_failed": "Takip sitesine ulaşılamadı.",
+      "score_format_unknown": "Takip sitesinde bilinmeyen puan biçimi."
     },
     "list": {
       "content_not_found": "İçerik bulunamadı.",
-      "entry_not_found": "Liste girişi bulunamadı."
+      "entry_not_found": "Liste girişi bulunamadı.",
+      "missing_id": "Bu girdinin takip kimliği eksik."
     },
     "proxy": {
       "no_url_provided": "URL sağlanmadı.",
       "upstream_error": "Yukarı akış (upstream) sunucu hatası.",
       "upstream_timeout": "Yukarı akış sunucusu zaman aşımına uğradı.",
       "invalid_header": "Geçersiz istek başlığı.",
-      "body_read_failed": "Yanıt gövdesi okunamadı.",
-      "invalid_upstream_url": "Geçersiz yukarı akış URL'si.",
-      "binary_not_supported": "İkili akışlar bu işlem için desteklenmiyor."
+      "body_read_failed": "Yanıt gövdesi okunamadı."
     },
     "user": {
       "not_found": "Kullanıcı bulunamadı.",
@@ -1505,24 +1557,28 @@
       "invalid_media_type": "Geçersiz medya türü.",
       "extension_search_failed": "Eklenti üzerinden arama başarısız oldu.",
       "no_match_found": "Eşleşme bulunamadı.",
-      "invalid_items_list": "Geçersiz öğe listesi biçimi.",
       "item_number_not_found": "Öğe numarası bulunamadı.",
       "link_failed": "İçerik bağlama başarısız oldu.",
-      "tracker_mapping_invalid": "İzleyici, yalnızca eklentiye özel içerikle ilişkilendirilemez.",
       "mapping_not_found": "Eşleştirme bulunamadı.",
-      "data_missing": "İçerik verileri eksik.",
-      "extension_only": "Bu işleme yalnızca eklentiye özel içeriklerde izin verilmez."
+      "extension_metadata_failed": "Eklenti bu başlığın ayrıntılarını yükleyemedi.",
+      "extension_no_match": "Eklentinin girdisi bu başlıkla eşleşmiyor.",
+      "invalid_content_type": "Geçersiz içerik türü.",
+      "invalid_extension_response": "Eklenti geçersiz bir yanıt döndürdü.",
+      "merge_type_mismatch": "Farklı türdeki girdiler birleştirilemez.",
+      "serialization": "İçerik verileri işlenemedi.",
+      "tracker_media_not_found": "Bu başlık takip sitesinde bulunamadı."
     },
     "extension": {
       "not_found": "Eklenti bulunamadı.",
-      "metadata_fetch_failed": "Eklentiden meta veriler alınamadı.",
-      "load_failed": "Eklenti yüklenemedi.",
       "install_network_failed": "Eklenti kurulumu sırasında ağ hatası.",
       "invalid_manifest": "Geçersiz eklenti manifestosu.",
       "unsupported_type": "Desteklenmeyen eklenti türü.",
       "invalid_script": "Geçersiz eklenti betiği (script).",
-      "io_error": "Eklenti G/Ç (I/O) hatası.",
-      "script_missing": "Eklenti betiği eksik."
+      "script_missing": "Eklenti betiği eksik.",
+      "already_exists": "Bu kimliğe sahip bir eklenti zaten var.",
+      "id_mismatch": "Eklenti kimliği manifestiyle eşleşmiyor.",
+      "invalid_id": "Geçersiz eklenti kimliği.",
+      "manifest_serialize": "Eklenti manifesti kaydedilemedi."
     },
     "home": {
       "invalid_layout": "Bu ana sayfa düzeni geçerli değil"
@@ -1537,16 +1593,59 @@
     "sandbox": {
       "serialization_failed": "Korumalı alan (Sandbox) için veriler hazırlanamadı.",
       "runtime_init_failed": "Korumalı alan çalışma zamanı başlatılamadı.",
-      "execution_failed": "Eklenti yürütme başarısız oldu.",
       "bad_json_response": "Korumalı alandan geçersiz JSON yanıtı.",
-      "thread_panicked": "Korumalı alan iş parçacığı (thread) çöktü."
+      "thread_panicked": "Korumalı alan iş parçacığı (thread) çöktü.",
+      "js_exception": "Eklentide bir hata oluştu."
     },
     "torrent": {
       "invalid_cache_key": "Geçersiz önbellek kaydı.",
       "cache_entry_in_use": "Bu torrent oynatılıyor ve silinemez.",
       "cache_entry_not_found": "Bu önbellek kaydı artık mevcut değil.",
       "cache_delete_failed": "Önbelleğe alınmış dosyalar silinemedi.",
-      "cache_scan_failed": "Torrent önbelleği okunamadı."
+      "cache_scan_failed": "Torrent önbelleği okunamadı.",
+      "add_failed": "Torrent eklenemedi.",
+      "add_failed_no_handle": "Torrent eklendi ancak açılamadı.",
+      "concurrency_limit_reached": "Aynı anda çok fazla torrent yayınlanıyor.",
+      "disk_check_failed": "Kullanılabilir disk alanı kontrol edilemedi.",
+      "episode_not_in_torrent": "Bu bölüm torrentte yok.",
+      "init_timeout": "Torrentin başlaması çok uzun sürdü.",
+      "insufficient_disk_space": "Bu torrent için yeterli disk alanı yok.",
+      "invalid_magnet": "Geçersiz magnet bağlantısı.",
+      "metadata_resolve_failed": "Torrentin meta verileri okunamadı.",
+      "metadata_timeout": "Torrentin meta verileri beklenirken zaman aşımı oluştu.",
+      "session_init_failed": "Torrent istemcisi başlatılamadı."
+    },
+    "generic": "Bir şeyler ters gitti",
+    "enrichment": {
+      "bad_id_dump": "Kimlik eşleme verileri geçersiz.",
+      "rate_limited": "Kimlik eşleme hizmetine çok fazla istek. Daha sonra tekrar deneyin.",
+      "unsupported_tracker": "Bu takip sitesi kimlik eşleme için desteklenmiyor."
+    },
+    "import": {
+      "already_running": "Zaten bir içe aktarma çalışıyor."
+    },
+    "logs": {
+      "delete_failed": "Günlük dosyası silinemedi.",
+      "fetch_failed": "Günlükler yüklenemedi.",
+      "invalid_file": "Geçersiz günlük dosyası adı.",
+      "read_failed": "Günlük dosyası okunamadı."
+    },
+    "playback": {
+      "chapters_file_failed": "Bölüm işaretleri hazırlanamadı.",
+      "command_failed": "Oynatıcı komutu kabul etmedi.",
+      "init_failed": "Oynatıcı başlatılamadı.",
+      "not_initialized": "Oynatıcı henüz hazır değil.",
+      "shutdown_failed": "Oynatıcı düzgün durdurulamadı."
+    },
+    "schedule": {
+      "cache_deserialize_failed": "Önbellekteki takvim okunamadı.",
+      "cache_serialize_failed": "Takvim önbelleğe alınamadı."
+    },
+    "sync": {
+      "tracker_not_connected": "Bu takip sitesi bağlı değil."
     }
+  },
+  "history": {
+    "title": "Geçmiş"
   }
 }
