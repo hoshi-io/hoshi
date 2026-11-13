@@ -1,5 +1,5 @@
 use rquickjs::context::EvalOptions;
-use rquickjs::{async_with, AsyncContext, AsyncRuntime, CatchResultExt};
+use rquickjs::{AsyncContext, AsyncRuntime, CatchResultExt};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -281,7 +281,7 @@ async fn run_quickjs_local(
     let full_script_for_error = full_script.clone();
     let state_map_for_output = Arc::clone(&state_map);
 
-    let result: Result<String, String> = async_with!(ctx => |ctx| {
+    let result: Result<String, String> = ctx.async_with(async |ctx| {
         register_native_apis(&ctx, headless_available, bridge, Arc::clone(&state_map), extension_id, console_buffer)
             .catch(&ctx)
             .map_err(|e| e.to_string())?;

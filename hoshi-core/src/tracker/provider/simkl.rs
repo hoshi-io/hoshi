@@ -131,6 +131,7 @@ struct SimklMediaObject {
     #[serde(default)]
     first_aired: Option<String>,
     #[serde(default)]
+    #[allow(dead_code)] // part of the API shape, not used yet
     ended: Option<bool>,
     #[serde(default)]
     year: Option<i32>,
