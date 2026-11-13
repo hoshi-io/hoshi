@@ -180,6 +180,7 @@ pub async fn get_trending(
     state: State<'_, Arc<AppState>>,
     session_state: State<'_, TauriSession>,
     media_type: String,
+    tracker: Option<String>,
 ) -> Result<Vec<FullContent>, CoreError> {
     let content_type = match media_type.as_str() {
         "anime" => ContentType::Anime,
@@ -188,7 +189,7 @@ pub async fn get_trending(
         _ => return Err(CoreError::BadRequest("error.content.invalid_media_type".into())),
     };
     let user_id = require_auth(&session_state).await?;
-    DiscoverService::trending(state.inner(), user_id, content_type).await
+    DiscoverService::trending(state.inner(), user_id, content_type, tracker.as_deref().unwrap_or("anilist")).await
 }
 
 #[tauri::command(rename_all = "snake_case")]

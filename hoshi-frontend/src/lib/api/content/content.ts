@@ -15,9 +15,9 @@ import type {
 
 export const contentApi = {
 
-    getTrending(mediaType: ContentType) {
+    getTrending(mediaType: ContentType, tracker?: string) {
         return call<FullContent[]>({
-            tauri: { cmd: "get_trending", args: { media_type: mediaType } },
+            tauri: { cmd: "get_trending", args: { media_type: mediaType, tracker } },
         });
     },
 

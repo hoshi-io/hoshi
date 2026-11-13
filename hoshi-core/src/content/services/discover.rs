@@ -96,17 +96,24 @@ impl DiscoverService {
         }
     }
 
-    /// The tracker trending list for a content type, as plain content.
     pub async fn trending(
         state: &Arc<AppState>,
         user_id: i32,
         content_type: ContentType,
+        tracker: &str,
     ) -> CoreResult<Vec<FullContent>> {
+        let (tracker, sort) = match tracker {
+            "mangabaka" => ("mangabaka", "trending"),
+            "mal" => ("mal", "trending"),
+            "shikimori" => ("shikimori", "trending"),
+            "kitsu" => ("kitsu", "popularityRank"),
+            _ => ("anilist", "TRENDING_DESC"),
+        };
         let query = DiscoverQuery::Tracker {
-            tracker: "anilist".into(),
+            tracker: tracker.into(),
             content_type,
             query: None,
-            sort: Some("TRENDING_DESC".into()),
+            sort: Some(sort.into()),
             genre: None,
             format: None,
             status: None,

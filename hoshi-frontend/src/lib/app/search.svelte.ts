@@ -159,7 +159,7 @@ class SearchState {
 
         if (!this.query.trim() && !this.sort && !this.status && !this.genre && !this.format && !this.nsfw && this.tags.length === 0) {
             try {
-                const res = await contentApi.getTrending(this.contentType);
+                const res = await contentApi.getTrending(this.contentType, this.tracker);
                 if (token !== this.searchToken) return; // a newer search has since started, drop this
 
                 this.results = (res || []).map(normalizeFullContent);
