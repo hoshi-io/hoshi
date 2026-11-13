@@ -111,10 +111,11 @@ pub async fn play_content_by_number(
     cid: String,
     ext_name: String,
     number: f64,
+    item_id: Option<String>,
     server: Option<String>,
     category: Option<String>,
 ) -> Result<PlayContentResult, CoreError> {
-    let res = ExtensionService::play_content(state.inner(), &cid, &ext_name, number, server, category).await?;
+    let res = ExtensionService::play_content(state.inner(), &cid, &ext_name, number, item_id, server, category).await?;
 
     Ok(res)
 }

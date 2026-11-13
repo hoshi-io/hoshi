@@ -8,20 +8,17 @@ import { progressApi } from "@/api/progress/progress";
 import type { CoreError } from "@/api/client";
 import {listStore} from "@/app/list.svelte";
 import {invoke} from "@tauri-apps/api/core";
+import { chapterHref, chapterNum, collapseByNumber, type ChapterLike } from "@/app/chapterVariants";
 
-export type ChapterItem = {
-    number?: string | number;
-    unitNumber?: string | number;
-    title?: string;
-    id?: string;
-    [key: string]: unknown;
-};
+export type ChapterItem = ChapterLike;
 
 export abstract class BaseReaderState {
 
     cid           = $derived((page.params as Record<string, string>).cid           ?? "");
     extension     = $derived((page.params as Record<string, string>).extension     ?? "");
     chapterNumber = $derived(Number((page.params as Record<string, string>).number ?? 0));
+    /** Pinned version (language/scanlator) of this chapter number; empty = let the source pick. */
+    variantId     = $derived(page.url.searchParams.get("v") ?? "");
 
     isLoading    = $state(true);
     error        = $state<CoreError | null>(null);
@@ -29,7 +26,32 @@ export abstract class BaseReaderState {
     chapterTitle = $state("");
     coverImage   = $state<string | null>(null);
     isNsfw       = $state(false);
-    allChapters  = $state<ChapterItem[]>([]);
+    /** Every version the extension returned, sorted by number. */
+    rawChapters  = $state<ChapterItem[]>([]);
+
+    /** Same fallback as the backend: the pinned version, else the first one with this number. */
+    currentChapter = $derived(
+        this.rawChapters.find(c => chapterNum(c) === this.chapterNumber && c.id === this.variantId)
+        ?? this.rawChapters.find(c => chapterNum(c) === this.chapterNumber)
+    );
+    /** One chapter per number, preferring the current chapter's language/scanlator. */
+    allChapters = $derived(collapseByNumber(this.rawChapters, this.currentChapter));
+
+    private currentChapterIndex = $derived(
+        this.allChapters.findIndex(c => chapterNum(c) === this.chapterNumber)
+    );
+    nextChapter = $derived(
+        this.currentChapterIndex >= 0 ? this.allChapters[this.currentChapterIndex + 1] ?? null : null
+    );
+    prevChapter = $derived(
+        this.currentChapterIndex > 0 ? this.allChapters[this.currentChapterIndex - 1] : null
+    );
+
+    protected abstract readonly baseRoute: string;
+
+    chapterHref(ch: ChapterItem) {
+        return chapterHref(this.baseRoute, this.cid, this.extension, ch, this.rawChapters);
+    }
 
     private hasUpdatedList     = $state(false);
     private hasMarkedCompleted = $state(false);
@@ -56,7 +78,7 @@ export abstract class BaseReaderState {
 
         // Trigger load when route params change
         $effect(() => {
-            const currentId = `${this.cid}-${this.extension}-${this.chapterNumber}`;
+            const currentId = `${this.cid}-${this.extension}-${this.chapterNumber}-${this.variantId}`;
             if (this.cid && this.extension && !isNaN(this.chapterNumber)) {
                 untrack(() => this.load(currentId));
             }
@@ -90,14 +112,8 @@ export abstract class BaseReaderState {
         this.coverImage = meta?.coverImage ?? null;
 
         const rawItems: any[] = Array.isArray(itemsRes) ? itemsRes : (itemsRes as any)?.data ?? [];
-        this.allChapters = rawItems.sort(
-            (a, b) => Number(a.number ?? a.unitNumber) - Number(b.number ?? b.unitNumber)
-        );
-
-        const currentUnit = this.allChapters.find(
-            u => Number(u.number ?? u.unitNumber) === currentChapterNum
-        );
-        this.chapterTitle = currentUnit?.title || "";
+        this.rawChapters = rawItems.sort((a, b) => chapterNum(a) - chapterNum(b));
+        this.chapterTitle = this.currentChapter?.title || "";
 
         return contentRes;
     }

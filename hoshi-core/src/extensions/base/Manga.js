@@ -23,8 +23,25 @@ class Manga extends Base {
             this._assertString(ch.title, `${ctx}.title`);
             this._assertNullableNumber(ch.number, `${ctx}.number`);
             this._assertNullableNumber(ch.index,  `${ctx}.index`);
+            this._assertNullableString(ch.language, `${ctx}.language`);
+            ch.scanlators = this._normalizeScanlators(ch, ctx);
+            delete ch.scanlator;
         });
         return chapters;
+    }
+
+    /** Accepts `scanlators: string[]` or a single `scanlator` ("A & B" / "A, B" split into groups). */
+    _normalizeScanlators(ch, ctx) {
+        let list = ch.scanlators;
+        if (list == null && ch.scanlator != null) {
+            this._assertNullableString(ch.scanlator, `${ctx}.scanlator`);
+            list = ch.scanlator.split(/\s*(?:&|,)\s*/);
+        }
+        if (list == null) return null;
+        this._assertArray(list, `${ctx}.scanlators`);
+        list.forEach((s, j) => this._assertNullableString(s, `${ctx}.scanlators[${j}]`));
+        const clean = list.filter(s => typeof s === "string").map(s => s.trim()).filter(Boolean);
+        return clean.length ? clean : null;
     }
 
     async _findChapterPages(chapterId) {

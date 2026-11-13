@@ -53,19 +53,7 @@ export class MangaReaderState extends BaseReaderState {
         return !this.isLoading && !this.error && this.images.length === 0;
     }
 
-    private currentChapterIndex = $derived(
-        this.allChapters.findIndex(c => Number(c.number ?? c.unitNumber) === this.chapterNumber)
-    );
-    nextChapterNum = $derived(
-        this.currentChapterIndex >= 0 && this.currentChapterIndex < this.allChapters.length - 1
-            ? (this.allChapters[this.currentChapterIndex + 1].unitNumber ?? this.allChapters[this.currentChapterIndex + 1].number)
-            : null
-    );
-    prevChapterNum = $derived(
-        this.currentChapterIndex > 0
-            ? (this.allChapters[this.currentChapterIndex - 1].unitNumber ?? this.allChapters[this.currentChapterIndex - 1].number)
-            : null
-    );
+    protected readonly baseRoute = "/read";
 
     currentProgress = $derived(
         this.groupedImages.length > 0
@@ -133,7 +121,7 @@ export class MangaReaderState extends BaseReaderState {
         try {
             const [, playRes] = await Promise.all([
                 this.fetchShared(currentCid, currentExt, currentChapterNum, stale),
-                contentApi.play(currentCid, currentExt, currentChapterNum),
+                contentApi.play(currentCid, currentExt, currentChapterNum, { itemId: this.variantId || undefined }),
             ]);
             if (stale()) return;
 
@@ -148,7 +136,7 @@ export class MangaReaderState extends BaseReaderState {
             if (extensions.isTachiyomi(currentExt) && rawImages.length > 0) {
                 const firstUrl = typeof rawImages[0] === "string" ? rawImages[0] : rawImages[0].url;
                 try {
-                    tachiyomiHeaders = await extensionsApi.getImageRequestHeaders(currentExt, firstUrl, this.allChapters[this.currentChapterIndex]?.id);
+                    tachiyomiHeaders = await extensionsApi.getImageRequestHeaders(currentExt, firstUrl, this.currentChapter?.id);
                 } catch (e) {
                     console.warn("Could not fetch tachiyomi image headers", e);
                 }
@@ -312,16 +300,16 @@ export class MangaReaderState extends BaseReaderState {
                 this.updatePageWithDir(this.currentGroupIndex + 1);
             } else {
                 this.skipAnimation = true;
-                if (this.nextChapterNum !== null)
-                    goto(`/read/${this.cid}/${this.extension}/${this.nextChapterNum}`);
+                if (this.nextChapter)
+                    goto(this.chapterHref(this.nextChapter));
             }
         } else {
             if (this.currentGroupIndex > 0) {
                 this.updatePageWithDir(this.currentGroupIndex - 1);
             } else {
                 this.skipAnimation = true;
-                if (this.prevChapterNum !== null)
-                    goto(`/read/${this.cid}/${this.extension}/${this.prevChapterNum}`);
+                if (this.prevChapter)
+                    goto(this.chapterHref(this.prevChapter));
             }
         }
         document.getElementById("reader-main-container")?.scrollTo(0, 0);

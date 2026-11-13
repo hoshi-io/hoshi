@@ -216,6 +216,10 @@ pub struct Chapter {
     pub title: String,
     pub number: Option<f64>,
     pub index: Option<f64>,
+    #[serde(default)]
+    pub language: Option<String>,
+    #[serde(default)]
+    pub scanlators: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -223,6 +227,33 @@ pub struct Chapter {
 pub enum ContentItems {
     Episodes(Vec<Episode>),
     Chapters(Vec<Chapter>),
+}
+
+/// Cache shape for `ContentItems`. The untagged enum can't round-trip: chapter JSON
+/// also parses as `Episodes`, silently dropping chapter-only fields.
+#[derive(Serialize, Deserialize)]
+#[serde(tag = "kind", content = "items")]
+pub enum CachedContentItems {
+    Episodes(Vec<Episode>),
+    Chapters(Vec<Chapter>),
+}
+
+impl From<ContentItems> for CachedContentItems {
+    fn from(items: ContentItems) -> Self {
+        match items {
+            ContentItems::Episodes(e) => Self::Episodes(e),
+            ContentItems::Chapters(c) => Self::Chapters(c),
+        }
+    }
+}
+
+impl From<CachedContentItems> for ContentItems {
+    fn from(items: CachedContentItems) -> Self {
+        match items {
+            CachedContentItems::Episodes(e) => Self::Episodes(e),
+            CachedContentItems::Chapters(c) => Self::Chapters(c),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

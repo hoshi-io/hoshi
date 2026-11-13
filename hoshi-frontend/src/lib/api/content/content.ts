@@ -57,9 +57,10 @@ export const contentApi = {
         });
     },
 
-    play(cid: string, extName: string, number: number, opts?: { server?: string; category?: string }) {
+    play(cid: string, extName: string, number: number, opts?: { server?: string; category?: string; itemId?: string }) {
+        const { itemId, ...rest } = opts ?? {};
         return call<PlayResponse>({
-            tauri: { cmd: "play_content_by_number", args: { cid, ext_name: extName, number, ...opts } },
+            tauri: { cmd: "play_content_by_number", args: { cid, ext_name: extName, number, item_id: itemId, ...rest } },
         });
     },
 

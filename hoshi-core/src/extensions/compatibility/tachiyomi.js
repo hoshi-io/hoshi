@@ -537,6 +537,7 @@ class HttpSource extends _SandboxManga {
                 ? (ch.chapter_number ?? ch.getChapter_number?.())
                 : arr.length - i,
             index:  i,
+            scanlator: ch.scanlator ?? ch.getScanlator?.() ?? null,
         }));
     }
 

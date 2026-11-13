@@ -14,6 +14,7 @@
     import { discordApi } from "@/api/discord/discord";
     import type { BaseReaderState } from "@/app/reader.svelte";
     import {layoutState} from "@/stores/layout.svelte";
+    import { scanlatorLabel } from "@/app/chapterVariants";
 
     let {
         readerState,
@@ -33,21 +34,14 @@
     let isMobile = $derived(innerWidth < 1024);
     let chapterDropdownOpen = $state(false);
 
-    let sortedChapters = $derived(
-        [...readerState.allChapters].sort(
-            (a, b) => Number(a.number ?? a.unitNumber) - Number(b.number ?? b.unitNumber)
-        )
-    );
+    let sortedChapters = $derived(readerState.allChapters);
     let currentIndex = $derived(
         sortedChapters.findIndex(c => Number(c.number ?? c.unitNumber) === readerState.chapterNumber)
     );
-    let prevChapter = $derived(currentIndex > 0 ? sortedChapters[currentIndex - 1] : null);
-    let nextChapter = $derived(
-        currentIndex >= 0 && currentIndex < sortedChapters.length - 1
-            ? sortedChapters[currentIndex + 1]
-            : null
-    );
-    let baseRoute = $derived(contentType === "novel" ? "/read-novel" : "/read");
+    /** Every version (language/scanlator) of every chapter; novels have one per number. */
+    let dropdownChapters = $derived(readerState.rawChapters);
+    let prevChapter = $derived(readerState.prevChapter);
+    let nextChapter = $derived(readerState.nextChapter);
 
     function getCleanTitle(chap: any, num: number | string): string | null {
         const title = chap?.title?.trim();
@@ -62,7 +56,7 @@
 
     let displayChapterText = $derived.by(() => {
         if (readerState.isLoading) return i18n.t('reader.loading');
-        const chap = sortedChapters[currentIndex];
+        const chap = readerState.currentChapter;
         const numText = i18n.t('reader.chapter_number', { count: readerState.chapterNumber });
         const cleanTitle = getCleanTitle(chap, readerState.chapterNumber);
         return cleanTitle ? `${cleanTitle} — ${numText}` : numText;
@@ -98,9 +92,7 @@
     });
 
     function getChapterUrl(chap: any) {
-        if (!chap) return "#";
-        const num = chap.number ?? chap.unitNumber;
-        return `${baseRoute}/${readerState.cid}/${readerState.extension}/${num}`;
+        return chap ? readerState.chapterHref(chap) : "#";
     }
 
     let isDesktopUiVisible = $state(true);
@@ -135,10 +127,11 @@
             </p>
         </div>
         <div class="flex-1 overflow-y-auto custom-scrollbar p-1 flex flex-col gap-0.5">
-            {#each sortedChapters as chap}
+            {#each dropdownChapters as chap}
                 {@const num = chap.number ?? chap.unitNumber ?? 1}
-                {@const isCurrent = num === readerState.chapterNumber}
+                {@const isCurrent = chap === readerState.currentChapter}
                 {@const cleanTitle = getCleanTitle(chap, num)}
+                {@const group = scanlatorLabel(chap)}
                 <a
                         href={getChapterUrl(chap)}
                         onclick={() => (chapterDropdownOpen = false)}
@@ -157,6 +150,11 @@
                         </span>
                         {#if isCurrent}<Check class="size-4 shrink-0" />{/if}
                     </div>
+                    {#if chap.language || group}
+                        <span class="text-[10px] font-normal text-muted-foreground truncate max-w-full">
+                            {#if chap.language}<span class="font-bold uppercase">{chap.language}</span>{#if group} · {/if}{/if}{group ?? ''}
+                        </span>
+                    {/if}
                 </a>
             {/each}
         </div>

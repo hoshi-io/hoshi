@@ -28,20 +28,7 @@ export class NovelReaderState extends BaseReaderState {
     maxWidth         = $state(appConfig.data?.novel?.maxWidth         ?? 800);
     paragraphSpacing = $state(appConfig.data?.novel?.paragraphSpacing ?? 1.5);
 
-    // Derived from allChapters (inherited $state from BaseReaderState)
-    private currentChapterIndex = $derived(
-        this.allChapters.findIndex(c => Number(c.number ?? c.unitNumber) === this.chapterNumber)
-    );
-    private nextChapterNum = $derived(
-        this.currentChapterIndex >= 0 && this.currentChapterIndex < this.allChapters.length - 1
-            ? (this.allChapters[this.currentChapterIndex + 1].unitNumber ?? this.allChapters[this.currentChapterIndex + 1].number)
-            : null
-    );
-    private prevChapterNum = $derived(
-        this.currentChapterIndex > 0
-            ? (this.allChapters[this.currentChapterIndex - 1].unitNumber ?? this.allChapters[this.currentChapterIndex - 1].number)
-            : null
-    );
+    protected readonly baseRoute = "/read-novel";
 
     get isEmpty(): boolean {
         return !this.isLoading && !this.error && !this.contentHtml;
@@ -147,7 +134,7 @@ export class NovelReaderState extends BaseReaderState {
         try {
             const [, playRes] = await Promise.all([
                 this.fetchShared(currentCid, currentExt, currentChapterNum, stale),
-                contentApi.play(currentCid, currentExt, currentChapterNum),
+                contentApi.play(currentCid, currentExt, currentChapterNum, { itemId: this.variantId || undefined }),
             ]);
             if (stale()) return;
             if (playRes.type.toLowerCase() !== "novel" || !playRes.data) {

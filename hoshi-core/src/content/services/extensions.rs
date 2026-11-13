@@ -11,7 +11,7 @@ use crate::content::repositories::content::ContentRepository;
 use crate::content::services::aniskip::AniSkipService;
 use crate::content::services::resolver::ContentResolverService;
 use crate::error::{CoreError, CoreResult};
-use crate::extensions::types::{ContentItems, PlayContentResult};
+use crate::extensions::types::{CachedContentItems, ContentItems, PlayContentResult};
 use crate::state::AppState;
 
 pub struct ExtensionService;
@@ -78,7 +78,7 @@ impl ExtensionService {
     ) -> CoreResult<ContentItems> {
         let cache_key = format!("items:{}:{}", ext_name, cid);
 
-        Self::cached_or(&state.pool, &cache_key, ext_name, "content_items", || async {
+        let cached: CachedContentItems = Self::cached_or(&state.pool, &cache_key, ext_name, "content_items", || async {
             let (content_type, ext_id) = ContentResolverService::ensure_extension_link(state, cid, ext_name).await?;
             let manager = &state.extension_manager;
 
@@ -91,8 +91,9 @@ impl ExtensionService {
                 ContentType::Anime => 10800,
                 _ => 86400,
             };
-            Ok((items, ttl))
-        }).await
+            Ok((items.into(), ttl))
+        }).await?;
+        Ok(cached.into())
     }
 
     #[instrument(skip(state, server, category))]
@@ -101,6 +102,7 @@ impl ExtensionService {
         cid: &str,
         ext_name: &str,
         number: f64,
+        item_id: Option<String>,
         server: Option<String>,
         category: Option<String>,
     ) -> CoreResult<PlayContentResult> {
@@ -116,7 +118,7 @@ impl ExtensionService {
             (ct, id)
         };
 
-        let real_id = Self::find_item_id(&items_list, number)
+        let real_id = Self::find_item_id(&items_list, number, item_id.as_deref())
             .ok_or_else(|| {
                 warn!(cid = %cid, ext = %ext_name, number = %number, "Item number not found");
                 CoreError::NotFound("error.content.item_number_not_found".into())
@@ -164,12 +166,18 @@ impl ExtensionService {
         }
     }
 
-    fn find_item_id(items: &ContentItems, number: f64) -> Option<String> {
+    /// `item_id` pins one version of a chapter (language/scanlator); it must belong to `number`.
+    /// Without it, or when it's no longer listed, the first item with that number wins.
+    fn find_item_id(items: &ContentItems, number: f64, item_id: Option<&str>) -> Option<String> {
         let matches_number = |n: Option<f64>| n.map(|n| (n - number).abs() < 0.01).unwrap_or(false);
 
         match items {
             ContentItems::Episodes(eps) => eps.iter().find(|ep| matches_number(ep.number)).map(|ep| ep.id.clone()),
-            ContentItems::Chapters(ch) => ch.iter().find(|c| matches_number(c.number)).map(|c| c.id.clone()),
+            ContentItems::Chapters(ch) => {
+                let mut same_number = ch.iter().filter(|c| matches_number(c.number));
+                let pinned = item_id.and_then(|id| same_number.clone().find(|c| c.id == id));
+                pinned.or_else(|| same_number.next()).map(|c| c.id.clone())
+            }
         }
     }
 }

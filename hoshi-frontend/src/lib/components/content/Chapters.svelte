@@ -7,6 +7,9 @@
     import type { CoreError } from "@/api/client";
     import type { ChapterProgress } from "@/api/progress/types";
     import ResponsiveSelect from "$lib/components/ResponsiveSelect.svelte";
+    import {
+        ALL, chapterFacets, chapterHref, chapterNum, filterChapters, scanlatorLabel, type ChapterLike,
+    } from "@/app/chapterVariants";
 
     let {
         cid,
@@ -28,7 +31,36 @@
     let selectedExtensionName = $derived(
         isDerived ? source : ""
     );
-    let chapters = $state<any[]>([]);
+    /** Every version the extension returned (several per number on multi-language/scanlator sources). */
+    let rawChapters = $state<ChapterLike[]>([]);
+    let language = $state(ALL);
+    let scanlator = $state(ALL);
+
+    const languages = $derived(chapterFacets(rawChapters).languages);
+    const scanlators = $derived(
+        chapterFacets(filterChapters(rawChapters, { language })).scanlators
+    );
+    const languageItems = $derived(languages.length > 1
+        ? [{ value: ALL, label: i18n.t('content.all_languages') },
+           ...languages.map(l => ({ value: l, label: l.toUpperCase() }))]
+        : []);
+    const scanlatorItems = $derived(scanlators.length > 1
+        ? [{ value: ALL, label: i18n.t('content.all_scanlators') },
+           ...scanlators.map(s => ({ value: s, label: s }))]
+        : []);
+
+    // A scanlator can vanish when the language changes.
+    $effect(() => {
+        if (scanlator !== ALL && !scanlators.includes(scanlator)) scanlator = ALL;
+    });
+
+    // Metadata columns only exist when they'd differ between rows.
+    const showLangCol = $derived(languageItems.length > 0 && language === ALL);
+    const showGroupCol = $derived(rawChapters.some(c => c.scanlators?.length));
+
+    const chapters = $derived(filterChapters(rawChapters, { language, scanlator }) as any[]);
+    /** Distinct chapter numbers of the filtered list (versions of one number count once). */
+    const numbers = $derived([...new Set(chapters.map(chapterNum))]);
     let loading = $state(false);
     let error = $state<CoreError | null>(null);
     let selectedArc = $state("0");
@@ -39,25 +71,22 @@
         new Map(progress.map(p => [p.chapter, p]))
     );
 
-    const resumeChapter = $derived.by(() => {
-        if (chapters.length === 0) return 1;
-
+    const firstUnread = $derived.by(() => {
         const completedNums = new Set(progress.filter(p => p.completed).map(p => p.chapter));
-        const firstUnread = chapters.find(ch => {
-            const num = ch.number ?? ch.unitNumber;
-            return !completedNums.has(num);
-        });
-
-        return (firstUnread?.number ?? firstUnread?.unitNumber) ?? 1;
+        return chapters.find(ch => !completedNums.has(ch.number ?? ch.unitNumber));
     });
 
+    const resumeChapter = $derived(
+        chapters.length === 0 ? 1 : (firstUnread?.number ?? firstUnread?.unitNumber) ?? 1
+    );
+
     const arcs = $derived.by(() => {
-        if (chapters.length <= ARC_SIZE) return null;
+        if (numbers.length <= ARC_SIZE) return null;
         const chunks: { start: number; end: number; label: string }[] = [];
-        for (let i = 0; i < chapters.length; i += ARC_SIZE) {
-            const slice = chapters.slice(i, i + ARC_SIZE);
-            const start = slice[0].number ?? slice[0].unitNumber;
-            const end = slice[slice.length - 1].number ?? slice[slice.length - 1].unitNumber;
+        for (let i = 0; i < numbers.length; i += ARC_SIZE) {
+            const slice = numbers.slice(i, i + ARC_SIZE);
+            const start = slice[0];
+            const end = slice[slice.length - 1];
             chunks.push({ start, end, label: `${start}–${end}` });
         }
         return chunks;
@@ -123,13 +152,13 @@
         const token = ++loadToken;
         loading = true;
         error = null;
+        language = ALL;
+        scanlator = ALL;
         try {
             const res = await contentApi.getItems(cid, extId);
             if (token !== loadToken) return; // a newer extension switch happened, drop this
 
-            chapters = (Array.isArray(res) ? res : []).sort((a, b) =>
-                (a.number ?? a.unitNumber) - (b.number ?? b.unitNumber)
-            );
+            rawChapters = (Array.isArray(res) ? res : []).sort((a, b) => chapterNum(a) - chapterNum(b));
         } catch (e: any) {
             if (token !== loadToken) return;
             error = e.key ? e : { key: 'content.failed_load' };
@@ -151,13 +180,13 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h2 class="text-base md:text-lg font-bold tracking-tight">
             {i18n.t('content.chapters_title')}
-            {#if chapters.length > 0}
-                <span class="text-muted-foreground/50 font-medium">· {chapters.length}</span>
+            {#if numbers.length > 0}
+                <span class="text-muted-foreground/50 font-medium">· {numbers.length}</span>
             {/if}
         </h2>
 
-        {#if extensionItems.length > 1 || (arcs && !loading && !error)}
-            <div class="flex items-center gap-3">
+        {#if extensionItems.length > 1 || languageItems.length > 0 || scanlatorItems.length > 0 || (arcs && !loading && !error)}
+            <div class="flex flex-wrap items-center gap-3">
                 {#if extensionItems.length > 1}
                     <div class="w-[180px] shrink-0">
                         <ResponsiveSelect
@@ -167,6 +196,24 @@
                                 class="bg-muted/30 border-border/20 hover:bg-muted/50 transition-colors rounded-sm font-medium capitalize text-xs h-8"
                         />
                     </div>
+                {/if}
+
+                {#if languageItems.length > 0 && !loading && !error}
+                    <ResponsiveSelect
+                            bind:value={language}
+                            items={languageItems}
+                            placeholder={i18n.t('content.all_languages')}
+                            class="w-auto min-w-[7rem] bg-muted/30 border-border/20 hover:bg-muted/50 transition-colors rounded-sm font-medium text-xs h-8"
+                    />
+                {/if}
+
+                {#if scanlatorItems.length > 0 && !loading && !error}
+                    <ResponsiveSelect
+                            bind:value={scanlator}
+                            items={scanlatorItems}
+                            placeholder={i18n.t('content.all_scanlators')}
+                            class="w-auto min-w-[7rem] max-w-[200px] bg-muted/30 border-border/20 hover:bg-muted/50 transition-colors rounded-sm font-medium text-xs h-8"
+                    />
                 {/if}
 
                 {#if arcs && !loading && !error}
@@ -226,8 +273,10 @@
                 {@const num = chapter.number ?? chapter.unitNumber}
                 {@const prog = progressMap.get(num)}
                 {@const isRead = prog?.completed ?? false}
-                {@const isResume = num === resumeChapter}
-                {@const url = `${basePath}/${cid}/${selectedExtensionName}/${num}`}
+                {@const isResume = firstUnread ? chapter === firstUnread : num === resumeChapter}
+                {@const url = chapterHref(basePath, cid, selectedExtensionName, chapter, rawChapters)}
+                {@const group = scanlatorLabel(chapter)}
+                {@const lang = showLangCol ? chapter.language : null}
                 {@const title = chapter.title?.trim() ? chapter.title : null}
 
                 <a
@@ -257,14 +306,34 @@
 
                         {#if isResume && !isRead}
                             <p class="text-[10px] font-bold text-primary uppercase tracking-tighter mt-0.5">{i18n.t('content.resume')}</p>
-                        {:else if chapter.scanlator}
-                            <p class="text-[10px] text-muted-foreground/35 truncate mt-0.5">{chapter.scanlator}</p>
+                        {/if}
+                        <!-- Mobile: metadata goes under the title -->
+                        {#if group || lang}
+                            <p class="sm:hidden text-[10px] text-muted-foreground/40 truncate mt-0.5">
+                                {#if lang}<span class="font-bold uppercase">{lang}</span>{#if group} · {/if}{/if}{group ?? ''}
+                            </p>
                         {/if}
                     </div>
 
-                    {#if isRead}
-                        <BookOpenCheck class="w-3.5 h-3.5 text-primary/50 shrink-0" />
+                    <!-- Desktop: fixed-width columns so rows line up like a table -->
+                    {#if showGroupCol}
+                        <span class="hidden sm:block shrink-0 w-44 truncate text-xs text-muted-foreground/50" title={group ?? undefined}>
+                            {group ?? ''}
+                        </span>
                     {/if}
+                    {#if showLangCol}
+                        <span class="hidden sm:flex shrink-0 w-9 justify-center">
+                            {#if lang}
+                                <span class="px-1.5 py-0.5 rounded-sm border border-border/30 bg-muted/30 text-[10px] font-bold uppercase text-muted-foreground/70">{lang}</span>
+                            {/if}
+                        </span>
+                    {/if}
+
+                    <span class="shrink-0 w-3.5">
+                        {#if isRead}
+                            <BookOpenCheck class="w-3.5 h-3.5 text-primary/50" />
+                        {/if}
+                    </span>
                 </a>
             {/each}
         </div>
