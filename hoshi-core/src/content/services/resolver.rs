@@ -6,12 +6,13 @@ use tracing::{debug, error, info, instrument, warn};
 use serde_json::{json, Value};
 
 use crate::config::repository::ConfigRepository;
-use crate::content::models::{ContentType, EpisodeData, ExtensionSource, FullContent, Metadata};
+use crate::content::models::{ContentType, EpisodeData, ExtensionSource, FullContent, Metadata, Status};
 use crate::content::repositories::content::ContentRepository;
 use crate::content::repositories::extension::ExtensionRepository;
 use crate::content::services::content_units::SimklUnitsService;
 use crate::content::services::enrichment::EnrichmentService;
 use crate::content::services::extensions::ExtensionService;
+use crate::content::services::import::ImportService;
 use crate::content::services::mapping::MappingService;
 use crate::content::utils::{apply_year_penalty, best_title_match, generate_cid, normalize_title};
 use crate::error::{CoreError, CoreResult};
@@ -24,6 +25,8 @@ use crate::tracker::types::TrackerMapping;
 const TRACKER_SOURCES: &[&str] = &["anilist", "mal", "kitsu", "simkl", "mangabaka", "shikimori"];
 const FUZZY_SCORE_THRESHOLD: f64 = 0.85;
 const MAX_FUZZY_CANDIDATES: usize = 3;
+const ACTIVE_REFRESH_SECS: i64 = 24 * 60 * 60;
+const FINISHED_REFRESH_SECS: i64 = 30 * 24 * 60 * 60;
 
 fn value_to_id(v: &Value) -> Option<String> {
     match v {
@@ -744,7 +747,18 @@ impl ContentResolverService {
             .ok_or_else(|| CoreError::NotFound(format!("Tracker provider '{}' not found", preferred)))?;
 
         let meta = provider.to_core_metadata(cid, &media);
-        ContentRepository::upsert_metadata(&state.pool, &meta).await
+        ContentRepository::upsert_metadata(&state.pool, &meta).await?;
+        ImportService::sync_relations(&state.pool, cid, preferred, &media, true).await;
+        Ok(())
+    }
+
+    /// Airing/upcoming entries change often (status, episode count, new sequels); finished ones rarely.
+    fn is_metadata_stale(meta: &Metadata, now: i64) -> bool {
+        let age = now - meta.updated_at;
+        match meta.status {
+            Some(Status::Ongoing | Status::Planned | Status::Hiatus) | None => age > ACTIVE_REFRESH_SECS,
+            Some(Status::Completed | Status::Cancelled) => age > FINISHED_REFRESH_SECS,
+        }
     }
 
     async fn ensure_preferred_metadata(
@@ -756,7 +770,8 @@ impl ContentResolverService {
         current_tracker_id: &str,
     ) -> CoreResult<()> {
         match metadata.iter().find(|m| m.source_name == preferred) {
-            Some(m) if !m.characters.is_empty() => return Ok(()),
+            Some(m) if !m.characters.is_empty() && !Self::is_metadata_stale(m, Utc::now().timestamp()) => return Ok(()),
+            Some(m) if !m.characters.is_empty() => debug!(cid = %cid, status = ?m.status, "Preferred metadata stale, refreshing"),
             Some(_) => {} // present but missing characters: refresh
             None => info!(cid = %cid, preferred = %preferred, "Missing preferred provider metadata, backfilling"),
         }

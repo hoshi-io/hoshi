@@ -27,7 +27,7 @@ impl SimklUnitsService {
             return Self::fetch_and_persist(state, cid, &simkl_id).await;
         }
 
-        let is_airing = full.metadata.first()
+        let is_airing = full.metadata.iter().max_by_key(|m| m.updated_at)
             .is_some_and(|m| matches!(m.status, Some(Status::Ongoing)));
         if !is_airing {
             return Ok(false);

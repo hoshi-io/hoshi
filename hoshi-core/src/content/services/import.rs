@@ -96,26 +96,35 @@ impl ImportService {
             }
         };
 
+        Self::sync_relations(pool, &cid, tracker_name, media, false).await;
+
+        Ok(cid)
+    }
+
+    pub async fn sync_relations(
+        pool: &SqlitePool,
+        cid: &str,
+        tracker_name: &str,
+        media: &TrackerMedia,
+        prune: bool,
+    ) {
+        let existing = if prune {
+            if media.relations.is_empty() {
+                return;
+            }
+            let Ok(existing) = RelationRepository::get_by_source(pool, cid).await else { return };
+            if existing.iter().any(|r| r.source_name != tracker_name) {
+                return;
+            }
+            existing
+        } else {
+            Vec::new()
+        };
+
+        let mut kept: Vec<(&str, &'static str)> = Vec::with_capacity(media.relations.len());
         for rel in &media.relations {
-            let rel_type = match rel.relation_type.as_str() {
-                "SEQUEL"      => RelationType::Sequel,
-                "PREQUEL"     => RelationType::Prequel,
-                "SIDE_STORY"  => RelationType::SideStory,
-                "SPIN_OFF"    => RelationType::Spinoff,
-                "ADAPTATION"  => RelationType::Adaptation,
-                "PARENT"      => RelationType::Parent,
-                "SUMMARY"     => RelationType::Summary,
-                "SOURCE"      => RelationType::Source,
-                "COMPILATION" => RelationType::Compilation,
-                "CONTAINS"    => RelationType::Contains,
-                "ALTERNATIVE" => RelationType::Alternative,
-                "CHARACTER"   => RelationType::Character,
-                "OTHER"       => RelationType::Other,
-                other => {
-                    warn!(relation_type = %other, "Unknown AniList relation type");
-                    RelationType::Alternative
-                }
-            };
+            let rel_type = Self::map_relation_type(&rel.relation_type);
+            kept.push((rel.media.tracker_id.as_str(), rel_type.as_str()));
 
             let target_cid = TrackerRepository::find_cid_by_tracker(
                 pool, tracker_name, &rel.media.tracker_id,
@@ -137,7 +146,38 @@ impl ImportService {
             }
         }
 
-        Ok(cid)
+        let stale: Vec<i64> = existing.iter()
+            .filter(|r| !kept.contains(&(r.target_tracker_id.as_str(), r.relation_type.as_str())))
+            .filter_map(|r| r.id)
+            .collect();
+        if !stale.is_empty() {
+            debug!(cid = %cid, count = stale.len(), "Pruning relations no longer returned by tracker");
+            if let Err(e) = RelationRepository::delete_by_ids(pool, &stale).await {
+                warn!(error = ?e, "Failed to prune stale relations");
+            }
+        }
+    }
+
+    fn map_relation_type(raw: &str) -> RelationType {
+        match raw {
+            "SEQUEL"      => RelationType::Sequel,
+            "PREQUEL"     => RelationType::Prequel,
+            "SIDE_STORY"  => RelationType::SideStory,
+            "SPIN_OFF"    => RelationType::Spinoff,
+            "ADAPTATION"  => RelationType::Adaptation,
+            "PARENT"      => RelationType::Parent,
+            "SUMMARY"     => RelationType::Summary,
+            "SOURCE"      => RelationType::Source,
+            "COMPILATION" => RelationType::Compilation,
+            "CONTAINS"    => RelationType::Contains,
+            "ALTERNATIVE" => RelationType::Alternative,
+            "CHARACTER"   => RelationType::Character,
+            "OTHER"       => RelationType::Other,
+            other => {
+                warn!(relation_type = %other, "Unknown AniList relation type");
+                RelationType::Alternative
+            }
+        }
     }
 
     pub fn to_content_metadata(cid: &str, tracker_name: &str, media: &TrackerMedia) -> Metadata {

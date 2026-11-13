@@ -79,6 +79,18 @@ impl RelationRepository {
         Ok(())
     }
 
+    pub async fn delete_by_ids(pool: &SqlitePool, ids: &[i64]) -> CoreResult<()> {
+        for chunk in ids.chunks(IN_CHUNK) {
+            let sql = format!("DELETE FROM content_relations WHERE id IN ({})", placeholders(chunk.len()));
+            let mut q = sqlx::query(&sql);
+            for id in chunk {
+                q = q.bind(id);
+            }
+            q.execute(pool).await?;
+        }
+        Ok(())
+    }
+
     pub async fn backfill_target_cid(
         pool: &SqlitePool, tracker_name: &str, tracker_id: &str, cid: &str,
     ) -> CoreResult<()> {
