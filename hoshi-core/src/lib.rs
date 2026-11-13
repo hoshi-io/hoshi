@@ -28,13 +28,14 @@ use std::sync::{Arc};
 use std::time::Duration;
 use reqwest::Client;
 use tracker::provider::build_registry;
-use tracing::{info, instrument};
+use tracing::{info, instrument, warn};
 use crate::list::sync_queue::SyncQueue;
 use crate::playback::PlaybackHandle;
 use crate::thumbnail::ThumbnailService;
 use crate::torrent::TorrentHandle;
 use crate::tracker::sync::StartupSyncService;
 use crate::home::service::HomeLayoutService;
+use crate::content::repositories::cache::CacheRepository;
 
 #[instrument(skip(log_store, paths, headless))]
 pub async fn build(paths: AppPaths, headless: HeadlessHandle, log_store: logs::LogStore, ) -> CoreResult<Arc<AppState>> {
@@ -96,6 +97,17 @@ pub async fn build(paths: AppPaths, headless: HeadlessHandle, log_store: logs::L
     state.torrent.spawn_reaper();
 
     HomeLayoutService::warmup(state.clone());
+    tokio::spawn({
+        let pool = state.pool.clone();
+        async move {
+            loop {
+                if let Err(e) = CacheRepository::cleanup(&pool).await {
+                    warn!(error = ?e, "Cache cleanup failed");
+                }
+                tokio::time::sleep(Duration::from_secs(24 * 3600)).await;
+            }
+        }
+    });
     SyncQueue::start(state.clone()).await;
     StartupSyncService::run(state.clone());
     info!("Hoshi Core initialization completed successfully");
