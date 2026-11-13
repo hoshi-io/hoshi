@@ -128,7 +128,15 @@
       "sections_desc": "Shown on the home page in this order.",
       "delete_tab_desc": "Removes the tab and its sections.",
       "tabs": "Tabs",
-      "tab_settings_desc": "Name, icon and the banner shown at the top of this tab."
+      "tab_settings_desc": "Name, icon and the banner shown at the top of this tab.",
+      "filters": "Filters",
+      "filtered": "Filtered",
+      "filters_desc": "Search text and filters for this section.",
+      "search_text": "Search text",
+      "search_text_placeholder": "Optional, leave empty to browse",
+      "filters_failed": "This extension's filters couldn't be loaded.",
+      "no_filters": "This extension has no filters.",
+      "apply": "Apply"
     },
     "presets": {
       "sequels": "Sequels you haven't started",

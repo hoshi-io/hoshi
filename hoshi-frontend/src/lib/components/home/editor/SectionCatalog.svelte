@@ -44,7 +44,7 @@
     }
 
     function isAdded(p: Preset) {
-        return tab.sections.some(s => sameSource(s, p.section));
+        return !p.repeatable && tab.sections.some(s => sameSource(s, p.section));
     }
 
     function add(p: Preset) {

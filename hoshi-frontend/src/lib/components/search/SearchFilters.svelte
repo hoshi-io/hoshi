@@ -5,7 +5,8 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { searchState } from "@/app/search.svelte.js";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
-    import {ANIME_FORMATS, formatLabel, MANGA_FORMATS, TRACKER_FILTERS} from "@/utils/search.js";
+    import {ANIME_FORMATS, MANGA_FORMATS, TRACKER_FILTERS} from "@/utils/search.js";
+    import ExtensionFilterFields from "@/components/search/ExtensionFilterFields.svelte";
 
     let {
         searchMode,
@@ -60,17 +61,6 @@
 
         handleFilterChange();
     }
-
-    const toggleMultiSelect = (key: string, value: string) => {
-        if (!extFilterValues[key]) extFilterValues[key] = [];
-        const index = extFilterValues[key].indexOf(value);
-        if (index > -1) {
-            extFilterValues[key] = extFilterValues[key].filter((v: string) => v !== value);
-        } else {
-            extFilterValues[key] = [...extFilterValues[key], value];
-        }
-        handleFilterChange();
-    };
 
     let tagFilter = $state("");
 
@@ -201,57 +191,7 @@
         </div>
 
     {:else if searchMode === "extension" && Object.keys(extFiltersSchema).length > 0}
-        <div class="space-y-4">
-            {#each Object.entries(extFiltersSchema) as [key, filterDef]}
-                <div class="space-y-2.5">
-                    {#if filterDef.type === 'select'}
-                        <Label class="text-sm font-bold text-foreground/90">
-                            {filterDef.label || formatLabel(key)}
-                        </Label>
-                        <ResponsiveSelect
-                                bind:value={extFilterValues[key]}
-                                items={[
-            { value: "", label: i18n.t('search.any_genre') },
-            ...(filterDef.options || []).map((opt: any) => ({ value: opt.value, label: opt.label }))
-        ]}
-                                onValueChange={handleFilterChange}
-                                placeholder={i18n.t('search.any_genre')}
-                                class="bg-muted/20 border-none h-11 rounded-sm font-semibold"
-                        />
-                    {:else if filterDef.type === 'multiselect'}
-                        <div class="space-y-3">
-                            <Label class="text-sm font-bold text-foreground/90">
-                                {filterDef.label || formatLabel(key)}
-                            </Label>
-
-                            <div class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-2 rounded-sm border border-border/40 bg-muted/5 [scrollbar-width:thin]">
-                                {#each filterDef.options || [] as opt}
-                                    {@const isSelected = extFilterValues[key]?.includes(opt.value)}
-                                    <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-sm text-xs font-bold transition-all border
-{isSelected
-    ? 'bg-primary text-primary-foreground border-primary'
-    : 'bg-muted/20 text-foreground/70 border-transparent hover:border-border'}"
-                                            onclick={() => toggleMultiSelect(key, opt.value)}
-                                    >
-                                        {opt.label}
-                                        {#if isSelected}
-                                            <span class="ml-1 opacity-70">✕</span>
-                                        {/if}
-                                    </button>
-                                {/each}
-                            </div>
-                        </div>
-                    {:else if filterDef.type === 'boolean'}
-                        <div class="flex items-center space-x-3 pt-2">
-                            <Switch id={`filter-${key}`} bind:checked={extFilterValues[key]} onCheckedChange={handleFilterChange} />
-                            <Label for={`filter-${key}`} class="text-sm font-bold text-foreground/90">{filterDef.label || formatLabel(key)}</Label>
-                        </div>
-                    {/if}
-                </div>
-            {/each}
-        </div>
+        <ExtensionFilterFields schema={extFiltersSchema} bind:values={extFilterValues} onchange={handleFilterChange} />
     {/if}
 
     <div class="pt-6 border-t border-border/40">

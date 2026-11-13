@@ -224,7 +224,7 @@
         {/key}
 
         {#if items.length > 1}
-            <div class="absolute bottom-8 right-6 md:right-16 z-30 flex gap-2 items-center">
+            <div class="absolute bottom-8 md:bottom-20 right-6 md:right-16 z-30 flex gap-2 items-center">
                 {#each items as _, i}
                     <button
                             aria-label={`Ir a diapositiva ${i + 1}`}

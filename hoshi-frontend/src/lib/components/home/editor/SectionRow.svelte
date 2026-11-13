@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ArrowDown, ArrowUp, Eye, EyeOff, GripVertical, MoreHorizontal, Pencil, Trash2 } from 'lucide-svelte';
+    import { ArrowDown, ArrowUp, Eye, EyeOff, GripVertical, MoreHorizontal, Pencil, Settings2, Trash2 } from 'lucide-svelte';
     import * as DropdownMenu from '@/components/ui/dropdown-menu';
     import SegmentedControl from '@/components/settings/parts/SegmentedControl.svelte';
     import { homeEditor } from '@/app/home-editor.svelte.js';
@@ -9,6 +9,7 @@
     import { cn } from '@/utils';
     import type { HomeSection, HomeTab, SectionLayout } from '@/api/home/types';
     import { TRACKER_NAMES } from './presets';
+    import ExtensionSectionDialog from './ExtensionSectionDialog.svelte';
 
     let { tab, section, index }: { tab: HomeTab; section: HomeSection; index: number } = $props();
 
@@ -19,6 +20,14 @@
         { value: 'ranked', label: i18n.t('home.edit.layout_ranked') },
         { value: 'strip', label: i18n.t('home.edit.layout_strip') },
     ]);
+
+    const extensionQuery = $derived(
+        section.source.kind === 'search' && section.source.query.kind === 'extension' ? section.source.query : null
+    );
+    const filtered = $derived(
+        !!extensionQuery && (!!extensionQuery.query || Object.keys(extensionQuery.filters ?? {}).length > 0)
+    );
+    let filtersOpen = $state(false);
 
     const fixedLayout = $derived(section.source.kind === 'builtin' && FIXED_LAYOUT.includes(section.source.builtin.type));
 
@@ -33,6 +42,7 @@
         }
         const parts = [source];
         if (section.contentType) parts.push(i18n.t(`home.${section.contentType}`));
+        if (filtered) parts.push(i18n.t('home.edit.filtered'));
         if (tab.hero === section.id) parts.push(i18n.t('home.edit.hero'));
         if (section.hidden) parts.push(i18n.t('home.edit.hidden'));
         return parts.join(' · ');
@@ -45,7 +55,6 @@
     function startRename() {
         name = labelText(section.title);
         renaming = true;
-        queueMicrotask(() => { input?.focus(); input?.select(); });
     }
 
     function commitRename() {
@@ -92,6 +101,19 @@
         </div>
     {/if}
 
+    {#if extensionQuery}
+        <button
+                type="button"
+                title={i18n.t('home.edit.filters')}
+                aria-label={i18n.t('home.edit.filters')}
+                onclick={() => filtersOpen = true}
+                class={cn('flex size-8 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-muted hover:text-foreground',
+                    filtered ? 'text-primary' : 'text-muted-foreground')}
+        >
+            <Settings2 class="size-4" />
+        </button>
+    {/if}
+
     <button
             type="button"
             title={i18n.t(section.hidden ? 'home.edit.show' : 'home.edit.hide')}
@@ -122,7 +144,17 @@
                 </button>
             {/snippet}
         </DropdownMenu.DropdownMenuTrigger>
-        <DropdownMenu.DropdownMenuContent align="end" class="w-48">
+        <!-- Closing the menu hands focus back to its trigger, which would blur (and end) a rename just started from it. -->
+        <DropdownMenu.DropdownMenuContent
+                align="end"
+                class="w-48"
+                onCloseAutoFocus={(e) => {
+                    if (!renaming) return;
+                    e.preventDefault();
+                    input?.focus();
+                    input?.select();
+                }}
+        >
             <DropdownMenu.DropdownMenuItem onclick={startRename}>
                 <Pencil />{i18n.t('home.edit.rename')}
             </DropdownMenu.DropdownMenuItem>
@@ -150,6 +182,10 @@
         </DropdownMenu.DropdownMenuContent>
     </DropdownMenu.DropdownMenu>
 </div>
+
+{#if extensionQuery}
+    <ExtensionSectionDialog bind:open={filtersOpen} {tab} {section} />
+{/if}
 
 <style>
     :global([data-dragging]) .section-row {

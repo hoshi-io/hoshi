@@ -145,6 +145,14 @@ class HomeEditor {
         this.touch();
     }
 
+    /** Search text and filters of an extension section. */
+    setExtensionQuery(tabId: string, sectionId: string, query: string | null, filters: Record<string, unknown> | null) {
+        const section = this.tab(tabId)?.sections.find(s => s.id === sectionId);
+        if (!section || section.source.kind !== 'search' || section.source.query.kind !== 'extension') return;
+        section.source.query = { ...section.source.query, query, filters };
+        this.touch();
+    }
+
     toggleHidden(tabId: string, sectionId: string) {
         const section = this.tab(tabId)?.sections.find(s => s.id === sectionId);
         if (!section) return;

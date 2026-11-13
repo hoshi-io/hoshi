@@ -10,6 +10,8 @@ export interface Preset {
     group: PresetGroup;
     /** Rendered as a compact chip (genres) instead of a full row. */
     compact?: boolean;
+    /** Can be added more than once (each copy gets its own filters). */
+    repeatable?: boolean;
     section: Omit<HomeSection, 'id'>;
 }
 
@@ -102,6 +104,7 @@ export function buildPresets(ct: ContentType, installed: Extension[]): Preset[] 
         presets.push({
             key: `ext.${ext.id}`,
             group: 'extensions',
+            repeatable: true,
             section: {
                 title: text(ext.name),
                 layout: 'carousel',

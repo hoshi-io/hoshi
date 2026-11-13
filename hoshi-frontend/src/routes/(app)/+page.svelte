@@ -13,6 +13,7 @@
     import { homeEditor } from '@/app/home-editor.svelte.js';
     import HomeEditView from '@/components/home/editor/HomeEditView.svelte';
     import { Pencil } from 'lucide-svelte';
+    import { beforeNavigate } from '$app/navigation';
 
     const prefersReducedMotion =
         typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -71,8 +72,11 @@
         return () => { layoutState.headerAction = undefined; };
     });
 
-    // Leaving the page drops an unsaved draft.
-    $effect(() => () => homeEditor.cancel());
+    // Leaving home drops an unsaved draft. Not tied to this component's lifetime:
+    // the layout can remount the page while navigating to it, which must not end editing.
+    beforeNavigate(({ to }) => {
+        if (homeEditor.editing && to?.url.pathname !== '/') homeEditor.cancel();
+    });
 
     $effect(() => {
         if (auth.loading || !auth.initialized || !auth.user) return;
