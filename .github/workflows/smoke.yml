@@ -73,6 +73,7 @@ jobs:
           if kill -0 $PID 2>/dev/null; then echo alive > out/status; kill $PID; else echo dead > out/status; fi
           sleep 2
           cp otool.txt out/
+          cp "$HOME/Library/Application Support/com.ninelfx.hoshi/smoke.log" out/ 2>/dev/null || echo "no smoke.log" > out/smoke.log
 
       - name: Summary
         if: always()
@@ -87,10 +88,17 @@ jobs:
             # Only meaningful if the app got far enough to run setup.
             check "GL view inserted behind the webview" '[ "$(cat out/status 2>/dev/null)" = alive ] && ! grep -qE "no superview yet|NSOpenGLPixelFormat initWithAttributes returned nil|NSOpenGLView initWithFrame" $log'
             check "mpv linked from the bundle, not Homebrew" '! grep -q "/opt/homebrew" out/otool.txt'
-            check "test video plays (position advancing)" '[ "$(grep -c "smoke playback" $log)" -ge 3 ] && ! grep -q "smoke playback error" $log'
-            ok=$(grep -c "smoke headless ok" $log || true); bad=$(grep -c "smoke headless failed" $log || true)
+            sl=out/smoke.log
+            check "test video plays (position advancing)" '[ "$(grep -c "smoke playback position" $sl)" -ge 3 ] && ! grep -q "smoke playback error" $sl'
+            ok=$(grep -c "smoke headless ok" $sl || true)
             check "headless: $ok/7 fetches returned (5 sequential + 2 concurrent)" '[ "$ok" -eq 7 ]'
-            if [ "$bad" -gt 0 ]; then echo ""; echo "Headless failures:"; echo '```'; grep "smoke headless failed" $log | head -n 7; echo '```'; fi
+            echo ""
+            echo "<details><summary>smoke.log</summary>"
+            echo ""
+            echo '```'
+            cat $sl
+            echo '```'
+            echo "</details>"
             echo ""
             echo "Rendering itself: check the screenshot in the smoke-macos artifact (video under the player UI)."
             echo ""
@@ -181,6 +189,8 @@ jobs:
           # Rust's stdout is redirected to os_log on iOS, so the system log has most of it.
           xcrun simctl spawn "$UDID" log show --last 5m --style compact \
             --predicate "process == \"$EXE_NAME\"" > out/ios-system.log 2>&1 || true
+          DATA=$(xcrun simctl get_app_container "$UDID" "$BUNDLE_ID" data)
+          cp "$DATA/Library/Application Support/com.ninelfx.hoshi/smoke.log" out/ 2>/dev/null || echo "no smoke.log" > out/smoke.log
           xcrun simctl terminate "$UDID" "$BUNDLE_ID" || true
           cat out/ios-console.log out/ios-system.log > out/ios-all.log
 
@@ -198,10 +208,17 @@ jobs:
             # Positive lines can be cut off in iOS's chunked stdout logging, so check for failures.
             check "mpv core initialized" '! grep -qE "init_failed|failed to attach CAMetalLayer|mpv rejected option" $log'
             check "video output (MoltenVK) came up" 'grep -qiE "vo/gpu-next" $log && ! grep -qiE "Failed initializing any suitable GPU context|Error opening/initializing the selected video_out" $log'
-            check "test video plays (position advancing)" '[ "$(grep -c "smoke playback" $log)" -ge 3 ] && ! grep -q "smoke playback error" $log'
-            ok=$(grep -c "smoke headless ok" $log || true); bad=$(grep -c "smoke headless failed" $log || true)
+            sl=out/smoke.log
+            check "test video plays (position advancing)" '[ "$(grep -c "smoke playback position" $sl)" -ge 3 ] && ! grep -q "smoke playback error" $sl'
+            ok=$(grep -c "smoke headless ok" $sl || true)
             check "headless: $ok/7 fetches returned (5 sequential + 2 concurrent)" '[ "$ok" -eq 7 ]'
-            if [ "$bad" -gt 0 ]; then echo ""; echo "Headless failures:"; echo '```'; grep "smoke headless failed" $log | head -n 7; echo '```'; fi
+            echo ""
+            echo "<details><summary>smoke.log</summary>"
+            echo ""
+            echo '```'
+            cat $sl
+            echo '```'
+            echo "</details>"
             echo ""
             echo "<details><summary>mpv / player lines</summary>"
             echo ""

@@ -196,11 +196,21 @@ fn create_render_context(
             info!("mpv render context created successfully");
 
             let render_state_for_cb = render_state.clone();
+            // At most one render queued on the main thread at a time (GTK's queue_render does
+            // this for Linux). Without it, frames slower than the frame rate pile up and starve
+            // the whole UI.
+            let pending = Arc::new(std::sync::atomic::AtomicBool::new(false));
             ctx.set_update_callback({
                 let window = window.clone();
                 move || {
+                    if pending.swap(true, std::sync::atomic::Ordering::AcqRel) {
+                        return;
+                    }
                     let render_state = render_state_for_cb.clone();
+                    let pending = pending.clone();
                     let _ = window.run_on_main_thread(move || {
+                        // Cleared first so a frame arriving mid-render queues exactly one more.
+                        pending.store(false, std::sync::atomic::Ordering::Release);
                         render_frame(gl_view, gl_context, render_state);
                     });
                 }

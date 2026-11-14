@@ -59,7 +59,11 @@
         // TEMPORARY: CI smoke test. Waits out first-run user creation, then opens the player.
         invoke<{ video: string | null }>('smoke_config')
             .then((cfg) => {
-                if (cfg.video) setTimeout(() => goto('/watch/smoke/1'), 8000);
+                if (!cfg.video) return;
+                setTimeout(() => {
+                    invoke('smoke_log', { msg: `navigating from ${page.url.pathname}` }).catch(() => {});
+                    goto('/watch/smoke/1');
+                }, 8000);
             })
             .catch(() => {});
     }

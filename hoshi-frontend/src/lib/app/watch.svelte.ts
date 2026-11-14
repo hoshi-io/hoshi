@@ -261,20 +261,23 @@ export class WatchState {
     // TEMPORARY: CI smoke test. Skips content/extension lookup and plays HOSHI_SMOKE_VIDEO
     // through the real player path.
     private async loadSmoke(epNumber: number) {
+        const log = (msg: string) => invoke("smoke_log", { msg }).catch(() => {});
         this.currentLoadedCid = "smoke";
         this.currentLoadedEp = epNumber;
         this.isLoadingMeta = false;
         try {
             const cfg = await invoke<{ video: string | null }>("smoke_config");
             if (!cfg.video) return;
+            log("watch page opened");
             await this.playerReady;
             await invoke("wait_for_player_ready").catch(() => {});
+            log("player ready, calling load_stream");
             await invoke("load_stream", { url: cfg.video });
             this.isStreamLoaded = true;
             this.isLoadingPlay = false;
-            console.log("[smoke] load_stream ok");
+            log("load_stream ok");
         } catch (e) {
-            console.error("[smoke] load_stream failed", e);
+            log(`load_stream failed: ${JSON.stringify(e)}`);
         }
     }
 

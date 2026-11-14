@@ -4,13 +4,34 @@
 //! HOSHI_SMOKE_VIDEO=<url>   frontend opens /watch/smoke/1 and plays <url>
 //! HOSHI_SMOKE_HEADLESS=1    runs a burst of headless fetches and logs the outcome
 
-use std::sync::Arc;
+use std::io::Write;
+use std::path::PathBuf;
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
 use hoshi_core::headless::{HeadlessBrowser, HeadlessOptions};
 use hoshi_core::playback::PlaybackEvent;
 use serde::Serialize;
-use tracing::{error, info};
+use tracing::info;
+
+// Results also go to <app data>/smoke.log: iOS truncates chunked stdout, so the log
+// stream alone can't be trusted. CI pulls this file out of the app container.
+static LOG_PATH: OnceLock<PathBuf> = OnceLock::new();
+
+fn record(line: String) {
+    info!("{line}");
+    if let Some(path) = LOG_PATH.get() {
+        if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
+            let _ = writeln!(f, "{line}");
+        }
+    }
+}
+
+/// Lets the frontend report its side of the smoke test into the same file.
+#[tauri::command]
+pub fn smoke_log(msg: String) {
+    record(format!("smoke frontend {msg}"));
+}
 
 #[derive(Serialize)]
 pub struct SmokeConfig {
@@ -22,7 +43,16 @@ pub fn smoke_config() -> SmokeConfig {
     SmokeConfig { video: std::env::var("HOSHI_SMOKE_VIDEO").ok() }
 }
 
-pub fn spawn(state: Arc<hoshi_core::AppState>, headless: Arc<dyn HeadlessBrowser>) {
+pub fn spawn(state: Arc<hoshi_core::AppState>, headless: Arc<dyn HeadlessBrowser>, data_dir: PathBuf) {
+    if std::env::var_os("HOSHI_SMOKE_VIDEO").is_none() && std::env::var_os("HOSHI_SMOKE_HEADLESS").is_none() {
+        return;
+    }
+    let _ = std::fs::create_dir_all(&data_dir);
+    let path = data_dir.join("smoke.log");
+    let _ = std::fs::remove_file(&path);
+    let _ = LOG_PATH.set(path);
+    record("smoke started".into());
+
     if std::env::var_os("HOSHI_SMOKE_VIDEO").is_some() {
         let mut rx = state.playback.subscribe_events();
         tauri::async_runtime::spawn(async move {
@@ -30,10 +60,10 @@ pub fn spawn(state: Arc<hoshi_core::AppState>, headless: Arc<dyn HeadlessBrowser
             while let Ok(ev) = rx.recv().await {
                 match ev {
                     PlaybackEvent::Position(p) if p - last_logged >= 2.0 => {
-                        info!(position = p, "smoke playback");
+                        record(format!("smoke playback position={p:.1}"));
                         last_logged = p;
                     }
-                    PlaybackEvent::Error(e) => error!(error = %e, "smoke playback error"),
+                    PlaybackEvent::Error(e) => record(format!("smoke playback error {e}")),
                     _ => {}
                 }
             }
@@ -53,8 +83,8 @@ pub fn spawn(state: Arc<hoshi_core::AppState>, headless: Arc<dyn HeadlessBrowser
                         ..Default::default()
                     };
                     match headless.fetch("https://example.com/", options).await {
-                        Ok(r) => info!(n, title = ?r.result, html_len = r.html.len(), "smoke headless ok"),
-                        Err(e) => error!(n, error = ?e, "smoke headless failed"),
+                        Ok(r) => record(format!("smoke headless ok n={n} title={:?} html_len={}", r.result, r.html.len())),
+                        Err(e) => record(format!("smoke headless failed n={n} error={e:?}")),
                     }
                 }
             };
@@ -64,7 +94,7 @@ pub fn spawn(state: Arc<hoshi_core::AppState>, headless: Arc<dyn HeadlessBrowser
                 fetch(n).await;
             }
             tokio::join!(fetch(6), fetch(7));
-            info!("smoke headless done");
+            record("smoke headless done".into());
         });
     }
 }

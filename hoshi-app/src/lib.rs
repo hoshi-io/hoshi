@@ -159,7 +159,11 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             }
 
             // TEMPORARY: CI smoke test
-            smoke::spawn(app.state::<std::sync::Arc<hoshi_core::AppState>>().inner().clone(), smoke_headless);
+            smoke::spawn(
+                app.state::<std::sync::Arc<hoshi_core::AppState>>().inner().clone(),
+                smoke_headless,
+                app.path().app_data_dir().unwrap_or_default(),
+            );
 
             // Discord RPC is driven entirely off the same core event stream
             #[cfg(feature = "discord-rpc")]
