@@ -1,0 +1,9 @@
+xcuserdata/
+build/
+Externals/
+# copied from bundle.resources on every build
+assets/
+# Tauri's Swift package, copied by build.rs for HoshiPlugins
+.tauri/
+HoshiPlugins/.build/
+HoshiPlugins/Package.resolved

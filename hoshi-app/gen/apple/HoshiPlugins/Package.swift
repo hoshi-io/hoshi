@@ -1,18 +1,20 @@
 // swift-tools-version:5.5
+// Built by hoshi-app/build.rs (swift-rs) into the Rust staticlib, not by the Xcode project:
+// the plugins need the Tauri module, which only exists on the Rust side.
 
 import PackageDescription
 
 let package = Package(
-    name: "tauri-plugin-hoshi-ios",
+    name: "hoshi-plugins",
     platforms: [
         .macOS(.v10_13),
         .iOS(.v15),
     ],
     products: [
         .library(
-            name: "tauri-plugin-hoshi-ios",
+            name: "hoshi-plugins",
             type: .static,
-            targets: ["tauri-plugin-hoshi-ios"])
+            targets: ["hoshi-plugins"])
     ],
     dependencies: [
         .package(name: "Tauri", path: "../.tauri/tauri-api")
@@ -20,7 +22,7 @@ let package = Package(
     targets: [
         .systemLibrary(name: "HoshiSysLibs", path: "SysLibs"),
         .target(
-            name: "tauri-plugin-hoshi-ios",
+            name: "hoshi-plugins",
             dependencies: [
                 .byName(name: "Tauri"),
                 .byName(name: "HoshiSysLibs"),

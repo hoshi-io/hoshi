@@ -20,6 +20,8 @@ discord-rpc = ["hoshi-core/discord-rpc"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+# link_apple_library, to compile gen/apple/HoshiPlugins on iOS builds
+tauri-utils = { version = "2", features = ["build"] }
 
 [dependencies]
 hoshi-core = { path = "../hoshi-core" }
@@ -48,9 +50,6 @@ libc = "0.2"
 [target.'cfg(target_os = "android")'.dependencies]
 jni = "=0.21.1"
 tauri-plugin-android-tv-check = "1.1.2"
-
-[target.'cfg(target_os = "ios")'.dependencies]
-tauri-plugin-hoshi-ios = { path = "ios-plugin" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 webview2-com = "0.38.2"

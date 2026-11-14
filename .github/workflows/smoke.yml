@@ -1,0 +1,174 @@
+name: Smoke test
+
+# Launch-only checks for platforms there's no hardware to test on: does the app
+# start, stay up, and get its native video layer in place behind the webview.
+on:
+  workflow_dispatch:
+    inputs:
+      macos_dmg:
+        description: macOS .dmg to test
+        default: https://github.com/hoshi-io/hoshi/releases/download/v1.2.4/hoshi-desktop-macos-arm64-v1.2.4.dmg
+
+jobs:
+  macos:
+    name: macOS (release dmg)
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Install app from dmg
+        run: |
+          curl -fsSL "${{ inputs.macos_dmg }}" -o hoshi.dmg
+          hdiutil attach hoshi.dmg -nobrowse -mountpoint /Volumes/hoshi
+          cp -R /Volumes/hoshi/*.app "$RUNNER_TEMP/"
+          hdiutil detach /Volumes/hoshi
+          APP=$(find "$RUNNER_TEMP" -maxdepth 1 -name "*.app" | head -n1)
+          xattr -cr "$APP"
+          echo "APP=$APP" >> "$GITHUB_ENV"
+
+      - name: Bundled libraries
+        run: |
+          EXE=$(find "$APP/Contents/MacOS" -type f | head -n1)
+          echo "EXE=$EXE" >> "$GITHUB_ENV"
+          otool -L "$EXE" | tee otool.txt
+
+      - name: Launch
+        run: |
+          mkdir -p out
+          RUST_LOG="hoshii_lib=debug,hoshi_core=info" HOSHI_MPV_LOG=1 "$EXE" > out/macos.log 2>&1 &
+          PID=$!
+          sleep 30
+          screencapture -x out/macos.png || echo "screencapture failed (no screen recording permission?)"
+          if kill -0 $PID 2>/dev/null; then echo alive > out/status; kill $PID; else echo dead > out/status; fi
+          sleep 2
+          cp otool.txt out/
+
+      - name: Summary
+        if: always()
+        run: |
+          log=out/macos.log
+          check() { if eval "$2"; then echo "- ✅ $1"; else echo "- ❌ $1"; fi; }
+          {
+            echo "## macOS"
+            check "app still running after 30s" '[ "$(cat out/status 2>/dev/null)" = alive ]'
+            check "no panic / fatal startup error" '! grep -qiE "panicked|FATAL" $log'
+            check "GL view inserted behind the webview" '! grep -qE "no superview yet|NSOpenGLPixelFormat initWithAttributes returned nil|NSOpenGLView initWithFrame" $log'
+            check "mpv linked from the bundle, not Homebrew" '! grep -q "/opt/homebrew" out/otool.txt'
+            echo ""
+            echo "The mpv render context only starts when a video opens, so rendering itself is not covered."
+            echo ""
+            echo "<details><summary>last 40 log lines</summary>"
+            echo ""
+            echo '```'
+            tail -n 40 $log
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-macos
+          path: out/
+
+  ios:
+    name: iOS (simulator build + launch)
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: hoshi-frontend/package-lock.json
+
+      - name: Build frontend
+        run: |
+          cd hoshi-frontend
+          npm ci
+          npm run build
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios-sim,aarch64-apple-ios
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ios
+
+      # The cargo CLI, not the npm one: the Xcode project's build phase calls
+      # `cargo tauri ios xcode-script`.
+      - name: Install Tauri CLI and XcodeGen
+        run: |
+          command -v cargo-tauri || cargo install tauri-cli --version "^2" --locked
+          brew install xcodegen
+
+      - name: Fetch libmpv (MPVKit)
+        run: ./scripts/ios-mpv.sh
+
+      - name: Build (simulator)
+        working-directory: hoshi-app
+        run: cargo tauri ios build --target aarch64-sim --debug --ci
+
+      - name: Find app
+        run: |
+          APP=$(find hoshi-app/gen/apple/build -name "*.app" -type d -maxdepth 6 | head -n1)
+          test -n "$APP"
+          echo "APP=$APP" >> "$GITHUB_ENV"
+          echo "BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")" >> "$GITHUB_ENV"
+          echo "EXE_NAME=$(/usr/libexec/PlistBuddy -c 'Print CFBundleExecutable' "$APP/Info.plist")" >> "$GITHUB_ENV"
+
+      - name: Boot simulator
+        run: |
+          UDID=$(xcrun simctl list devices available -j \
+            | jq -r '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
+          test -n "$UDID" && test "$UDID" != null
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+
+      - name: Launch
+        run: |
+          mkdir -p out
+          xcrun simctl install "$UDID" "$APP"
+          SIMCTL_CHILD_RUST_LOG="hoshii_lib=debug,hoshi_core=info" SIMCTL_CHILD_HOSHI_MPV_LOG=1 \
+            xcrun simctl launch --console-pty "$UDID" "$BUNDLE_ID" > out/ios-console.log 2>&1 &
+          sleep 45
+          xcrun simctl io "$UDID" screenshot out/ios.png || true
+          if xcrun simctl spawn "$UDID" launchctl list | grep -q "$BUNDLE_ID"; then echo alive > out/status; else echo dead > out/status; fi
+          # Rust's stdout is redirected to os_log on iOS, so the system log has most of it.
+          xcrun simctl spawn "$UDID" log show --last 3m --style compact \
+            --predicate "process == \"$EXE_NAME\"" > out/ios-system.log 2>&1 || true
+          xcrun simctl terminate "$UDID" "$BUNDLE_ID" || true
+          cat out/ios-console.log out/ios-system.log > out/ios-all.log
+
+      - name: Summary
+        if: always()
+        run: |
+          log=out/ios-all.log
+          check() { if eval "$2"; then echo "- ✅ $1"; else echo "- ❌ $1"; fi; }
+          {
+            echo "## iOS simulator"
+            check "app still running after 45s" '[ "$(cat out/status 2>/dev/null)" = alive ]'
+            check "no panic / fatal startup error" '! grep -qiE "panicked|FATAL" $log'
+            check "CAMetalLayer placed behind the webview" '! grep -q "never got a superview" $log'
+            check "layer handed to mpv" 'grep -qE "handing CAMetalLayer to mpv|flushing CAMetalLayer" $log'
+            check "mpv core initialized" 'grep -q "playback core initialized" $log && ! grep -q "failed to attach CAMetalLayer" $log'
+            check "video output (MoltenVK) came up" 'grep -qiE "vo/gpu-next" $log && ! grep -qiE "Failed initializing any suitable GPU context|Error opening/initializing the selected video_out" $log'
+            echo ""
+            echo "<details><summary>mpv / player lines</summary>"
+            echo ""
+            echo '```'
+            grep -iE "CAMetalLayer|playback core|vo/|vulkan|moltenvk|gpu" $log | tail -n 60
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-ios
+          path: |
+            out/
+            ${{ env.APP }}

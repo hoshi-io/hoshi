@@ -16,10 +16,6 @@ pub mod player_surface;
 pub mod anime4k;
 pub mod proxy_protocol;
 
-// Links the Swift side of the mobile plugins (see ios-plugin/).
-#[cfg(target_os = "ios")]
-extern crate tauri_plugin_hoshi_ios;
-
 #[cfg(mobile)]
 use crate::{
     headless::headless_plugin::{init as headless_plugin_init},

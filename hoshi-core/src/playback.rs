@@ -671,12 +671,21 @@ fn build_mpv(target: RenderTarget) -> libmpv2::Result<Mpv> {
                 if gpu_context == "moltenvk" {
                     init.set_option("vo", "gpu-next")?;
                     init.set_option("gpu-api", "vulkan")?;
+                    // Bring the VO up at launch (black, behind the UI) so GPU init failures
+                    // show at startup instead of on first play.
+                    init.set_option("force-window", "yes")?;
                 } else {
                     init.set_option("vo", "gpu")?;
                 }
                 init.set_option("gpu-context", gpu_context)?;
                 init.set_option("wid", wid)?;
             }
+        }
+
+        // mpv's own log on stdout, for debugging GPU/VO issues (used by the smoke test).
+        if std::env::var_os("HOSHI_MPV_LOG").is_some() {
+            init.set_option("terminal", "yes")?;
+            init.set_option("msg-level", "all=v")?;
         }
 
         init.set_option("hwdec", "auto-safe")?;

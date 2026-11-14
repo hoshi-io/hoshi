@@ -26,8 +26,11 @@ fn main() {
     }
 
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("ios") {
+        #[cfg(target_os = "macos")]
+        build_ios_plugins();
+
         // Static libs from MPVKit, extracted by scripts/ios-mpv.sh. They are bundled into
-        // the staticlib Xcode links; system deps come in via ios-plugin's HoshiSysLibs module.
+        // the staticlib Xcode links; system deps come in via HoshiPlugins' HoshiSysLibs module.
         let target = std::env::var("TARGET").unwrap();
         let slice = if target.ends_with("-sim") || target.starts_with("x86_64") { "simulator" } else { "device" };
         let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
@@ -76,4 +79,43 @@ fn main() {
         println!("cargo:rustc-link-search=native={prefix}/lib");
         println!("cargo:rustc-link-lib=dylib=mpv");
     }
+}
+/// Compiles the Swift plugins in gen/apple/HoshiPlugins (what a Tauri plugin crate's build
+/// does for its ios/ folder). They import the Tauri Swift package, so it is copied next to them.
+#[cfg(target_os = "macos")]
+fn build_ios_plugins() {
+    use std::path::{Path, PathBuf};
+
+    fn copy_dir(src: &Path, dst: &Path) {
+        std::fs::create_dir_all(dst).unwrap();
+        for entry in std::fs::read_dir(src).unwrap() {
+            let entry = entry.unwrap();
+            let name = entry.file_name();
+            if [".build", "Package.resolved", "Tests"].iter().any(|skip| name == *skip) {
+                continue;
+            }
+            let (from, to) = (entry.path(), dst.join(&name));
+            if entry.file_type().unwrap().is_dir() {
+                copy_dir(&from, &to);
+            } else {
+                std::fs::copy(&from, &to).unwrap();
+            }
+        }
+    }
+
+    let manifest_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
+    let apple_dir = manifest_dir.join("gen").join("apple");
+    let tauri_api = PathBuf::from(
+        std::env::var("DEP_TAURI_IOS_LIBRARY_PATH").expect("tauri did not export its iOS library path"),
+    );
+
+    let dest = apple_dir.join(".tauri").join("tauri-api");
+    let _ = std::fs::remove_dir_all(&dest);
+    copy_dir(&tauri_api, &dest);
+
+    let plugins = apple_dir.join("HoshiPlugins");
+    println!("cargo:rerun-if-changed={}", plugins.join("Sources").display());
+    println!("cargo:rerun-if-changed={}", plugins.join("SysLibs").display());
+    println!("cargo:rerun-if-changed={}", plugins.join("Package.swift").display());
+    tauri_utils::build::link_apple_library("hoshi-plugins", plugins);
 }

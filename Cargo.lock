@@ -2334,11 +2334,11 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-android-tv-check",
  "tauri-plugin-deep-link",
- "tauri-plugin-hoshi-ios",
  "tauri-plugin-opener",
  "tauri-plugin-os",
  "tauri-plugin-single-instance",
  "tauri-plugin-store",
+ "tauri-utils",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -6435,14 +6435,6 @@ dependencies = [
  "url",
  "windows-registry",
  "windows-result 0.3.4",
-]
-
-[[package]]
-name = "tauri-plugin-hoshi-ios"
-version = "0.1.0"
-dependencies = [
- "tauri",
- "tauri-plugin",
 ]
 
 [[package]]
