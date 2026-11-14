@@ -4,25 +4,48 @@ name: Smoke test
 # start, stay up, and get its native video layer in place behind the webview.
 on:
   workflow_dispatch:
-    inputs:
-      macos_dmg:
-        description: macOS .dmg to test
-        default: https://github.com/hoshi-io/hoshi/releases/download/v1.2.4/hoshi-desktop-macos-arm64-v1.2.4.dmg
 
 jobs:
   macos:
-    name: macOS (release dmg)
+    name: macOS (build + launch)
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 60
     steps:
-      - name: Install app from dmg
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: hoshi-frontend/package-lock.json
+
+      - name: Build frontend
         run: |
-          curl -fsSL "${{ inputs.macos_dmg }}" -o hoshi.dmg
-          hdiutil attach hoshi.dmg -nobrowse -mountpoint /Volumes/hoshi
-          cp -R /Volumes/hoshi/*.app "$RUNNER_TEMP/"
-          hdiutil detach /Volumes/hoshi
-          APP=$(find "$RUNNER_TEMP" -maxdepth 1 -name "*.app" | head -n1)
-          xattr -cr "$APP"
+          cd hoshi-frontend
+          npm ci
+          npm run build
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: macos
+
+      - name: Install mpv, dylibbundler and Tauri CLI
+        run: |
+          brew install mpv dylibbundler
+          echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          npm install -g @tauri-apps/cli
+
+      # Debug build to keep it quick; the bundling step is the same script release.yml runs.
+      - name: Build app
+        run: tauri build --debug --features discord-rpc --bundles app
+
+      - name: Bundle libmpv
+        run: |
+          APP=$(find target/debug/bundle/macos -maxdepth 1 -name "*.app" | head -n1)
+          test -n "$APP"
+          ./scripts/macos-bundle.sh "$APP"
           echo "APP=$APP" >> "$GITHUB_ENV"
 
       - name: Bundled libraries
@@ -30,6 +53,8 @@ jobs:
           EXE=$(find "$APP/Contents/MacOS" -type f | head -n1)
           echo "EXE=$EXE" >> "$GITHUB_ENV"
           otool -L "$EXE" | tee otool.txt
+          echo "--- rpaths"
+          otool -l "$EXE" | awk '$2 == "LC_RPATH" { getline; getline; print $2 }' | tee -a otool.txt
 
       - name: Launch
         run: |
@@ -50,8 +75,10 @@ jobs:
           {
             echo "## macOS"
             check "app still running after 30s" '[ "$(cat out/status 2>/dev/null)" = alive ]'
+            check "dyld loaded all bundled libraries" '! grep -q "^dyld" $log'
             check "no panic / fatal startup error" '! grep -qiE "panicked|FATAL" $log'
-            check "GL view inserted behind the webview" '! grep -qE "no superview yet|NSOpenGLPixelFormat initWithAttributes returned nil|NSOpenGLView initWithFrame" $log'
+            # Only meaningful if the app got far enough to run setup.
+            check "GL view inserted behind the webview" '[ "$(cat out/status 2>/dev/null)" = alive ] && ! grep -qE "no superview yet|NSOpenGLPixelFormat initWithAttributes returned nil|NSOpenGLView initWithFrame" $log'
             check "mpv linked from the bundle, not Homebrew" '! grep -q "/opt/homebrew" out/otool.txt'
             echo ""
             echo "The mpv render context only starts when a video opens, so rendering itself is not covered."
@@ -68,7 +95,9 @@ jobs:
         if: always()
         with:
           name: smoke-macos
-          path: out/
+          path: |
+            out/
+            ${{ env.APP }}
 
   ios:
     name: iOS (simulator build + launch)
@@ -152,7 +181,7 @@ jobs:
             echo "## iOS simulator"
             check "app still running after 45s" '[ "$(cat out/status 2>/dev/null)" = alive ]'
             check "no panic / fatal startup error" '! grep -qiE "panicked|FATAL" $log'
-            check "CAMetalLayer placed behind the webview" '! grep -q "never got a superview" $log'
+            check "CAMetalLayer placed behind the webview" '[ "$(cat out/status 2>/dev/null)" = alive ] && ! grep -q "never got a superview" $log'
             check "layer handed to mpv" 'grep -qE "handing CAMetalLayer to mpv|flushing CAMetalLayer" $log'
             check "mpv core initialized" 'grep -q "playback core initialized" $log && ! grep -q "failed to attach CAMetalLayer" $log'
             check "video output (MoltenVK) came up" 'grep -qiE "vo/gpu-next" $log && ! grep -qiE "Failed initializing any suitable GPU context|Error opening/initializing the selected video_out" $log'

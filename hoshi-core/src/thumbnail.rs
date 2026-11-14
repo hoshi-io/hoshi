@@ -297,7 +297,7 @@ fn build_thumb_mpv(hooks: &Arc<Mutex<Vec<ProtocolHook>>>) -> libmpv2::Result<Mpv
         i.set_option("pause", "yes")?;
         i.set_option("idle", "yes")?;
         i.set_option("keep-open", "yes")?;
-        i.set_option("ytdl", "no")?;
+        let _ = i.set_option("ytdl", "no"); // Lua builds only
         i.set_option("cache", "yes")?;
         i.set_option("demuxer-max-bytes", "16MiB")?;
         i.set_option("demuxer-readahead-secs", "2")?;

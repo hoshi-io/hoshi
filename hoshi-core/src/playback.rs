@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use libmpv2::{Mpv, MpvInitializer};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{broadcast, Notify, RwLock};
-use tracing::{info, instrument, warn};
+use tracing::{error, info, instrument, warn};
 
 use crate::core_err;
 use crate::error::CoreResult;
@@ -655,6 +655,14 @@ fn spawn_event_loop(
     });
 }
 
+/// mpv only returns an error code, so name the rejected option in the log.
+fn set_opt<T: libmpv2::SetData>(init: &MpvInitializer, name: &str, value: T) -> libmpv2::Result<()> {
+    init.set_option(name, value).map_err(|e| {
+        error!(option = name, ?e, "mpv rejected option");
+        e
+    })
+}
+
 fn build_mpv(target: RenderTarget) -> libmpv2::Result<Mpv> {
     unsafe {
         let c_locale = std::ffi::CString::new("C").expect("no interior nul");
@@ -664,36 +672,37 @@ fn build_mpv(target: RenderTarget) -> libmpv2::Result<Mpv> {
     Mpv::with_initializer(move |init: MpvInitializer| {
         match target {
             RenderTarget::RenderApi => {
-                init.set_option("vo", "libmpv")?;
+                set_opt(&init, "vo", "libmpv")?;
             }
             RenderTarget::NativeWindow { wid, gpu_context } => {
                 // MoltenVK (iOS) is a Vulkan context, which gpu-next handles best.
                 if gpu_context == "moltenvk" {
-                    init.set_option("vo", "gpu-next")?;
-                    init.set_option("gpu-api", "vulkan")?;
+                    set_opt(&init, "vo", "gpu-next")?;
+                    set_opt(&init, "gpu-api", "vulkan")?;
                     // Bring the VO up at launch (black, behind the UI) so GPU init failures
                     // show at startup instead of on first play.
-                    init.set_option("force-window", "yes")?;
+                    set_opt(&init, "force-window", "yes")?;
                 } else {
-                    init.set_option("vo", "gpu")?;
+                    set_opt(&init, "vo", "gpu")?;
                 }
-                init.set_option("gpu-context", gpu_context)?;
-                init.set_option("wid", wid)?;
+                set_opt(&init, "gpu-context", gpu_context)?;
+                set_opt(&init, "wid", wid)?;
             }
         }
 
         // mpv's own log on stdout, for debugging GPU/VO issues (used by the smoke test).
         if std::env::var_os("HOSHI_MPV_LOG").is_some() {
-            init.set_option("terminal", "yes")?;
-            init.set_option("msg-level", "all=v")?;
+            set_opt(&init, "terminal", "yes")?;
+            set_opt(&init, "msg-level", "all=v")?;
         }
 
-        init.set_option("hwdec", "auto-safe")?;
-        init.set_option("keep-open", "yes")?;
-        init.set_option("idle", "yes")?;
-        init.set_option("deband", "yes")?;
-        init.set_option("ytdl", "no")?;
-        init.set_option("demuxer-lavf-o", "multiple_requests=1")?;
+        set_opt(&init, "hwdec", "auto-safe")?;
+        set_opt(&init, "keep-open", "yes")?;
+        set_opt(&init, "idle", "yes")?;
+        set_opt(&init, "deband", "yes")?;
+        // Only exists in mpv builds with Lua (MPVKit's iOS build has none).
+        let _ = init.set_option("ytdl", "no");
+        set_opt(&init, "demuxer-lavf-o", "multiple_requests=1")?;
 
         Ok(())
     })
