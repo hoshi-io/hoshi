@@ -79,10 +79,23 @@ pub fn attach(
         }
         let bounds: NSRect = msg_send![superview, bounds];
         
-        let attrs: [u32; 5] = [5, 73, 99, 0x3200, 0];
-        let pixel_format: *mut AnyObject = msg_send![class!(NSOpenGLPixelFormat), alloc];
-        let pixel_format: *mut AnyObject =
-            msg_send![pixel_format, initWithAttributes: attrs.as_ptr()];
+        // DoubleBuffer=5, Accelerated=73, OpenGLProfile=99 (3.2 core=0x3200, legacy=0x1000).
+        // Strictest first; VMs and some GPUs refuse "accelerated only".
+        let candidates: [(&str, &[u32]); 3] = [
+            ("accelerated 3.2 core", &[5, 73, 99, 0x3200, 0]),
+            ("3.2 core", &[5, 99, 0x3200, 0]),
+            ("legacy", &[5, 99, 0x1000, 0]),
+        ];
+        let mut pixel_format: *mut AnyObject = std::ptr::null_mut();
+        for (name, attrs) in candidates {
+            let pf: *mut AnyObject = msg_send![class!(NSOpenGLPixelFormat), alloc];
+            pixel_format = msg_send![pf, initWithAttributes: attrs.as_ptr()];
+            if !pixel_format.is_null() {
+                info!(format = name, "using NSOpenGLPixelFormat");
+                break;
+            }
+            warn!(format = name, "NSOpenGLPixelFormat unavailable, trying next");
+        }
         if pixel_format.is_null() {
             error!("NSOpenGLPixelFormat initWithAttributes returned nil");
             return;

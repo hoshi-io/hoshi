@@ -15,6 +15,7 @@ pub mod auth_webview;
 pub mod player_surface;
 pub mod anime4k;
 pub mod proxy_protocol;
+pub mod smoke; // TEMPORARY: CI smoke test
 
 #[cfg(mobile)]
 use crate::{
@@ -125,6 +126,7 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
             let paths = hoshi_core::paths::AppPaths::from_base(base_dir);
             let headless = std::sync::Arc::new(headless::headless::TauriHeadless::new(app.handle().clone()));
+            let smoke_headless = headless.clone(); // TEMPORARY: CI smoke test
             hoshi_core::logs::init_log_file(&paths.logs_path);
 
             #[cfg(any(windows, target_os = "linux"))]
@@ -155,6 +157,9 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             {
                 spawn_player_event_listener(app.handle().clone(), app.state::<std::sync::Arc<hoshi_core::AppState>>().inner().clone())
             }
+
+            // TEMPORARY: CI smoke test
+            smoke::spawn(app.state::<std::sync::Arc<hoshi_core::AppState>>().inner().clone(), smoke_headless);
 
             // Discord RPC is driven entirely off the same core event stream
             #[cfg(feature = "discord-rpc")]

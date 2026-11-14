@@ -211,6 +211,11 @@ export class WatchState {
         $effect(() => {
             const { cid, epNumber } = this;
             if (cid && epNumber && (cid !== this.currentLoadedCid || epNumber !== this.currentLoadedEp)) {
+                // TEMPORARY: CI smoke test
+                if (cid === "smoke") {
+                    untrack(() => this.loadSmoke(epNumber));
+                    return;
+                }
                 untrack(() => this.loadPageData(cid, epNumber));
             }
         });
@@ -251,6 +256,26 @@ export class WatchState {
         });
 
         untrack(() => this.attachPlayerListeners());
+    }
+
+    // TEMPORARY: CI smoke test. Skips content/extension lookup and plays HOSHI_SMOKE_VIDEO
+    // through the real player path.
+    private async loadSmoke(epNumber: number) {
+        this.currentLoadedCid = "smoke";
+        this.currentLoadedEp = epNumber;
+        this.isLoadingMeta = false;
+        try {
+            const cfg = await invoke<{ video: string | null }>("smoke_config");
+            if (!cfg.video) return;
+            await this.playerReady;
+            await invoke("wait_for_player_ready").catch(() => {});
+            await invoke("load_stream", { url: cfg.video });
+            this.isStreamLoaded = true;
+            this.isLoadingPlay = false;
+            console.log("[smoke] load_stream ok");
+        } catch (e) {
+            console.error("[smoke] load_stream failed", e);
+        }
     }
 
     private async attachPlayerListeners() {

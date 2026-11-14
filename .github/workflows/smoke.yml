@@ -59,9 +59,16 @@ jobs:
       - name: Launch
         run: |
           mkdir -p out
-          RUST_LOG="hoshii_lib=debug,hoshi_core=info" HOSHI_MPV_LOG=1 "$EXE" > out/macos.log 2>&1 &
+          RUST_LOG="hoshii_lib=debug,hoshi_core=info" HOSHI_MPV_LOG=1 \
+            HOSHI_SMOKE_VIDEO="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" HOSHI_SMOKE_HEADLESS=1 \
+            "$EXE" > out/macos.log 2>&1 &
           PID=$!
-          sleep 30
+          # At least 45s (player opens at ~8s), at most 150s waiting for the headless burst.
+          for i in $(seq 1 150); do
+            sleep 1
+            [ $i -ge 45 ] && grep -q "smoke headless done" out/macos.log && break
+            kill -0 $PID 2>/dev/null || break
+          done
           screencapture -x out/macos.png || echo "screencapture failed (no screen recording permission?)"
           if kill -0 $PID 2>/dev/null; then echo alive > out/status; kill $PID; else echo dead > out/status; fi
           sleep 2
@@ -80,8 +87,12 @@ jobs:
             # Only meaningful if the app got far enough to run setup.
             check "GL view inserted behind the webview" '[ "$(cat out/status 2>/dev/null)" = alive ] && ! grep -qE "no superview yet|NSOpenGLPixelFormat initWithAttributes returned nil|NSOpenGLView initWithFrame" $log'
             check "mpv linked from the bundle, not Homebrew" '! grep -q "/opt/homebrew" out/otool.txt'
+            check "test video plays (position advancing)" '[ "$(grep -c "smoke playback" $log)" -ge 3 ] && ! grep -q "smoke playback error" $log'
+            ok=$(grep -c "smoke headless ok" $log || true); bad=$(grep -c "smoke headless failed" $log || true)
+            check "headless: $ok/7 fetches returned (5 sequential + 2 concurrent)" '[ "$ok" -eq 7 ]'
+            if [ "$bad" -gt 0 ]; then echo ""; echo "Headless failures:"; echo '```'; grep "smoke headless failed" $log | head -n 7; echo '```'; fi
             echo ""
-            echo "The mpv render context only starts when a video opens, so rendering itself is not covered."
+            echo "Rendering itself: check the screenshot in the smoke-macos artifact (video under the player UI)."
             echo ""
             echo "<details><summary>last 40 log lines</summary>"
             echo ""
@@ -162,12 +173,13 @@ jobs:
           mkdir -p out
           xcrun simctl install "$UDID" "$APP"
           SIMCTL_CHILD_RUST_LOG="hoshii_lib=debug,hoshi_core=info" SIMCTL_CHILD_HOSHI_MPV_LOG=1 \
+            SIMCTL_CHILD_HOSHI_SMOKE_VIDEO="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" SIMCTL_CHILD_HOSHI_SMOKE_HEADLESS=1 \
             xcrun simctl launch --console-pty "$UDID" "$BUNDLE_ID" > out/ios-console.log 2>&1 &
-          sleep 45
+          sleep 120
           xcrun simctl io "$UDID" screenshot out/ios.png || true
           if xcrun simctl spawn "$UDID" launchctl list | grep -q "$BUNDLE_ID"; then echo alive > out/status; else echo dead > out/status; fi
           # Rust's stdout is redirected to os_log on iOS, so the system log has most of it.
-          xcrun simctl spawn "$UDID" log show --last 3m --style compact \
+          xcrun simctl spawn "$UDID" log show --last 5m --style compact \
             --predicate "process == \"$EXE_NAME\"" > out/ios-system.log 2>&1 || true
           xcrun simctl terminate "$UDID" "$BUNDLE_ID" || true
           cat out/ios-console.log out/ios-system.log > out/ios-all.log
@@ -183,8 +195,13 @@ jobs:
             check "no panic / fatal startup error" '! grep -qiE "panicked|FATAL" $log'
             check "CAMetalLayer placed behind the webview" '[ "$(cat out/status 2>/dev/null)" = alive ] && ! grep -q "never got a superview" $log'
             check "layer handed to mpv" 'grep -qE "handing CAMetalLayer to mpv|flushing CAMetalLayer" $log'
-            check "mpv core initialized" 'grep -q "playback core initialized" $log && ! grep -q "failed to attach CAMetalLayer" $log'
+            # Positive lines can be cut off in iOS's chunked stdout logging, so check for failures.
+            check "mpv core initialized" '! grep -qE "init_failed|failed to attach CAMetalLayer|mpv rejected option" $log'
             check "video output (MoltenVK) came up" 'grep -qiE "vo/gpu-next" $log && ! grep -qiE "Failed initializing any suitable GPU context|Error opening/initializing the selected video_out" $log'
+            check "test video plays (position advancing)" '[ "$(grep -c "smoke playback" $log)" -ge 3 ] && ! grep -q "smoke playback error" $log'
+            ok=$(grep -c "smoke headless ok" $log || true); bad=$(grep -c "smoke headless failed" $log || true)
+            check "headless: $ok/7 fetches returned (5 sequential + 2 concurrent)" '[ "$ok" -eq 7 ]'
+            if [ "$bad" -gt 0 ]; then echo ""; echo "Headless failures:"; echo '```'; grep "smoke headless failed" $log | head -n 7; echo '```'; fi
             echo ""
             echo "<details><summary>mpv / player lines</summary>"
             echo ""

@@ -5,6 +5,7 @@
     import { page } from '$app/state';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { check } from '@smbcloud/tauri-plugin-android-tv-check-api';
+    import { invoke } from '@tauri-apps/api/core'; // TEMPORARY: CI smoke test
 
     import { initApp, handleNavigation } from '$lib/app/app';
     import { setupImportListener } from '@/stores/importStatus.svelte';
@@ -54,6 +55,13 @@
             // plugin not available (desktop / iOS): not a TV
         }
         ready = true;
+
+        // TEMPORARY: CI smoke test. Waits out first-run user creation, then opens the player.
+        invoke<{ video: string | null }>('smoke_config')
+            .then((cfg) => {
+                if (cfg.video) setTimeout(() => goto('/watch/smoke/1'), 8000);
+            })
+            .catch(() => {});
     }
 
     // Wait for `ready` so isAndroidTv is known before any setup/login redirect decides /setup vs /tv/setup.
