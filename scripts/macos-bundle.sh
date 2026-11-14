@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copies Homebrew's libmpv (and its deps) into the .app, then fixes rpaths and re-signs.
-# Used by release.yml and the smoke test so both ship the same bundle.
+# Used by release.yml.
 set -euo pipefail
 
 APP="$1"

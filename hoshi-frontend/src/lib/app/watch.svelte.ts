@@ -211,7 +211,7 @@ export class WatchState {
         $effect(() => {
             const { cid, epNumber } = this;
             if (cid && epNumber && (cid !== this.currentLoadedCid || epNumber !== this.currentLoadedEp)) {
-                // TEMPORARY: CI smoke test
+                // TEMPORARY: layering check
                 if (cid === "smoke") {
                     untrack(() => this.loadSmoke(epNumber));
                     return;
@@ -258,27 +258,20 @@ export class WatchState {
         untrack(() => this.attachPlayerListeners());
     }
 
-    // TEMPORARY: CI smoke test. Skips content/extension lookup and plays HOSHI_SMOKE_VIDEO
-    // through the real player path.
+    // TEMPORARY: layering check. Plays the test stream, then pauses it: paused controls
+    // stay on screen, so the screenshot shows whether they draw over the video.
     private async loadSmoke(epNumber: number) {
-        const log = (msg: string) => invoke("smoke_log", { msg }).catch(() => {});
         this.currentLoadedCid = "smoke";
         this.currentLoadedEp = epNumber;
         this.isLoadingMeta = false;
-        try {
-            const cfg = await invoke<{ video: string | null }>("smoke_config");
-            if (!cfg.video) return;
-            log("watch page opened");
-            await this.playerReady;
-            await invoke("wait_for_player_ready").catch(() => {});
-            log("player ready, calling load_stream");
-            await invoke("load_stream", { url: cfg.video });
-            this.isStreamLoaded = true;
-            this.isLoadingPlay = false;
-            log("load_stream ok");
-        } catch (e) {
-            log(`load_stream failed: ${JSON.stringify(e)}`);
-        }
+        const url = await invoke<string | null>("smoke_video");
+        if (!url) return;
+        await this.playerReady;
+        await invoke("wait_for_player_ready").catch(() => {});
+        await invoke("load_stream", { url });
+        this.isStreamLoaded = true;
+        this.isLoadingPlay = false;
+        setTimeout(() => invoke("set_paused", { paused: true }).catch(() => {}), 20000);
     }
 
     private async attachPlayerListeners() {

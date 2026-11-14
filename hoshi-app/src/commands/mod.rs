@@ -34,8 +34,7 @@ pub fn generate_handlers() -> impl Fn(tauri::ipc::Invoke) -> bool {
         dev::list_dev_extensions, dev::create_dev_extension, dev::read_extension_source, dev::write_extension_source, dev::read_manifest_raw, dev::write_manifest_raw, dev::run_extension_function, dev::delete_dev_extension,
         torrent::search_torrents, torrent::get_magnet, torrent::auto_select_torrent, torrent::start_torrent_stream, torrent::stop_torrent_stream, torrent::get_torrent_stats, torrent::get_torrent_storage_stats, torrent::list_torrent_cache, torrent::delete_torrent_cache_entry, torrent::clear_torrent_cache, torrent::get_torrent_cache_dir,
         
-        crate::smoke::smoke_config, // TEMPORARY: CI smoke test
-        crate::smoke::smoke_log, // TEMPORARY: CI smoke test
+        crate::smoke::smoke_video, // TEMPORARY: layering check
         #[cfg(feature = "discord-rpc")]
         discord::set_activity,
         #[cfg(feature = "discord-rpc")]

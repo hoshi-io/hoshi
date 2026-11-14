@@ -5,7 +5,7 @@
     import { page } from '$app/state';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { check } from '@smbcloud/tauri-plugin-android-tv-check-api';
-    import { invoke } from '@tauri-apps/api/core'; // TEMPORARY: CI smoke test
+    import { invoke } from '@tauri-apps/api/core'; // TEMPORARY: layering check
 
     import { initApp, handleNavigation } from '$lib/app/app';
     import { setupImportListener } from '@/stores/importStatus.svelte';
@@ -56,15 +56,9 @@
         }
         ready = true;
 
-        // TEMPORARY: CI smoke test. Waits out first-run user creation, then opens the player.
-        invoke<{ video: string | null }>('smoke_config')
-            .then((cfg) => {
-                if (!cfg.video) return;
-                setTimeout(() => {
-                    invoke('smoke_log', { msg: `navigating from ${page.url.pathname}` }).catch(() => {});
-                    goto('/watch/smoke/1');
-                }, 8000);
-            })
+        // TEMPORARY: layering check. Waits out first-run user creation, then opens the player.
+        invoke<string | null>('smoke_video')
+            .then((url) => { if (url) setTimeout(() => goto('/watch/smoke/1'), 8000); })
             .catch(() => {});
     }
 
