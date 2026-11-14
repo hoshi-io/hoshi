@@ -193,6 +193,10 @@ jobs:
           cp "$DATA/Library/Application Support/com.ninelfx.hoshi/smoke.log" out/ 2>/dev/null || echo "no smoke.log" > out/smoke.log
           xcrun simctl terminate "$UDID" "$BUNDLE_ID" || true
           cat out/ios-console.log out/ios-system.log > out/ios-all.log
+          # Simulator crashes are reported on the host Mac.
+          mkdir -p out/crashes
+          find "$HOME/Library/Logs/DiagnosticReports" -name "*$EXE_NAME*" -mmin -30 -exec cp {} out/crashes/ \; 2>/dev/null || true
+          ls -la out/crashes
 
       - name: Summary
         if: always()
@@ -201,7 +205,29 @@ jobs:
           check() { if eval "$2"; then echo "- ✅ $1"; else echo "- ❌ $1"; fi; }
           {
             echo "## iOS simulator"
-            check "app still running after 45s" '[ "$(cat out/status 2>/dev/null)" = alive ]'
+            for c in out/crashes/*; do
+              [ -f "$c" ] || continue
+              echo "**Crash report: $(basename "$c")**"
+              echo '```'
+              # .ips is a JSON header line + JSON body; pull the useful bits either way.
+              python3 - "$c" <<'PY' || head -n 80 "$c"
+          import json, sys
+          raw = open(sys.argv[1]).read()
+          body = json.loads(raw.split("\n", 1)[1])
+          exc = body.get("exception", {})
+          print("exception:", exc.get("type"), exc.get("signal"), exc.get("codes"))
+          if body.get("asi"): print("asi:", body["asi"])
+          if body.get("termination"): print("termination:", body["termination"])
+          imgs = body.get("usedImages", [])
+          for t in body.get("threads", []):
+              if t.get("triggered"):
+                  for f in t.get("frames", [])[:25]:
+                      img = imgs[f["imageIndex"]].get("name", "?") if f.get("imageIndex") is not None and f["imageIndex"] < len(imgs) else "?"
+                      print(f'{img:30} {f.get("symbol", hex(f.get("imageOffset", 0)))}')
+          PY
+              echo '```'
+            done
+            check "app still running" '[ "$(cat out/status 2>/dev/null)" = alive ]'
             check "no panic / fatal startup error" '! grep -qiE "panicked|FATAL" $log'
             check "CAMetalLayer placed behind the webview" '[ "$(cat out/status 2>/dev/null)" = alive ] && ! grep -q "never got a superview" $log'
             check "layer handed to mpv" 'grep -qE "handing CAMetalLayer to mpv|flushing CAMetalLayer" $log'
