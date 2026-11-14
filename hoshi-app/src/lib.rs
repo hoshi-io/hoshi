@@ -15,7 +15,6 @@ pub mod auth_webview;
 pub mod player_surface;
 pub mod anime4k;
 pub mod proxy_protocol;
-pub mod smoke; // TEMPORARY: layering check
 
 #[cfg(mobile)]
 use crate::{

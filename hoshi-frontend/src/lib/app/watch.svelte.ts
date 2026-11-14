@@ -211,11 +211,6 @@ export class WatchState {
         $effect(() => {
             const { cid, epNumber } = this;
             if (cid && epNumber && (cid !== this.currentLoadedCid || epNumber !== this.currentLoadedEp)) {
-                // TEMPORARY: layering check
-                if (cid === "smoke") {
-                    untrack(() => this.loadSmoke(epNumber));
-                    return;
-                }
                 untrack(() => this.loadPageData(cid, epNumber));
             }
         });
@@ -256,22 +251,6 @@ export class WatchState {
         });
 
         untrack(() => this.attachPlayerListeners());
-    }
-
-    // TEMPORARY: layering check. Plays the test stream, then pauses it: paused controls
-    // stay on screen, so the screenshot shows whether they draw over the video.
-    private async loadSmoke(epNumber: number) {
-        this.currentLoadedCid = "smoke";
-        this.currentLoadedEp = epNumber;
-        this.isLoadingMeta = false;
-        const url = await invoke<string | null>("smoke_video");
-        if (!url) return;
-        await this.playerReady;
-        await invoke("wait_for_player_ready").catch(() => {});
-        await invoke("load_stream", { url });
-        this.isStreamLoaded = true;
-        this.isLoadingPlay = false;
-        setTimeout(() => invoke("set_paused", { paused: true }).catch(() => {}), 20000);
     }
 
     private async attachPlayerListeners() {
