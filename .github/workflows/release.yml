@@ -242,10 +242,10 @@ jobs:
           APK_ARM32=$(find hoshi-app/gen/android/app/build/outputs -name "*app-arm-*.apk" | head -n 1)
           
           $BUILD_TOOLS/zipalign -v -p 4 "$APK_ARM64" final-apk/hoshi-android-arm64-${VERSION}.apk
-          $BUILD_TOOLS/apksigner sign --ks hoshi.jks --ks-pass env:KEYSTORE_PASS --key-pass env:KEYSTORE_PASS final-apk/hoshi-android-arm64-${VERSION}.apk
+          $BUILD_TOOLS/apksigner sign --v4-signing-enabled false --ks hoshi.jks --ks-pass env:KEYSTORE_PASS --key-pass env:KEYSTORE_PASS final-apk/hoshi-android-arm64-${VERSION}.apk
           
           $BUILD_TOOLS/zipalign -v -p 4 "$APK_ARM32" final-apk/hoshi-android-arm32-${VERSION}.apk
-          $BUILD_TOOLS/apksigner sign --ks hoshi.jks --ks-pass env:KEYSTORE_PASS --key-pass env:KEYSTORE_PASS final-apk/hoshi-android-arm32-${VERSION}.apk
+          $BUILD_TOOLS/apksigner sign --v4-signing-enabled false --ks hoshi.jks --ks-pass env:KEYSTORE_PASS --key-pass env:KEYSTORE_PASS final-apk/hoshi-android-arm32-${VERSION}.apk
 
       - name: Upload Android APK artifacts
         uses: actions/upload-artifact@v4
@@ -354,9 +354,73 @@ jobs:
           name: android-aab
           path: final-aab/*
 
+  build-ios:
+    name: Build iOS (unsigned IPA)
+    needs: build-frontend
+    runs-on: macos-15
+    # Not tested end to end yet; a failure here must not block the release.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: hoshi-frontend/build
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ios-release
+
+      # The cargo CLI, not the npm one: the Xcode build phase calls `cargo tauri ios xcode-script`.
+      - name: Install Tauri CLI and XcodeGen
+        run: |
+          command -v cargo-tauri || cargo install tauri-cli --version "^2" --locked
+          brew install xcodegen
+
+      - name: Fetch libmpv (MPVKit)
+        run: ./scripts/ios-mpv.sh
+
+      # Sideload-only build: no team, no certificate. Sideload tools re-sign with the user's Apple ID.
+      - name: Disable code signing
+        working-directory: hoshi-app/gen/apple
+        run: |
+          python3 -c 'import pathlib; p = pathlib.Path("project.yml"); s = p.read_text(); k = "        ENABLE_BITCODE: false\n"; assert k in s; p.write_text(s.replace(k, k + "        CODE_SIGNING_ALLOWED: NO\n        CODE_SIGNING_REQUIRED: NO\n        CODE_SIGN_IDENTITY: \"\"\n", 1))'
+          grep -q "CODE_SIGNING_ALLOWED: NO" project.yml
+          xcodegen generate --spec project.yml
+
+      # The archive step works unsigned; the signed export after it can't, so it's allowed to fail.
+      - name: Build archive
+        working-directory: hoshi-app
+        run: cargo tauri ios build --target aarch64 --ci || echo "export failed (expected without signing)"
+
+      - name: Package IPA
+        run: |
+          APP=$(find hoshi-app/gen/apple/build -path "*.xcarchive/Products/Applications/*.app" -type d | head -n1)
+          if [ -z "$APP" ]; then
+            echo "no archived .app found"; find hoshi-app/gen/apple/build -maxdepth 3; exit 1
+          fi
+          mkdir -p ipa/Payload final-ipa
+          cp -R "$APP" ipa/Payload/
+          (cd ipa && zip -qry "../final-ipa/hoshi-ios-${{ github.ref_name }}.ipa" Payload)
+          ls -la final-ipa
+
+      - name: Upload iOS IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: final-ipa/*
+
   publish-release:
     name: Publish GitHub Release
-    needs: [build-desktop, build-android-apk, build-android-aab]
+    needs: [build-desktop, build-android-apk, build-android-aab, build-ios]
+    # build-ios is continue-on-error, so this still runs if it failed.
+    if: ${{ !cancelled() && needs.build-desktop.result == 'success' && needs.build-android-apk.result == 'success' && needs.build-android-aab.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Download Desktop artifacts
@@ -376,6 +440,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: android-aab
+          path: all-artifacts
+
+      - name: Download iOS IPA artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: ios-ipa
           path: all-artifacts
 
       - name: Publish to GitHub Releases
