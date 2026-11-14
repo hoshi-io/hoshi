@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
 use hoshi_core::error::CoreError;
-use hoshi_core::playback::{Chapter, EpisodeChapter, ExternalSubtitle, LoadMode, LoadSpec, NowPlaying, RenderTarget, Track};
+use hoshi_core::playback::{Chapter, EpisodeChapter, ExternalSubtitle, LoadMode, LoadSpec, NowPlaying, Track};
+#[cfg(not(mobile))]
+use hoshi_core::playback::RenderTarget;
 use hoshi_core::AppState;
 use serde::Deserialize;
 use tauri::ipc::Response;
@@ -44,10 +46,10 @@ pub async fn initialize_player(
     Ok(())
 }
 
-#[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
+// Mobile boots mpv from the native surface callback (player_surface::android / ios).
+#[cfg(mobile)]
 #[tauri::command]
-pub async fn initialize_player(state: State<'_, Arc<AppState>>) -> Result<(), CoreError> {
-    state.playback.initialize(RenderTarget::RenderApi).await?;
+pub async fn initialize_player() -> Result<(), CoreError> {
     Ok(())
 }
 
@@ -74,7 +76,7 @@ pub async fn get_thumbnail(state: State<'_, Arc<AppState>>, time: f64) -> Result
     })
 }
 
-#[cfg(target_os = "android")]
+#[cfg(mobile)]
 #[tauri::command]
 pub async fn wait_for_player_ready(
     state: State<'_, Arc<AppState>>,
@@ -86,7 +88,7 @@ pub async fn wait_for_player_ready(
     Ok(())
 }
 
-#[cfg(not(target_os = "android"))]
+#[cfg(not(mobile))]
 #[tauri::command]
 pub async fn wait_for_player_ready(_state: State<'_, Arc<AppState>>) -> Result<(), CoreError> {
     Ok(())

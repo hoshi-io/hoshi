@@ -39,7 +39,6 @@ tauri-plugin-store = "2"
 tauri-plugin-deep-link = "2.4.7"
 tauri-plugin-opener = "2.5.3"
 tauri-plugin-os = "2.3.2"
-tauri-plugin-android-tv-check = "1.1.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6.4"
@@ -48,6 +47,10 @@ libc = "0.2"
 
 [target.'cfg(target_os = "android")'.dependencies]
 jni = "=0.21.1"
+tauri-plugin-android-tv-check = "1.1.2"
+
+[target.'cfg(target_os = "ios")'.dependencies]
+tauri-plugin-hoshi-ios = { path = "ios-plugin" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 webview2-com = "0.38.2"

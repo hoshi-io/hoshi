@@ -32,7 +32,10 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": ["resources/anime4k/*.glsl"]
+    "resources": ["resources/anime4k/*.glsl"],
+    "iOS": {
+      "minimumSystemVersion": "15.0"
+    }
   },
   "plugins": {
     "deep-link": {

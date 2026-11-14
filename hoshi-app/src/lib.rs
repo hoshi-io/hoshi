@@ -10,21 +10,25 @@ use hoshi_core::logs::{new_log_store, MemoryLogLayer};
 pub mod commands;
 pub mod headless;
 pub mod orientation;
-pub mod intent;
 pub mod immersive;
 pub mod auth_webview;
 pub mod player_surface;
 pub mod anime4k;
 pub mod proxy_protocol;
 
+// Links the Swift side of the mobile plugins (see ios-plugin/).
+#[cfg(target_os = "ios")]
+extern crate tauri_plugin_hoshi_ios;
+
 #[cfg(mobile)]
 use crate::{
     headless::headless_plugin::{init as headless_plugin_init},
     orientation::orientation_plugin::{init as orientation_plugin_init},
-    intent::intent_plugin::{init as intent_plugin_init},
     immersive::immersive_plugin::{init as immersive_plugin_init},
-    auth_webview::auth_webview::{init as auth_webview_init},
 };
+
+#[cfg(target_os = "android")]
+use crate::auth_webview::auth_webview::init as auth_webview_init;
 
 #[derive(Default)]
 pub struct TauriSession {
@@ -106,10 +110,15 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .plugin(headless_plugin_init())
             .plugin(orientation_plugin_init())
             .plugin(immersive_plugin_init())
-            .plugin(auth_webview_init())
-            .plugin(player_surface::android_plugin::init())
+            .plugin(player_surface::plugin::init());
+    }
+
+    #[cfg(target_os = "android")]
+    {
+        // Login page for Android TV, where the system browser flow doesn't work.
+        builder = builder
             .plugin(tauri_plugin_android_tv_check::init())
-            .plugin(intent_plugin_init());
+            .plugin(auth_webview_init());
     }
 
     let app = builder
@@ -137,9 +146,9 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 app.manage(state);
                 app.manage(TauriSession::default());
 
-                #[cfg(target_os = "android")]
+                #[cfg(mobile)]
                 {
-                    player_surface::android::flush_pending_surface();
+                    player_surface::flush_pending_surface();
                 }
 
                 Ok::<(), CoreError>(())

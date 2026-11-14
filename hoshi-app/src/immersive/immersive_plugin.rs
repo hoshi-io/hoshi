@@ -5,7 +5,11 @@ use tauri::{
     Manager, Runtime,
 };
 
+#[cfg(target_os = "android")]
 const PLUGIN_IDENTIFIER: &str = "com.ninelfx.hoshi";
+
+#[cfg(target_os = "ios")]
+tauri::ios_plugin_binding!(init_plugin_immersive);
 
 #[derive(Serialize, Deserialize)]
 pub struct Empty {}
@@ -81,9 +85,14 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             get_immersive_volume,
         ])
         .setup(|app, api: PluginApi<R, ()>| {
+            #[cfg(target_os = "android")]
             let handle = api
                 .register_android_plugin(PLUGIN_IDENTIFIER, "ImmersivePlugin")
                 .expect("Failed to register ImmersivePlugin on Android");
+            #[cfg(target_os = "ios")]
+            let handle = api
+                .register_ios_plugin(init_plugin_immersive)
+                .expect("Failed to register ImmersivePlugin on iOS");
 
             app.manage(ImmersivePlugin(handle));
             Ok(())

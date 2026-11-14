@@ -10,8 +10,10 @@ export interface ProxyParams {
 export function buildTauriProxyUrl(params: ProxyParams): string {
     const osType = getOsType();
 
+    // WebKit platforms serve custom schemes as scheme://localhost; Windows and Android
+    // (WebView2 / Android WebView) only allow http, so Tauri maps them to http://scheme.localhost.
     const proxyBaseUrl =
-        osType === "linux"
+        osType === "linux" || osType === "macos" || osType === "ios"
             ? "proxy://localhost"
             : "http://proxy.localhost/proxy";
 

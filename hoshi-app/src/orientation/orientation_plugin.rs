@@ -6,7 +6,11 @@ use tauri::{
 };
 use tracing::debug;
 
+#[cfg(target_os = "android")]
 const PLUGIN_IDENTIFIER: &str = "com.ninelfx.hoshi";
+
+#[cfg(target_os = "ios")]
+tauri::ios_plugin_binding!(init_plugin_orientation);
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -97,9 +101,14 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             get_current_orientation,
         ])
         .setup(|app, api: PluginApi<R, ()>| {
+            #[cfg(target_os = "android")]
             let handle = api
                 .register_android_plugin(PLUGIN_IDENTIFIER, "OrientationPlugin")
                 .expect("Failed to register OrientationPlugin on Android");
+            #[cfg(target_os = "ios")]
+            let handle = api
+                .register_ios_plugin(init_plugin_orientation)
+                .expect("Failed to register OrientationPlugin on iOS");
 
             app.manage(OrientationPlugin(handle));
             Ok(())

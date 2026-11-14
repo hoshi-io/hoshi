@@ -6,7 +6,11 @@ use tauri::{
 };
 use tracing::{debug};
 
+#[cfg(target_os = "android")]
 const PLUGIN_IDENTIFIER: &str = "com.ninelfx.hoshi";
+
+#[cfg(target_os = "ios")]
+tauri::ios_plugin_binding!(init_plugin_headless);
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -55,9 +59,14 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("headless")
         .invoke_handler(tauri::generate_handler![])
         .setup(|app, api: PluginApi<R, ()>| {
+            #[cfg(target_os = "android")]
             let handle = api
                 .register_android_plugin(PLUGIN_IDENTIFIER, "HeadlessPlugin")
                 .expect("Failed to register HeadlessPlugin on Android");
+            #[cfg(target_os = "ios")]
+            let handle = api
+                .register_ios_plugin(init_plugin_headless)
+                .expect("Failed to register HeadlessPlugin on iOS");
 
             app.manage(HeadlessPlugin(handle));
             Ok(())

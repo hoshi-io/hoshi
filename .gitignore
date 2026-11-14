@@ -5,3 +5,4 @@
 /hoshi-frontend/build/
 /hoshi-app/gen/android/.idea/
 /.cargo/
+/hoshi-app/mpv-ios/

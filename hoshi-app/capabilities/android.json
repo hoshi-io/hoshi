@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "android",
+  "description": "Android-only plugins",
+  "windows": ["main"],
+  "platforms": ["android"],
+  "permissions": [
+    "android-tv-check:allow-check",
+    "android-tv-check:default"
+  ]
+}

@@ -46,11 +46,13 @@ fs2 = "0.4.3"
 dashmap = "6.2.1"
 lru = "0.19.0"
 
-[target.'cfg(target_os = "android")'.dependencies]
+# rquickjs ships no pregenerated bindings for android/ios
+[target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
 rquickjs = { version = "0.14.0", features = ["loader", "classes", "properties", "futures", "bindgen"] }
+[target.'cfg(target_os = "android")'.dependencies]
 image = { version = "0.25", default-features = false, features = ["jpeg"] }
 libmpv2-sys = "4.0.1"
-[target.'cfg(not(target_os = "android"))'.dependencies]
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 rquickjs = { version = "0.14.0", default-features = false, features = ["loader", "classes", "properties", "futures"] }
 
 [target.'cfg(target_pointer_width = "32")'.dependencies]

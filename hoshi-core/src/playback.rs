@@ -543,20 +543,25 @@ impl PlaybackHandle {
             .map_err(|e| core_err!(Internal, "error.playback.command_failed", e))
     }
 
-    #[cfg(target_os = "android")]
+    #[cfg(any(target_os = "android", target_os = "ios"))]
     #[instrument(skip(self))]
     pub async fn attach_surface(&self, wid: i64) -> CoreResult<()> {
+        #[cfg(target_os = "android")]
+        let (gpu_context, vo) = ("android", "gpu");
+        #[cfg(target_os = "ios")]
+        let (gpu_context, vo) = ("moltenvk", "gpu-next");
+
         let mpv = self.require_mpv().await?;
         self.run(move || -> libmpv2::Result<()> {
             mpv.set_property("wid", wid)?;
-            mpv.set_property("gpu-context", "android")?;
-            mpv.set_property("vo", "gpu")?;
+            mpv.set_property("gpu-context", gpu_context)?;
+            mpv.set_property("vo", vo)?;
             mpv.set_property("force-window", "yes")
         })
             .await
     }
 
-    #[cfg(target_os = "android")]
+    #[cfg(any(target_os = "android", target_os = "ios"))]
     #[instrument(skip(self))]
     pub async fn detach_surface(&self) -> CoreResult<()> {
         let mpv = self.require_mpv().await?;
@@ -662,7 +667,13 @@ fn build_mpv(target: RenderTarget) -> libmpv2::Result<Mpv> {
                 init.set_option("vo", "libmpv")?;
             }
             RenderTarget::NativeWindow { wid, gpu_context } => {
-                init.set_option("vo", "gpu")?;
+                // MoltenVK (iOS) is a Vulkan context, which gpu-next handles best.
+                if gpu_context == "moltenvk" {
+                    init.set_option("vo", "gpu-next")?;
+                    init.set_option("gpu-api", "vulkan")?;
+                } else {
+                    init.set_option("vo", "gpu")?;
+                }
                 init.set_option("gpu-context", gpu_context)?;
                 init.set_option("wid", wid)?;
             }

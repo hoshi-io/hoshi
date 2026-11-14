@@ -200,10 +200,10 @@ export class WatchState {
         invoke("lock_orientation", { orientation: "landscape" }).catch(() => {});
         invoke("enter_fullscreen").catch(() => {});
 
-        // Android has no initialize_player command — the mpv core boots
-        // itself off the first native surfaceCreated callback (see
-        // player_surface::android on the Rust side), not off a frontend call.
-        if (getOsType() !== "android") {
+        // On mobile the mpv core boots itself off the native surface callback
+        // (player_surface::android / ios on the Rust side), not off a frontend call.
+        const os = getOsType();
+        if (os !== "android" && os !== "ios") {
             this.playerReady = invoke("initialize_player").catch(() => {});
         }
 

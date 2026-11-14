@@ -38,9 +38,9 @@ pub fn generate_handlers() -> impl Fn(tauri::ipc::Invoke) -> bool {
         discord::set_activity,
         #[cfg(feature = "discord-rpc")]
         discord::clear_activity,
-        #[cfg(mobile)]
+        #[cfg(target_os = "android")]
         crate::auth_webview::auth_webview::auth_webview_open,
-        #[cfg(mobile)]
+        #[cfg(target_os = "android")]
         crate::auth_webview::auth_webview::auth_webview_close,
         #[cfg(mobile)]
         crate::headless::headless_plugin::notify_done,
@@ -50,8 +50,6 @@ pub fn generate_handlers() -> impl Fn(tauri::ipc::Invoke) -> bool {
         crate::orientation::orientation_plugin::unlock_orientation,
         #[cfg(mobile)]
         crate::orientation::orientation_plugin::get_current_orientation,
-        #[cfg(mobile)]
-        crate::intent::intent_plugin::launch_intent,
         #[cfg(mobile)]
         crate::immersive::immersive_plugin::enter_fullscreen,
         #[cfg(mobile)]

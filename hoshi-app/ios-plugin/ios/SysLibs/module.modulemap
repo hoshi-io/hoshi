@@ -1,0 +1,26 @@
+// libmpv (MPVKit) is bundled into the Rust staticlib, but its system deps are not.
+// Importing this module from Swift makes the linker pull them in through autolinking,
+// so the Tauri-generated Xcode project needs no manual OTHER_LDFLAGS.
+module HoshiSysLibs [system] {
+    header "shim.h"
+    link "z"
+    link "bz2"
+    link "iconv"
+    link "expat"
+    link "resolv"
+    link "xml2"
+    link "c++"
+    link framework "AVFoundation"
+    link framework "CoreAudio"
+    link framework "AudioToolbox"
+    link framework "CoreVideo"
+    link framework "CoreMedia"
+    link framework "CoreText"
+    link framework "VideoToolbox"
+    link framework "Metal"
+    link framework "IOSurface"
+    link framework "QuartzCore"
+    link framework "MediaPlayer"
+    link framework "Security"
+    export *
+}
