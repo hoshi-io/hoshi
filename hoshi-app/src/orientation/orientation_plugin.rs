@@ -93,6 +93,8 @@ impl<R: Runtime, T: Manager<R>> OrientationPluginExt<R> for T {
     }
 }
 
+// The commands below must stay async: sync commands run on the main thread, and on iOS the
+// Swift side needs that same thread to reply, so a sync call deadlocks the app.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("orientation")
         .invoke_handler(tauri::generate_handler![
@@ -117,7 +119,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 }
 
 #[tauri::command]
-pub fn lock_orientation<R: Runtime>(
+pub async fn lock_orientation<R: Runtime>(
     app: tauri::AppHandle<R>,
     orientation: String,
 ) -> Result<(), String> {
@@ -130,14 +132,14 @@ pub fn lock_orientation<R: Runtime>(
 }
 
 #[tauri::command]
-pub fn unlock_orientation<R: Runtime>(app: tauri::AppHandle<R>) -> Result<(), String> {
+pub async fn unlock_orientation<R: Runtime>(app: tauri::AppHandle<R>) -> Result<(), String> {
     app.orientation_plugin()
         .unlock()
         .map_err(|e| format!("Error al desbloquear orientación: {}", e))
 }
 
 #[tauri::command]
-pub fn get_current_orientation<R: Runtime>(
+pub async fn get_current_orientation<R: Runtime>(
     app: tauri::AppHandle<R>,
 ) -> Result<String, String> {
     app.orientation_plugin()

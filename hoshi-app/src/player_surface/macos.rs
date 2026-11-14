@@ -195,6 +195,12 @@ fn create_render_context(
         Ok(mut ctx) => {
             info!("mpv render context created successfully");
 
+            // We render on the main thread, so mpv must not sleep in render() waiting for the
+            // frame's display time (same as MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME=0).
+            if let Err(e) = mpv_static.set_property("video-timing-offset", 0.0) {
+                warn!(error = ?e, "failed to set video-timing-offset");
+            }
+
             let render_state_for_cb = render_state.clone();
             // At most one render queued on the main thread at a time (GTK's queue_render does
             // this for Linux). Without it, frames slower than the frame rate pile up and starve

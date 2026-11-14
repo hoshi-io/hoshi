@@ -74,6 +74,8 @@ impl<R: Runtime, T: Manager<R>> ImmersivePluginExt<R> for T {
     }
 }
 
+// Async for the same reason as orientation_plugin: a sync command would block the main
+// thread that the Swift side needs in order to reply (deadlock on iOS).
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("immersive")
         .invoke_handler(tauri::generate_handler![
@@ -101,42 +103,42 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 }
 
 #[tauri::command]
-pub fn enter_fullscreen<R: Runtime>(app: tauri::AppHandle<R>) -> Result<(), String> {
+pub async fn enter_fullscreen<R: Runtime>(app: tauri::AppHandle<R>) -> Result<(), String> {
     app.immersive_plugin()
         .enter()
         .map_err(|e| format!("Error entering immersive mode: {}", e))
 }
 
 #[tauri::command]
-pub fn exit_fullscreen<R: Runtime>(app: tauri::AppHandle<R>) -> Result<(), String> {
+pub async fn exit_fullscreen<R: Runtime>(app: tauri::AppHandle<R>) -> Result<(), String> {
     app.immersive_plugin()
         .exit()
         .map_err(|e| format!("Error exiting immersive mode: {}", e))
 }
 
 #[tauri::command]
-pub fn set_immersive_brightness<R: Runtime>(app: tauri::AppHandle<R>, level: f32) -> Result<(), String> {
+pub async fn set_immersive_brightness<R: Runtime>(app: tauri::AppHandle<R>, level: f32) -> Result<(), String> {
     app.immersive_plugin()
         .set_brightness(level)
         .map_err(|e| format!("Error setting brightness: {}", e))
 }
 
 #[tauri::command]
-pub fn get_immersive_brightness<R: Runtime>(app: tauri::AppHandle<R>) -> Result<f32, String> {
+pub async fn get_immersive_brightness<R: Runtime>(app: tauri::AppHandle<R>) -> Result<f32, String> {
     app.immersive_plugin()
         .get_brightness()
         .map_err(|e| format!("Error getting brightness: {}", e))
 }
 
 #[tauri::command]
-pub fn set_immersive_volume<R: Runtime>(app: tauri::AppHandle<R>, level: f32) -> Result<(), String> {
+pub async fn set_immersive_volume<R: Runtime>(app: tauri::AppHandle<R>, level: f32) -> Result<(), String> {
     app.immersive_plugin()
         .set_volume(level)
         .map_err(|e| format!("Error setting volume: {}", e))
 }
 
 #[tauri::command]
-pub fn get_immersive_volume<R: Runtime>(app: tauri::AppHandle<R>) -> Result<f32, String> {
+pub async fn get_immersive_volume<R: Runtime>(app: tauri::AppHandle<R>) -> Result<f32, String> {
     app.immersive_plugin()
         .get_volume()
         .map_err(|e| format!("Error getting volume: {}", e))
