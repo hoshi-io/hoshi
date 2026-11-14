@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Platforms-Win_%7C_Mac_%7C_Linux_%7C_Android_%7C_Android_TV-2a2a2a?style=for-the-badge&logo=github" alt="Platforms" />
+  <img src="https://img.shields.io/badge/Platforms-Win_%7C_Mac_%7C_Linux_%7C_Android_%7C_iOS-2a2a2a?style=for-the-badge&logo=github" alt="Platforms" />
   <a href="https://github.com/hoshi-io/hoshi/releases">
     <img src="https://img.shields.io/github/v/release/hoshi-io/hoshi?style=for-the-badge&color=2a2a2a" alt="Latest Release" />
   </a>
@@ -62,6 +62,14 @@ Check out the [Releases](https://github.com/hoshi-io/hoshi/releases) page to dow
 <a href="https://play.google.com/store/apps/details?id=com.ninelfx.hoshi">
   <img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="60" />
 </a>
+
+Android TV is supported with its own TV interface.
+
+### iOS
+
+The `.ipa` on the [Releases](https://github.com/hoshi-io/hoshi/releases) page is unsigned and meant for sideloading with tools like AltStore, SideStore or Sideloadly, which sign it with your own Apple ID.
+
+> iOS support is experimental: it has only been tested on the iOS simulator so far. Bug reports from real devices are very welcome.
 
 ### Linux
 
