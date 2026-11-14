@@ -23,11 +23,16 @@ for url in $URLS; do
   zip="$WORK/$(basename "$url")"
   echo "-> $(basename "$url")"
   curl -fsSL "$url" -o "$zip"
-  dir="$WORK/x/$(basename "$url" .zip)"
+  dir="$WORK/x/$(basename "$url" .xcframework.zip)"
   mkdir -p "$dir"
   unzip -q "$zip" -d "$dir"
-  xcf=$(find "$dir" -maxdepth 2 -name '*.xcframework' -type d | head -n1)
+  xcf=$(find "$dir" -mindepth 1 -maxdepth 2 -name '*.xcframework' -type d | head -n1)
+  if [ -z "$xcf" ]; then
+    echo "   !! no .xcframework inside $(basename "$zip")" >&2
+    exit 1
+  fi
 
+  found=0
   for slice_dir in "$xcf"/*/; do
     slice=$(basename "$slice_dir")
     case "$slice" in
@@ -54,8 +59,18 @@ for url in $URLS; do
     name="${name#lib}"
     name="${name#Lib}"
     name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
-    cp "$bin" "$dest/lib$name.a"
+    # MPVKit ships universal (fat) archives; rustc needs a plain one to bundle it.
+    if command -v lipo >/dev/null && lipo "$bin" -thin arm64 -output "$dest/lib$name.a" 2>/dev/null; then
+      :
+    else
+      cp "$bin" "$dest/lib$name.a"
+    fi
+    found=$((found + 1))
   done
+  if [ "$found" -ne 2 ]; then
+    echo "   !! expected device + simulator slices in $(basename "$xcf"), got $found: $(ls "$xcf" | tr '\n' ' ')" >&2
+    exit 1
+  fi
 done
 
 echo "device:    $(ls "$OUT/device" | tr '\n' ' ')"
