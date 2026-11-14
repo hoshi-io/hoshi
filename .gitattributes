@@ -1,3 +1,4 @@
 locales/* linguist-vendored
 hoshi-app/resources/anime4k/* linguist-vendored
 hoshi-frontend/src/lib/components/ui/** linguist-vendored
+patches/** linguist-vendored
