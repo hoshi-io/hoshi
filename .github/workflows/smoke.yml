@@ -60,7 +60,7 @@ jobs:
         run: |
           mkdir -p out
           RUST_LOG="hoshii_lib=debug,hoshi_core=info" HOSHI_MPV_LOG=1 \
-            HOSHI_SMOKE_VIDEO="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" HOSHI_SMOKE_HEADLESS=1 \
+            HOSHI_SMOKE_VIDEO="https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8" HOSHI_SMOKE_HEADLESS=1 \
             "$EXE" > out/macos.log 2>&1 &
           PID=$!
           # At least 45s (player opens at ~8s), at most 150s waiting for the headless burst.
@@ -173,7 +173,7 @@ jobs:
           mkdir -p out
           xcrun simctl install "$UDID" "$APP"
           SIMCTL_CHILD_RUST_LOG="hoshii_lib=debug,hoshi_core=info" SIMCTL_CHILD_HOSHI_MPV_LOG=1 \
-            SIMCTL_CHILD_HOSHI_SMOKE_VIDEO="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" SIMCTL_CHILD_HOSHI_SMOKE_HEADLESS=1 \
+            SIMCTL_CHILD_HOSHI_SMOKE_VIDEO="https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8" SIMCTL_CHILD_HOSHI_SMOKE_HEADLESS=1 \
             xcrun simctl launch --console-pty "$UDID" "$BUNDLE_ID" > out/ios-console.log 2>&1 &
           sleep 120
           xcrun simctl io "$UDID" screenshot out/ios.png || true

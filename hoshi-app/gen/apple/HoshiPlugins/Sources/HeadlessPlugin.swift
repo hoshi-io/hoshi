@@ -93,7 +93,7 @@ class HeadlessPlugin: Plugin, WKScriptMessageHandler, WKNavigationDelegate {
       self.webviews[args.label] = wv
       self.initScripts[args.label] = args.initScript ?? ""
       wv.load(URLRequest(url: url))
-      invoke.resolve()
+      invoke.resolveEmpty()
     }
   }
 
@@ -101,7 +101,7 @@ class HeadlessPlugin: Plugin, WKScriptMessageHandler, WKNavigationDelegate {
     let args = try invoke.parseArgs(DestroyArgs.self)
     DispatchQueue.main.async {
       if let wv = self.webviews[args.label] { self.destroyWebView(args.label, wv) }
-      invoke.resolve()
+      invoke.resolveEmpty()
     }
   }
 

@@ -33,7 +33,7 @@ class ImmersivePlugin: Plugin {
       ViewControllerOverrides.statusBarHidden = true
       ViewControllerOverrides.homeIndicatorHidden = true
       ViewControllerOverrides.refresh()
-      invoke.resolve()
+      invoke.resolveEmpty()
     }
   }
 
@@ -46,7 +46,7 @@ class ImmersivePlugin: Plugin {
         UIScreen.main.brightness = b
         self.originalBrightness = nil
       }
-      invoke.resolve()
+      invoke.resolveEmpty()
     }
   }
 
@@ -57,7 +57,7 @@ class ImmersivePlugin: Plugin {
         self.originalBrightness = UIScreen.main.brightness
       }
       UIScreen.main.brightness = CGFloat(min(max(args.level, 0), 1))
-      invoke.resolve()
+      invoke.resolveEmpty()
     }
   }
 
@@ -79,7 +79,7 @@ class ImmersivePlugin: Plugin {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
         slider.value = min(max(args.level, 0), 1)
         slider.sendActions(for: .valueChanged)
-        invoke.resolve()
+        invoke.resolveEmpty()
       }
     }
   }

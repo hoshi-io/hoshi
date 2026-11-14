@@ -33,7 +33,7 @@ class OrientationPlugin: Plugin {
       self.current = args.orientation
       ViewControllerOverrides.orientations = m
       ViewControllerOverrides.refresh()
-      invoke.resolve()
+      invoke.resolveEmpty()
     }
   }
 
@@ -42,7 +42,7 @@ class OrientationPlugin: Plugin {
       self.current = "unspecified"
       ViewControllerOverrides.orientations = .allButUpsideDown
       ViewControllerOverrides.refresh()
-      invoke.resolve()
+      invoke.resolveEmpty()
     }
   }
 
