@@ -1062,6 +1062,7 @@
       "cache_entries": "التورنتات المخزنة مؤقتًا ({{num}})",
       "cache_empty": "لا يوجد شيء مخزن مؤقتًا حتى الآن.",
       "files_count": "{{num}} ملفات",
+      "episodes_used": "الحلقة {{list}}",
       "last_used": "آخر استخدام {{date}}",
       "delete_entry": "حذف",
       "state_active": "قيد التشغيل",

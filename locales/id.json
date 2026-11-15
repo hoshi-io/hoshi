@@ -1062,6 +1062,7 @@
       "cache_entries": "Torrent yang di-cache ({{num}})",
       "cache_empty": "Belum ada yang di-cache.",
       "files_count": "{{num}} file",
+      "episodes_used": "Ep. {{list}}",
       "last_used": "terakhir digunakan {{date}}",
       "delete_entry": "Hapus",
       "state_active": "Sedang diputar",

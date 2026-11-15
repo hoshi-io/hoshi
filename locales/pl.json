@@ -1062,6 +1062,7 @@
       "cache_entries": "Torrenty w pamięci podręcznej ({{num}})",
       "cache_empty": "Pamięć podręczna jest jeszcze pusta.",
       "files_count": "{{num}} plików",
+      "episodes_used": "Odc. {{list}}",
       "last_used": "ostatnio użyto {{date}}",
       "delete_entry": "Usuń",
       "state_active": "Odtwarzanie",

@@ -1062,6 +1062,7 @@
       "cache_entries": "Кэшированные торренты ({{num}})",
       "cache_empty": "Кэш пока пуст.",
       "files_count": "{{num}} файлов",
+      "episodes_used": "Эп. {{list}}",
       "last_used": "последнее использование {{date}}",
       "delete_entry": "Удалить",
       "state_active": "Воспроизводится",

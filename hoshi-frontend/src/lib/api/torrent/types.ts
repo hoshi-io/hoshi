@@ -7,6 +7,15 @@ export interface TorrentSearchResult {
     seeders?: number | null;
 }
 
+export interface TorrentChoice {
+    torrentId: string;
+    title: string;
+    magnet: string;
+    isPack: boolean;
+    /** Saved for this exact episode; otherwise a pack saved for another episode of the show. */
+    exact: boolean;
+}
+
 export interface TorrentStreamInfo {
     sessionId: string;
     url: string;
@@ -40,6 +49,12 @@ export interface TorrentCacheFile {
     size: number;
 }
 
+export interface TorrentCacheUsage {
+    cid: string;
+    title: string;
+    episodes: number[];
+}
+
 export interface TorrentCacheEntry {
     key: string;
     name: string;
@@ -47,6 +62,8 @@ export interface TorrentCacheEntry {
     lastUsedMs: number;
     state: TorrentCacheState;
     files: TorrentCacheFile[];
+    /** Shows and episodes this torrent played. */
+    usedBy: TorrentCacheUsage[];
 }
 
 export interface TorrentStorageStats {

@@ -33,6 +33,19 @@
 
     const GIB = 1024 ** 3;
 
+    /** [1,2,3,5,7,8] -> "1–3, 5, 7–8" */
+    function episodeRanges(eps: number[]): string {
+        const sorted = [...new Set(eps)].sort((a, b) => a - b);
+        const parts: string[] = [];
+        for (let i = 0; i < sorted.length; i++) {
+            let j = i;
+            while (j + 1 < sorted.length && sorted[j + 1] === sorted[j] + 1) j++;
+            parts.push(j > i ? `${sorted[i]}–${sorted[j]}` : `${sorted[i]}`);
+            i = j;
+        }
+        return parts.join(", ");
+    }
+
     const t = (key: string, params?: Record<string, unknown>) =>
         i18n.t(`settings.torrent_section.${key}`, params as Record<string, string | number>);
 
@@ -569,6 +582,16 @@
                                                 <ChevronRight class="size-4 shrink-0 text-muted-foreground transition-transform duration-200 {expanded[entry.key] ? 'rotate-90' : ''}" />
                                                 <div class="min-w-0">
                                                     <p class="text-sm font-medium truncate">{entry.name}</p>
+                                                    {#each entry.usedBy ?? [] as usage (usage.cid)}
+                                                        <p class="text-xs truncate">
+                                                            <a
+                                                                    href={`/c/${usage.cid}`}
+                                                                    class="font-semibold text-primary hover:underline"
+                                                                    onclick={(e) => e.stopPropagation()}
+                                                            >{usage.title || usage.cid}</a>
+                                                            <span class="text-muted-foreground">· {t('episodes_used', { list: episodeRanges(usage.episodes) })}</span>
+                                                        </p>
+                                                    {/each}
                                                     <p class="text-xs text-muted-foreground">
                                                         {formatBytes(entry.sizeBytes)}
                                                         · {t('files_count', { num: entry.files.length })}

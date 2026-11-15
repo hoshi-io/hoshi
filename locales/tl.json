@@ -1062,6 +1062,7 @@
       "cache_entries": "Mga naka-cache na torrent ({{num}})",
       "cache_empty": "Wala pang naka-cache.",
       "files_count": "{{num}} file",
+      "episodes_used": "Ep. {{list}}",
       "last_used": "huling ginamit {{date}}",
       "delete_entry": "Tanggalin",
       "state_active": "Pinapatugtog",

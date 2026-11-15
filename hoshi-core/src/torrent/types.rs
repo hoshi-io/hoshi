@@ -61,6 +61,16 @@ pub struct TorrentCacheEntry {
     pub last_used_ms: u64,
     pub state: CacheEntryState,
     pub files: Vec<TorrentCacheFile>,
+    /// Shows and episodes this torrent played (filled in from saved torrent choices).
+    pub used_by: Vec<TorrentCacheUsage>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TorrentCacheUsage {
+    pub cid: String,
+    pub title: String,
+    pub episodes: Vec<u32>,
 }
 
 #[derive(Debug, Clone, Serialize)]

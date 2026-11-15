@@ -178,8 +178,6 @@ export class WatchState {
     private eofHandledFor = -1;
     /// A torrent the user picked by hand; only valid for the current episode/extension.
     private forcedTorrent: TorrentSearchResult | null = null;
-    /// The torrent that played last: a pack is reused for the following episodes.
-    private lastTorrent: { cid: string; ext: string; torrent: TorrentSearchResult } | null = null;
     /// Sessions of the previous file, kept alive until the next one has started so a
     /// pack switch reuses the loaded torrent instead of re-fetching its metadata.
     private retiredSessions: string[] = [];
@@ -699,13 +697,17 @@ export class WatchState {
         let torrent = this.forcedTorrent;
         let info: Awaited<ReturnType<typeof torrentApi.startStream>> | null = null;
 
-        // Same show, same source: a pack that holds this episode beats a new search.
-        const last = this.lastTorrent;
-        if (!torrent && last && last.cid === this.cid && last.ext === ext && last.torrent.magnet) {
-            info = await torrentApi
-                .startStream(ext, last.torrent.id, this.cid, this.epNumber, last.torrent.magnet, true)
-                .catch(() => null);
-            if (info) torrent = last.torrent;
+        // What played this episode before, or a pack used for the show: beats a new search.
+        // A pack only counts if it really holds this episode (packOnly).
+        if (!torrent) {
+            const saved = await torrentApi.getChoice(ext, this.cid, this.epNumber).catch(() => null);
+            if (saved) {
+                const candidate: TorrentSearchResult = { id: saved.torrentId, title: saved.title, magnet: saved.magnet };
+                info = await torrentApi
+                    .startStream(ext, candidate.id, this.cid, this.epNumber, candidate.magnet, !saved.exact, candidate.title)
+                    .catch(() => null);
+                if (info) torrent = candidate;
+            }
         }
 
         torrent ??= await this.pickTorrent();
@@ -715,8 +717,7 @@ export class WatchState {
             return { url: torrent.url, headers: {}, subtitles: [], chapters: [], torrent };
         }
 
-        info ??= await torrentApi.startStream(ext, torrent.id, this.cid, this.epNumber, torrent.magnet);
-        if (torrent.magnet) this.lastTorrent = { cid: this.cid, ext, torrent };
+        info ??= await torrentApi.startStream(ext, torrent.id, this.cid, this.epNumber, torrent.magnet, false, torrent.title);
 
         if (token !== this.loadToken) {
             void this.stopTorrentSession(info.sessionId);

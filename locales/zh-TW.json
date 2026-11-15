@@ -1062,6 +1062,7 @@
       "cache_entries": "已快取的 Torrent（{{num}}）",
       "cache_empty": "目前沒有任何快取。",
       "files_count": "{{num}} 個檔案",
+      "episodes_used": "第 {{list}} 集",
       "last_used": "最後使用於 {{date}}",
       "delete_entry": "刪除",
       "state_active": "播放中",

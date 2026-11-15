@@ -1062,6 +1062,7 @@
       "cache_entries": "キャッシュ済みトレント（{{num}}）",
       "cache_empty": "まだキャッシュされていません。",
       "files_count": "{{num}}ファイル",
+      "episodes_used": "第{{list}}話",
       "last_used": "最終使用 {{date}}",
       "delete_entry": "削除",
       "state_active": "再生中",

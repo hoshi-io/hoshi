@@ -1062,6 +1062,7 @@
       "cache_entries": "已缓存种子（{{num}}）",
       "cache_empty": "尚无缓存。",
       "files_count": "{{num}} 个文件",
+      "episodes_used": "第 {{list}} 集",
       "last_used": "最后使用于 {{date}}",
       "delete_entry": "删除",
       "state_active": "播放中",

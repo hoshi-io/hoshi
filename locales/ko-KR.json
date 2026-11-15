@@ -1062,6 +1062,7 @@
       "cache_entries": "캐시된 토렌트 ({{num}})",
       "cache_empty": "아직 캐시된 항목이 없습니다.",
       "files_count": "{{num}}개 파일",
+      "episodes_used": "{{list}}화",
       "last_used": "마지막 사용 {{date}}",
       "delete_entry": "삭제",
       "state_active": "재생 중",

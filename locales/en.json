@@ -1088,6 +1088,7 @@
       "cache_entries": "Cached torrents ({{num}})",
       "cache_empty": "Nothing is cached yet.",
       "files_count": "{{num}} files",
+      "episodes_used": "Ep. {{list}}",
       "last_used": "last used {{date}}",
       "delete_entry": "Delete",
       "state_active": "Playing",

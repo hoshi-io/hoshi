@@ -1062,6 +1062,7 @@
       "cache_entries": "Torrent in cache ({{num}})",
       "cache_empty": "Nessun elemento memorizzato nella cache.",
       "files_count": "{{num}} file",
+      "episodes_used": "Ep. {{list}}",
       "last_used": "utilizzato l'ultima volta {{date}}",
       "delete_entry": "Elimina",
       "state_active": "In riproduzione",

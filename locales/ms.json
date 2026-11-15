@@ -1062,6 +1062,7 @@
       "cache_entries": "Torrent dicache ({{num}})",
       "cache_empty": "Tiada apa-apa yang dicache lagi.",
       "files_count": "{{num}} fail",
+      "episodes_used": "Ep. {{list}}",
       "last_used": "digunakan terakhir {{date}}",
       "delete_entry": "Padam",
       "state_active": "Sedang dimainkan",

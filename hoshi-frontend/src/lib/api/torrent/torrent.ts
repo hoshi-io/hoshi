@@ -4,6 +4,7 @@ import type {
     DeleteTorrentCacheEntryResponse,
     StopTorrentStreamResponse,
     TorrentCacheEntry,
+    TorrentChoice,
     TorrentFilters,
     TorrentLiveStats,
     TorrentSearchResult,
@@ -40,9 +41,16 @@ export const torrentApi = {
      * Adds the torrent and opens a stream session. Pass `magnet` to skip the extension lookup.
      * `packOnly`: fail unless the torrent is a multi-file pack containing `episode`.
      */
-    startStream(id: string, contentId: string, cid: string, episode: number, magnet?: string | null, packOnly = false): Promise<TorrentStreamInfo> {
+    startStream(id: string, contentId: string, cid: string, episode: number, magnet?: string | null, packOnly = false, title?: string): Promise<TorrentStreamInfo> {
         return call<TorrentStreamInfo>({
-            tauri: { cmd: "start_torrent_stream", args: { id, contentId, cid: cid, episode: episode, magnet: magnet ?? null, packOnly } },
+            tauri: { cmd: "start_torrent_stream", args: { id, contentId, cid: cid, episode: episode, magnet: magnet ?? null, packOnly, title: title ?? null } },
+        });
+    },
+
+    /** What played this episode before, or the latest pack used for the show on this source. */
+    getChoice(id: string, cid: string, episode: number): Promise<TorrentChoice | null> {
+        return call<TorrentChoice | null>({
+            tauri: { cmd: "get_torrent_choice", args: { id, cid, episode } },
         });
     },
 

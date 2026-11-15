@@ -1062,6 +1062,7 @@
       "cache_entries": "Zwischengespeicherte Torrents ({{num}})",
       "cache_empty": "Noch nichts zwischengespeichert.",
       "files_count": "{{num}} Dateien",
+      "episodes_used": "Folge {{list}}",
       "last_used": "zuletzt verwendet {{date}}",
       "delete_entry": "Löschen",
       "state_active": "Wiedergabe",

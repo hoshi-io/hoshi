@@ -1062,6 +1062,7 @@
       "cache_entries": "Önbelleğe alınmış torrentler ({{num}})",
       "cache_empty": "Henüz önbelleğe alınmış bir şey yok.",
       "files_count": "{{num}} dosya",
+      "episodes_used": "Bölüm {{list}}",
       "last_used": "son kullanım: {{date}}",
       "delete_entry": "Sil",
       "state_active": "Oynatılıyor",

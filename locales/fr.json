@@ -1062,6 +1062,7 @@
       "cache_entries": "Torrents en cache ({{num}})",
       "cache_empty": "Rien n'est encore en cache.",
       "files_count": "{{num}} fichiers",
+      "episodes_used": "Ép. {{list}}",
       "last_used": "dernière utilisation {{date}}",
       "delete_entry": "Supprimer",
       "state_active": "En lecture",

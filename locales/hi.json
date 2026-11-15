@@ -1062,6 +1062,7 @@
       "cache_entries": "कैश किए गए टोरेंट ({{num}})",
       "cache_empty": "अभी तक कुछ भी कैश नहीं किया गया है।",
       "files_count": "{{num}} फ़ाइलें",
+      "episodes_used": "एपि. {{list}}",
       "last_used": "अंतिम बार {{date}} को उपयोग किया गया",
       "delete_entry": "हटाएँ",
       "state_active": "चल रहा है",

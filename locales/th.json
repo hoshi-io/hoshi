@@ -1062,6 +1062,7 @@
       "cache_entries": "ทอร์เรนต์ในแคช ({{num}})",
       "cache_empty": "ยังไม่มีอะไรอยู่ในแคช",
       "files_count": "{{num}} ไฟล์",
+      "episodes_used": "ตอน {{list}}",
       "last_used": "ใช้ล่าสุด {{date}}",
       "delete_entry": "ลบ",
       "state_active": "กำลังเล่น",

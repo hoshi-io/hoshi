@@ -102,10 +102,15 @@ fn natural_cmp(a: &str, b: &str) -> Ordering {
 ///   order, but only when the file count equals the entry's episode count
 ///
 /// `None` means "this torrent does not contain that episode".
+/// More than one video: a batch/season pack rather than a single release.
+pub fn is_pack(files: &[TorrentFile]) -> bool {
+    files.iter().filter(|f| is_video(&f.path)).count() >= 2
+}
+
 /// Like `select_file`, but only for packs: a single-video torrent is one specific
 /// episode, so it can't be reused for another one.
 pub fn select_file_in_pack(files: &[TorrentFile], target: &TargetDescriptor) -> Option<usize> {
-    if files.iter().filter(|f| is_video(&f.path)).count() < 2 {
+    if !is_pack(files) {
         return None;
     }
     select_file(files, Some(target))

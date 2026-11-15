@@ -1,4 +1,5 @@
 pub mod handle;
+pub mod choices;
 mod service;
 pub mod mpv_protocol;
 pub mod types;

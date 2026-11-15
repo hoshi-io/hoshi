@@ -1062,6 +1062,7 @@
       "cache_entries": "Torrent trong bộ nhớ đệm ({{num}})",
       "cache_empty": "Chưa có gì được lưu trong bộ nhớ đệm.",
       "files_count": "{{num}} tệp",
+      "episodes_used": "Tập {{list}}",
       "last_used": "sử dụng lần cuối {{date}}",
       "delete_entry": "Xóa",
       "state_active": "Đang phát",

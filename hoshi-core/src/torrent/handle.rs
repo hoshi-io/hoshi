@@ -14,7 +14,7 @@ use tracing::{info, warn};
 use crate::config::model::TorrentConfig;
 use crate::core_err;
 use crate::error::{CoreError, CoreResult};
-use crate::torrent::parser::files::{select_file, select_file_in_pack, TorrentFile};
+use crate::torrent::parser::files::{is_pack, select_file, select_file_in_pack, TorrentFile};
 use crate::torrent::parser::matcher::TargetDescriptor;
 use crate::torrent::types::{
     CacheEntryState, Lingering, StreamSession, TorrentCacheClearResult, TorrentCacheEntry,
@@ -29,6 +29,12 @@ const LAST_PLAYED_MARKER: &str = ".last_played";
 const PREFETCH_HEAD: u64 = 32 * 1024 * 1024;
 const PREFETCH_TAIL: u64 = 4 * 1024 * 1024;
 const PREFETCH_TIMEOUT: Duration = Duration::from_secs(180);
+
+pub struct AddedStream {
+    pub session_id: String,
+    pub total_size: u64,
+    pub is_pack: bool,
+}
 
 #[derive(Clone)]
 pub struct TorrentHandle(Arc<Inner>);
@@ -121,7 +127,7 @@ impl TorrentHandle {
         magnet: &str,
         target: Option<&TargetDescriptor>,
         pack_only: bool,
-    ) -> CoreResult<(String, u64)> {
+    ) -> CoreResult<AddedStream> {
         let dir = magnet_key(magnet)
             .ok_or_else(|| core_err!(BadRequest, "error.torrent.invalid_magnet"))?;
 
@@ -176,7 +182,7 @@ impl TorrentHandle {
         // Active again, so no longer a reaper candidate.
         self.0.lingering.remove(&torrent_id);
 
-        let (file_index, file_len) = match self
+        let (file_index, file_len, pack) = match self
             .prepare_torrent(session, &torrent, torrent_id, target, pack_only)
             .await
         {
@@ -197,7 +203,7 @@ impl TorrentHandle {
             StreamSession { torrent, torrent_id, dir, file_index, file_len },
         );
 
-        Ok((session_id, file_len))
+        Ok(AddedStream { session_id, total_size: file_len, is_pack: pack })
     }
 
     async fn prepare_torrent(
@@ -207,7 +213,7 @@ impl TorrentHandle {
         torrent_id: usize,
         target: Option<&TargetDescriptor>,
         pack_only: bool,
-    ) -> CoreResult<(usize, u64)> {
+    ) -> CoreResult<(usize, u64, bool)> {
         // Also returns for a torrent that is merely paused.
         tokio::time::timeout(INIT_TIMEOUT, torrent.wait_until_initialized())
             .await
@@ -240,7 +246,7 @@ impl TorrentHandle {
                 .await
                 .map_err(|e| core_err!(Internal, "error.torrent.add_failed", e))?;
         }
-        Ok((file_index, file_len))
+        Ok((file_index, file_len, is_pack(&files)))
     }
 
     /// Fetches the start and end of `target`'s file in this session's torrent, so the
@@ -483,6 +489,7 @@ impl TorrentHandle {
                     .unwrap_or(0),
                 key: e.key,
                 files: e.files,
+                used_by: Vec::new(),
             })
             .collect())
     }
@@ -576,7 +583,8 @@ impl TorrentHandle {
 
 /// Extracts the btih from a magnet URI, lowercased. Used as the torrent's
 /// folder name, so it's restricted to [a-z0-9] (no path traversal possible).
-fn magnet_key(magnet: &str) -> Option<String> {
+/// The info-hash of a magnet, lowercased: also the torrent's cache folder name.
+pub fn magnet_key(magnet: &str) -> Option<String> {
     let query = magnet.strip_prefix("magnet:?")?;
     query
         .split('&')
