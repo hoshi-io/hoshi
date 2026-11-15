@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { viewPrefs } from "@/stores/viewPrefs.svelte";
     import { onMount } from 'svelte';
     import { fade } from 'svelte/transition';
     import CalendarIcon from 'phosphor-svelte/lib/CalendarBlankIcon';
@@ -21,11 +22,7 @@
     }
 
     function formatTime(ts: number) {
-        return new Date(getMs(ts)).toLocaleTimeString(i18n.locale, {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
+        return viewPrefs.formatTime(getMs(ts));
     }
 
     // 30 = divisible by 5/6 columns, so pages end on full rows.

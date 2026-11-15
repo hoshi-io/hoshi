@@ -15,12 +15,22 @@
     import {Button} from "$lib/components/ui/button";
     import PageHeader from "@/components/PageHeader.svelte";
     import LazyCardGrid from "@/components/card/LazyCardGrid.svelte";
+    import SmartImage from "@/components/SmartImage.svelte";
+    import ListIcon from 'phosphor-svelte/lib/ListIcon';
+    import { viewPrefs } from "@/stores/viewPrefs.svelte";
+    import { getCardTitle, getCardShouldBlur, normalizeFullContent } from "@/utils/normalize";
 
     $effect(() => {
         layoutState.title    = i18n.t("schedule.title");
         layoutState.showBack = false;
         layoutState.backUrl  = null;
         layoutState.headerAction = headerActions;
+        untrack(() => scheduleStore.load());
+    });
+
+    // Changing "days ahead" refetches (the store compares the window).
+    $effect(() => {
+        viewPrefs.data.scheduleDaysAhead;
         untrack(() => scheduleStore.load());
     });
 
@@ -33,6 +43,54 @@
 
     const total = $derived(scheduleStore.groups.reduce((n, g) => n + g.items.length, 0));
     const hasMore = $derived(limit < total);
+
+    // ---- calendar ----
+    function dayKey(d: Date) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    const weeks = $derived.by(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const firstFetched = new Date(today);
+        firstFetched.setDate(today.getDate() - 2);
+        const last = new Date(today);
+        last.setDate(today.getDate() + viewPrefs.data.scheduleDaysAhead);
+
+        const byDay: Record<string, typeof scheduleStore.filteredEntries> = {};
+        for (const e of scheduleStore.filteredEntries) {
+            (byDay[dayKey(new Date(getMs(e.airingAt)))] ??= []).push(e);
+        }
+
+        const cursor = new Date(today);
+        cursor.setDate(today.getDate() - ((today.getDay() - viewPrefs.data.weekStart + 7) % 7));
+
+        const rows = [];
+        while (cursor <= last) {
+            const days = [];
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(cursor);
+                const key = dayKey(date);
+                days.push({
+                    key,
+                    date,
+                    isToday: date.getTime() === today.getTime(),
+                    inRange: date >= firstFetched && date <= last,
+                    items: (byDay[key] ?? []).sort((a, b) => a.airingAt - b.airingAt),
+                });
+                cursor.setDate(cursor.getDate() + 1);
+            }
+            rows.push(days);
+        }
+        return rows;
+    });
+
+    const weekdayNames = $derived(
+        Array.from({ length: 7 }, (_, i) =>
+            // 2024-01-07 was a Sunday.
+            new Date(2024, 0, 7 + ((viewPrefs.data.weekStart + i) % 7)).toLocaleDateString(i18n.locale, { weekday: "short" })
+        )
+    );
 
     const visibleGroups = $derived.by(() => {
         let left = limit;
@@ -50,8 +108,28 @@
     <title>{i18n.t("schedule.title")}</title>
 </svelte:head>
 
+{#snippet viewToggle()}
+    <div class="flex items-center rounded-sm bg-muted/50 p-0.5" role="radiogroup" aria-label={i18n.t('schedule.view')}>
+        {#each [['list', ListIcon, 'schedule.view_list'], ['calendar', CalendarIcon, 'schedule.view_calendar']] as const as [view, Icon, key] (view)}
+            {@const on = viewPrefs.data.scheduleView === view}
+            <button
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    title={i18n.t(key)}
+                    aria-label={i18n.t(key)}
+                    onclick={() => viewPrefs.set({ scheduleView: view })}
+                    class="grid h-9 w-9 place-items-center rounded-sm transition-colors {on ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}"
+            >
+                <Icon class="size-[18px]" />
+            </button>
+        {/each}
+    </div>
+{/snippet}
+
 {#snippet headerActions()}
     <div class="flex items-center gap-0.5">
+        {@render viewToggle()}
         <Button
                 variant="ghost"
                 size="icon"
@@ -122,6 +200,50 @@
                 </div>
             </div>
 
+        {:else if viewPrefs.data.scheduleView === 'calendar'}
+            <div class="overflow-x-auto pb-2 lg:pl-16" in:fade={{ duration: 300 }}>
+                <div class="grid min-w-[980px] grid-cols-7 gap-px overflow-hidden rounded-sm border border-border/50 bg-border/50">
+                    {#each weekdayNames as name, i (i)}
+                        <div class="bg-muted/40 px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{name}</div>
+                    {/each}
+                    {#each weeks as week, wi (wi)}
+                        {#each week as day (day.key)}
+                            <div class="min-h-32 bg-background p-2 {day.inRange ? '' : 'opacity-40'}">
+                                <div class="mb-2 flex items-center gap-2">
+                                    <span class="grid size-7 place-items-center rounded-full text-sm font-bold tabular-nums
+                                                 {day.isToday ? 'bg-primary text-primary-foreground' : 'text-foreground/80'}">
+                                        {day.date.getDate()}
+                                    </span>
+                                    {#if day.items.length}
+                                        <span class="text-[10px] font-semibold text-muted-foreground">{day.items.length}</span>
+                                    {/if}
+                                </div>
+                                <!-- About three entries tall; busy days scroll inside the cell. -->
+                                <div class="max-h-[11.5rem] space-y-1.5 overflow-y-auto overscroll-contain pr-0.5 thin-scrollbar">
+                                    {#each day.items as entry (`${entry.trackerId}-${entry.episode}`)}
+                                        {@const card = normalizeFullContent(entry.fullContent)}
+                                        {@const ms = getMs(entry.airingAt)}
+                                        <a
+                                                href={card.href}
+                                                class="flex items-center gap-2 rounded-sm p-1 transition-colors hover:bg-muted/50 {ms <= Date.now() ? 'opacity-60' : ''}"
+                                        >
+                                            <div class="relative h-12 w-8 shrink-0 overflow-hidden rounded-sm bg-muted">
+                                                <SmartImage src={card.cover} alt="" imageHeaders={card.imageHeaders} shouldBlur={getCardShouldBlur(card)} />
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="line-clamp-2 text-xs font-semibold leading-tight">{getCardTitle(card)}</p>
+                                                <p class="mt-0.5 text-[10px] font-medium text-muted-foreground tabular-nums">
+                                                    {i18n.t("schedule.episode_number", { num: entry.episode })} · {viewPrefs.formatTime(ms)}
+                                                </p>
+                                            </div>
+                                        </a>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/each}
+                    {/each}
+                </div>
+            </div>
         {:else}
             {#each visibleGroups as group, gi (group.key)}
                 <div class="relative z-10" in:fade={{ duration: 400 }}>
@@ -154,7 +276,7 @@
                                                 {i18n.t("schedule.episode_number", { num: item.episode })}
                                             </span>
                                         <span class="bg-primary/90 backdrop-blur-sm text-primary-foreground text-[10px] font-bold px-2 py-1 rounded-sm">
-                                                {new Date(getMs(item.airingAt)).toLocaleTimeString(i18n.locale, { hour: "2-digit", minute: "2-digit", hour12: false })}
+                                                {viewPrefs.formatTime(getMs(item.airingAt))}
                                             </span>
                                     </div>
                                 {/snippet}
@@ -166,3 +288,9 @@
         {/if}
     </section>
 </main>
+<style>
+    .thin-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--foreground) 20%, transparent) transparent;
+    }
+</style>

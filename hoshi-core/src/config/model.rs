@@ -25,6 +25,73 @@ pub struct UserConfig {
     pub list: ListConfig,
     #[serde(default)]
     pub torrent: TorrentConfig,
+    #[serde(default)]
+    pub views: ViewsConfig,
+}
+
+/// Per-profile layout choices for the schedule and list pages.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ViewsConfig {
+    pub schedule_view: ScheduleView,
+    pub schedule_days_ahead: u8,
+    pub time_format: TimeFormat,
+    /// 1 = Monday, 0 = Sunday.
+    pub week_start: u8,
+    pub list_density: ListDensity,
+    pub list_badges: ListBadges,
+}
+
+impl Default for ViewsConfig {
+    fn default() -> Self {
+        Self {
+            schedule_view: ScheduleView::default(),
+            schedule_days_ahead: 7,
+            time_format: TimeFormat::default(),
+            week_start: 1,
+            list_density: ListDensity::default(),
+            list_badges: ListBadges::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum ScheduleView {
+    #[default]
+    List,
+    Calendar,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub enum TimeFormat {
+    #[default]
+    #[serde(rename = "24h")]
+    H24,
+    #[serde(rename = "12h")]
+    H12,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum ListDensity {
+    #[default]
+    Comfortable,
+    Compact,
+    Rows,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListBadges {
+    pub status: bool,
+    pub progress: bool,
+    pub score: bool,
+}
+
+impl Default for ListBadges {
+    fn default() -> Self {
+        Self { status: true, progress: true, score: true }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

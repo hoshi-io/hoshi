@@ -15,6 +15,8 @@
     import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
     import SettingRow from "@/components/settings/parts/SettingRow.svelte";
     import { APP_FONTS, FONTS } from "@/fonts";
+    import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
+    import { viewPrefs, type ViewPrefs } from "@/stores/viewPrefs.svelte";
 
     let {
         config = $bindable(),
@@ -228,4 +230,71 @@
     >
         <Switch id="disableHeroTrailers" bind:checked={config.disableHeroTrailers} onCheckedChange={onSave} />
     </SettingRow>
+</SettingsSection>
+
+<SettingsSection
+        class="mt-10"
+        title={i18n.t('settings.ui_section.schedule')}
+        description={i18n.t('settings.ui_section.schedule_desc')}
+>
+    <SettingRow label={i18n.t('schedule.days_ahead')} description={i18n.t('settings.ui_section.days_ahead_desc')}>
+        <SegmentedControl
+                label={i18n.t('schedule.days_ahead')}
+                value={String(viewPrefs.data.scheduleDaysAhead)}
+                options={[3, 7, 14].map((n) => ({ value: String(n), label: i18n.t('schedule.days', { num: n }) }))}
+                onValueChange={(v) => viewPrefs.set({ scheduleDaysAhead: Number(v) as ViewPrefs['scheduleDaysAhead'] })}
+        />
+    </SettingRow>
+    <SettingRow label={i18n.t('schedule.time_format')} description={i18n.t('settings.ui_section.time_format_desc')}>
+        <SegmentedControl
+                label={i18n.t('schedule.time_format')}
+                value={viewPrefs.data.timeFormat}
+                options={[{ value: '24h', label: '24h' }, { value: '12h', label: '12h' }]}
+                onValueChange={(v) => viewPrefs.set({ timeFormat: v as ViewPrefs['timeFormat'] })}
+        />
+    </SettingRow>
+    <SettingRow label={i18n.t('schedule.week_starts')} description={i18n.t('settings.ui_section.week_starts_desc')}>
+        <SegmentedControl
+                label={i18n.t('schedule.week_starts')}
+                value={String(viewPrefs.data.weekStart)}
+                options={[{ value: '1', label: i18n.t('schedule.monday') }, { value: '0', label: i18n.t('schedule.sunday') }]}
+                onValueChange={(v) => viewPrefs.set({ weekStart: Number(v) as ViewPrefs['weekStart'] })}
+        />
+    </SettingRow>
+</SettingsSection>
+
+<SettingsSection
+        class="mt-10"
+        title={i18n.t('settings.ui_section.list')}
+        description={i18n.t('settings.ui_section.list_desc')}
+>
+    <SettingRow label={i18n.t('list.view')} description={i18n.t('settings.ui_section.list_density_desc')}>
+        <SegmentedControl
+                label={i18n.t('list.view')}
+                value={viewPrefs.data.listDensity}
+                options={[
+                    { value: 'comfortable', label: i18n.t('list.density_comfortable') },
+                    { value: 'compact', label: i18n.t('list.density_compact') },
+                    { value: 'rows', label: i18n.t('list.density_rows') },
+                ]}
+                onValueChange={(v) => viewPrefs.set({ listDensity: v as ViewPrefs['listDensity'] })}
+        />
+    </SettingRow>
+    {#each [['status', 'list.badge_status'], ['progress', 'list.badge_progress'], ['score', 'list.badge_score']] as [badge, key] (badge)}
+        {@const b = badge as keyof ViewPrefs['listBadges']}
+        <SettingRow
+                inline
+                for={`listBadge-${b}`}
+                label={i18n.t('settings.ui_section.show_badge', { badge: i18n.t(key) })}
+                description={i18n.t('settings.ui_section.show_badge_desc')}
+                disabled={viewPrefs.data.listDensity === 'rows'}
+        >
+            <Switch
+                    id={`listBadge-${b}`}
+                    checked={viewPrefs.data.listBadges[b]}
+                    disabled={viewPrefs.data.listDensity === 'rows'}
+                    onCheckedChange={(on) => viewPrefs.set({ listBadges: { ...viewPrefs.data.listBadges, [b]: on } })}
+            />
+        </SettingRow>
+    {/each}
 </SettingsSection>

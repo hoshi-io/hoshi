@@ -5,6 +5,7 @@ import { i18n } from "@/stores/i18n.svelte.js";
 import type { NormalizedCard } from "@/utils/normalize";
 import { normalizeFullContent } from "@/utils/normalize";
 import { listStore } from "@/app/list.svelte.js";
+import { viewPrefs } from "@/stores/viewPrefs.svelte";
 
 export type ScheduleGroup = {
     key: string;
@@ -108,14 +109,19 @@ class ScheduleStore {
             }))
     );
 
+    /** The fetched window, so changing "days ahead" refetches. */
+    private loadedDaysAhead = 0;
+
     async load(force = false) {
-        if (!force && this.entries.length > 0) return;
+        const daysAhead = viewPrefs.data.scheduleDaysAhead;
+        if (!force && this.entries.length > 0 && daysAhead === this.loadedDaysAhead) return;
+        this.loadedDaysAhead = daysAhead;
 
         this.isLoading = true;
         this.error = null;
 
         try {
-            this.entries = await scheduleApi.get({ daysBack: 2, daysAhead: 7 });
+            this.entries = await scheduleApi.get({ daysBack: 2, daysAhead });
         } catch (err) {
             console.error("Failed to load schedule:", err);
             this.error = err as CoreError;

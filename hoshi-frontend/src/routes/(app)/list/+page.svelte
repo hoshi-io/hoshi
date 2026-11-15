@@ -25,7 +25,9 @@
     import { appConfig } from "@/stores/config.svelte.js";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import LazyCardGrid from "@/components/card/LazyCardGrid.svelte";
-    import {getCardScore, getCardScoreIsStars} from "@/utils/normalize";
+    import {getCardScore, getCardScoreIsStars, getCardTitle, getCardShouldBlur} from "@/utils/normalize";
+    import SmartImage from "@/components/SmartImage.svelte";
+    import { viewPrefs, type ViewPrefs } from "@/stores/viewPrefs.svelte";
     import ResponsiveMenu from "@/components/ResponsiveMenu.svelte";
     import { goto } from "$app/navigation";
     import SyncIndicator from "@/components/list/SyncIndicator.svelte";
@@ -92,6 +94,19 @@
     });
 
     const visibleItems = $derived(listStore.sorted.slice(0, visibleCount));
+
+    const GRID_CLASS: Record<ViewPrefs['listDensity'], string | undefined> = {
+        comfortable: undefined, // LazyCardGrid's default
+        compact: "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-9 3xl:grid-cols-11 gap-2.5",
+        rows: "flex flex-col divide-y divide-border/40",
+    };
+    const badges = $derived(viewPrefs.data.listBadges);
+
+    const STATUS_LABEL: Record<string, string> = {
+        CURRENT: 'list.current', COMPLETED: 'list.completed', PLANNING: 'list.planning',
+        PAUSED: 'list.paused', DROPPED: 'list.dropped', REPEATING: 'list.repeating',
+    };
+    const statusText = (status: string) => STATUS_LABEL[status] ? i18n.t(STATUS_LABEL[status]) : status;
 
     // True when the user has no entries at all (vs. a search/filter that simply matched nothing).
     const hasNoEntries = $derived(listStore.entries.length === 0);
@@ -268,10 +283,12 @@
                 <div class="absolute inset-0 p-2 flex flex-col justify-between pointer-events-none select-none">
                     <div class="flex items-start justify-between w-full gap-2">
                         <div class="flex flex-wrap gap-1.5 items-center max-w-[75%]">
+                            {#if badges.status}
                             <span class="inline-flex items-center gap-1.5 bg-zinc-950/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide text-zinc-200 border border-white/5 shadow-sm">
                 <span class="h-1.5 w-1.5 rounded-full" class:bg-emerald-500={item.original.status === 'COMPLETED'} class:bg-sky-500={item.original.status === 'CURRENT'} class:bg-amber-500={item.original.status === 'PAUSED'} class:bg-rose-500={item.original.status === 'DROPPED'} class:bg-purple-500={item.original.status === 'REPEATING'} class:bg-zinc-400={item.original.status === 'PLANNING'}></span>
                                 {item.original.status}
             </span>
+                            {/if}
 
                             {#if item.original.isPrivate}
                                 <div class="bg-zinc-950/70 backdrop-blur-md p-1 rounded-md text-zinc-400 border border-white/5 shadow-sm" title="Private Entry">
@@ -289,13 +306,17 @@
                     </div>
 
                     <div class="flex items-center justify-between w-full mt-auto">
+                        {#if badges.progress}
                         <div class="bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-md shadow-md border border-white/5 flex items-center gap-1.5 font-mono">
                             <span class="text-xs font-black text-primary">{item.original.progress}</span>
                             <span class="text-[10px] font-medium text-zinc-500">/</span>
                             <span class="text-[10px] font-bold text-zinc-400">{item.original.totalUnits || '—'}</span>
                         </div>
+                        {:else}
+                        <span></span>
+                        {/if}
 
-                        {#if item.original.score}
+                        {#if badges.score && item.original.score}
                             <div class="bg-zinc-950/75 backdrop-blur-md px-2 py-1 rounded-md shadow-md border border-white/5 flex items-center gap-1 font-mono text-xs font-black text-amber-400">
                                 {#if !getCardScoreIsStars(item.card)}
                                     <span class="text-[10px] text-amber-500">★</span>
@@ -308,6 +329,42 @@
             {/snippet}
         </CardWrapper>
     </div>
+{/snippet}
+
+{#snippet rowFace(item: NormalizedListEntry)}
+    <div
+            role="button"
+            tabindex="0"
+            class="flex w-full cursor-pointer items-center gap-3 px-2 py-2 text-left transition-colors hover:bg-muted/40"
+            onclick={(e) => { e.preventDefault(); listStore.openEdit(item.original); }}
+            onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); listStore.openEdit(item.original); } }}
+    >
+        <div class="relative h-14 w-10 shrink-0 overflow-hidden rounded-sm bg-muted">
+            <SmartImage src={item.card.cover} alt="" imageHeaders={item.card.imageHeaders} shouldBlur={getCardShouldBlur(item.card)} />
+        </div>
+        <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-semibold">{getCardTitle(item.card)}</p>
+            <p class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span class="h-1.5 w-1.5 rounded-full" class:bg-emerald-500={item.original.status === 'COMPLETED'} class:bg-sky-500={item.original.status === 'CURRENT'} class:bg-amber-500={item.original.status === 'PAUSED'} class:bg-rose-500={item.original.status === 'DROPPED'} class:bg-purple-500={item.original.status === 'REPEATING'} class:bg-zinc-400={item.original.status === 'PLANNING'}></span>
+                {statusText(item.original.status)}
+                {#if item.card.contentTypeLabel}<span class="opacity-60">· {item.card.contentTypeLabel}</span>{/if}
+            </p>
+        </div>
+        <span class="w-20 shrink-0 text-right font-mono text-xs">
+            <span class="font-black text-primary">{item.original.progress}</span><span class="text-muted-foreground"> / {item.original.totalUnits || '—'}</span>
+        </span>
+        <span class="w-14 shrink-0 text-right font-mono text-xs font-black text-amber-500">
+            {#if item.original.score}{getCardScore(item.card)}{/if}
+        </span>
+    </div>
+{/snippet}
+
+{#snippet face(item: NormalizedListEntry)}
+    {#if viewPrefs.data.listDensity === 'rows'}
+        {@render rowFace(item)}
+    {:else}
+        {@render cardFace(item)}
+    {/if}
 {/snippet}
 
 {#snippet mobileTopbar()}
@@ -479,6 +536,7 @@
                         onToggle={(item) => listStore.toggleSelect(item.original.cid)}
                         onLongPress={layoutState.isMobile ? (item) => listStore.enterSelection([item.original.cid]) : undefined}
                         items={visibleItems}
+                        gridClass={GRID_CLASS[viewPrefs.data.listDensity]}
                         keyFn={(item) => item.original.cid}
                         hasMore={visibleCount < listStore.sorted.length}
                         isLoading={listStore.isLoading} onLoadMore={() => {
@@ -489,7 +547,7 @@
                         {#if layoutState.isMobile}
                             <!-- Touch: long-press selects (see LazyCardGrid). The card menu would fight for that gesture,
                                  so its actions live in the selection bar instead (details, +1, delete). -->
-                            {@render cardFace(item)}
+                            {@render face(item)}
                         {:else}
                             <ResponsiveMenu
                                     title={item.original.titleI18n?.[appConfig.data?.ui?.titleLanguage || 'romaji'] || item.original.title}
@@ -499,7 +557,7 @@
                                     onDelete={() => listStore.removeEntry(item.original.cid)}
                             >
                                 {#snippet trigger()}
-                                    {@render cardFace(item)}
+                                    {@render face(item)}
                                 {/snippet}
                             </ResponsiveMenu>
                         {/if}

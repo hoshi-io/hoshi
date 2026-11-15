@@ -159,6 +159,16 @@ export interface TorrentConfig {
     minFreeDiskSpaceBytes: number;
 }
 
+export interface ViewsConfig {
+    scheduleView: 'list' | 'calendar';
+    scheduleDaysAhead: 3 | 7 | 14;
+    timeFormat: '24h' | '12h';
+    /** 1 = Monday, 0 = Sunday (Date.getDay numbering). */
+    weekStart: 0 | 1;
+    listDensity: 'comfortable' | 'compact' | 'rows';
+    listBadges: { status: boolean; progress: boolean; score: boolean };
+}
+
 export interface AppConfig {
     general: GeneralConfig;
     ui: UiConfig;
@@ -171,4 +181,5 @@ export interface AppConfig {
     discord: DiscordConfig;
     list: ListConfig;
     torrent: TorrentConfig;
+    views: ViewsConfig;
 }
