@@ -121,11 +121,11 @@
     {#if stacked}
         <div class="space-y-0.5 px-0.5">
             <div class="flex items-center gap-2">
-                <p class="text-[11px] font-bold uppercase tracking-wide text-muted-foreground/60">
+                <p class="text-xs font-medium text-muted-foreground">
                     {episode}
                 </p>
                 {#if tag}
-                    <span class="text-[10px] font-bold uppercase tracking-wide text-primary/80">· {tag}</span>
+                    <span class="text-xs font-semibold text-primary">· {tag}</span>
                 {/if}
             </div>
             {#if episodeTitle}
@@ -140,23 +140,14 @@
             {/if}
         </div>
     {:else}
-        <div class="flex flex-col gap-1 px-1">
+        <div class="flex min-w-0 flex-col gap-0.5 px-1">
             {#if series}
-                <p class="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest truncate">
-                    {series}
-                </p>
+                <p class="truncate text-sm font-semibold transition-colors group-hover:text-primary">{series}</p>
             {/if}
-            <div class="flex items-baseline gap-2 overflow-hidden">
-                <span class="font-black text-base md:text-sm whitespace-nowrap group-hover:text-primary transition-colors">
-                    {episode}
-                </span>
-                {#if episodeTitle}
-                    <span class="text-muted-foreground/40 text-xs">.</span>
-                    <span class="text-sm md:text-base font-semibold text-muted-foreground line-clamp-1">
-                        {episodeTitle}
-                    </span>
-                {/if}
-            </div>
+            <p class="truncate text-sm text-muted-foreground">
+                <span class={series ? '' : 'font-semibold text-foreground transition-colors group-hover:text-primary'}>{episode}</span>
+                {#if episodeTitle}<span class="opacity-50"> · </span>{episodeTitle}{/if}
+            </p>
         </div>
     {/if}
 </a>

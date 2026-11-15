@@ -54,9 +54,7 @@ export function episodeLabel(
     unitTitle: string | null | undefined
 ): { number: string; title: string | null } {
     return {
-        number: unitTitle
-            ? String(episode)
-            : i18n.t('watch.episode_number', { num: episode ?? '?' }),
+        number: i18n.t('watch.episode_number', { num: episode ?? '?' }),
         title: unitTitle ?? null,
     };
 }

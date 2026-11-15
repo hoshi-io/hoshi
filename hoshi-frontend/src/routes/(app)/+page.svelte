@@ -130,10 +130,42 @@
             </button>
         {/each}
     </div>
-    {@render editButton('size-10 md:hidden')}
+    {@render editButton('size-10')}
     </div>
     {/if}
 {/snippet}
+
+{#if !layoutState.isMobile && activeTab && !homeEditor.editing && !isSkeletonVisible}
+    <!-- Desktop home tabs: fixed top-right like the mobile header, so they stay reachable while scrolling. -->
+    <div class="fixed top-12 right-6 xl:right-10 z-40 flex items-center gap-2" in:fade={{ duration: 200 }}>
+        <div class="flex items-center gap-1 rounded-lg border border-border/50 bg-background/70 p-1 shadow-lg backdrop-blur-md">
+            {#each homeState.tabs as tab (tab.id)}
+                {@const Icon = tabIcon(tab.icon)}
+                {@const active = activeTab.id === tab.id}
+                <button
+                        class="relative flex h-9 shrink-0 items-center gap-2 rounded-md px-4 text-sm font-semibold transition-colors duration-200
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40
+                               {active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}"
+                        onclick={() => homeState.activeTabId = tab.id}
+                        aria-pressed={active}
+                >
+                    {#if active}
+                        <span
+                                class="absolute inset-0 rounded-md bg-background shadow-sm ring-1 ring-border/60"
+                                in:receive={{ key: 'tab-underline' }}
+                                out:send={{ key: 'tab-underline' }}
+                        ></span>
+                    {/if}
+                    <Icon class="relative size-4 shrink-0" />
+                    <span class="relative">{labelText(tab.title)}</span>
+                </button>
+            {/each}
+        </div>
+        <div class="rounded-lg border border-border/50 bg-background/70 shadow-lg backdrop-blur-md">
+            {@render editButton('size-11')}
+        </div>
+    </div>
+{/if}
 
 <div class="bg-background overflow-x-hidden relative -mt-24 lg:mt-0 pb-11">
 
@@ -178,34 +210,10 @@
                     {/key}
                 </div>
             {:else}
-                <div class="h-24 lg:h-8" transition:slide={{ duration: prefersReducedMotion ? 0 : 450, easing: cubicOut }}></div>
+                <div class="h-24 lg:h-20" transition:slide={{ duration: prefersReducedMotion ? 0 : 450, easing: cubicOut }}></div>
             {/if}
 
             <div class="w-full px-4 md:px-12 lg:pl-32 pt-4 md:pt-6 relative z-20 space-y-4 md:space-y-6 pb-safe transition-[margin] duration-500 {hasHero ? '-mt-8 md:-mt-16' : ''}">
-                <div class="hidden md:flex items-center gap-8 border-b border-border/10 pb-4 overflow-x-auto [scrollbar-width:none]">
-                    {#each homeState.tabs as tab (tab.id)}
-                        {@const Icon = tabIcon(tab.icon)}
-                        <button
-                                class="group relative flex shrink-0 items-center gap-2.5 py-2 transition-all duration-300"
-                                onclick={() => homeState.activeTabId = tab.id}
-                                aria-pressed={activeTab.id === tab.id}
-                        >
-                            <Icon class="size-5 transition-colors {activeTab.id === tab.id ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}" />
-                            <span class="text-sm font-black uppercase tracking-widest transition-colors {activeTab.id === tab.id ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}">
-                                {labelText(tab.title)}
-                            </span>
-                            {#if activeTab.id === tab.id}
-                                <div
-                                        class="absolute -bottom-4 left-0 right-0 h-1 bg-primary rounded-t-full"
-                                        in:receive={{ key: 'tab-underline' }}
-                                        out:send={{ key: 'tab-underline' }}
-                                ></div>
-                            {/if}
-                        </button>
-                    {/each}
-                    <div class="ml-auto">{@render editButton('size-9')}</div>
-                </div>
-
                 {#key activeTab.id}
                     <div class="space-y-2 md:space-y-4">
                         {#each visibleSections as section, i (section.id)}

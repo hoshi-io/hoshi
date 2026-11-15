@@ -108,7 +108,7 @@
 
     {#if stacked}
         <div class="mt-2 space-y-0.5 px-0.5">
-            <p class="text-xs font-bold uppercase tracking-wide text-muted-foreground/70">
+            <p class="text-xs font-medium text-muted-foreground">
                 {episode}
                 {#if tag}
                     <span class="text-primary">· {tag}</span>
@@ -119,16 +119,14 @@
             {/if}
         </div>
     {:else}
-        <div class="mt-2 space-y-0.5 px-0.5">
+        <div class="mt-2 min-w-0 space-y-0.5 px-0.5">
             {#if series}
-                <p class="truncate text-xs font-bold uppercase tracking-widest text-muted-foreground/70">{series}</p>
+                <p class="truncate text-base font-semibold group-focus:text-primary">{series}</p>
             {/if}
-            <div class="flex items-baseline gap-2 overflow-hidden">
-                <span class="whitespace-nowrap text-sm font-black group-focus:text-primary">{episode}</span>
-                {#if episodeTitle}
-                    <span class="line-clamp-1 text-sm font-semibold text-muted-foreground">{episodeTitle}</span>
-                {/if}
-            </div>
+            <p class="truncate text-sm text-muted-foreground">
+                <span class={series ? '' : 'font-semibold text-foreground group-focus:text-primary'}>{episode}</span>
+                {#if episodeTitle}<span class="opacity-50"> · </span>{episodeTitle}{/if}
+            </p>
         </div>
     {/if}
 </a>
