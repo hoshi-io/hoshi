@@ -14,6 +14,7 @@
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
     import SettingRow from "@/components/settings/parts/SettingRow.svelte";
+    import { APP_FONTS, FONTS } from "@/fonts";
 
     let {
         config = $bindable(),
@@ -157,6 +158,33 @@
             </label>
 
             <span class="text-xs font-mono font-semibold uppercase tracking-wide text-muted-foreground tabular-nums">{accent}</span>
+        </div>
+    </SettingRow>
+
+    <SettingRow
+            stacked
+            label={i18n.t('settings.ui_section.app_font')}
+            description={i18n.t('settings.ui_section.app_font_desc')}
+    >
+        <div role="radiogroup" aria-label={i18n.t('settings.ui_section.app_font')} class="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
+            {#each APP_FONTS as id (id)}
+                {@const selected = themeManager.font === id}
+                <button
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onclick={() => themeManager.setFont(id)}
+                        class="flex flex-col items-start gap-0.5 rounded-sm border-2 px-3 py-2 text-left transition-colors
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50
+                               {selected ? 'border-primary bg-primary/10' : 'border-border/50 hover:bg-muted/50'}"
+                        style="font-family: {FONTS[id].stack}"
+                >
+                    <span class="text-lg font-semibold leading-tight">Aa</span>
+                    <span class="text-xs text-muted-foreground truncate w-full">
+                        {id === 'system' ? i18n.t('settings.ui_section.app_font_system') : FONTS[id].label}
+                    </span>
+                </button>
+            {/each}
         </div>
     </SettingRow>
 

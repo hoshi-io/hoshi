@@ -1,5 +1,6 @@
 <script lang="ts">
     import './layout.css';
+    import '$lib/fonts';
     import { untrack } from 'svelte';
     import { goto } from '$app/navigation';
     import { page } from '$app/state';

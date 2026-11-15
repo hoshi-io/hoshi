@@ -279,6 +279,26 @@ pub struct NovelConfig {
     pub max_width: u16,
     pub text_align: TextAlign,
     pub paragraph_spacing: f32,
+    pub layout: NovelLayout,
+    /// Paged mode only; 2 falls back to 1 on narrow screens.
+    pub pages_per_view: u8,
+    /// Horizontal page margin in px.
+    pub margin: u16,
+    /// In em.
+    pub letter_spacing: f32,
+    /// In em.
+    pub word_spacing: f32,
+    /// Used when `theme` is `custom`.
+    pub custom_bg: String,
+    pub custom_text: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum NovelLayout {
+    #[default]
+    Scroll,
+    Paged,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -289,6 +309,7 @@ pub enum NovelTheme {
     Dark,
     Sepia,
     Oled,
+    Custom,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -298,6 +319,17 @@ pub enum FontFamily {
     Sans,
     Serif,
     Mono,
+    Literata,
+    Merriweather,
+    Lora,
+    SourceSerif,
+    Inter,
+    Roboto,
+    Nunito,
+    Lexend,
+    Atkinson,
+    OpenDyslexic,
+    JetbrainsMono,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -318,6 +350,13 @@ impl Default for NovelConfig {
             max_width: 700,
             paragraph_spacing: 2.0,
             text_align: TextAlign::default(),
+            layout: NovelLayout::default(),
+            pages_per_view: 2,
+            margin: 24,
+            letter_spacing: 0.0,
+            word_spacing: 0.0,
+            custom_bg: "#1e1e24".into(),
+            custom_text: "#e4e4e7".into(),
         }
     }
 }

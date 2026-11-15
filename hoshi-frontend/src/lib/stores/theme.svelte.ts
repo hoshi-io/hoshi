@@ -1,3 +1,5 @@
+import { fontStack } from '@/fonts';
+
 async function loadSavedValue(key: string): Promise<string | null> {
     try {
         const { load } = await import('@tauri-apps/plugin-store');
@@ -33,6 +35,7 @@ async function persistValue(key: string, value: string | null): Promise<void> {
 class ThemeManager {
     theme = $state<string>('dark');
     accentColor = $state<string | null>(null);
+    font = $state<string>('system');
 
     constructor() {
         this.init();
@@ -44,6 +47,8 @@ class ThemeManager {
 
         if (savedTheme) this.theme = savedTheme;
         if (savedAccent) this.accentColor = savedAccent;
+        const savedFont = await loadSavedValue('app_font');
+        if (savedFont) this.font = savedFont;
 
         this.applyToDOM();
     }
@@ -71,6 +76,12 @@ class ThemeManager {
         await persistValue('app_accent', newColor);
     }
 
+    async setFont(font: string) {
+        this.font = font;
+        this.applyToDOM();
+        await persistValue('app_font', font === 'system' ? null : font);
+    }
+
     applyToDOM() {
         if (typeof document === 'undefined') return;
 
@@ -88,6 +99,13 @@ class ThemeManager {
         } else {
             html.style.removeProperty('--app-accent');
             html.style.removeProperty('--app-accent-foreground');
+        }
+
+        // Tailwind's base font and `font-sans` both read --font-sans.
+        if (this.font && this.font !== 'system') {
+            html.style.setProperty('--font-sans', fontStack(this.font));
+        } else {
+            html.style.removeProperty('--font-sans');
         }
     }
 }

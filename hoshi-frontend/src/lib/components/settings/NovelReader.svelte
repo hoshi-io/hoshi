@@ -16,6 +16,8 @@
     import Space from 'phosphor-svelte/lib/ArrowsOutLineHorizontalIcon';
     import type { NovelConfig, NovelTheme, FontFamily } from "@/api/config/types";
     import { i18n } from '@/stores/i18n.svelte.js';
+    import { NOVEL_THEMES, novelThemeColors } from "@/app/novel.svelte";
+    import { FONTS, READER_FONTS, fontStack } from "@/fonts";
 
     let {
         config = $bindable(),
@@ -29,34 +31,32 @@
     let localLine = $state(config.lineHeight ?? 1.6);
     let localSpacing = $state(config.paragraphSpacing ?? 1.5);
     let localWidth = $state(config.maxWidth ?? 700);
+    let localMargin = $state(config.margin ?? 24);
+    let localLetter = $state(config.letterSpacing ?? 0);
+    let localWord = $state(config.wordSpacing ?? 0);
 
     $effect(() => {
         if (config.fontSize) localSize = config.fontSize;
         if (config.lineHeight) localLine = config.lineHeight;
         if (config.paragraphSpacing) localSpacing = config.paragraphSpacing;
         if (config.maxWidth) localWidth = config.maxWidth;
+        localMargin = config.margin ?? 24;
+        localLetter = config.letterSpacing ?? 0;
+        localWord = config.wordSpacing ?? 0;
     });
 
-    const themes = {
-        light: { bg: "#fdfdfd", text: "#1a1a1a", border: "#e5e7eb" },
-        dark: { bg: "#1a1a1a", text: "#e0e0e0", border: "#262626" },
-        sepia: { bg: "#f4ecd8", text: "#5b4636", border: "#e2d7bf" },
-        oled: { bg: "#000000", text: "#d1d5db", border: "#171717" }
-    };
+    const colors = $derived(novelThemeColors(config));
+
 
     const novelShortcuts = [
         { label: i18n.t('reader.scroll_down'), keys: ["↓"] },
         { label: i18n.t('reader.scroll_up'), keys: ["↑"] },
         { label: i18n.t('reader.page_scroll'), keys: ["Space"]},
+        { label: i18n.t('reader.turn_page'), keys: ["←", "→"] },
         { label: i18n.t('reader.increase_font'), keys: ["+", "="] },
         { label: i18n.t('reader.decrease_font'), keys: ["-"] },
     ];
 
-    const fontFamilyOptions = [
-        { value: "sans", label: "Sans", class: "font-sans" },
-        { value: "serif", label: "Serif", class: "font-serif" },
-        { value: "mono", label: "Mono", class: "font-mono" }
-    ];
 
     const alignOptions = [
         { value: "left", label: i18n.t('reader.align_left'), icon: AlignLeft },
@@ -70,6 +70,21 @@
     function handleCommitLine(val: number) { config.lineHeight = val; onSave(); }
     function handleCommitSpacing(val: number) { config.paragraphSpacing = val; onSave(); }
     function handleCommitWidth(val: number) { config.maxWidth = val; onSave(); }
+    function handleCommitMargin(val: number) { config.margin = val; onSave(); }
+    function handleCommitLetter(val: number) { config.letterSpacing = val; onSave(); }
+    function handleCommitWord(val: number) { config.wordSpacing = val; onSave(); }
+
+    const layoutOptions = [
+        { value: "scroll", label: i18n.t('reader.scroll') },
+        { value: "paged", label: i18n.t('reader.paged') }
+    ];
+    const spreadOptions = [
+        { value: "1", label: i18n.t('reader.single_page') },
+        { value: "2", label: i18n.t('reader.double_page') }
+    ];
+    function changeLayout(v: string) { config.layout = v as NovelConfig['layout']; onSave(); }
+    function changeSpread(v: string) { config.pagesPerView = Number(v); onSave(); }
+    function setCustom(key: 'customBg' | 'customText', value: string) { config[key] = value; config.theme = 'custom'; onSave(); }
 </script>
 
 <div class="flex flex-col xl:flex-row gap-8 items-start">
@@ -83,9 +98,9 @@
 
         <div
                 class="relative aspect-[3/4] w-full rounded-2xl border-4 shadow-2xl overflow-hidden flex flex-col transition-colors duration-500"
-                style="background-color: {themes[config.theme as keyof typeof themes]?.bg || themes.dark.bg}; border-color: {themes[config.theme as keyof typeof themes]?.border || themes.dark.border}; color: {themes[config.theme as keyof typeof themes]?.text || themes.dark.text};"
+                style="background-color: {colors.bg}; border-color: {colors.border}; color: {colors.text};"
         >
-            <div class="h-8 w-full border-b flex items-center px-4 justify-between opacity-40" style="border-color: {themes[config.theme as keyof typeof themes]?.border || themes.dark.border};">
+            <div class="h-8 w-full border-b flex items-center px-4 justify-between opacity-40" style="border-color: {colors.border};">
                 <div class="h-1.5 w-16 bg-current rounded-full"></div>
                 <div class="h-1.5 w-4 bg-current rounded-full"></div>
             </div>
@@ -98,7 +113,10 @@
                         font-size: {localSize * 0.6}px;
                         line-height: {localLine};
                         text-align: {config.textAlign};
-                        font-family: {config.fontFamily === 'sans' ? 'sans-serif' : config.fontFamily === 'serif' ? 'serif' : 'monospace'};
+                        font-family: {fontStack(config.fontFamily)};
+                        letter-spacing: {localLetter}em;
+                        word-spacing: {localWord}em;
+                        padding-inline: {localMargin * 0.4}px;
                         --preview-spacing: {localSpacing}em;
                     "
                 >
@@ -135,30 +153,57 @@
                     <Label class="text-base font-bold">{i18n.t('reader.theme')}</Label>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {#each Object.entries(themes) as [t, colors]}
+                    {#each Object.entries(NOVEL_THEMES) as [t, swatch]}
                         <Button
                                 variant={config.theme === t ? 'default' : 'outline'}
                                 class="h-12 rounded-sm flex flex-col gap-0.5 relative overflow-hidden transition-colors"
-                                style="background-color: {config.theme === t ? '' : colors.bg}; color: {config.theme === t ? '' : colors.text};"
+                                style="background-color: {config.theme === t ? '' : swatch.bg}; color: {config.theme === t ? '' : swatch.text};"
                                 onclick={() => { config.theme = t as NovelTheme; onSave(); }}
                         >
                             <span class="text-xs font-bold capitalize">{t}</span>
                         </Button>
                     {/each}
                 </div>
+                <div class="flex flex-wrap items-center gap-4 rounded-sm border-2 px-3 py-2 {config.theme === 'custom' ? 'border-primary' : 'border-border/50'}">
+                    <span class="text-sm font-bold flex-1">{i18n.t('reader.theme_custom')}</span>
+                    <label class="flex items-center gap-2 text-xs text-muted-foreground">
+                        {i18n.t('reader.background')}
+                        <input type="color" value={config.customBg ?? '#1e1e24'} onchange={(e) => setCustom('customBg', e.currentTarget.value)} class="size-8 cursor-pointer rounded border-0 bg-transparent p-0" />
+                    </label>
+                    <label class="flex items-center gap-2 text-xs text-muted-foreground">
+                        {i18n.t('reader.text_color')}
+                        <input type="color" value={config.customText ?? '#e4e4e7'} onchange={(e) => setCustom('customText', e.currentTarget.value)} class="size-8 cursor-pointer rounded border-0 bg-transparent p-0" />
+                    </label>
+                </div>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <Label class="font-bold flex items-center gap-2">{i18n.t('reader.layout')}</Label>
+                    <SegmentedControl fluid label={i18n.t('reader.layout')} value={config.layout ?? 'scroll'} options={layoutOptions} onValueChange={changeLayout} />
+                </div>
+                {#if config.layout === 'paged'}
+                    <div class="space-y-4">
+                        <Label class="font-bold flex items-center gap-2">{i18n.t('reader.pages_per_view')}</Label>
+                        <SegmentedControl fluid label={i18n.t('reader.pages_per_view')} value={String(config.pagesPerView ?? 2)} options={spreadOptions} onValueChange={changeSpread} />
+                    </div>
+                {/if}
             </div>
 
             <div class="grid sm:grid-cols-2 gap-8">
                 <div class="space-y-4">
                     <Label class="font-bold flex items-center gap-2"><Type class="size-4 text-primary"/> {i18n.t('reader.font_family')}</Label>
-                    <div>
-                        <SegmentedControl
-                                fluid
-                                label={i18n.t('reader.font_family')}
-                                value={config.fontFamily}
-                                options={fontFamilyOptions}
-                                onValueChange={changeFontFamily}
-                        />
+                    <div class="grid grid-cols-2 gap-2">
+                        {#each READER_FONTS as id (id)}
+                            <button
+                                    type="button"
+                                    aria-pressed={config.fontFamily === id}
+                                    onclick={() => changeFontFamily(id)}
+                                    class="h-10 truncate rounded-sm border-2 px-3 text-left text-sm transition-colors
+                                           {config.fontFamily === id ? 'border-primary bg-primary/10 font-semibold' : 'border-border/50 hover:bg-muted/50'}"
+                                    style="font-family: {FONTS[id].stack}"
+                            >{FONTS[id].label}</button>
+                        {/each}
                     </div>
                 </div>
 
@@ -221,6 +266,23 @@
                     </div>
                     <SettingSlider fluid showValue={false} bind:value={localWidth} min={400} max={1200} step={50} oncommit={handleCommitWidth} />
                 </div>
+
+                {#each [
+                    { label: i18n.t('reader.margins'), unit: 'px', get: () => localMargin, set: (v: number) => (localMargin = v), min: 0, max: 96, step: 4, commit: handleCommitMargin, fmt: (v: number) => `${v}` },
+                    { label: i18n.t('reader.letter_spacing'), unit: 'em', get: () => localLetter, set: (v: number) => (localLetter = v), min: -0.05, max: 0.2, step: 0.01, commit: handleCommitLetter, fmt: (v: number) => v.toFixed(2) },
+                    { label: i18n.t('reader.word_spacing'), unit: 'em', get: () => localWord, set: (v: number) => (localWord = v), min: 0, max: 0.5, step: 0.02, commit: handleCommitWord, fmt: (v: number) => v.toFixed(2) },
+                ] as row (row.label)}
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <Space class="size-4 text-primary"/>
+                                <Label class="font-bold text-sm">{row.label}</Label>
+                            </div>
+                            <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{row.fmt(row.get())}{row.unit}</span>
+                        </div>
+                        <SettingSlider fluid showValue={false} bind:value={row.get, row.set} min={row.min} max={row.max} step={row.step} oncommit={row.commit} />
+                    </div>
+                {/each}
             </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 border-t border-border/40">

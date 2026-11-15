@@ -5,8 +5,14 @@ export type MangaLayout = 'scroll' | 'paged';
 export type ReadingDirection = 'ltr' | 'rtl';
 export type FitMode = 'width' | 'height' | 'fit';
 
-export type NovelTheme = 'light' | 'dark' | 'sepia' | 'oled';
-export type FontFamily = 'sans' | 'serif' | 'mono';
+export type NovelTheme = 'light' | 'dark' | 'sepia' | 'oled' | 'custom';
+export type NovelLayout = 'scroll' | 'paged';
+export type FontFamily =
+    | 'sans' | 'serif' | 'mono'
+    | 'literata' | 'merriweather' | 'lora' | 'sourceSerif'
+    | 'inter' | 'roboto' | 'nunito' | 'lexend'
+    | 'atkinson' | 'openDyslexic' | 'jetbrainsMono';
+export type AppFont = 'system' | 'inter' | 'roboto' | 'nunito' | 'outfit' | 'lexend' | 'atkinson' | 'openDyslexic';
 export type TextAlign = 'left' | 'justify';
 
 export type MergeStrategy =
@@ -112,6 +118,13 @@ export interface NovelConfig {
     maxWidth: number;
     textAlign: TextAlign;
     paragraphSpacing: number;
+    layout: NovelLayout;
+    pagesPerView: number;
+    margin: number;
+    letterSpacing: number;
+    wordSpacing: number;
+    customBg: string;
+    customText: string;
 }
 
 export interface DiscordConfig {
