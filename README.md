@@ -29,7 +29,7 @@
 -  **Smart Tracking:** Sync your library with AniList, MAL, Simkl, Kitsu, MangaBaka, Shikimori or MangaUpdates. You can keep everything local if you prefer.
 -  **Powerful List Management:** Keep your library organized with advanced tools, including list merging and batch actions for managing multiple entries at once. Duplicate entries can be detected and merged into a single item.
 -  **BYOC Extensions:** Bring your own content by adding marketplace URLs. Browse and install extensions directly from the app.
--  **Compatibility Layers (experimental):** Run LNReader and Sora extensions natively inside Hoshi, no extra installation required.
+-  **Compatibility Layers (experimental):** Run LNReader extensions and Stremio addons natively inside Hoshi, no extra installation required.
 -  **Advanced Readers & Player:** Includes a libmpv based player with Anime4k integrations, along with custom, highly configurable readers for manga and light novels.
 -  **Subtitle customization:** Subtitles fully customized powered by libmpv and libass.
 -  **Built-in torrent client:** Stream torrents directly in hoshi with librqbit, with zero configuration required.

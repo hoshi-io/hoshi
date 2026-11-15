@@ -4,7 +4,6 @@ use hoshi_core::{
 };
 use crate::{require_auth, TauriSession};
 use std::sync::Arc;
-use serde_json::{json, Value};
 use tauri::State;
 use hoshi_core::content::models::{ContentType, ExtensionSource, FullContent, Metadata};
 use hoshi_core::content::relations::RelationTreeService;
@@ -199,26 +198,4 @@ pub async fn get_relation_tree(
     cid: String,
 ) -> Result<RelationGraph, CoreError> {
     RelationTreeService::get_relation_tree(state.inner(), &cid).await
-}
-
-#[tauri::command]
-pub async fn list_episode_servers(
-    state: State<'_, Arc<AppState>>,
-    ext_name: String,
-    cid: String,
-    number: f64,
-) -> Result<Value, CoreError> {
-    let items_list = ExtensionService::get_content_items(state.inner(), &cid, &ext_name).await?;
-
-    let real_id = match &items_list {
-        ContentItems::Episodes(eps) => eps.iter()
-            .find(|ep| ep.number.map(|n| (n - number).abs() < 0.01).unwrap_or(false))
-            .map(|ep| ep.id.clone()),
-        ContentItems::Chapters(ch) => ch.iter()
-            .find(|c| c.number.map(|n| (n - number).abs() < 0.01).unwrap_or(false))
-            .map(|c| c.id.clone()),
-    }.ok_or_else(|| CoreError::NotFound("error.content.item_number_not_found".into()))?;
-
-    let servers = state.extension_manager.list_episode_servers(&ext_name, &real_id).await?;
-    Ok(json!({ "ok": true, "servers": servers }))
 }

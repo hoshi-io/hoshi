@@ -7,19 +7,18 @@ import type {
     AnyMarketplaceEntry,
     Extension,
     LNReaderMarketplaceEntry,
-    NativeMarketplaceEntry,
-    SoraMarketplaceEntry
+    NativeMarketplaceEntry
 } from '@/api/extensions/types';
 import { extensions } from '@/stores/extensions.svelte.js';
 import { i18n } from '@/stores/i18n.svelte.js';
 
-export type Source = 'native' | 'lnreader' | 'sora';
+export type Source = 'native' | 'lnreader' | 'stremio';
 export type Tone = 'anime' | 'manga' | 'novel';
 
 export const SOURCE_LABELS: Record<Source, string> = {
     native: 'Hoshi',
     lnreader: 'LNReader',
-    sora: 'Sora'
+    stremio: 'Stremio'
 };
 
 export type CardExt = {
@@ -46,7 +45,7 @@ export function errorMessage(error: unknown): string {
 
 export function sourceOfId(id: string): Source {
     if (id.startsWith('lnr_')) return 'lnreader';
-    if (id.startsWith('sora_')) return 'sora';
+    if (id.startsWith('stremio_')) return 'stremio';
     return 'native';
 }
 
@@ -201,22 +200,6 @@ export function normalizeLang(lang: string | undefined): string {
     return LANG_CODES[l] ?? l.charAt(0).toUpperCase() + l.slice(1);
 }
 
-function normalizeSoraType(raw: string | undefined): string {
-    switch (raw) {
-        case 'anime': return 'anime';
-        case 'novels':
-        case 'novel': return 'novel';
-        case 'movies/shows':
-        case 'movies':
-        case 'shows': return 'movie';
-        default: return 'other';
-    }
-}
-
-function isSora(item: AnyMarketplaceEntry): item is SoraMarketplaceEntry {
-    return 'sourceName' in item && 'manifestUrl' in item && 'installCount' in item;
-}
-
 function isLNReader(item: AnyMarketplaceEntry): item is LNReaderMarketplaceEntry {
     return 'url' in item && 'iconUrl' in item;
 }
@@ -226,17 +209,16 @@ function getItemLang(item: AnyMarketplaceEntry): string | undefined {
 }
 
 function getItemName(item: AnyMarketplaceEntry): string {
-    return isSora(item) ? item.sourceName : (item.name ?? '');
+    return item.name ?? '';
 }
 
 function installedIdOf(item: AnyMarketplaceEntry): string {
     if (isLNReader(item)) return `lnr_${item.id}`;
-    if (isSora(item)) return `sora_${item.id}`;
     return item.id;
 }
 
 export function sourceOfEntry(item: AnyMarketplaceEntry): Source {
-    return isLNReader(item) ? 'lnreader' : isSora(item) ? 'sora' : 'native';
+    return isLNReader(item) ? 'lnreader' : 'native';
 }
 
 export function toCardExt(item: AnyMarketplaceEntry): CardExt {
@@ -247,16 +229,6 @@ export function toCardExt(item: AnyMarketplaceEntry): CardExt {
             icon: item.iconUrl,
             language: item.lang,
             author: 'LNReader'
-        } as CardExt;
-    }
-    if (isSora(item)) {
-        return {
-            ...item,
-            name: item.sourceName,
-            icon: item.iconUrl,
-            ext_type: normalizeSoraType(item.type),
-            language: item.language,
-            author: item.author?.name ?? 'Unknown'
         } as CardExt;
     }
     return { ...(item as any), language: getItemLang(item) } as CardExt;
@@ -476,8 +448,6 @@ export function useMarketplace(opts: MarketplaceOptions) {
         try {
             if (isLNReader(item)) {
                 applyResult(await extensionsApi.installLNReader(item));
-            } else if (isSora(item)) {
-                applyResult(await extensionsApi.installSora(item));
             } else {
                 const manifest = (item as NativeMarketplaceEntry).manifestUrl;
                 if (!manifest) {
@@ -517,8 +487,6 @@ export function useMarketplace(opts: MarketplaceOptions) {
         try {
             if (isLNReader(item)) {
                 applyResult(await extensionsApi.installLNReader(item));
-            } else if (isSora(item)) {
-                applyResult(await extensionsApi.installSora(item));
             } else {
                 const manifest = (item as NativeMarketplaceEntry).manifestUrl;
                 if (!manifest) {

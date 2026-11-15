@@ -4,7 +4,6 @@ import type {
     ExtensionFiltersResponse,
     ExtensionSettingsResponse,
     InstallExtensionResponse, LNReaderMarketplaceEntry,
-    SoraMarketplaceEntry,
     UninstallExtensionResponse, UpdateExtensionResponse,
     UpdateExtensionSettingsResponse,
 } from "./types";
@@ -46,12 +45,6 @@ export const extensionsApi = {
         });
     },
 
-    installSora(entry: SoraMarketplaceEntry) {
-        return call<InstallExtensionResponse>({
-            tauri: { cmd: "install_sora_extension", args: { entry } },
-        });
-    },
-
     installStremio(url: string) {
         return call<InstallExtensionResponse>({
             tauri: { cmd: "install_stremio_addon", args: { url } },
@@ -67,13 +60,6 @@ export const extensionsApi = {
     uninstall(id: string) {
         return call<UninstallExtensionResponse>({
             tauri: { cmd: "uninstall_extension", args: { id } },
-        });
-    },
-
-    getImageRequestHeaders: (extensionId: string, imageUrl: string, chapterUrl?: string) => {
-        if (!chapterUrl) chapterUrl = "";
-        return call<Record<string, string>>({
-            tauri: { cmd: "get_image_request_headers", args: { extensionId, imageUrl, chapterUrl } },
         });
     },
 };

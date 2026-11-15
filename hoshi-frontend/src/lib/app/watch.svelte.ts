@@ -622,9 +622,7 @@ export class WatchState {
         this.selectedServer = null;
         this.isDub = false;
 
-        const isSora = extensionsStore.anime.find(e => e.id === ext)?.source === 'sora';
-
-        if (!isSora && !this.isTorrent) {
+        if (!this.isTorrent) {
             try {
                 const s = await extensionsApi.getSettings(ext);
                 // a newer selection (e.g. a torrent extension) took over
@@ -640,18 +638,6 @@ export class WatchState {
     }
 
     private async resolveAnimeStream(): Promise<ResolvedStream> {
-        const isSora = extensionsStore.anime.find(e => e.id === this.selectedExtension)?.source === 'sora';
-
-        if (isSora) {
-            const res = await contentApi.listEpisodeServers(this.selectedExtension!, this.cid, this.epNumber);
-            this.servers = res.servers ?? [];
-            this.supportsDub = false;
-            this.isDub = false;
-            if (!this.selectedServer || !this.servers.includes(this.selectedServer)) {
-                this.selectedServer = this.servers[0] ?? null;
-            }
-        }
-
         const opts: { server?: string; category?: string } = {};
         if (this.selectedServer) opts.server = this.selectedServer;
         if (this.supportsDub && this.isDub) opts.category = "dub";

@@ -4,7 +4,6 @@ import type { NormalizedCard } from "@/utils/normalize";
 import { contentApi } from "@/api/content/content";
 import { extensions } from "@/stores/extensions.svelte.js";
 import type { CoreError } from "@/api/client";
-import {extensionsApi} from "@/api/extensions/extensions";
 import type { DiscoverQuery } from "@/api/home/types";
 
 /** Home sections store generic statuses; the search filters use each tracker's own values. */
@@ -259,29 +258,11 @@ class SearchState {
                 normalizeExtensionResult(item, this.selectedExtension, this.contentType)
             );
 
-            let imageHeaders: Record<string, string> | undefined;
-            const selectedExt = extensions.installed.find(e => e.id === this.selectedExtension);
-            if (selectedExt?.source === "tachiyomi" && normalized.length > 0) {
-                try {
-                    imageHeaders = await extensionsApi.getImageRequestHeaders(
-                        this.selectedExtension,
-                        normalized[0].cover
-                    );
-                    if (token !== this.searchToken) return;
-                } catch (e) {
-                    console.warn("Could not fetch image headers", e);
-                }
-            }
-
-            const withHeaders = imageHeaders
-                ? normalized.map(card => ({ ...card, imageHeaders }))
-                : normalized;
-
             if (this.page === 1) {
-                this.results = withHeaders;
+                this.results = normalized;
             } else {
                 const existingIds = new Set(this.results.map(i => i.key));
-                this.results = [...this.results, ...withHeaders.filter(i => !existingIds.has(i.key))];
+                this.results = [...this.results, ...normalized.filter(i => !existingIds.has(i.key))];
             }
 
             this.hasSearched = true;

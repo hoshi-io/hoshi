@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::extensions::SANDBOX_BOOTSTRAP;
-use crate::extensions::types::{CompatLayer, ExtensionType};
+use crate::extensions::types::CompatLayer;
 
 pub(super) fn build_sandbox_script(
     base_classes: &str,
@@ -10,7 +10,6 @@ pub(super) fn build_sandbox_script(
     function_name: &str,
     args_json: &str,
     settings_json: &str,
-    ext_type: &ExtensionType,
 ) -> String {
     let ext_code_repr = serde_json::to_string(extension_code).unwrap_or_default();
 
@@ -30,40 +29,6 @@ pub(super) fn build_sandbox_script(
                 ext_repr = ext_code_repr,
                 fn       = function_name,
                 args     = args_json,
-            );
-            (js.clone(), runner)
-        }
-
-        Some(CompatLayer::Sora(js)) => {
-            let build_call = match ext_type {
-                ExtensionType::Novel => "__sora_buildNovelClass()",
-                _                     => "__sora_buildAnimeClass()", // default/fallback
-            };
-
-            let runner = format!(
-                r#"(async () => {{
-                    const src = {ext_repr};
-                    (0, eval)(src);
-
-                    if (typeof globalThis.fetchv2 !== "function") {{
-                        globalThis.fetchv2 = async (url, headers = {{}}, method = "GET", body = null) => {{
-                            return await fetch(url, {{ method, headers, body }});
-                        }};
-                    }}
-
-                    const ExtClass = {build_call};
-                    const instance = new ExtClass();
-
-                    const fn_name = "{fn}";
-                    if (typeof instance[fn_name] !== "function")
-                        throw new Error(`Method "${{fn_name}}" not found on Sora compat class`);
-
-                    return await instance[fn_name](...{args});
-                }})()"#,
-                ext_repr   = ext_code_repr,
-                build_call = build_call,
-                fn         = function_name,
-                args       = args_json,
             );
             (js.clone(), runner)
         }

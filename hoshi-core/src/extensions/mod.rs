@@ -24,13 +24,13 @@ const ANIME: &str = include_str!("base/Anime.js");
 const MANGA: &str = include_str!("base/Manga.js");
 const NOVEL: &str = include_str!("base/Novel.js");
 const TORRENT: &str = include_str!("base/Torrent.js");
-// const TACHIYOMI: &str = include_str!("compatibility/tachiyomi.js"); abandoned support for apk based extensions
 const LNREADER: &str = include_str!("compatibility/lnreader.js");
-const SORA: &str = include_str!("compatibility/sora.js");
 const STREMIO: &str = include_str!("compatibility/stremio.js");
 
+/// Compatibility layers that still exist; extensions from dropped ones are skipped at load.
+const KNOWN_SOURCES: &[&str] = &["lnreader", "stremio"];
+
 static LNREADER_ARC: OnceLock<Arc<str>> = OnceLock::new();
-static SORA_ARC: OnceLock<Arc<str>> = OnceLock::new();
 static STREMIO_ARC: OnceLock<Arc<str>> = OnceLock::new();
 const SANDBOX_BOOTSTRAP: &str = include_str!("sandbox_bootstrap.js");
 
@@ -152,6 +152,11 @@ impl ExtensionManager {
                 || install::validate_script_file(&manifest.main).is_err()
             {
                 error!(path = %manifest_path.display(), "Skipping extension with an unsafe id or main script path");
+                continue;
+            }
+
+            if manifest.source.as_deref().is_some_and(|s| !KNOWN_SOURCES.contains(&s)) {
+                warn!(ext = %manifest.id, source = ?manifest.source, "Skipping extension from an unsupported compatibility layer");
                 continue;
             }
 

@@ -7,9 +7,8 @@ use tracing::{debug, error, info, instrument, warn};
 use super::{load_settings, persist_settings, ExtensionManager};
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::types::{
-    normalize_sora_type, Extension, ExtensionManifest, ExtensionType, LNReaderMarketplaceEntry,
-    SettingDefinition, SettingOption, SettingType, SoraMarketplaceEntry, SoraModuleManifest,
-    StremioManifest,
+    Extension, ExtensionManifest, ExtensionType, LNReaderMarketplaceEntry,
+    SettingDefinition, SettingOption, SettingType, StremioManifest,
 };
 use crate::state::AppState;
 
@@ -139,74 +138,6 @@ impl ExtensionManager {
         self.insert(extension.clone());
         info!(ext = %extension.id, "LNReader extension installed successfully");
 
-        Ok(extension)
-    }
-
-    #[instrument(skip(self, state, entry))]
-    pub async fn install_sora_extension(
-        &self,
-        state: &AppState,
-        entry: SoraMarketplaceEntry,
-    ) -> CoreResult<Extension> {
-        info!(id = %entry.id, "Installing Sora extension");
-
-        let module_manifest: SoraModuleManifest = state.http_client
-            .get(&entry.manifest_url)
-            .send()
-            .await
-            .map_err(|e| { error!(error = ?e, "Failed to fetch Sora manifest"); CoreError::Network("error.extension.install_network_failed".into()) })?
-            .json()
-            .await
-            .map_err(|e| { error!(error = ?e, "Invalid Sora manifest JSON"); CoreError::Parse("error.extension.invalid_manifest".into()) })?;
-
-        let script = state.http_client
-            .get(&module_manifest.script_url)
-            .send()
-            .await
-            .map_err(|e| { error!(error = ?e, "Failed to download Sora module JS"); CoreError::Network("error.extension.install_network_failed".into()) })?
-            .text()
-            .await
-            .map_err(|_| CoreError::Network("error.extension.install_network_failed".into()))?;
-
-        let prefixed_id = format!("sora_{}", entry.id);
-        validate_extension_id(&prefixed_id)?;
-
-        let ext_type: ExtensionType = serde_yaml::from_str(normalize_sora_type(&entry.ext_type))
-            .unwrap_or(ExtensionType::Unknown);
-        let manifest = ExtensionManifest {
-            id: prefixed_id.clone(),
-            name: entry.source_name.clone(),
-            version: module_manifest.version.clone(),
-            author: Some(entry.author.name.clone()),
-            ext_type,
-            main: "index.js".into(),
-            icon: Some(entry.icon_url.clone()),
-            language: entry.language.clone(),
-            nsfw: false,
-            skip_default_processing: false,
-            settings: vec![],
-            source: Some("sora".into()),
-            dev: false,
-            exact_results: false,
-        };
-        let manifest_yaml = manifest_yaml(&manifest, &[
-            ("note", module_manifest.note.clone().unwrap_or_default().into()),
-            ("softsub", module_manifest.softsub.into()),
-        ])?;
-
-        let ext_dir = self.extensions_dir.join(&prefixed_id);
-        fs::create_dir_all(&ext_dir).await.map_err(CoreError::Io)?;
-        fs::write(ext_dir.join("manifest.yaml"), &manifest_yaml).await.map_err(CoreError::Io)?;
-        fs::write(ext_dir.join("index.js"), &script).await.map_err(CoreError::Io)?;
-
-        let settings = load_settings(&ext_dir, &manifest.settings).await;
-        let script_path = ext_dir.join("index.js");
-
-        let mut extension = Extension::from_manifest(manifest, script_path, settings);
-        extension.nsfw = false;
-
-        self.insert(extension.clone());
-        info!(ext = %extension.id, "Sora extension installed successfully");
         Ok(extension)
     }
 

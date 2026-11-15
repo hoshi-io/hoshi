@@ -8,8 +8,6 @@ import type { FullContent } from "@/api/content/types";
 import { layoutState } from '@/stores/layout.svelte.js';
 import { appConfig } from "@/stores/config.svelte.js";
 import {type NormalizedRelation, normalizeRelationCard} from "@/utils/normalize";
-import {extensions} from "@/stores/extensions.svelte";
-import {extensionsApi} from "@/api/extensions/extensions";
 import {historyStore} from "@/stores/history.svelte";
 
 export class ContentDetailState {
@@ -85,11 +83,6 @@ export class ContentDetailState {
             });
         }
 
-        if (meta && extensions.isTachiyomi(meta.sourceName) && meta.coverImage) {
-            extensionsApi.getImageRequestHeaders(meta.sourceName, meta.coverImage)
-                .then(headers => { if (token === this.loadToken) this.headers = headers; })
-                .catch(e => console.warn("Could not fetch tachiyomi image headers", e));
-        }
 
         this.relations = (res.relations ?? []).map((relation) => ({
             targetCid: relation.targetCid,

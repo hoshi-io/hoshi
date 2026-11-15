@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 use tokio::fs;
 use tracing::{error, instrument};
 
-use super::{sandbox, ExtensionManager, LNREADER, LNREADER_ARC, SORA, SORA_ARC, STREMIO, STREMIO_ARC};
+use super::{sandbox, ExtensionManager, LNREADER, LNREADER_ARC, STREMIO, STREMIO_ARC};
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::sandbox::native_apis::ConsoleBuffer;
 use crate::extensions::types::{Chapter, CompatLayer, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, Page, TorrentSearchResult};
@@ -63,9 +63,6 @@ impl ExtensionManager {
             Some("lnreader") => Some(CompatLayer::Lnreader(
                 LNREADER_ARC.get_or_init(|| LNREADER.into()).clone()
             )),
-            Some("sora") => Some(CompatLayer::Sora(
-                SORA_ARC.get_or_init(|| SORA.into()).clone()
-            )),
             Some("stremio") => Some(CompatLayer::Stremio(
                 STREMIO_ARC.get_or_init(|| STREMIO.into()).clone()
             )),
@@ -81,7 +78,6 @@ impl ExtensionManager {
             extension_id.to_string(),
             Arc::clone(&self.extension_state),
             compat,
-            extension.ext_type,
             http_client,
             console_buffer
         ).await
@@ -129,10 +125,6 @@ impl ExtensionManager {
 
     pub async fn find_episode_server(&self, ext_id: &str, content_id: &str, server: &str, category: &str) -> CoreResult<EpisodeSource> {
         self.call_typed_function(ext_id, "findEpisodeServer", vec![json!(content_id), json!(server), json!(category)], self.http_client.clone()).await
-    }
-
-    pub async fn list_episode_servers(&self, ext_id: &str, content_id: &str) -> CoreResult<Vec<String>> {
-        self.call_typed_function(ext_id, "listEpisodeServers", vec![json!(content_id)], self.http_client.clone()).await
     }
 
     pub async fn find_manga_pages(&self, ext_id: &str, chapter_id: &str) -> CoreResult<Vec<Page>> {

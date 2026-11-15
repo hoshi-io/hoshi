@@ -15,7 +15,7 @@ use crate::error::{CoreError, CoreResult};
 use crate::extensions::{ExtensionStateStore, TORRENT};
 use crate::extensions::{ANIME, BASE, MANGA, NOVEL};
 use crate::extensions::sandbox::native_apis::ConsoleBuffer;
-use crate::extensions::types::{CompatLayer, ExtensionType};
+use crate::extensions::types::CompatLayer;
 use crate::headless::{HeadlessHandle, HeadlessOptions};
 
 const SCRIPT_DEADLINE: std::time::Duration = std::time::Duration::from_secs(25);
@@ -148,7 +148,6 @@ pub(crate) async fn execute_in_quickjs(
     extension_id: String,
     state_store: ExtensionStateStore,
     compat_layer: Option<CompatLayer>,
-    ext_type: ExtensionType,
     http_client: reqwest::Client,
     console_buffer: Option<ConsoleBuffer>,
 ) -> CoreResult<Value> {
@@ -180,7 +179,6 @@ pub(crate) async fn execute_in_quickjs(
         &function_name,
         &args_json,
         &settings_json,
-        &ext_type,
     );
 
     let headless_available = headless.is_available();

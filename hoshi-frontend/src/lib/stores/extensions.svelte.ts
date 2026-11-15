@@ -80,9 +80,6 @@ class ExtensionsStore {
         }
     }
 
-    isTachiyomi(extId: string): boolean {
-        return this.installed.find(e => e.id === extId)?.source === "tachiyomi";
-    }
 }
 
 export const extensions = new ExtensionsStore();

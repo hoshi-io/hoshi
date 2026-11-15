@@ -6,8 +6,6 @@ import { contentApi } from "@/api/content/content";
 import type { MangaConfig } from "@/api/config/types";
 
 import { BaseReaderState } from "./reader.svelte";
-import {extensions} from "@/stores/extensions.svelte";
-import {extensionsApi} from "@/api/extensions/extensions";
 
 export type ImageEntry = {
     url: string;
@@ -132,22 +130,11 @@ export class MangaReaderState extends BaseReaderState {
             const data: any = playRes.data;
             const rawImages = Array.isArray(data) ? data : (data.pages || data.images || []);
             const globalHeaders = data.headers ?? {};
-            let tachiyomiHeaders: Record<string, string> = {};
-            if (extensions.isTachiyomi(currentExt) && rawImages.length > 0) {
-                const firstUrl = typeof rawImages[0] === "string" ? rawImages[0] : rawImages[0].url;
-                try {
-                    tachiyomiHeaders = await extensionsApi.getImageRequestHeaders(currentExt, firstUrl, this.currentChapter?.id);
-                } catch (e) {
-                    console.warn("Could not fetch tachiyomi image headers", e);
-                }
-                if (stale()) return;
-            }
 
             this.images = rawImages.map(
                 (img: string | { url: string; headers?: Record<string, string> }): ImageEntry => {
                     const rawUrl = typeof img === "string" ? img : img.url;
                     const headers = {
-                        ...tachiyomiHeaders,
                         ...globalHeaders,
                         ...(typeof img !== "string" && img.headers ? img.headers : {}),
                     };
