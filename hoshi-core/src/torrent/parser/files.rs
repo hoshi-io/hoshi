@@ -102,6 +102,15 @@ fn natural_cmp(a: &str, b: &str) -> Ordering {
 ///   order, but only when the file count equals the entry's episode count
 ///
 /// `None` means "this torrent does not contain that episode".
+/// Like `select_file`, but only for packs: a single-video torrent is one specific
+/// episode, so it can't be reused for another one.
+pub fn select_file_in_pack(files: &[TorrentFile], target: &TargetDescriptor) -> Option<usize> {
+    if files.iter().filter(|f| is_video(&f.path)).count() < 2 {
+        return None;
+    }
+    select_file(files, Some(target))
+}
+
 pub fn select_file(files: &[TorrentFile], target: Option<&TargetDescriptor>) -> Option<usize> {
     let videos: Vec<&TorrentFile> = files.iter().filter(|f| is_video(&f.path)).collect();
     if videos.is_empty() {

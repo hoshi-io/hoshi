@@ -178,6 +178,12 @@ export class WatchState {
     private eofHandledFor = -1;
     /// A torrent the user picked by hand; only valid for the current episode/extension.
     private forcedTorrent: TorrentSearchResult | null = null;
+    /// The torrent that played last: a pack is reused for the following episodes.
+    private lastTorrent: { cid: string; ext: string; torrent: TorrentSearchResult } | null = null;
+    /// Sessions of the previous file, kept alive until the next one has started so a
+    /// pack switch reuses the loaded torrent instead of re-fetching its metadata.
+    private retiredSessions: string[] = [];
+    private nextPrefetchedFor = -1;
 
     // reset on every load
     private durationFetchInFlight = false;
@@ -439,6 +445,11 @@ export class WatchState {
             }).catch(() => {});
         }
 
+        if (this.nextPrefetchedFor !== this.loadToken && duration > 0 && currentTime / duration >= NEXT_PREFETCH_AT && this.hasNext) {
+            this.nextPrefetchedFor = this.loadToken;
+            void this.prefetchNextEpisode();
+        }
+
         if (!this.hasUpdatedList && duration > 0 && appConfig.data.content.autoUpdateProgress) {
             if (currentTime / duration >= 0.8) {
                 this.hasUpdatedList = true;
@@ -447,6 +458,27 @@ export class WatchState {
                     .catch((e) => console.error("List sync failed", e));
             }
         }
+    }
+
+    private streamOpts(): { server?: string; category?: string } {
+        const opts: { server?: string; category?: string } = {};
+        if (this.selectedServer) opts.server = this.selectedServer;
+        if (this.supportsDub && this.isDub) opts.category = "dub";
+        return opts;
+    }
+
+    /// Near the end of an episode: resolve the next one's stream (play_content caches it
+    /// in the backend, same server/category), or for a torrent pack, start fetching the
+    /// next file from the same torrent.
+    private async prefetchNextEpisode() {
+        const next = this.epNumber + 1;
+        if (this.isTorrent) {
+            if (!this.torrentSessionId) return;
+            await torrentApi.prefetchEpisode(this.torrentSessionId, this.cid, next).catch(() => false);
+            return;
+        }
+        if (!this.selectedExtension) return;
+        await contentApi.play(this.cid, this.selectedExtension, next, this.streamOpts()).catch(() => {});
     }
 
     private handleEof() {
@@ -638,11 +670,7 @@ export class WatchState {
     }
 
     private async resolveAnimeStream(): Promise<ResolvedStream> {
-        const opts: { server?: string; category?: string } = {};
-        if (this.selectedServer) opts.server = this.selectedServer;
-        if (this.supportsDub && this.isDub) opts.category = "dub";
-
-        const res = await contentApi.play(this.cid, this.selectedExtension!, this.epNumber, opts);
+        const res = await contentApi.play(this.cid, this.selectedExtension!, this.epNumber, this.streamOpts());
         if (res.type?.toLowerCase() !== "video") throw { key: "watch.no_stream" } as CoreError;
 
         const data = res.data as unknown as PlayVideoData;
@@ -667,14 +695,28 @@ export class WatchState {
     }
 
     private async resolveTorrentStream(token: number): Promise<ResolvedStream | null> {
-        const torrent = this.forcedTorrent ?? await this.pickTorrent();
+        const ext = this.selectedExtension!;
+        let torrent = this.forcedTorrent;
+        let info: Awaited<ReturnType<typeof torrentApi.startStream>> | null = null;
+
+        // Same show, same source: a pack that holds this episode beats a new search.
+        const last = this.lastTorrent;
+        if (!torrent && last && last.cid === this.cid && last.ext === ext && last.torrent.magnet) {
+            info = await torrentApi
+                .startStream(ext, last.torrent.id, this.cid, this.epNumber, last.torrent.magnet, true)
+                .catch(() => null);
+            if (info) torrent = last.torrent;
+        }
+
+        torrent ??= await this.pickTorrent();
 
         // Debrid results are already a playable link: no torrent session.
-        if (torrent.url && !torrent.magnet) {
+        if (!info && torrent.url && !torrent.magnet) {
             return { url: torrent.url, headers: {}, subtitles: [], chapters: [], torrent };
         }
 
-        const info = await    torrentApi.startStream(this.selectedExtension!, torrent.id, this.cid, this.epNumber, torrent.magnet)
+        info ??= await torrentApi.startStream(ext, torrent.id, this.cid, this.epNumber, torrent.magnet);
+        if (torrent.magnet) this.lastTorrent = { cid: this.cid, ext, torrent };
 
         if (token !== this.loadToken) {
             void this.stopTorrentSession(info.sessionId);
@@ -810,7 +852,14 @@ export class WatchState {
             }
         } finally {
             if (token === this.loadToken) this.isLoadingPlay = false;
+            this.releaseRetiredSessions();
         }
+    }
+
+    private releaseRetiredSessions() {
+        const sessions = this.retiredSessions;
+        this.retiredSessions = [];
+        for (const id of sessions) void this.stopTorrentSession(id);
     }
 
     // ---- intro/outro skipping ----------------------------------------------
@@ -864,6 +913,7 @@ export class WatchState {
 
         const sessionId = this.torrentSessionId;
         this.torrentSessionId = null;
+        this.releaseRetiredSessions();
 
         invoke("unlock_orientation").catch(() => {});
         invoke("exit_fullscreen").catch(() => {});
@@ -900,10 +950,14 @@ export class WatchState {
 
         await invoke("stop_playback").catch(() => {});
 
-        if (sessionId) void this.stopTorrentSession(sessionId);
+        // Released once the next file has started (see releaseRetiredSessions).
+        if (sessionId) this.retiredSessions.push(sessionId);
     }
 
 }
+
+/** Where in an episode the next one is prepared (stream resolved / torrent file prefetched). */
+const NEXT_PREFETCH_AT = 0.85;
 
 export interface SubtitleSource {
     url: string;

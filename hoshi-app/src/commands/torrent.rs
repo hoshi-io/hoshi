@@ -68,6 +68,7 @@ pub async fn start_torrent_stream(
     magnet: Option<String>,
     cid: Option<String>,
     episode: Option<u32>,
+    pack_only: Option<bool>,
 ) -> Result<TorrentStreamInfo, CoreError> {
     let user_id = require_auth(&session).await?;
     TorrentService::sync_config(state.inner(), user_id).await?;
@@ -88,7 +89,7 @@ pub async fn start_torrent_stream(
     let (session_id, total_size) = state
         .inner()
         .torrent
-        .add_magnet(&magnet, target.as_ref())
+        .add_magnet(&magnet, target.as_ref(), pack_only.unwrap_or(false))
         .await?;
 
     Ok(TorrentStreamInfo {
@@ -96,6 +97,20 @@ pub async fn start_torrent_stream(
         session_id,
         total_size,
     })
+}
+
+#[tauri::command]
+pub async fn prefetch_torrent_episode(
+    state: State<'_, Arc<AppState>>,
+    session_id: String,
+    cid: String,
+    episode: u32,
+) -> Result<Value, CoreError> {
+    let Some(target) = TorrentService::build_target(state.inner(), &cid, episode).await? else {
+        return Ok(json!({ "inTorrent": false }));
+    };
+    let in_torrent = state.inner().torrent.prefetch_episode(&session_id, &target)?;
+    Ok(json!({ "inTorrent": in_torrent }))
 }
 
 #[tauri::command]

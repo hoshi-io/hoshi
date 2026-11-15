@@ -36,11 +36,21 @@ export const torrentApi = {
         }).then(res => res.torrent ?? null);
     },
 
-    /** Adds the torrent and opens a stream session. Pass `magnet` to skip the extension lookup. */
-    startStream(id: string, contentId: string, cid: string, episode: number, magnet?: string | null): Promise<TorrentStreamInfo> {
+    /**
+     * Adds the torrent and opens a stream session. Pass `magnet` to skip the extension lookup.
+     * `packOnly`: fail unless the torrent is a multi-file pack containing `episode`.
+     */
+    startStream(id: string, contentId: string, cid: string, episode: number, magnet?: string | null, packOnly = false): Promise<TorrentStreamInfo> {
         return call<TorrentStreamInfo>({
-            tauri: { cmd: "start_torrent_stream", args: { id, contentId, cid: cid, episode: episode, magnet: magnet ?? null } },
+            tauri: { cmd: "start_torrent_stream", args: { id, contentId, cid: cid, episode: episode, magnet: magnet ?? null, packOnly } },
         });
+    },
+
+    /** Starts fetching `episode` from the torrent `sessionId` plays; false when it isn't in there. */
+    prefetchEpisode(sessionId: string, cid: string, episode: number): Promise<boolean> {
+        return call<{ inTorrent: boolean }>({
+            tauri: { cmd: "prefetch_torrent_episode", args: { sessionId, cid, episode } },
+        }).then(res => res.inTorrent);
     },
 
     stopStream(sessionId: string): Promise<StopTorrentStreamResponse> {

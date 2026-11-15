@@ -2,7 +2,7 @@ import { page } from "$app/state";
 import { untrack } from "svelte";
 
 import { contentApi } from "@/api/content/content";
-import { primaryMetadata } from "@/api/content/types";
+import { primaryMetadata, type PlayResponse } from "@/api/content/types";
 import { appConfig } from "@/stores/config.svelte.js";
 import { progressApi } from "@/api/progress/progress";
 import type { CoreError } from "@/api/client";
@@ -119,7 +119,33 @@ export abstract class BaseReaderState {
     }
     protected abstract loadChapter(cid: string, ext: string, chapterNum: number): Promise<void>;
 
+    // ---- next chapter preload ----
+    // play_content caches results in the backend, so asking once is enough:
+    // opening the next chapter is then served from that cache.
+    private prefetchedKey = "";
+
+    /** Hook for readers that can warm more than the backend cache (manga pages). */
+    protected onPrefetched(_res: PlayResponse): void {}
+
+    private prefetchNext() {
+        const next = this.nextChapter;
+        if (!next || this.isLoading || this.error) return;
+
+        // Same variant rule as the next-chapter link, so the cached item is the one that opens.
+        const variant = new URL(this.chapterHref(next), "http://x").searchParams.get("v") ?? "";
+        const num = chapterNum(next);
+        const key = `${this.cid}|${this.extension}|${num}|${variant}`;
+        if (this.prefetchedKey === key) return;
+        this.prefetchedKey = key;
+
+        contentApi.play(this.cid, this.extension, num, { itemId: variant || undefined })
+            .then(res => this.onPrefetched(res))
+            .catch(() => {});
+    }
+
     handleProgress(ratio: number) {
+        if (ratio >= 0.5) this.prefetchNext();
+
         if (!this.hasMarkedCompleted && ratio >= 0.9) {
             this.hasMarkedCompleted = true;
             progressApi

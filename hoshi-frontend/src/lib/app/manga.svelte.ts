@@ -127,25 +127,7 @@ export class MangaReaderState extends BaseReaderState {
                 throw { key: "reader.no_data" } as import("@/api/client").CoreError;
             }
 
-            const data: any = playRes.data;
-            const rawImages = Array.isArray(data) ? data : (data.pages || data.images || []);
-            const globalHeaders = data.headers ?? {};
-
-            this.images = rawImages.map(
-                (img: string | { url: string; headers?: Record<string, string> }): ImageEntry => {
-                    const rawUrl = typeof img === "string" ? img : img.url;
-                    const headers = {
-                        ...globalHeaders,
-                        ...(typeof img !== "string" && img.headers ? img.headers : {}),
-                    };
-                    const proxyParams = { url: rawUrl, ...this.extractHeaders(headers) };
-                    return {
-                        url: buildTauriProxyUrl(proxyParams),
-                        id: rawUrl,
-                        proxyParams,
-                    };
-                }
-            );
+            this.images = this.imagesOf(playRes.data);
 
             if (this.images.length === 0) {
                 throw { key: "reader.no_images" } as import("@/api/client").CoreError;
@@ -192,6 +174,28 @@ export class MangaReaderState extends BaseReaderState {
             },
         };
     };
+
+    private imagesOf(data: any): ImageEntry[] {
+        const rawImages = Array.isArray(data) ? data : (data?.pages || data?.images || []);
+        const globalHeaders = data?.headers ?? {};
+        return rawImages.map((img: string | { url: string; headers?: Record<string, string> }): ImageEntry => {
+            const rawUrl = typeof img === "string" ? img : img.url;
+            const headers = {
+                ...globalHeaders,
+                ...(typeof img !== "string" && img.headers ? img.headers : {}),
+            };
+            const proxyParams = { url: rawUrl, ...this.extractHeaders(headers) };
+            return { url: buildTauriProxyUrl(proxyParams), id: rawUrl, proxyParams };
+        });
+    }
+
+    /** Next chapter preloaded: also fetch its first pages so it opens without waiting. */
+    protected onPrefetched(res: import("@/api/content/types").PlayResponse) {
+        if (res.type?.toLowerCase() !== "reader") return;
+        for (const img of this.imagesOf(res.data).slice(0, 3)) {
+            new Image().src = img.url;
+        }
+    }
 
     /** Warms the webview cache for the next pages (same proxy URL the <img> uses). */
     private preloadNextImages(currentIndex: number) {

@@ -149,6 +149,8 @@ export class NovelReaderState extends BaseReaderState {
         const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
         this.pager?.scrollTo({ left: page * this.pageStep, behavior: smooth && !reduce ? "smooth" : "auto" });
 
+        // An empty or still-loading chapter measures as one page: that isn't progress.
+        if (this.isLoading || !this.contentHtml) return;
         this.scrollProgress = this.pageCount > 1 ? (page / (this.pageCount - 1)) * 100 : 100;
         this.handleProgress((page + 1) / this.pageCount);
     }

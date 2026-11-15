@@ -14,7 +14,7 @@ use tracing::{info, warn};
 use crate::config::model::TorrentConfig;
 use crate::core_err;
 use crate::error::{CoreError, CoreResult};
-use crate::torrent::parser::files::{select_file, TorrentFile};
+use crate::torrent::parser::files::{select_file, select_file_in_pack, TorrentFile};
 use crate::torrent::parser::matcher::TargetDescriptor;
 use crate::torrent::types::{
     CacheEntryState, Lingering, StreamSession, TorrentCacheClearResult, TorrentCacheEntry,
@@ -24,6 +24,11 @@ const METADATA_TIMEOUT: Duration = Duration::from_secs(45);
 const INIT_TIMEOUT: Duration = Duration::from_secs(60);
 const REAP_INTERVAL: Duration = Duration::from_secs(60);
 const LAST_PLAYED_MARKER: &str = ".last_played";
+/// How much of the next episode to fetch ahead: enough for mpv to open it and
+/// play the first seconds, plus the tail where MKV/MP4 keep their index.
+const PREFETCH_HEAD: u64 = 32 * 1024 * 1024;
+const PREFETCH_TAIL: u64 = 4 * 1024 * 1024;
+const PREFETCH_TIMEOUT: Duration = Duration::from_secs(180);
 
 #[derive(Clone)]
 pub struct TorrentHandle(Arc<Inner>);
@@ -115,6 +120,7 @@ impl TorrentHandle {
         &self,
         magnet: &str,
         target: Option<&TargetDescriptor>,
+        pack_only: bool,
     ) -> CoreResult<(String, u64)> {
         let dir = magnet_key(magnet)
             .ok_or_else(|| core_err!(BadRequest, "error.torrent.invalid_magnet"))?;
@@ -171,7 +177,7 @@ impl TorrentHandle {
         self.0.lingering.remove(&torrent_id);
 
         let (file_index, file_len) = match self
-            .prepare_torrent(session, &torrent, torrent_id, target)
+            .prepare_torrent(session, &torrent, torrent_id, target, pack_only)
             .await
         {
             Ok(v) => v,
@@ -200,6 +206,7 @@ impl TorrentHandle {
         torrent: &Arc<librqbit::ManagedTorrent>,
         torrent_id: usize,
         target: Option<&TargetDescriptor>,
+        pack_only: bool,
     ) -> CoreResult<(usize, u64)> {
         // Also returns for a torrent that is merely paused.
         tokio::time::timeout(INIT_TIMEOUT, torrent.wait_until_initialized())
@@ -207,21 +214,13 @@ impl TorrentHandle {
             .map_err(|_| core_err!(BadRequest, "error.torrent.init_timeout"))?
             .map_err(|e| core_err!(Internal, "error.torrent.metadata_resolve_failed", e))?;
 
-        let files: Vec<TorrentFile> = torrent
-            .with_metadata(|m| {
-                m.file_infos
-                    .iter()
-                    .enumerate()
-                    .map(|(i, f)| TorrentFile {
-                        index: i,
-                        path: f.relative_filename.to_string_lossy().replace('\\', "/"),
-                        len: f.len,
-                    })
-                    .collect()
-            })
-            .map_err(|e| core_err!(Internal, "error.torrent.metadata_resolve_failed", e))?;
+        let files = torrent_files(torrent)?;
 
-        let file_index = select_file(&files, target)
+        let picked = match (pack_only, target) {
+            (true, Some(t)) => select_file_in_pack(&files, t),
+            _ => select_file(&files, target),
+        };
+        let file_index = picked
             .ok_or_else(|| core_err!(BadRequest, "error.torrent.episode_not_in_torrent"))?;
         let file_len = files[file_index].len;
         info!(file = %files[file_index].path, "torrent file selected");
@@ -242,6 +241,31 @@ impl TorrentHandle {
                 .map_err(|e| core_err!(Internal, "error.torrent.add_failed", e))?;
         }
         Ok((file_index, file_len))
+    }
+
+    /// Fetches the start and end of `target`'s file in this session's torrent, so the
+    /// next episode opens without waiting. Streams get piece priority even for files
+    /// that aren't selected, so nothing else of that file is downloaded.
+    /// Returns false when the torrent isn't a pack containing that episode.
+    pub fn prefetch_episode(&self, session_id: &str, target: &TargetDescriptor) -> CoreResult<bool> {
+        let Some((torrent, current)) = self.0.streams.get(session_id).map(|s| (s.torrent.clone(), s.file_index)) else {
+            return Ok(false);
+        };
+        let files = torrent_files(&torrent)?;
+        let Some(index) = select_file_in_pack(&files, target).filter(|i| *i != current) else {
+            return Ok(false);
+        };
+        let len = files[index].len;
+        info!(file = %files[index].path, "prefetching next episode");
+
+        self.0.rt.spawn(async move {
+            match tokio::time::timeout(PREFETCH_TIMEOUT, prefetch_spans(torrent, index, len)).await {
+                Ok(Ok(())) => info!(index, "next episode prefetched"),
+                Ok(Err(e)) => warn!(index, error = %e, "next episode prefetch failed"),
+                Err(_) => warn!(index, "next episode prefetch timed out"),
+            }
+        });
+        Ok(true)
     }
 
     /// File indices that live sessions of this torrent are reading.
@@ -725,4 +749,45 @@ fn remove_cache_dir(path: &Path) -> std::io::Result<()> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
         other => other,
     }
+}
+fn torrent_files(torrent: &librqbit::ManagedTorrent) -> CoreResult<Vec<TorrentFile>> {
+    torrent
+        .with_metadata(|m| {
+            m.file_infos
+                .iter()
+                .enumerate()
+                .map(|(i, f)| TorrentFile {
+                    index: i,
+                    path: f.relative_filename.to_string_lossy().replace('\\', "/"),
+                    len: f.len,
+                })
+                .collect()
+        })
+        .map_err(|e| core_err!(Internal, "error.torrent.metadata_resolve_failed", e))
+}
+
+async fn prefetch_spans(torrent: Arc<librqbit::ManagedTorrent>, index: usize, len: u64) -> Result<(), String> {
+    use tokio::io::AsyncSeekExt;
+    let mut stream = torrent.stream(index).await.map_err(|e| e.to_string())?;
+    read_span(&mut stream, PREFETCH_HEAD.min(len)).await?;
+    if len > PREFETCH_HEAD + PREFETCH_TAIL {
+        stream.seek(std::io::SeekFrom::Start(len - PREFETCH_TAIL)).await.map_err(|e| e.to_string())?;
+        read_span(&mut stream, PREFETCH_TAIL).await?;
+    }
+    Ok(())
+}
+
+/// Reads and discards `left` bytes; the point is making librqbit fetch them.
+async fn read_span(stream: &mut (impl tokio::io::AsyncRead + Unpin), mut left: u64) -> Result<(), String> {
+    use tokio::io::AsyncReadExt;
+    let mut buf = vec![0u8; 256 * 1024];
+    while left > 0 {
+        let want = left.min(buf.len() as u64) as usize;
+        let n = stream.read(&mut buf[..want]).await.map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
+        }
+        left -= n as u64;
+    }
+    Ok(())
 }
