@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "Mağaza",
     "missing_manifest": "Yüklenemedi: Uzantı manifest URL'si eksik.",
+    "stremio_title": "Stremio eklentisi",
+    "stremio_desc": "Torrent kaynağı olarak kullanmak için bir Stremio eklenti URL'si yapıştırın (ör. yapılandırılmış Torrentio bağlantınız).",
+    "stremio_installed": "{{name}} yüklendi",
     "installed": "Yüklendi",
     "enter_valid_repo": "Geçerli bir depo URL'si girin",
     "loaded_extensions": "{{count}} uzantı yüklendi",
@@ -1579,7 +1582,11 @@
       "already_exists": "Bu kimliğe sahip bir eklenti zaten var.",
       "id_mismatch": "Eklenti kimliği manifestiyle eşleşmiyor.",
       "invalid_id": "Geçersiz eklenti kimliği.",
-      "manifest_serialize": "Eklenti manifesti kaydedilemedi."
+      "manifest_serialize": "Eklenti manifesti kaydedilemedi.",
+      "stremio_invalid_url": "Eklentinin http(s) veya stremio:// URL'sini girin.",
+      "stremio_no_streams": "Bu eklenti anime yayını sağlamıyor.",
+      "stremio_no_kitsu": "Bu eklenti anime (Kitsu/MAL) kimliklerini desteklemiyor.",
+      "stremio_needs_config": "Bu eklentinin önce yapılandırılması gerekiyor. Sitesinde yapılandırın ve verdiği URL'yi yapıştırın."
     },
     "home": {
       "invalid_layout": "Bu ana sayfa düzeni geçerli değil"

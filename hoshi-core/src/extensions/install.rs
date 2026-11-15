@@ -8,7 +8,8 @@ use super::{load_settings, persist_settings, ExtensionManager};
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::types::{
     normalize_sora_type, Extension, ExtensionManifest, ExtensionType, LNReaderMarketplaceEntry,
-    SoraMarketplaceEntry, SoraModuleManifest,
+    SettingDefinition, SettingOption, SettingType, SoraMarketplaceEntry, SoraModuleManifest,
+    StremioManifest,
 };
 use crate::state::AppState;
 
@@ -77,6 +78,7 @@ impl Extension {
             settings,
             source: manifest.source,
             dev: manifest.dev,
+            exact_results: manifest.exact_results,
         }
     }
 }
@@ -118,6 +120,7 @@ impl ExtensionManager {
             settings: vec![],
             source: Some("lnreader".into()),
             dev: false,
+            exact_results: false,
         };
         let manifest_yaml = manifest_yaml(&manifest, &[("site", entry.site.clone().into())])?;
 
@@ -184,6 +187,7 @@ impl ExtensionManager {
             settings: vec![],
             source: Some("sora".into()),
             dev: false,
+            exact_results: false,
         };
         let manifest_yaml = manifest_yaml(&manifest, &[
             ("note", module_manifest.note.clone().unwrap_or_default().into()),
@@ -203,6 +207,142 @@ impl ExtensionManager {
 
         self.insert(extension.clone());
         info!(ext = %extension.id, "Sora extension installed successfully");
+        Ok(extension)
+    }
+
+    /// Stremio addons become generated torrent extensions run by the stremio.js shim.
+    #[instrument(skip(self, state, url))]
+    pub async fn install_stremio_addon(&self, state: &AppState, url: &str) -> CoreResult<Extension> {
+        let base = stremio_base_url(url)?;
+        info!(url = %base, "Installing Stremio addon");
+
+        let response = state.http_client
+            .get(format!("{base}/manifest.json"))
+            .send()
+            .await
+            .map_err(|e| { error!(error = ?e, "Failed to fetch Stremio manifest"); CoreError::Network("error.extension.install_network_failed".into()) })?;
+        if !response.status().is_success() {
+            error!(status = %response.status(), "Stremio manifest returned HTTP error");
+            return Err(CoreError::Network("error.extension.install_network_failed".into()));
+        }
+        let addon: StremioManifest = response.json().await
+            .map_err(|e| { error!(error = ?e, "Invalid Stremio manifest JSON"); CoreError::Parse("error.extension.invalid_manifest".into()) })?;
+
+        let id_prefixes = check_stremio_compat(&addon, &base)?;
+
+        // Some addons only reject unconfigured URLs at stream time (Comet answers 403).
+        let probe = state.http_client
+            .get(format!("{base}/stream/series/kitsu:1:1.json"))
+            .send()
+            .await;
+        if let Ok(r) = probe {
+            if matches!(r.status().as_u16(), 401 | 403) {
+                warn!(status = %r.status(), "Stremio addon refuses streams without configuration");
+                return Err(CoreError::Validation("error.extension.stremio_needs_config".into()));
+            }
+        }
+
+        // SDK addons keep their config as the last path segment (URI-encoded JSON).
+        let (root, prefilled) = match base.rsplit_once('/') {
+            Some((parent, seg)) if !addon.config.is_empty() && parent.contains("://") && parent.split("://").nth(1).is_some_and(|p| !p.is_empty()) => {
+                match percent_decode(seg).and_then(|d| serde_json::from_str::<serde_json::Map<String, Value>>(&d).ok()) {
+                    Some(cfg) => (parent.to_string(), cfg),
+                    None => (base.clone(), serde_json::Map::new()),
+                }
+            }
+            _ => (base.clone(), serde_json::Map::new()),
+        };
+
+        let mut settings_defs = vec![SettingDefinition {
+            key: "addonUrl".into(),
+            label: "Addon URL".into(),
+            setting_type: SettingType::String,
+            default: Value::String(root.clone()),
+            options: vec![],
+        }];
+        let mut config_keys = Vec::new();
+        let mut checkbox_keys = Vec::new();
+        for field in &addon.config {
+            let setting_type = match field.field_type.as_str() {
+                "number" => SettingType::Number,
+                "checkbox" => SettingType::Boolean,
+                "select" if !field.options.is_empty() => SettingType::Select,
+                _ => SettingType::String,
+            };
+            let default = match (&setting_type, &field.default) {
+                (SettingType::Boolean, Some(v)) => Value::Bool(v.as_str() == Some("checked") || v.as_bool() == Some(true)),
+                (SettingType::Boolean, None) => Value::Bool(false),
+                (_, Some(v)) => v.clone(),
+                (SettingType::Number, None) => Value::Null,
+                (_, None) => Value::String(String::new()),
+            };
+            if setting_type == SettingType::Boolean {
+                checkbox_keys.push(field.key.clone());
+            }
+            config_keys.push(field.key.clone());
+            settings_defs.push(SettingDefinition {
+                key: format!("cfg_{}", field.key),
+                label: field.title.clone().unwrap_or_else(|| field.key.clone()),
+                setting_type,
+                default,
+                options: field.options.iter()
+                    .map(|o| SettingOption { value: o.clone(), label: o.clone() })
+                    .collect(),
+            });
+        }
+
+        let prefixed_id = format!(
+            "stremio_{}",
+            addon.id.chars().map(|c| if c.is_alphanumeric() || matches!(c, '-' | '_' | '.') { c } else { '_' }).collect::<String>()
+        );
+        validate_extension_id(&prefixed_id)?;
+
+        let addon_info = serde_json::json!({
+            "name": addon.name,
+            "root": root,
+            "configKeys": config_keys,
+            "checkboxKeys": checkbox_keys,
+            "idPrefixes": id_prefixes,
+        });
+        let script = format!("globalThis.__stremioAddon = {addon_info};\n");
+
+        let manifest = ExtensionManifest {
+            id: prefixed_id.clone(),
+            name: addon.name.clone(),
+            version: addon.version.clone(),
+            author: Some("stremio".into()),
+            ext_type: ExtensionType::Torrent,
+            main: "index.js".into(),
+            icon: addon.logo.clone(),
+            language: "multi".into(),
+            nsfw: false,
+            skip_default_processing: false,
+            settings: settings_defs,
+            source: Some("stremio".into()),
+            dev: false,
+            exact_results: true,
+        };
+        let manifest_yaml = manifest_yaml(&manifest, &[])?;
+
+        let ext_dir = self.extensions_dir.join(&prefixed_id);
+        fs::create_dir_all(&ext_dir).await.map_err(CoreError::Io)?;
+        fs::write(ext_dir.join("manifest.yaml"), &manifest_yaml).await.map_err(CoreError::Io)?;
+        fs::write(ext_dir.join("index.js"), &script).await.map_err(CoreError::Io)?;
+
+        // A reinstall keeps old settings, except what the pasted URL says.
+        let mut settings = load_settings(&ext_dir, &manifest.settings).await;
+        settings.insert("addonUrl".into(), Value::String(root));
+        for (key, value) in prefilled {
+            if config_keys.contains(&key) {
+                let value = if checkbox_keys.contains(&key) { Value::Bool(value.as_str() == Some("checked") || value.as_bool() == Some(true)) } else { value };
+                settings.insert(format!("cfg_{key}"), value);
+            }
+        }
+        persist_settings(&ext_dir, &settings).await;
+
+        let extension = Extension::from_manifest(manifest, ext_dir.join("index.js"), settings);
+        self.insert(extension.clone());
+        info!(ext = %extension.id, "Stremio addon installed successfully");
         Ok(extension)
     }
 
@@ -414,4 +554,73 @@ impl ExtensionManager {
         debug!(ext = %id, "Extension settings updated successfully");
         Ok(())
     }
+}
+/// Accepts `stremio://`, `https://…/manifest.json` or the bare addon URL; returns it without `/manifest.json`.
+fn stremio_base_url(url: &str) -> CoreResult<String> {
+    let url = url.trim();
+    let url = match url.strip_prefix("stremio://") {
+        Some(rest) => format!("https://{rest}"),
+        None => url.to_string(),
+    };
+    if !url.starts_with("https://") && !url.starts_with("http://") {
+        return Err(CoreError::Validation("error.extension.stremio_invalid_url".into()));
+    }
+    let url = url.split(['?', '#']).next().unwrap_or(&url);
+    let url = url.trim_end_matches('/');
+    let url = url.strip_suffix("/manifest.json").unwrap_or(url);
+    Ok(url.to_string())
+}
+
+/// Returns the id prefixes the stream resource accepts (`None` = any).
+fn check_stremio_compat(addon: &StremioManifest, base: &str) -> CoreResult<Option<Vec<String>>> {
+    let names_stream = |r: &Value| r.as_str() == Some("stream") || r.get("name").and_then(Value::as_str) == Some("stream");
+    let stream = addon.resources.iter().find(|r| names_stream(r));
+
+    // Unconfigured manifests often list nothing (AIOStreams), so ask for config first.
+    let has_path = base.split("://").nth(1).is_some_and(|rest| rest.contains('/'));
+    if addon.behavior_hints.configuration_required && (stream.is_none() || !has_path) {
+        warn!(addon = %addon.id, "Stremio addon needs configuration first");
+        return Err(CoreError::Validation("error.extension.stremio_needs_config".into()));
+    }
+    let Some(stream) = stream else {
+        warn!(addon = %addon.id, "Stremio addon has no stream resource");
+        return Err(CoreError::Validation("error.extension.stremio_no_streams".into()));
+    };
+
+    // Resource-level types/idPrefixes override the manifest-level ones.
+    let list = |key: &str| -> Option<Vec<String>> {
+        stream.get(key).and_then(Value::as_array)
+            .map(|a| a.iter().filter_map(|v| v.as_str().map(str::to_string)).collect())
+    };
+    let types = list("types").unwrap_or_else(|| addon.types.clone());
+    let prefixes = list("idPrefixes").or_else(|| addon.id_prefixes.clone());
+
+    if !types.iter().any(|t| matches!(t.as_str(), "anime" | "series" | "movie")) {
+        warn!(addon = %addon.id, ?types, "Stremio addon serves no anime/series/movie streams");
+        return Err(CoreError::Validation("error.extension.stremio_no_streams".into()));
+    }
+    // No idPrefixes means the addon is asked for every id.
+    let anime_id = |p: &String| matches!(p.trim_end_matches(':'), "kitsu" | "mal");
+    if prefixes.as_ref().is_some_and(|p| !p.iter().any(anime_id)) {
+        warn!(addon = %addon.id, "Stremio addon accepts neither kitsu nor mal ids");
+        return Err(CoreError::Validation("error.extension.stremio_no_kitsu".into()));
+    }
+    Ok(prefixes)
+}
+
+fn percent_decode(s: &str) -> Option<String> {
+    let bytes = s.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%' {
+            let hex = s.get(i + 1..i + 3)?;
+            out.push(u8::from_str_radix(hex, 16).ok()?);
+            i += 3;
+        } else {
+            out.push(bytes[i]);
+            i += 1;
+        }
+    }
+    String::from_utf8(out).ok()
 }

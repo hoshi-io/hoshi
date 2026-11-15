@@ -132,16 +132,51 @@ impl TorrentService {
         Ok(Some(target))
     }
 
+    /// Adds `{ ids: { anilist, mal, kitsu }, episode, movie }` from the content's
+    /// tracker mappings, without overwriting keys the caller already set.
+    pub async fn with_content_ids(state: &Arc<AppState>, cid: &str, episode: u32, filters: Value) -> Value {
+        let mut filters = match filters {
+            Value::Object(m) => m,
+            _ => serde_json::Map::new(),
+        };
+        let fc = match ContentRepository::get_full_content(&state.pool, cid).await {
+            Ok(Some(fc)) => fc,
+            _ => return Value::Object(filters),
+        };
+
+        let ids: serde_json::Map<String, Value> = fc.tracker_mappings.iter()
+            .filter(|m| matches!(m.tracker_name.as_str(), "anilist" | "mal" | "kitsu"))
+            .map(|m| {
+                let raw = m.tracker_id.split_once(':').map_or(m.tracker_id.as_str(), |(_, id)| id);
+                (m.tracker_name.clone(), Value::String(raw.to_string()))
+            })
+            .collect();
+        let movie = fc.primary_metadata()
+            .and_then(|m| m.subtype.as_deref())
+            .is_some_and(|s| s.eq_ignore_ascii_case("movie"));
+
+        filters.entry("ids").or_insert(Value::Object(ids));
+        filters.entry("episode").or_insert(Value::from(episode));
+        filters.entry("movie").or_insert(Value::Bool(movie));
+        Value::Object(filters)
+    }
+
     /// Parse + match one batch of raw results. Extension-provided fields only
-    /// fill gaps; our own parse of the title wins.
+    /// fill gaps; our own parse of the title wins. `exact`: the extension already
+    /// returned only this episode, so nothing is rejected.
     pub fn rank(
         results: Vec<TorrentSearchResult>,
         target: &TargetDescriptor,
+        exact: bool,
     ) -> Vec<RankedTorrent> {
         let mut out = Vec::new();
         for r in results {
             let mut parsed = parse_release_title(&r.title);
             Self::fill_from_extension(&mut parsed, &r);
+            if exact {
+                out.push(RankedTorrent { result: r, parsed, confidence: 1.0, reason: "exact result" });
+                continue;
+            }
             let m = target.evaluate(&parsed);
             if m.confidence < MIN_LISTED {
                 debug!("  reject ({}) {:?}", m.reason, r.title);
@@ -191,7 +226,14 @@ impl TorrentService {
         let mut last_err = None;
         let mut any_ok = false;
 
-        for q in target.search_queries() {
+        // The query is ignored by exact (id-based) extensions: one call is enough.
+        let exact = manager.exact_results(ext_id);
+        let mut queries = target.search_queries();
+        if exact {
+            queries.truncate(1);
+        }
+
+        for q in queries {
             debug!("torrent search: query={q:?} ext={ext_id} page={page}");
             match manager.search_torrents(ext_id, &q, filters.clone(), page).await {
                 Ok(results) => {
@@ -205,7 +247,7 @@ impl TorrentService {
                         })
                         .collect();
                     let before = ranked.len();
-                    ranked.extend(Self::rank(fresh.clone(), target));
+                    ranked.extend(Self::rank(fresh.clone(), target, exact));
                     info!(
                         "torrent search: query={q:?} -> {raw} raw, {} new, {} matched",
                         fresh.len(),
@@ -248,7 +290,10 @@ impl TorrentService {
 
     fn passes_filters(t: &RankedTorrent, config: &TorrentConfig) -> bool {
         let title = t.result.title.to_lowercase();
-        if (t.result.seeders.unwrap_or(0).max(0) as u64) < config.min_seeders as u64 {
+        // Direct (debrid) links don't depend on seeders.
+        if t.result.url.is_none()
+            && (t.result.seeders.unwrap_or(0).max(0) as u64) < config.min_seeders as u64
+        {
             return false;
         }
         if config
@@ -344,6 +389,7 @@ impl TorrentService {
             warn!("torrent auto-select: no content/metadata for cid={cid}");
             return Ok(None);
         };
+        let filters = Self::with_content_ids(state, cid, episode, filters).await;
         let ranked =
             Self::search_ranked(manager, ext_id, &target, filters, page, Some(&config)).await?;
         Ok(Self::pick_best(&ranked, &config).map(|t| t.result.clone()))

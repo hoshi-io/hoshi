@@ -37,7 +37,9 @@
                 id: pageState.selectedExtension,
                 query: q,
                 filters: {},
-                page: 1
+                page: 1,
+                cid: pageState.cid,
+                episode: pageState.epNumber
             });
             if (mine !== seq) return;
             results = [...res.results].sort((a, b) => (b.seeders ?? 0) - (a.seeders ?? 0));
@@ -87,7 +89,7 @@
         <p class="py-8 text-center text-base text-white/60">{i18n.t('watch.torrent_no_results')}</p>
     {:else}
         <ul class="flex flex-col gap-2">
-            {#each results as t (t.id)}
+            {#each results as t}
                 <li>
                     <button
                             type="button"

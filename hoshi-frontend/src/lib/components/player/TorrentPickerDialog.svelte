@@ -37,6 +37,8 @@
                 query: q,
                 filters: {},
                 page: 1,
+                cid: pageState.cid,
+                episode: pageState.epNumber,
             });
             if (mine !== seq) return;
             results = [...res.results].sort((a, b) => (b.seeders ?? 0) - (a.seeders ?? 0));
@@ -88,7 +90,7 @@
             {:else if searched && results.length === 0}
                 <p class="py-6 text-center text-sm text-muted-foreground">{i18n.t("watch.torrent_no_results")}</p>
             {:else}
-                {#each results as t (t.id)}
+                {#each results as t}
                     <button
                             class="w-full rounded-md border border-transparent p-2 text-left hover:border-border hover:bg-accent"
                             onclick={() => pick(t)}

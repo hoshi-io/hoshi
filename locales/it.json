@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "Marketplace",
     "missing_manifest": "Impossibile installare: manca l'URL del manifest dell'estensione.",
+    "stremio_title": "Addon Stremio",
+    "stremio_desc": "Incolla l'URL di un addon Stremio (ad es. il tuo link Torrentio configurato) per usarlo come fonte torrent.",
+    "stremio_installed": "{{name}} installato",
     "installed": "Installata",
     "enter_valid_repo": "Inserisci un URL del repository valido",
     "loaded_extensions": "{{count}} estensioni caricate",
@@ -1579,7 +1582,11 @@
       "already_exists": "Esiste già un'estensione con questo ID.",
       "id_mismatch": "L'ID dell'estensione non corrisponde al suo manifest.",
       "invalid_id": "ID estensione non valido.",
-      "manifest_serialize": "Impossibile salvare il manifest dell'estensione."
+      "manifest_serialize": "Impossibile salvare il manifest dell'estensione.",
+      "stremio_invalid_url": "Inserisci l'URL http(s) o stremio:// dell'addon.",
+      "stremio_no_streams": "Questo addon non fornisce stream di anime.",
+      "stremio_no_kitsu": "Questo addon non supporta gli ID anime (Kitsu/MAL).",
+      "stremio_needs_config": "Questo addon va prima configurato. Configuralo sul suo sito e incolla l'URL che ti fornisce."
     },
     "home": {
       "invalid_layout": "Questo layout della home non è valido"

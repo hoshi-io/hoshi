@@ -9,6 +9,7 @@ pub enum CompatLayer {
     //Tachiyomi(Arc<str>),
     //Aniyomi(Arc<str>),
     Sora(Arc<str>),
+    Stremio(Arc<str>),
 }
 
 #[derive(Debug, Clone)]
@@ -104,6 +105,10 @@ pub struct ExtensionManifest {
     pub source: Option<String>,
     #[serde(default)]
     pub dev: bool,
+    /// Results are already for the requested episode (id-based lookups):
+    /// one search call, no title matching.
+    #[serde(default)]
+    pub exact_results: bool,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -164,6 +169,8 @@ pub struct Extension {
     pub settings: HashMap<String, Value>,
     pub source: Option<String>,
     pub dev: bool,
+    #[serde(default)]
+    pub exact_results: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -339,4 +346,43 @@ pub struct TorrentSearchResult {
     pub episode_number: Option<f64>,
     pub info_hash: Option<String>,
     pub date: Option<String>, // ISO 8601, extension's responsibility to normalize
+    /// Direct playable link (debrid) instead of a magnet.
+    #[serde(default)]
+    pub url: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StremioManifest {
+    pub id: String,
+    pub name: String,
+    pub version: String,
+    pub logo: Option<String>,
+    #[serde(default)]
+    pub resources: Vec<Value>,
+    #[serde(default)]
+    pub types: Vec<String>,
+    pub id_prefixes: Option<Vec<String>>,
+    #[serde(default)]
+    pub behavior_hints: StremioBehaviorHints,
+    #[serde(default)]
+    pub config: Vec<StremioConfigField>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StremioBehaviorHints {
+    #[serde(default)]
+    pub configuration_required: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct StremioConfigField {
+    pub key: String,
+    #[serde(rename = "type")]
+    pub field_type: String,
+    pub title: Option<String>,
+    pub default: Option<Value>,
+    #[serde(default)]
+    pub options: Vec<String>,
 }

@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "市集",
     "missing_manifest": "無法安裝：缺少擴充功能 Manifest URL。",
+    "stremio_title": "Stremio 外掛",
+    "stremio_desc": "貼上 Stremio 外掛網址(例如你設定好的 Torrentio 連結),即可作為種子來源使用。",
+    "stremio_installed": "已安裝 {{name}}",
     "installed": "已安裝",
     "enter_valid_repo": "請輸入有效的軟體庫 URL",
     "loaded_extensions": "已載入 {{count}} 個擴充功能",
@@ -1579,7 +1582,11 @@
       "already_exists": "已存在使用此 ID 的擴充功能。",
       "id_mismatch": "擴充功能 ID 與其資訊清單不符。",
       "invalid_id": "無效的擴充功能 ID。",
-      "manifest_serialize": "無法儲存擴充功能資訊清單。"
+      "manifest_serialize": "無法儲存擴充功能資訊清單。",
+      "stremio_invalid_url": "請輸入外掛的 http(s) 或 stremio:// 網址。",
+      "stremio_no_streams": "此外掛不提供動畫串流。",
+      "stremio_no_kitsu": "此外掛不支援動畫(Kitsu/MAL)ID。",
+      "stremio_needs_config": "此外掛需要先設定。請在其網站上設定,然後貼上它提供的網址。"
     },
     "home": {
       "invalid_layout": "此首頁版面配置無效"

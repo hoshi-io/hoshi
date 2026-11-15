@@ -12,9 +12,10 @@ import type {
 } from "./types";
 
 export const torrentApi = {
-    search(id: string, query: string, filters: TorrentFilters = {}, page = 1): Promise<TorrentSearchResult[]> {
+    /** `cid` + `episode` let the backend attach the content's tracker ids to `filters`. */
+    search(id: string, query: string, filters: TorrentFilters = {}, page = 1, cid?: string, episode?: number): Promise<TorrentSearchResult[]> {
         return call<{ results: TorrentSearchResult[] }>({
-            tauri: { cmd: "search_torrents", args: { id, query, filters, page } },
+            tauri: { cmd: "search_torrents", args: { id, query, filters, page, cid: cid ?? null, episode: episode ?? null } },
         }).then(res => res.results ?? []);
     },
 

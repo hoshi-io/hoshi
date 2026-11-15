@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "Marketplace",
     "missing_manifest": "Hindi ma-install: Nawawala ang Extension manifest URL.",
+    "stremio_title": "Stremio addon",
+    "stremio_desc": "I-paste ang URL ng isang Stremio addon (hal. ang naka-configure mong Torrentio link) para gamitin ito bilang torrent source.",
+    "stremio_installed": "Na-install ang {{name}}",
     "installed": "Naka-install",
     "enter_valid_repo": "Maglagay ng valid na repository url",
     "loaded_extensions": "Naka-load ang {{count}} na mga extension",
@@ -1579,7 +1582,11 @@
       "already_exists": "May extension na may ganitong ID.",
       "id_mismatch": "Hindi tugma ang extension ID sa manifest nito.",
       "invalid_id": "Hindi valid na extension ID.",
-      "manifest_serialize": "Hindi ma-save ang manifest ng extension."
+      "manifest_serialize": "Hindi ma-save ang manifest ng extension.",
+      "stremio_invalid_url": "Ilagay ang http(s) o stremio:// URL ng addon.",
+      "stremio_no_streams": "Walang anime stream ang addon na ito.",
+      "stremio_no_kitsu": "Hindi sinusuportahan ng addon na ito ang mga anime (Kitsu/MAL) ID.",
+      "stremio_needs_config": "Kailangan munang i-configure ang addon na ito. I-configure ito sa website nito at i-paste ang URL na ibibigay nito."
     },
     "home": {
       "invalid_layout": "Hindi valid ang layout ng home na ito"

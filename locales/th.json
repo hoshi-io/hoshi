@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "ตลาดส่วนขยาย",
     "missing_manifest": "ไม่สามารถติดตั้งได้: ไม่พบ URL ของ Extension Manifest",
+    "stremio_title": "ส่วนเสริม Stremio",
+    "stremio_desc": "วาง URL ของส่วนเสริม Stremio (เช่น ลิงก์ Torrentio ที่ตั้งค่าแล้ว) เพื่อใช้เป็นแหล่งทอร์เรนต์",
+    "stremio_installed": "ติดตั้ง {{name}} แล้ว",
     "installed": "ติดตั้งแล้ว",
     "enter_valid_repo": "โปรดใส่ URL ของ Repository ที่ถูกต้อง",
     "loaded_extensions": "โหลดส่วนขยายแล้ว {{count}} รายการ",
@@ -1579,7 +1582,11 @@
       "already_exists": "มีส่วนขยายที่ใช้ ID นี้อยู่แล้ว",
       "id_mismatch": "ID ส่วนขยายไม่ตรงกับไฟล์ manifest",
       "invalid_id": "ID ส่วนขยายไม่ถูกต้อง",
-      "manifest_serialize": "ไม่สามารถบันทึกไฟล์ manifest ของส่วนขยายได้"
+      "manifest_serialize": "ไม่สามารถบันทึกไฟล์ manifest ของส่วนขยายได้",
+      "stremio_invalid_url": "กรอก URL แบบ http(s) หรือ stremio:// ของส่วนเสริม",
+      "stremio_no_streams": "ส่วนเสริมนี้ไม่มีสตรีมอนิเมะ",
+      "stremio_no_kitsu": "ส่วนเสริมนี้ไม่รองรับ ID อนิเมะ (Kitsu/MAL)",
+      "stremio_needs_config": "ต้องตั้งค่าส่วนเสริมนี้ก่อน ตั้งค่าบนเว็บไซต์ของมันแล้ววาง URL ที่ได้รับ"
     },
     "home": {
       "invalid_layout": "เลย์เอาต์หน้าแรกนี้ไม่ถูกต้อง"

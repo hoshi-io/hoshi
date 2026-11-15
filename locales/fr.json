@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "Boutique",
     "missing_manifest": "Impossible d'installer : l'URL du manifeste de l'extension est manquante.",
+    "stremio_title": "Addon Stremio",
+    "stremio_desc": "Collez l'URL d'un addon Stremio (par ex. votre lien Torrentio configuré) pour l'utiliser comme source torrent.",
+    "stremio_installed": "{{name}} installé",
     "installed": "Installée",
     "enter_valid_repo": "Saisissez l'URL d'un dépôt valide",
     "loaded_extensions": "{{count}} extensions chargées",
@@ -1579,7 +1582,11 @@
       "already_exists": "Une extension avec cet ID existe déjà.",
       "id_mismatch": "L'ID de l'extension ne correspond pas à son manifeste.",
       "invalid_id": "ID d'extension invalide.",
-      "manifest_serialize": "Impossible d'enregistrer le manifeste de l'extension."
+      "manifest_serialize": "Impossible d'enregistrer le manifeste de l'extension.",
+      "stremio_invalid_url": "Saisissez l'URL http(s) ou stremio:// de l'addon.",
+      "stremio_no_streams": "Cet addon ne fournit pas de flux d'anime.",
+      "stremio_no_kitsu": "Cet addon ne prend pas en charge les identifiants d'anime (Kitsu/MAL).",
+      "stremio_needs_config": "Cet addon doit d'abord être configuré. Configurez-le sur son site et collez l'URL qu'il vous donne."
     },
     "home": {
       "invalid_layout": "Cette disposition de l'accueil n'est pas valide"

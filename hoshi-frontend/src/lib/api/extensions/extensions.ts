@@ -52,6 +52,12 @@ export const extensionsApi = {
         });
     },
 
+    installStremio(url: string) {
+        return call<InstallExtensionResponse>({
+            tauri: { cmd: "install_stremio_addon", args: { url } },
+        });
+    },
+
     update(id: string, manifestUrl: string) {
         return call<UpdateExtensionResponse>({
             tauri: { cmd: "update_extension", args: { id, manifestUrl } },

@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "Marketplace",
     "missing_manifest": "Nie można zainstalować: Brak adresu URL manifestu rozszerzenia.",
+    "stremio_title": "Dodatek Stremio",
+    "stremio_desc": "Wklej adres URL dodatku Stremio (np. skonfigurowany link Torrentio), aby używać go jako źródła torrentów.",
+    "stremio_installed": "Zainstalowano {{name}}",
     "installed": "Zainstalowano",
     "enter_valid_repo": "Wprowadź prawidłowy adres URL repozytorium",
     "loaded_extensions": "Załadowano {{count}} rozszerzeń",
@@ -1579,7 +1582,11 @@
       "already_exists": "Rozszerzenie o tym ID już istnieje.",
       "id_mismatch": "ID rozszerzenia nie zgadza się z jego manifestem.",
       "invalid_id": "Nieprawidłowe ID rozszerzenia.",
-      "manifest_serialize": "Nie udało się zapisać manifestu rozszerzenia."
+      "manifest_serialize": "Nie udało się zapisać manifestu rozszerzenia.",
+      "stremio_invalid_url": "Podaj adres http(s) lub stremio:// dodatku.",
+      "stremio_no_streams": "Ten dodatek nie udostępnia strumieni anime.",
+      "stremio_no_kitsu": "Ten dodatek nie obsługuje identyfikatorów anime (Kitsu/MAL).",
+      "stremio_needs_config": "Ten dodatek trzeba najpierw skonfigurować. Skonfiguruj go na jego stronie i wklej podany adres URL."
     },
     "home": {
       "invalid_layout": "Ten układ strony głównej jest nieprawidłowy"

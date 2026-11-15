@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "Marketplace",
     "missing_manifest": "Gagal memasang: URL manifes ekstensi hilang.",
+    "stremio_title": "Addon Stremio",
+    "stremio_desc": "Tempel URL addon Stremio (mis. tautan Torrentio yang sudah dikonfigurasi) untuk dipakai sebagai sumber torrent.",
+    "stremio_installed": "{{name}} terpasang",
     "installed": "Terpasang",
     "enter_valid_repo": "Masukkan URL repositori yang valid",
     "loaded_extensions": "Berhasil memuat {{count}} ekstensi",
@@ -1579,7 +1582,11 @@
       "already_exists": "Ekstensi dengan ID ini sudah ada.",
       "id_mismatch": "ID ekstensi tidak cocok dengan manifesnya.",
       "invalid_id": "ID ekstensi tidak valid.",
-      "manifest_serialize": "Manifes ekstensi tidak dapat disimpan."
+      "manifest_serialize": "Manifes ekstensi tidak dapat disimpan.",
+      "stremio_invalid_url": "Masukkan URL http(s) atau stremio:// addon.",
+      "stremio_no_streams": "Addon ini tidak menyediakan stream anime.",
+      "stremio_no_kitsu": "Addon ini tidak mendukung ID anime (Kitsu/MAL).",
+      "stremio_needs_config": "Addon ini perlu dikonfigurasi dulu. Konfigurasikan di situsnya lalu tempel URL yang diberikan."
     },
     "home": {
       "invalid_layout": "Tata letak beranda ini tidak valid"

@@ -68,6 +68,24 @@ pub(super) fn build_sandbox_script(
             (js.clone(), runner)
         }
 
+        Some(CompatLayer::Stremio(js)) => {
+            let runner = format!(
+                r#"(async () => {{
+                    (0, eval)({ext_repr});
+                    const ExtClass = __stremio_buildTorrentClass();
+                    const instance = new ExtClass();
+                    const fn_name = "{fn}";
+                    if (typeof instance[fn_name] !== "function")
+                        throw new Error(`Method "${{fn_name}}" not found on Stremio compat class`);
+                    return await instance[fn_name](...{args});
+                }})()"#,
+                ext_repr = ext_code_repr,
+                fn       = function_name,
+                args     = args_json,
+            );
+            (js.clone(), runner)
+        }
+
         None => {
             let runner = format!(
                 r#"(async () => {{

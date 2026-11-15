@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "Pasaran",
     "missing_manifest": "Tidak dapat memasang: URL manifes sambungan hilang.",
+    "stremio_title": "Addon Stremio",
+    "stremio_desc": "Tampal URL addon Stremio (cth. pautan Torrentio yang telah dikonfigurasi) untuk menggunakannya sebagai sumber torrent.",
+    "stremio_installed": "{{name}} dipasang",
     "installed": "Dipasang",
     "enter_valid_repo": "Masukkan url repositori yang sah",
     "loaded_extensions": "{{count}} sambungan dimuatkan",
@@ -1579,7 +1582,11 @@
       "already_exists": "Sambungan dengan ID ini sudah wujud.",
       "id_mismatch": "ID sambungan tidak sepadan dengan manifesnya.",
       "invalid_id": "ID sambungan tidak sah.",
-      "manifest_serialize": "Manifes sambungan tidak dapat disimpan."
+      "manifest_serialize": "Manifes sambungan tidak dapat disimpan.",
+      "stremio_invalid_url": "Masukkan URL http(s) atau stremio:// addon.",
+      "stremio_no_streams": "Addon ini tidak menyediakan strim anime.",
+      "stremio_no_kitsu": "Addon ini tidak menyokong ID anime (Kitsu/MAL).",
+      "stremio_needs_config": "Addon ini perlu dikonfigurasi dahulu. Konfigurasikannya di laman webnya dan tampal URL yang diberikan."
     },
     "home": {
       "invalid_layout": "Susun atur laman utama ini tidak sah"

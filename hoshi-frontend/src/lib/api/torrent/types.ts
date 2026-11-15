@@ -2,6 +2,8 @@ export interface TorrentSearchResult {
     id: string;
     title: string;
     magnet?: string | null;
+    /** Direct playable link (debrid) instead of a magnet. */
+    url?: string | null;
     seeders?: number | null;
 }
 

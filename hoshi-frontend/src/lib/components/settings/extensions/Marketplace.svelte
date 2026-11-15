@@ -28,6 +28,7 @@
     let { market }: { market: MarketplaceState } = $props();
 
     let managing = $state(false);
+    let stremioUrl = $state("");
 
     function onVisible(node: HTMLElement, params: { key: unknown; cb: () => void }) {
         let current = params;
@@ -155,6 +156,37 @@
                         </Button>
                     </div>
                 {/each}
+            </div>
+
+            <div class="space-y-2 border-t border-border/50 pt-3">
+                <div>
+                    <h4 class="text-sm font-bold">{i18n.t('marketplace.stremio_title')}</h4>
+                    <p class="text-xs text-muted-foreground">{i18n.t('marketplace.stremio_desc')}</p>
+                </div>
+                <form
+                        class="flex items-center gap-2"
+                        onsubmit={async (e) => {
+                            e.preventDefault();
+                            if (await market.installStremio(stremioUrl)) stremioUrl = "";
+                        }}
+                >
+                    <div class="relative flex-1">
+                        <Link2 class="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                        <Input
+                                bind:value={stremioUrl}
+                                placeholder="https://addon.example.com/manifest.json"
+                                class="h-9 rounded-lg border-border/50 bg-background pl-8 text-sm"
+                        />
+                    </div>
+                    <Button type="submit" variant="outline" size="sm" class="h-9 shrink-0 gap-1.5 rounded-lg text-xs font-bold" disabled={market.stremioBusy || !stremioUrl.trim()}>
+                        {#if market.stremioBusy}
+                            <Spinner class="size-3.5 animate-spin" />
+                        {:else}
+                            <Plus class="size-3.5" />
+                        {/if}
+                        {i18n.t('marketplace.install')}
+                    </Button>
+                </form>
             </div>
         </div>
     {/if}

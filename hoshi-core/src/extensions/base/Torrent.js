@@ -12,6 +12,11 @@ class Torrent extends Base {
         if (item.magnet !== undefined && item.magnet !== null)
             this._assertString(item.magnet, `${ctx}.magnet`);
 
+        if (item.url !== undefined && item.url !== null) {
+            if (typeof item.url !== "string" || !/^https?:\/\//i.test(item.url))
+                throw new Error(`[${this.constructor.name}] ${ctx}.url must be an http(s) URL`);
+        }
+
         if (item.size !== undefined && item.size !== null)
             this._assertNullableString(item.size, `${ctx}.size`);
 

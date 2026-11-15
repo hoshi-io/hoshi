@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "मार्केटप्लेस",
     "missing_manifest": "इंस्टॉल नहीं किया जा सकता: एक्सटेंशन मेनिफेस्ट URL गायब है।",
+    "stremio_title": "Stremio ऐडऑन",
+    "stremio_desc": "टोरेंट स्रोत के रूप में उपयोग करने के लिए Stremio ऐडऑन का URL पेस्ट करें (जैसे आपका कॉन्फ़िगर किया गया Torrentio लिंक)।",
+    "stremio_installed": "{{name}} इंस्टॉल हो गया",
     "installed": "इंस्टॉल किया गया",
     "enter_valid_repo": "एक मान्य रिपॉजिटरी यूआरएल डालें",
     "loaded_extensions": "{{count}} एक्सटेंशन लोड हुए",
@@ -1579,7 +1582,11 @@
       "already_exists": "इस ID वाला एक्सटेंशन पहले से मौजूद है।",
       "id_mismatch": "एक्सटेंशन ID उसके मैनिफ़ेस्ट से मेल नहीं खाती।",
       "invalid_id": "अमान्य एक्सटेंशन ID।",
-      "manifest_serialize": "एक्सटेंशन मैनिफ़ेस्ट सहेजा नहीं जा सका।"
+      "manifest_serialize": "एक्सटेंशन मैनिफ़ेस्ट सहेजा नहीं जा सका।",
+      "stremio_invalid_url": "ऐडऑन का http(s) या stremio:// URL दर्ज करें।",
+      "stremio_no_streams": "यह ऐडऑन एनीमे स्ट्रीम प्रदान नहीं करता।",
+      "stremio_no_kitsu": "यह ऐडऑन एनीमे (Kitsu/MAL) आईडी का समर्थन नहीं करता।",
+      "stremio_needs_config": "इस ऐडऑन को पहले कॉन्फ़िगर करना होगा। इसकी वेबसाइट पर कॉन्फ़िगर करें और मिला हुआ URL पेस्ट करें।"
     },
     "home": {
       "invalid_layout": "यह होम लेआउट मान्य नहीं है"

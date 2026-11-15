@@ -54,6 +54,16 @@ pub async fn install_sora_extension(
 }
 
 #[tauri::command]
+pub async fn install_stremio_addon(
+    state: State<'_, Arc<AppState>>,
+    url: String,
+) -> Result<Value, CoreError> {
+    let manager = &state.extension_manager;
+    let extension = manager.install_stremio_addon(state.inner(), &url).await?;
+    Ok(json!({ "ok": true, "extension": extension }))
+}
+
+#[tauri::command]
 pub async fn uninstall_extension(
     state: State<'_, Arc<AppState>>,
     id: String,

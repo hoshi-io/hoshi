@@ -493,6 +493,24 @@ export function useMarketplace(opts: MarketplaceOptions) {
         }
     }
 
+    let stremioBusy = $state(false);
+
+    async function installStremio(url: string): Promise<boolean> {
+        if (!url.trim()) return false;
+        stremioBusy = true;
+        try {
+            const res = await extensionsApi.installStremio(url.trim());
+            applyResult(res);
+            if (res.ok && res.extension) toast.success(i18n.t('marketplace.stremio_installed', { name: res.extension.name }));
+            return !!res.ok;
+        } catch (e) {
+            toast.error(errorMessage(e));
+            return false;
+        } finally {
+            stremioBusy = false;
+        }
+    }
+
     async function update(item: AnyMarketplaceEntry) {
         const key = installedIdOf(item);
         busy.add(key);
@@ -528,6 +546,8 @@ export function useMarketplace(opts: MarketplaceOptions) {
         removeRepo,
         commitRepos,
         reload,
+        installStremio,
+        get stremioBusy() { return stremioBusy; },
 
         /* filters */
         get query() { return query; },

@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 use tokio::fs;
 use tracing::{error, instrument};
 
-use super::{sandbox, ExtensionManager, LNREADER, LNREADER_ARC, SORA, SORA_ARC};
+use super::{sandbox, ExtensionManager, LNREADER, LNREADER_ARC, SORA, SORA_ARC, STREMIO, STREMIO_ARC};
 use crate::error::{CoreError, CoreResult};
 use crate::extensions::sandbox::native_apis::ConsoleBuffer;
 use crate::extensions::types::{Chapter, CompatLayer, Episode, EpisodeSource, ExtensionFeatures, ExtensionFilters, ExtensionMetadata, ExtensionSearchResult, Page, TorrentSearchResult};
@@ -65,6 +65,9 @@ impl ExtensionManager {
             )),
             Some("sora") => Some(CompatLayer::Sora(
                 SORA_ARC.get_or_init(|| SORA.into()).clone()
+            )),
+            Some("stremio") => Some(CompatLayer::Stremio(
+                STREMIO_ARC.get_or_init(|| STREMIO.into()).clone()
             )),
             _ => None,
         };

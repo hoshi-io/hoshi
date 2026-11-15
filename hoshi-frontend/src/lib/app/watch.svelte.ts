@@ -682,6 +682,12 @@ export class WatchState {
 
     private async resolveTorrentStream(token: number): Promise<ResolvedStream | null> {
         const torrent = this.forcedTorrent ?? await this.pickTorrent();
+
+        // Debrid results are already a playable link: no torrent session.
+        if (torrent.url && !torrent.magnet) {
+            return { url: torrent.url, headers: {}, subtitles: [], chapters: [], torrent };
+        }
+
         const info = await    torrentApi.startStream(this.selectedExtension!, torrent.id, this.cid, this.epNumber, torrent.magnet)
 
         if (token !== this.loadToken) {

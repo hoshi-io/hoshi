@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "Chợ tiện ích",
     "missing_manifest": "Không thể cài đặt: Thiếu URL manifest của tiện ích.",
+    "stremio_title": "Addon Stremio",
+    "stremio_desc": "Dán URL của addon Stremio (vd. liên kết Torrentio đã cấu hình) để dùng làm nguồn torrent.",
+    "stremio_installed": "Đã cài đặt {{name}}",
     "installed": "Đã cài đặt",
     "enter_valid_repo": "Nhập URL kho lưu trữ hợp lệ",
     "loaded_extensions": "Đã tải {{count}} tiện ích",
@@ -1579,7 +1582,11 @@
       "already_exists": "Đã có tiện ích với ID này.",
       "id_mismatch": "ID tiện ích không khớp với manifest của nó.",
       "invalid_id": "ID tiện ích không hợp lệ.",
-      "manifest_serialize": "Không thể lưu manifest của tiện ích."
+      "manifest_serialize": "Không thể lưu manifest của tiện ích.",
+      "stremio_invalid_url": "Nhập URL http(s) hoặc stremio:// của addon.",
+      "stremio_no_streams": "Addon này không cung cấp luồng anime.",
+      "stremio_no_kitsu": "Addon này không hỗ trợ ID anime (Kitsu/MAL).",
+      "stremio_needs_config": "Addon này cần được cấu hình trước. Hãy cấu hình trên trang web của nó và dán URL nhận được."
     },
     "home": {
       "invalid_layout": "Bố cục trang chủ này không hợp lệ"

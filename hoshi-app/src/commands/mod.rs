@@ -26,7 +26,7 @@ pub fn generate_handlers() -> impl Fn(tauri::ipc::Invoke) -> bool {
         schedule::get_schedule,
         home::get_home_layout, home::get_default_home_layout, home::save_home_layout, home::reset_home_layout, home::discover, home::get_unstarted_sequels,
         list::get_list, list::get_single_entry, list::upsert_entry, list::delete_entry, list::get_stats, list::get_entry_history, list::get_activity_feed, list::batch_upsert_entries, list::batch_delete_entries, list::push_to_tracker, list::get_batch_status, list::get_batch_issues, list::resume_sync_lane, list::get_sync_status, list::retry_failed_syncs, list::cancel_batch,
-        extensions::get_extensions, extensions::get_extension_filters, extensions::get_extension_settings, extensions::install_extension, extensions::install_sora_extension, extensions::install_lnreader_extension, extensions::update_extension, extensions::uninstall_extension, extensions::update_extension_settings,
+        extensions::get_extensions, extensions::get_extension_filters, extensions::get_extension_settings, extensions::install_extension, extensions::install_sora_extension, extensions::install_lnreader_extension, extensions::install_stremio_addon, extensions::update_extension, extensions::uninstall_extension, extensions::update_extension_settings,
         config::get_user_config, config::patch_user_config,
         progress::get_content_progress, progress::get_continue_watching, progress::update_anime_progress, progress::update_chapter_progress,
         intergations::list_trackers, intergations::add_integration, intergations::remove_integration, intergations::set_sync_enabled,

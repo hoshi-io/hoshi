@@ -18,8 +18,14 @@ pub async fn search_torrents(
     query: String,
     filters: Value,
     page: u32,
+    cid: Option<String>,
+    episode: Option<u32>,
 ) -> Result<Value, CoreError> {
     let manager = &state.extension_manager;
+    let filters = match (cid, episode) {
+        (Some(cid), Some(ep)) => TorrentService::with_content_ids(state.inner(), &cid, ep, filters).await,
+        _ => filters,
+    };
     let results: Vec<TorrentSearchResult> = manager.search_torrents(&id, &query, filters, page).await?;
     Ok(json!({ "results": results }))
 }

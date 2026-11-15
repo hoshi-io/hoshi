@@ -34,6 +34,7 @@ impl ExtensionManager {
             settings: vec![],
             source: None,
             dev: true,
+            exact_results: false,
         };
 
         let yaml = serde_yaml::to_string(&manifest)
@@ -55,6 +56,7 @@ impl ExtensionManager {
             settings: std::collections::HashMap::new(),
             source: manifest.source,
             dev: true,
+            exact_results: manifest.exact_results,
         };
 
         self.insert(extension.clone());
@@ -115,6 +117,7 @@ impl ExtensionManager {
             settings,
             source: manifest.source,
             dev: true,
+            exact_results: manifest.exact_results,
         };
 
         self.insert(extension.clone());

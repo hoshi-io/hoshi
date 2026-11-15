@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "マーケットプレイス",
     "missing_manifest": "インストールできません: 拡張機能のマニフェストURLがありません。",
+    "stremio_title": "Stremioアドオン",
+    "stremio_desc": "StremioアドオンのURL(設定済みのTorrentioリンクなど)を貼り付けると、トレントソースとして使えます。",
+    "stremio_installed": "{{name}} をインストールしました",
     "installed": "インストール済み",
     "enter_valid_repo": "有効なリポジトリURLを入力してください",
     "loaded_extensions": "{{count}}個の拡張機能を読み込みました",
@@ -1579,7 +1582,11 @@
       "already_exists": "このIDの拡張機能はすでに存在します。",
       "id_mismatch": "拡張機能のIDがマニフェストと一致しません。",
       "invalid_id": "無効な拡張機能IDです。",
-      "manifest_serialize": "拡張機能のマニフェストを保存できませんでした。"
+      "manifest_serialize": "拡張機能のマニフェストを保存できませんでした。",
+      "stremio_invalid_url": "アドオンのhttp(s)またはstremio:// URLを入力してください。",
+      "stremio_no_streams": "このアドオンはアニメのストリームを提供していません。",
+      "stremio_no_kitsu": "このアドオンはアニメ(Kitsu/MAL)IDに対応していません。",
+      "stremio_needs_config": "このアドオンは先に設定が必要です。公式サイトで設定し、表示されたURLを貼り付けてください。"
     },
     "home": {
       "invalid_layout": "このホームレイアウトは無効です"

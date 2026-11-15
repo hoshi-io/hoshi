@@ -27,9 +27,11 @@ const TORRENT: &str = include_str!("base/Torrent.js");
 // const TACHIYOMI: &str = include_str!("compatibility/tachiyomi.js"); abandoned support for apk based extensions
 const LNREADER: &str = include_str!("compatibility/lnreader.js");
 const SORA: &str = include_str!("compatibility/sora.js");
+const STREMIO: &str = include_str!("compatibility/stremio.js");
 
 static LNREADER_ARC: OnceLock<Arc<str>> = OnceLock::new();
 static SORA_ARC: OnceLock<Arc<str>> = OnceLock::new();
+static STREMIO_ARC: OnceLock<Arc<str>> = OnceLock::new();
 const SANDBOX_BOOTSTRAP: &str = include_str!("sandbox_bootstrap.js");
 
 pub struct ExtensionManager {
@@ -97,6 +99,10 @@ impl ExtensionManager {
 
     pub fn skip_default_processing(&self, extension_id: &str) -> bool {
         self.with_registry(|m| m.get(extension_id).map(|ext| ext.skip_default_processing).unwrap_or(false))
+    }
+
+    pub fn exact_results(&self, extension_id: &str) -> bool {
+        self.with_registry(|m| m.get(extension_id).map(|ext| ext.exact_results).unwrap_or(false))
     }
 
     pub fn content_type(&self, extension_id: &str) -> crate::content::models::ContentType {
@@ -180,6 +186,7 @@ impl ExtensionManager {
                 settings,
                 source: manifest.source,
                 dev: manifest.dev,
+                exact_results: manifest.exact_results,
             };
 
             self.insert(extension);

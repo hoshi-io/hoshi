@@ -107,6 +107,7 @@
     }
 
     let managing = $state(false);
+    let stremioUrl = $state('');
 
     async function openManager() {
         managing = true;
@@ -498,6 +499,44 @@
                     </button>
                 </div>
             {/each}
+        </div>
+
+        <div class="space-y-3 border-t-2 border-border/40 pt-4">
+            <div>
+                <h4 class="text-lg font-bold">{i18n.t('marketplace.stremio_title')}</h4>
+                <p class="text-base text-muted-foreground">{i18n.t('marketplace.stremio_desc')}</p>
+            </div>
+            <form
+                    class="flex items-center gap-3"
+                    onsubmit={async (e) => {
+                        e.preventDefault();
+                        if (await market.installStremio(stremioUrl)) stremioUrl = '';
+                    }}
+            >
+                <input
+                        data-sn
+                        type="url"
+                        autocomplete="off"
+                        bind:value={stremioUrl}
+                        onfocus={() => { if (!stremioUrl) stremioUrl = 'https://'; }}
+                        onblur={() => { if (stremioUrl === 'https://') stremioUrl = ''; }}
+                        placeholder="https://addon.example.com/manifest.json"
+                        class="{inputClass} min-w-0 flex-1"
+                />
+                <button
+                        type="submit"
+                        data-sn
+                        disabled={market.stremioBusy || !stremioUrl.trim() || stremioUrl === 'https://'}
+                        class="{outlineBtn} shrink-0 disabled:opacity-50"
+                >
+                    {#if market.stremioBusy}
+                        <Spinner class="size-5 animate-spin" />
+                    {:else}
+                        <Plus class="size-5" />
+                    {/if}
+                    {i18n.t('marketplace.install')}
+                </button>
+            </form>
         </div>
 
         <div class="flex justify-between gap-3 pt-2">

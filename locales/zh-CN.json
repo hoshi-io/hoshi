@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "插件市场",
     "missing_manifest": "无法安装：缺少扩展清单 URL。",
+    "stremio_title": "Stremio 插件",
+    "stremio_desc": "粘贴 Stremio 插件链接(例如你配置好的 Torrentio 链接),将其用作种子来源。",
+    "stremio_installed": "已安装 {{name}}",
     "installed": "已安装",
     "enter_valid_repo": "请输入有效的存储库 (Repository) 地址",
     "loaded_extensions": "已加载 {{count}} 个扩展",
@@ -1579,7 +1582,11 @@
       "already_exists": "已存在使用此 ID 的扩展插件。",
       "id_mismatch": "扩展插件 ID 与其清单不匹配。",
       "invalid_id": "无效的扩展插件 ID。",
-      "manifest_serialize": "无法保存扩展插件清单。"
+      "manifest_serialize": "无法保存扩展插件清单。",
+      "stremio_invalid_url": "请输入插件的 http(s) 或 stremio:// 链接。",
+      "stremio_no_streams": "此插件不提供动画流。",
+      "stremio_no_kitsu": "此插件不支持动画(Kitsu/MAL)ID。",
+      "stremio_needs_config": "此插件需要先配置。请在其网站上配置,然后粘贴它提供的链接。"
     },
     "home": {
       "invalid_layout": "此主页布局无效"

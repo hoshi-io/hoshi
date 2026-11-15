@@ -355,6 +355,9 @@
   "marketplace": {
     "title": "المتجر",
     "missing_manifest": "لا يمكن التثبيت: رابط ملف manifest الخاص بالإضافة مفقود.",
+    "stremio_title": "إضافة Stremio",
+    "stremio_desc": "الصق رابط إضافة Stremio (مثل رابط Torrentio المُعدّ لديك) لاستخدامها كمصدر تورنت.",
+    "stremio_installed": "تم تثبيت {{name}}",
     "installed": "مثبت",
     "enter_valid_repo": "أدخل رابط مستودع (Repository) صالح",
     "loaded_extensions": "تم تحميل {{count}} إضافات",
@@ -1579,7 +1582,11 @@
       "already_exists": "توجد إضافة بهذا المعرّف بالفعل.",
       "id_mismatch": "معرّف الإضافة لا يطابق ملف التعريف الخاص بها.",
       "invalid_id": "معرّف إضافة غير صالح.",
-      "manifest_serialize": "تعذر حفظ ملف تعريف الإضافة."
+      "manifest_serialize": "تعذر حفظ ملف تعريف الإضافة.",
+      "stremio_invalid_url": "أدخل رابط http(s) أو stremio:// الخاص بالإضافة.",
+      "stremio_no_streams": "هذه الإضافة لا توفر بث أنمي.",
+      "stremio_no_kitsu": "هذه الإضافة لا تدعم معرّفات الأنمي (Kitsu/MAL).",
+      "stremio_needs_config": "يجب إعداد هذه الإضافة أولاً. أعدّها من موقعها ثم الصق الرابط الذي تعطيك إياه."
     },
     "home": {
       "invalid_layout": "تخطيط الصفحة الرئيسية هذا غير صالح"
