@@ -4,6 +4,7 @@
     import {getCardContentTypeLabel, getCardScore, getCardScoreIsStars, type NormalizedCard} from "@/utils/normalize";
     import { getCardTitle, getCardShouldBlur, getCardTrailerUrl } from "@/utils/normalize";
     import { layoutState } from "@/stores/layout.svelte";
+    import { appConfig } from "@/stores/config.svelte";
     import { scale, fade } from 'svelte/transition';
     import { cubicOut } from 'svelte/easing';
     import type { Snippet } from "svelte";
@@ -24,12 +25,13 @@
     let score      = $derived(getCardScore(card));
     let isStars    = $derived(getCardScoreIsStars(card));
     let isHovering = $state(false);
+    let previews   = $derived(!disablePreview && appConfig.data?.ui?.cardPreviews !== false);
 
     const HOVER_DELAY = 220;
     let hoverTimer: ReturnType<typeof setTimeout> | undefined;
 
     function onEnter() {
-        if (disablePreview || isMobile) return;
+        if (!previews || isMobile) return;
         clearTimeout(hoverTimer);
         hoverTimer = setTimeout(() => (isHovering = true), HOVER_DELAY);
     }
@@ -44,7 +46,7 @@
     let contentTypeLabel = $derived(getCardContentTypeLabel(card));
 </script>
 
-<div class="card-ct group relative" class:no-preview={disablePreview} onmouseenter={onEnter} onmouseleave={onLeave}>
+<div class="card-ct group relative" class:no-preview={!previews} onmouseenter={onEnter} onmouseleave={onLeave}>
     <a
             href={card.href}
             class="card-base block w-full outline-none cursor-pointer h-full overflow-hidden"
@@ -62,7 +64,7 @@
         />
     </a>
 
-    {#if !disablePreview && !isMobile && isHovering}
+    {#if previews && !isMobile && isHovering}
         <div
                 class="preview-anchor"
                 in:scale={{ start: 0.92, duration: 220, easing: cubicOut }}

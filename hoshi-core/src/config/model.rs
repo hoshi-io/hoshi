@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::content::models::ContentType;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -100,6 +101,7 @@ pub struct GeneralConfig {
     pub show_adult_content: bool,
     pub blur_adult_content: bool,
     pub need_setup: bool,
+    pub content_types: Vec<ContentType>,
 }
 
 impl Default for GeneralConfig {
@@ -108,6 +110,7 @@ impl Default for GeneralConfig {
             show_adult_content: false,
             blur_adult_content: true,
             need_setup: true,
+            content_types: vec![ContentType::Anime, ContentType::Manga, ContentType::Novel],
         }
     }
 }
@@ -119,6 +122,18 @@ pub struct UiConfig {
     pub disable_card_trailers: bool,
     pub title_language: TitleLanguage,
     pub disable_hero_trailers: bool,
+    pub start_page: StartPage,
+    pub card_previews: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum StartPage {
+    #[default]
+    Home,
+    List,
+    Schedule,
+    Search,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -138,6 +153,8 @@ impl Default for UiConfig {
             disable_card_trailers: false,
             title_language: TitleLanguage::default(),
             disable_hero_trailers: false,
+            start_page: StartPage::default(),
+            card_previews: true,
         }
     }
 }

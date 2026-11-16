@@ -1,4 +1,6 @@
 <script lang="ts">
+    import type { ContentType } from "@/api/content/types";
+    import { ALL_CONTENT_TYPES } from "@/utils/contentTypes";
     import { i18n } from "@/stores/i18n.svelte.js";
 
     import { Switch } from "$lib/components/ui/switch";
@@ -27,6 +29,15 @@
         { value: "mangabaka", label: "MangaBaka" },
         { value: "mangaupdates", label: "MangaUpdates" },
     ];
+
+    const enabled = $derived(config.contentTypes?.length ? config.contentTypes : ALL_CONTENT_TYPES);
+
+    function toggleType(type: ContentType) {
+        const next = enabled.includes(type) ? enabled.filter(t => t !== type) : [...enabled, type];
+        if (next.length === 0) return;
+        config.contentTypes = ALL_CONTENT_TYPES.filter(t => next.includes(t));
+        onSave();
+    }
 
     const scoreFormats = [
         { value: "point10", label: "0 – 10" },
@@ -71,6 +82,28 @@
                 disabled={!config.showAdultContent}
                 onCheckedChange={onSave}
         />
+    </SettingRow>
+
+    <SettingRow
+            stacked
+            label={i18n.t('settings.general_section.content_types')}
+            description={i18n.t('settings.general_section.content_types_desc')}
+    >
+        <div class="flex flex-wrap gap-2">
+            {#each ALL_CONTENT_TYPES as type (type)}
+                {@const on = enabled.includes(type)}
+                {@const last = on && enabled.length === 1}
+                <button
+                        type="button"
+                        aria-pressed={on}
+                        disabled={last}
+                        title={last ? i18n.t('settings.general_section.content_types_last') : undefined}
+                        onclick={() => toggleType(type)}
+                        class="h-9 rounded-sm border-2 px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed
+                               {on ? 'border-primary bg-primary/10 text-foreground' : 'border-border/50 text-muted-foreground hover:bg-muted/50'}"
+                >{i18n.t(`home.${type}`)}</button>
+            {/each}
+        </div>
     </SettingRow>
 
     <SettingRow

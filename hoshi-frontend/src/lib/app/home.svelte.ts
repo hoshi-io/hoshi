@@ -7,6 +7,7 @@ import { progressApi } from '@/api/progress/progress';
 import { extensions } from '@/stores/extensions.svelte.js';
 import { i18n } from '@/stores/i18n.svelte.js';
 import { type NormalizedCard, normalizeDiscoverItem } from '@/utils/normalize';
+import { isContentTypeEnabled } from '@/utils/contentTypes';
 
 export function labelText(label: Label): string {
     return label.kind === 'key' ? i18n.t(label.key) : label.text;
@@ -17,6 +18,17 @@ function queryContentType(query: DiscoverQuery): ContentType {
     const ext = extensions.installed.find(e => e.id === query.extension);
     const type = ext?.ext_type;
     return type === 'manga' || type === 'novel' ? type : 'anime';
+}
+
+/** The section's content type; null for mixed sections (they show whatever types are enabled). */
+export function sectionContentType(section: HomeSection): ContentType | null {
+    if (section.contentType) return section.contentType;
+    return section.source.kind === 'search' ? queryContentType(section.source.query) : null;
+}
+
+/** Shown on home: not hidden by the user, and of a content type they discover. */
+export function sectionVisible(section: HomeSection): boolean {
+    return !section.hidden && isContentTypeEnabled(sectionContentType(section));
 }
 
 /** Paged results of one saved search; shared by every section using the same query. */
@@ -77,8 +89,9 @@ class HomeState {
 
     hasData = $derived(this.layout !== null);
     tabs = $derived(this.layout?.tabs ?? []);
+    visibleTabs = $derived(this.tabs.filter(t => t.sections.some(sectionVisible)));
     activeTab = $derived<HomeTab | null>(
-        this.tabs.find(t => t.id === this.activeTabId) ?? this.tabs[0] ?? null
+        this.visibleTabs.find(t => t.id === this.activeTabId) ?? this.visibleTabs[0] ?? null
     );
 
     private feeds = new Map<string, SectionFeed>();

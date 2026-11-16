@@ -67,6 +67,13 @@
         { value: "chinese", label: i18n.t('settings.ui_section.title_language_chinese') },
     ];
 
+    const startPageItems = [
+        { value: "home", label: i18n.t('layout.home') },
+        { value: "list", label: i18n.t('layout.list') },
+        { value: "schedule", label: i18n.t('layout.schedule') },
+        { value: "search", label: i18n.t('layout.search') },
+    ];
+
     // Three short options: a segmented control is quicker than opening a menu.
     async function customizeHome() {
         if (!homeState.hasData) await homeState.load();
@@ -202,6 +209,27 @@
                 onValueChange={onSave}
         />
     </div>
+
+    <SettingRow
+            label={i18n.t('settings.ui_section.start_page')}
+            description={i18n.t('settings.ui_section.start_page_desc')}
+    >
+        <ResponsiveSelect
+                bind:value={config.startPage}
+                items={startPageItems}
+                class="rounded-sm h-11 w-full sm:max-w-65"
+                onValueChange={onSave}
+        />
+    </SettingRow>
+
+    <SettingRow
+            inline
+            for="cardPreviews"
+            label={i18n.t('settings.ui_section.card_previews')}
+            description={i18n.t('settings.ui_section.card_previews_desc')}
+    >
+        <Switch id="cardPreviews" bind:checked={config.cardPreviews} onCheckedChange={onSave} />
+    </SettingRow>
 
     <SettingRow
             label={i18n.t('settings.ui_section.customize_home')}

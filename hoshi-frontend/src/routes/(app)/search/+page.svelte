@@ -1,5 +1,7 @@
 <script lang="ts">
     import { untrack } from "svelte";
+    import type { ContentType } from "@/api/content/types";
+    import { enabledContentTypes } from "@/utils/contentTypes";
     import { extensionsApi } from "$lib/api/extensions/extensions";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { fade } from "svelte/transition";
@@ -75,6 +77,16 @@
                 .catch(() => { extFiltersSchema = {}; });
         } else {
             extFiltersSchema = {};
+        }
+    });
+
+    const enabledTypes = $derived(enabledContentTypes());
+    const typeEnabled = (t: ContentType) => enabledTypes.includes(t);
+
+    // A type turned off in settings can't stay selected.
+    $effect(() => {
+        if (!enabledTypes.includes(searchState.contentType)) {
+            untrack(() => (searchState.contentType = enabledTypes[0]));
         }
     });
 
@@ -176,10 +188,16 @@
 
                             <div class="space-y-3">
                                 <h4 class="text-xs font-bold text-muted-foreground uppercase tracking-wider">{i18n.t('search.type')}</h4>
-                                <div class="bg-muted/20 p-1.5 rounded-xl grid grid-cols-3 gap-1">
+                                <div class="bg-muted/20 p-1.5 rounded-xl grid gap-1" style="grid-template-columns: repeat({enabledTypes.length}, minmax(0, 1fr));">
+                                    {#if typeEnabled('anime')}
                                     <button onclick={() => { searchState.contentType = 'anime'; handleSearch(); }} class="h-10 rounded-lg text-sm font-bold transition-all {searchState.contentType === 'anime' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}">{i18n.t('search.anime')}</button>
+                                    {/if}
+                                    {#if typeEnabled('manga')}
                                     <button onclick={() => { searchState.contentType = 'manga'; handleSearch(); }} class="h-10 rounded-lg text-sm font-bold transition-all {searchState.contentType === 'manga' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}">{i18n.t('search.manga')}</button>
+                                    {/if}
+                                    {#if typeEnabled('novel')}
                                     <button onclick={() => { searchState.contentType = 'novel'; handleSearch(); }} class="h-10 rounded-lg text-sm font-bold transition-all {searchState.contentType === 'novel' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}">{i18n.t('search.novel')}</button>
+                                    {/if}
                                 </div>
                             </div>
 
@@ -248,6 +266,7 @@
 
             <div class="space-y-1">
                 <div class="flex flex-col gap-0.5">
+                    {#if typeEnabled('anime')}
                     <button
                             onclick={() => { searchState.contentType = 'anime'; handleSearch(); }}
                             class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-all w-full {searchState.contentType === 'anime' ? 'bg-muted/30 text-primary font-semibold shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/20'}"
@@ -255,6 +274,8 @@
                         <Tv class="w-4 h-4" />
                         {i18n.t('search.anime')}
                     </button>
+                    {/if}
+                    {#if typeEnabled('manga')}
                     <button
                             onclick={() => { searchState.contentType = 'manga'; handleSearch(); }}
                             class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-all w-full {searchState.contentType === 'manga' ? 'bg-muted/30 text-primary font-semibold shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/20'}"
@@ -262,6 +283,8 @@
                         <Book class="w-4 h-4" />
                         {i18n.t('search.manga')}
                     </button>
+                    {/if}
+                    {#if typeEnabled('novel')}
                     <button
                             onclick={() => { searchState.contentType = 'novel'; handleSearch(); }}
                             class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-all w-full {searchState.contentType === 'novel' ? 'bg-muted/30 text-primary font-semibold shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/20'}"
@@ -269,6 +292,7 @@
                         <BookOpen class="w-4 h-4" />
                         {i18n.t('search.novel')}
                     </button>
+                    {/if}
                 </div>
             </div>
 

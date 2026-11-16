@@ -9,7 +9,7 @@
     import { layoutState } from '@/stores/layout.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { auth } from '@/stores/auth.svelte.js';
-    import { homeState, labelText } from '@/app/home.svelte.js';
+    import { homeState, labelText, sectionVisible } from '@/app/home.svelte.js';
     import { homeEditor } from '@/app/home-editor.svelte.js';
     import HomeEditView from '@/components/home/editor/HomeEditView.svelte';
     import Pencil from 'phosphor-svelte/lib/PencilSimpleIcon';
@@ -49,7 +49,7 @@
     );
 
     const activeTab = $derived(homeState.activeTab);
-    const visibleSections = $derived(activeTab?.sections.filter(s => !s.hidden) ?? []);
+    const visibleSections = $derived(activeTab?.sections.filter(sectionVisible) ?? []);
     const heroSection = $derived(homeState.heroSection(activeTab));
     const heroFeed = $derived(
         heroSection?.source.kind === 'search' ? homeState.feed(heroSection.source.query) : null
@@ -109,7 +109,7 @@
     {#if !homeEditor.editing}
     <div class="flex items-center gap-1 mr-1" in:fade={{duration: 150}}>
     <div class="flex max-w-[55vw] items-center overflow-x-auto [scrollbar-width:none] bg-muted/40 p-1 rounded-xl border border-border/40 shadow-inner h-10">
-        {#each homeState.tabs as tab (tab.id)}
+        {#each homeState.visibleTabs as tab (tab.id)}
             {@const Icon = tabIcon(tab.icon)}
             {@const label = labelText(tab.title)}
             <button
@@ -139,7 +139,7 @@
     <!-- Desktop home tabs: fixed top-right like the mobile header, so they stay reachable while scrolling. -->
     <div class="fixed top-12 right-6 xl:right-10 z-40 flex items-center gap-2" in:fade={{ duration: 200 }}>
         <div class="flex items-center gap-1 rounded-lg border border-border/50 bg-background/70 p-1 shadow-lg backdrop-blur-md">
-            {#each homeState.tabs as tab (tab.id)}
+            {#each homeState.visibleTabs as tab (tab.id)}
                 {@const Icon = tabIcon(tab.icon)}
                 {@const active = activeTab.id === tab.id}
                 <button

@@ -7,6 +7,7 @@ import { i18n } from "@/stores/i18n.svelte";
 import { scheduleStore } from "@/app/schedule.svelte.js";
 import { layoutState } from "@/stores/layout.svelte.js";
 import { usersApi } from "@/api/users/users";
+import { appConfig } from "@/stores/config.svelte.js";
 
 const DEFAULT_USERNAME = 'User';
 
@@ -41,7 +42,14 @@ export async function initApp(setTouchDevice: (v: boolean) => void) {
         listStore.loadData();
         listStore.initSync();
         scheduleStore.load();
+        openStartPage();
     }
+}
+
+function openStartPage() {
+    const start = appConfig.data?.ui?.startPage;
+    if (!start || start === 'home' || location.pathname !== '/') return;
+    goto(`/${start}`, { replaceState: true });
 }
 
 export function handleNavigation(pathname: string) {

@@ -8,6 +8,7 @@
     import { extensions } from '@/stores/extensions.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { cn } from '@/utils';
+    import { enabledContentTypes } from '@/utils/contentTypes';
     import type { ContentType } from '@/api/content/types';
     import type { HomeTab } from '@/api/home/types';
     import { buildPresets, sameSource, TRACKER_NAMES, type Preset, type PresetGroup } from './presets';
@@ -20,7 +21,8 @@
     function dominantType(t: HomeTab): ContentType {
         const counts = new Map<ContentType, number>();
         for (const s of t.sections) if (s.contentType) counts.set(s.contentType, (counts.get(s.contentType) ?? 0) + 1);
-        return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'anime';
+        const enabled = enabledContentTypes();
+        return [...counts.entries()].filter(([t]) => enabled.includes(t)).sort((a, b) => b[1] - a[1])[0]?.[0] ?? enabled[0];
     }
 
     let contentType = $state<string>('anime');
@@ -32,7 +34,7 @@
     });
 
     const typeOptions = $derived(
-        (['anime', 'manga', 'novel'] as const).map(t => ({ value: t, label: i18n.t(`home.${t}`) }))
+        enabledContentTypes().map(t => ({ value: t, label: i18n.t(`home.${t}`) }))
     );
 
     const needle = $derived(filter.trim().toLowerCase());

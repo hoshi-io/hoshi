@@ -38,6 +38,7 @@ export interface GeneralConfig {
     showAdultContent: boolean;
     blurAdultContent: boolean;
     needSetup: boolean;
+    contentTypes: ('anime' | 'manga' | 'novel')[];
 }
 
 export interface UiConfig {
@@ -45,6 +46,8 @@ export interface UiConfig {
     disableCardTrailers: boolean;
     disableHeroTrailers: boolean;
     titleLanguage: TitleLanguage;
+    startPage: 'home' | 'list' | 'schedule' | 'search';
+    cardPreviews: boolean;
 }
 
 export interface ContentConfig {
