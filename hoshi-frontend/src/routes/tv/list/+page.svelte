@@ -1,4 +1,5 @@
 <script lang="ts">
+    import EmptyState from "$lib/components/EmptyState.svelte";
     import { onMount } from 'svelte';
     import { fade } from 'svelte/transition';
     import { goto } from '$app/navigation';
@@ -198,14 +199,9 @@
         </div>
 
     {:else if listStore.filtered.length === 0}
-        <div role="status" class="flex flex-col items-center justify-center gap-5 py-20 text-center" in:fade={{ duration: 200 }}>
-            <div class="rounded-full border border-border/50 bg-card p-6">
-                <List class="size-14 text-primary/80" />
-            </div>
-
+        <div in:fade={{ duration: 200 }}>
             {#if hasNoEntries}
-                <h2 class="text-2xl font-bold">{i18n.t('list.empty_title')}</h2>
-                <p class="max-w-md text-base text-muted-foreground">{i18n.t('list.empty_desc')}</p>
+                <EmptyState icon={List} tone="primary" size="tv" title={i18n.t('list.empty_title')} description={i18n.t('list.empty_desc')}>
                 <button
                         type="button"
                         data-sn
@@ -215,9 +211,9 @@
                     <Compass class="size-5" />
                     {i18n.t('list.browse')}
                 </button>
+                </EmptyState>
             {:else}
-                <h2 class="text-2xl font-bold">{i18n.t('list.no_matches_title')}</h2>
-                <p class="max-w-md text-base text-muted-foreground">{i18n.t('list.no_matches_desc')}</p>
+                <EmptyState icon={List} tone="primary" size="tv" title={i18n.t('list.no_matches_title')} description={i18n.t('list.no_matches_desc')} />
             {/if}
         </div>
 

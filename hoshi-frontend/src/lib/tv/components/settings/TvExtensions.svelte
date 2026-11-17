@@ -23,7 +23,7 @@
         toCardExt,
         isHttpUrl
     } from '@/app/marketplace.svelte.js';
-    import EmptyState from '$lib/components/settings/extensions/EmptyState.svelte';
+    import EmptyState from "$lib/components/EmptyState.svelte";
     import TvDialog from '@/tv/components/TvDialog.svelte';
     import TvExtensionCard from './TvExtensionCard.svelte';
 

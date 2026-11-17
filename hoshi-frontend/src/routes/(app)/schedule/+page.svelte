@@ -1,4 +1,5 @@
 <script lang="ts">
+    import EmptyState from "$lib/components/EmptyState.svelte";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { scheduleStore } from "@/app/schedule.svelte.js";
     import { untrack } from "svelte";
@@ -190,14 +191,8 @@
             </div>
 
         {:else if scheduleStore.groups.length === 0}
-            <div class="flex flex-col items-center justify-center py-32 text-center space-y-5 border-2 border-dashed rounded-xl border-muted/20 bg-muted/5" in:fade>
-                <div class="bg-background p-6 rounded-full shadow-sm border border-border/50">
-                    <CalendarIcon class="h-12 w-12 text-muted-foreground/30" />
-                </div>
-                <div class="space-y-2 px-6">
-                    <h3 class="text-2xl font-bold">{i18n.t("schedule.empty_title")}</h3>
-                    <p class="text-sm text-muted-foreground max-w-[300px] mx-auto">{i18n.t("schedule.empty_desc")}</p>
-                </div>
+            <div in:fade>
+                <EmptyState icon={CalendarIcon} class="min-h-[55vh]" title={i18n.t("schedule.empty_title")} description={i18n.t("schedule.empty_desc")} />
             </div>
 
         {:else if viewPrefs.data.scheduleView === 'calendar'}

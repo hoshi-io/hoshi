@@ -1,4 +1,5 @@
 <script lang="ts">
+    import EmptyState from "$lib/components/EmptyState.svelte";
     import { onMount, tick, untrack } from 'svelte';
     import Search from 'phosphor-svelte/lib/MagnifyingGlassIcon';
     import SearchX from 'phosphor-svelte/lib/MagnifyingGlassIcon';
@@ -246,11 +247,7 @@
             </button>
         </div>
     {:else if searchState.hasSearched && searchState.displayResults.length === 0}
-        <div class="flex min-h-[40dvh] flex-col items-center justify-center gap-3 text-center">
-            <SearchX class="size-14 text-muted-foreground" />
-            <h2 class="text-2xl font-bold">{i18n.t('search.empty_title')}</h2>
-            <p class="max-w-md text-muted-foreground">{i18n.t('search.empty_desc')}</p>
-        </div>
+        <EmptyState icon={SearchX} size="tv" class="min-h-[40dvh]" title={i18n.t('search.empty_title')} description={i18n.t('search.empty_desc')} />
     {:else if searchState.displayResults.length > 0}
         <LazyCardGrid
                 items={searchState.displayResults}

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import EmptyState from "$lib/components/EmptyState.svelte";
     import { untrack } from "svelte";
     import type { ContentType } from "@/api/content/types";
     import { enabledContentTypes } from "@/utils/contentTypes";
@@ -10,7 +11,6 @@
 
     import SearchFilters from "$lib/components/search/SearchFilters.svelte";
     import SearchSourceGrid from "$lib/components/search/SearchSourceGrid.svelte";
-    import * as Empty from "$lib/components/ui/empty";
     import * as Drawer from "$lib/components/ui/drawer";
     import { Input } from "$lib/components/ui/input";
     import { Button } from "$lib/components/ui/button";
@@ -349,15 +349,7 @@
                         </Button>
                     </div>
                 {:else if searchState.hasSearched && searchState.displayResults.length === 0}
-                    <Empty.Root class="border border-dashed py-24 rounded-2xl bg-muted/5 min-h-[50vh] flex items-center justify-center">
-                        <Empty.Header>
-                            <Empty.Media variant="icon"><SearchX class="w-12 h-12" /></Empty.Media>
-                            <Empty.Title class="text-2xl">{i18n.t('search.empty_title')}</Empty.Title>
-                            <Empty.Description class="max-w-sm mx-auto text-base">
-                                {i18n.t('search.empty_desc')}
-                            </Empty.Description>
-                        </Empty.Header>
-                    </Empty.Root>
+                    <EmptyState icon={SearchX} class="min-h-[50vh]" title={i18n.t('search.empty_title')} description={i18n.t('search.empty_desc')} />
                 {:else if searchState.displayResults.length > 0}
                     <LazyCardGrid
                             items={searchState.displayResults}

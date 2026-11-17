@@ -1,4 +1,5 @@
 <script lang="ts">
+    import EmptyState from "$lib/components/EmptyState.svelte";
     import { contentApi } from "$lib/api/content/content";
     import { extensions } from "@/stores/extensions.svelte.js";
     import { Skeleton } from "$lib/components/ui/skeleton";
@@ -275,13 +276,7 @@
             </button>
         </div>
     {:else if chapters.length === 0}
-        <div class="flex flex-col items-center justify-center gap-3 py-14 rounded-sm border border-border/20 bg-muted/5">
-            <SearchX class="w-8 h-8 text-muted-foreground/20" />
-            <div class="text-center space-y-0.5">
-                <p class="text-sm font-semibold text-muted-foreground/60">{i18n.t('content.no_chapters')}</p>
-                <p class="text-[11px] text-muted-foreground/40">{i18n.t('content.no_chapters_desc')}</p>
-            </div>
-        </div>
+        <EmptyState icon={SearchX} size="inline" title={i18n.t('content.no_chapters')} description={i18n.t('content.no_chapters_desc')} />
     {:else}
         <div class="flex flex-col gap-1.5 xl:max-h-[calc(100vh-32rem)] xl:overflow-y-auto xl:pr-1 hide-scrollbar">
             {#each visibleChapters as chapter (chapter.id || (chapter.number ?? chapter.unitNumber))}

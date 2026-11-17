@@ -1,4 +1,5 @@
 <script lang="ts">
+    import EmptyState from "$lib/components/EmptyState.svelte";
     import { viewPrefs } from "@/stores/viewPrefs.svelte";
     import { onMount } from 'svelte';
     import { fade } from 'svelte/transition';
@@ -110,12 +111,8 @@
         </div>
 
     {:else if scheduleStore.groups.length === 0}
-        <div class="flex flex-col items-center justify-center gap-5 rounded-xl border-2 border-dashed border-muted/20 bg-muted/5 py-24 text-center" in:fade>
-            <div class="rounded-full border border-border/50 bg-background p-6">
-                <CalendarIcon class="size-14 text-muted-foreground/40" />
-            </div>
-            <h3 class="text-2xl font-bold">{i18n.t('schedule.empty_title')}</h3>
-            <p class="max-w-md text-base text-muted-foreground">{i18n.t('schedule.empty_desc')}</p>
+        <div in:fade>
+            <EmptyState icon={CalendarIcon} size="tv" title={i18n.t('schedule.empty_title')} description={i18n.t('schedule.empty_desc')} />
         </div>
 
     {:else}

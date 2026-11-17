@@ -11,7 +11,7 @@
     import { sourceFilterItems, sourceOfId, type InstalledState } from "@/app/marketplace.svelte.js";
     import Card from "./Card.svelte";
     import Group from "./Group.svelte";
-    import EmptyState from "./EmptyState.svelte";
+    import EmptyState from "$lib/components/EmptyState.svelte";
 
     let {
         installed,

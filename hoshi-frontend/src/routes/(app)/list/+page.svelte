@@ -1,4 +1,5 @@
 <script lang="ts">
+    import EmptyState from "$lib/components/EmptyState.svelte";
     import { listStore, trackerLabel, type NormalizedListEntry } from "@/app/list.svelte.js";
     import SelectionBar from "@/components/list/SelectionBar.svelte";
     import CardWrapper from "@/components/card/CardWrapper.svelte";
@@ -233,34 +234,6 @@
     </div>
 {/snippet}
 
-{#snippet ghostStack(tone: 'neutral' | 'error' = 'neutral')}
-    <div class="relative h-48 w-60 shrink-0" aria-hidden="true">
-        <div
-                class="ghost absolute bottom-0 left-3 aspect-2/3 w-28 rounded-sm {tone === 'error' ? 'bg-destructive/5' : 'bg-muted/20'}"
-                style="--i: 0; --r: -9deg"
-        ></div>
-        <div
-                class="ghost absolute bottom-0 right-3 aspect-2/3 w-28 rounded-sm {tone === 'error' ? 'bg-destructive/5' : 'bg-muted/20'}"
-                style="--i: 1; --r: 9deg"
-        ></div>
-        <div
-                class="ghost absolute bottom-2 left-1/2 z-10 flex aspect-2/3 w-28 flex-col justify-between rounded-sm p-2.5 {tone === 'error' ? 'bg-destructive/10' : 'bg-muted/40'}"
-                style="--i: 2; --x: -50%"
-        >
-            <div class="flex flex-1 items-center justify-center">
-                {#if tone === 'error'}
-                    <AlertCircle class="size-8 text-destructive/80" />
-                {:else}
-                    <List class="size-8 text-primary/80" />
-                {/if}
-            </div>
-            <div class="space-y-1.5">
-                <div class="h-1.5 w-3/4 rounded-sm {tone === 'error' ? 'bg-destructive/20' : 'bg-foreground/10'}"></div>
-                <div class="h-1.5 w-1/2 rounded-sm {tone === 'error' ? 'bg-destructive/10' : 'bg-foreground/5'}"></div>
-            </div>
-        </div>
-    </div>
-{/snippet}
 
 {#snippet cardFace(item: NormalizedListEntry)}
     <div
@@ -490,9 +463,8 @@
                     {/each}
                 </div>
             {:else if listStore.error}
-                <div role="alert" in:fade={{ duration: 250 }} class="flex min-h-[55vh] flex-col items-center justify-center px-4 py-16 text-center">
-                    {@render ghostStack('error')}
-                    <h2 class="mt-8 text-xl font-bold tracking-tight text-destructive">{i18n.t(listStore.error.key)}</h2>
+                <div in:fade={{ duration: 250 }}>
+                <EmptyState icon={AlertCircle} tone="error" class="min-h-[55vh]" title={i18n.t(listStore.error.key)}>
                     <Button
                             variant="outline"
                             class="mt-6 h-10 gap-2 rounded-sm border-destructive/30 font-bold text-destructive hover:bg-destructive/10 hover:text-destructive"
@@ -501,30 +473,27 @@
                         <RefreshCw class="size-4" />
                         {i18n.t("content.retry")}
                     </Button>
+                </EmptyState>
                 </div>
             {:else if listStore.filtered.length === 0}
-                <div role="status" in:fade={{ duration: 250 }} class="flex min-h-[55vh] flex-col items-center justify-center px-4 py-16 text-center">
-                    {@render ghostStack('neutral')}
-
+                <div in:fade={{ duration: 250 }}>
                     {#if hasNoEntries}
-                        <h2 class="mt-8 text-xl font-bold tracking-tight">{i18n.t('list.empty_title')}</h2>
-                        <p class="mt-2 max-w-sm text-sm font-medium leading-relaxed text-muted-foreground">{i18n.t('list.empty_desc')}</p>
-                        <Button class="mt-6 h-10 gap-2 rounded-sm px-5 font-bold" onclick={() => goto('/')}>
-                            <Compass class="size-4" />
-                            {i18n.t("list.browse")}
-                        </Button>
+                        <EmptyState icon={List} tone="primary" class="min-h-[55vh]" title={i18n.t('list.empty_title')} description={i18n.t('list.empty_desc')}>
+                            <Button class="h-10 gap-2 rounded-sm px-5 font-bold" onclick={() => goto('/')}>
+                                <Compass class="size-4" />
+                                {i18n.t("list.browse")}
+                            </Button>
+                        </EmptyState>
                     {:else}
-                        <h2 class="mt-8 text-xl font-bold tracking-tight">{i18n.t("list.no_matches_title")}</h2>
-                        <p class="mt-2 max-w-sm text-sm font-medium leading-relaxed text-muted-foreground">
-                            {i18n.t("list.no_matches_desc")}
-                        </p>
-                        {#if searchTerm}
-                            <p class="mt-1 max-w-sm truncate text-sm font-bold text-foreground/80">“{searchTerm}”</p>
-                        {/if}
-                        <Button variant="outline" class="mt-6 h-10 gap-2 rounded-sm px-5 font-bold" onclick={() => listStore.resetFilters()}>
-                            <X class="size-4" />
-                            {i18n.t('list.clear_all')}
-                        </Button>
+                        <EmptyState icon={List} tone="primary" class="min-h-[55vh]" title={i18n.t("list.no_matches_title")} description={i18n.t("list.no_matches_desc")}>
+                            {#if searchTerm}
+                                <p class="-mt-4 mb-2 max-w-sm truncate text-sm font-bold text-foreground/80">“{searchTerm}”</p>
+                            {/if}
+                            <Button variant="outline" class="h-10 gap-2 rounded-sm px-5 font-bold" onclick={() => listStore.resetFilters()}>
+                                <X class="size-4" />
+                                {i18n.t('list.clear_all')}
+                            </Button>
+                        </EmptyState>
                     {/if}
                 </div>
             {:else}
@@ -583,23 +552,3 @@
             coverImage={listStore.selectedEntry.coverImage ?? undefined}
     />
 {/if}
-
-<style>
-    .ghost {
-        transform: translateX(var(--x, 0)) rotate(var(--r, 0deg));
-        transform-origin: 50% 100%;
-        animation: ghostIn 520ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
-        animation-delay: calc(var(--i) * 80ms);
-    }
-
-    @keyframes ghostIn {
-        from {
-            opacity: 0;
-            transform: translateX(var(--x, 0)) translateY(16px) rotate(0deg) scale(0.94);
-        }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .ghost { animation: none; }
-    }
-</style>
