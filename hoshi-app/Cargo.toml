@@ -64,3 +64,4 @@ libc = "0.2"
 
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 tauri-plugin-single-instance = { version = "2.0.0", features = ["deep-link"] }
+tauri-plugin-window-state = "~2.4"

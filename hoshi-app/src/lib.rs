@@ -102,6 +102,17 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 let _ = window.set_focus();
             }
         }));
+
+        // Size, position and maximized only: restoring visibility would show the hidden
+        // headless windows (hl-*), decorations would undo the custom titlebar, and fullscreen
+        // would reopen the app in the player's fullscreen.
+        use tauri_plugin_window_state::StateFlags;
+        builder = builder.plugin(
+            tauri_plugin_window_state::Builder::default()
+                .with_state_flags(StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED)
+                .with_filter(|label| !label.starts_with("hl-"))
+                .build(),
+        );
     }
 
     #[cfg(mobile)]
