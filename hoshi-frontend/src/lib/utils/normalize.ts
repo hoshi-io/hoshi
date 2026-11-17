@@ -1,4 +1,5 @@
 import type { ContentType, ExtensionSearchResult, FullContent, TrackerMedia } from "@/api/content/types";
+import { themeManager } from "@/stores/theme.svelte";
 import type { DiscoverItem } from "@/api/home/types";
 import { primaryMetadata } from "@/api/content/types";
 import { appConfig } from "@/stores/config.svelte.js";
@@ -51,7 +52,7 @@ export function getCardShouldBlur(card: NormalizedCard): boolean {
 }
 
 export function getCardTrailerUrl(card: NormalizedCard): string | null {
-    if (appConfig.data?.ui?.disableCardTrailers) return null;
+    if (appConfig.data?.ui?.disableCardTrailers || themeManager.performance) return null;
     return card.trailerUrlRaw;
 }
 

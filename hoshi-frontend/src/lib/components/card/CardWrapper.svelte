@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { themeManager } from "@/stores/theme.svelte";
     import CardContainer from '@/components/card/CardContainer.svelte';
     import CardPreview from '@/components/card/CardPreview.svelte';
     import {getCardContentTypeLabel, getCardScore, getCardScoreIsStars, type NormalizedCard} from "@/utils/normalize";
@@ -25,7 +26,7 @@
     let score      = $derived(getCardScore(card));
     let isStars    = $derived(getCardScoreIsStars(card));
     let isHovering = $state(false);
-    let previews   = $derived(!disablePreview && appConfig.data?.ui?.cardPreviews !== false);
+    let previews   = $derived(!disablePreview && appConfig.data?.ui?.cardPreviews !== false && !themeManager.performance);
 
     const HOVER_DELAY = 220;
     let hoverTimer: ReturnType<typeof setTimeout> | undefined;

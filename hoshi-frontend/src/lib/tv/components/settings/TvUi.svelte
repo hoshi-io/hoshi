@@ -6,6 +6,7 @@
     import { viewPrefs, type ViewPrefs } from '@/stores/viewPrefs.svelte';
     import TvSettingRow from '@/tv/components/TvSettingRow.svelte';
     import TvSegmented from '@/tv/components/TvSegmented.svelte';
+    import TvSwitch from '@/tv/components/TvSwitch.svelte';
     import TvColorSwatches from '@/tv/components/TvColorSwatches.svelte';
 
     let {
@@ -110,6 +111,28 @@
                 bind:value={config.titleLanguage}
                 options={titleLanguageItems}
                 onchange={() => onSave()}
+        />
+    </TvSettingRow>
+
+    <TvSettingRow
+            label={i18n.t('settings.ui_section.performance_mode')}
+            description={i18n.t('settings.ui_section.performance_mode_desc')}
+    >
+        <TvSwitch
+                label={i18n.t('settings.ui_section.performance_mode')}
+                checked={themeManager.performance}
+                onchange={(on) => themeManager.setPerformance(on)}
+        />
+    </TvSettingRow>
+
+    <TvSettingRow
+            label={i18n.t('settings.ui_section.high_contrast')}
+            description={i18n.t('settings.ui_section.high_contrast_desc')}
+    >
+        <TvSwitch
+                label={i18n.t('settings.ui_section.high_contrast')}
+                checked={themeManager.contrast}
+                onchange={(on) => themeManager.setContrast(on)}
         />
     </TvSettingRow>
 

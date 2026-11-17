@@ -232,6 +232,24 @@
     </SettingRow>
 
     <SettingRow
+            inline
+            for="performanceMode"
+            label={i18n.t('settings.ui_section.performance_mode')}
+            description={i18n.t('settings.ui_section.performance_mode_desc')}
+    >
+        <Switch id="performanceMode" checked={themeManager.performance} onCheckedChange={(on) => themeManager.setPerformance(on)} />
+    </SettingRow>
+
+    <SettingRow
+            inline
+            for="highContrast"
+            label={i18n.t('settings.ui_section.high_contrast')}
+            description={i18n.t('settings.ui_section.high_contrast_desc')}
+    >
+        <Switch id="highContrast" checked={themeManager.contrast} onCheckedChange={(on) => themeManager.setContrast(on)} />
+    </SettingRow>
+
+    <SettingRow
             label={i18n.t('settings.ui_section.customize_home')}
             description={i18n.t('settings.ui_section.customize_home_desc')}
     >

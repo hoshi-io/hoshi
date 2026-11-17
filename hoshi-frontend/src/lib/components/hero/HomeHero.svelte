@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { themeManager } from "@/stores/theme.svelte";
     import {getCardScore, type NormalizedCard} from '@/utils/normalize';
     import { getCardTitle, getCardShouldBlur, getCardTrailerUrl } from '@/utils/normalize';
     import Play from 'phosphor-svelte/lib/PlayIcon';
@@ -33,7 +34,7 @@
         return (match && match[2].length === 11) ? match[2] : null;
     }
 
-    let disableTrailers = $derived(appConfig.data?.ui.disableHeroTrailers ?? false);
+    let disableTrailers = $derived((appConfig.data?.ui.disableHeroTrailers ?? false) || themeManager.performance);
     let trailerId    = $derived(disableTrailers ? null : getYoutubeId(trailerUrl));
     let thumbnailSrc = $derived(trailerId ? `https://i.ytimg.com/vi/${trailerId}/maxresdefault.jpg` : null);
 

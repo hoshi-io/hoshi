@@ -36,6 +36,10 @@ class ThemeManager {
     theme = $state<string>('dark');
     accentColor = $state<string | null>(null);
     font = $state<string>('system');
+    /** No animations, transitions, blur, trailers or hover previews. */
+    performance = $state(false);
+    /** Stronger muted text and borders. */
+    contrast = $state(false);
 
     constructor() {
         this.init();
@@ -49,8 +53,22 @@ class ThemeManager {
         if (savedAccent) this.accentColor = savedAccent;
         const savedFont = await loadSavedValue('app_font');
         if (savedFont) this.font = savedFont;
+        this.performance = (await loadSavedValue('app_performance')) === '1';
+        this.contrast = (await loadSavedValue('app_contrast')) === '1';
 
         this.applyToDOM();
+    }
+
+    async setPerformance(on: boolean) {
+        this.performance = on;
+        this.applyToDOM();
+        await persistValue('app_performance', on ? '1' : null);
+    }
+
+    async setContrast(on: boolean) {
+        this.contrast = on;
+        this.applyToDOM();
+        await persistValue('app_contrast', on ? '1' : null);
     }
 
     async setTheme(newTheme: string) {
@@ -100,6 +118,10 @@ class ThemeManager {
             html.style.removeProperty('--app-accent');
             html.style.removeProperty('--app-accent-foreground');
         }
+
+        // Both are handled in layout.css, keyed on these attributes.
+        html.toggleAttribute('data-performance', this.performance);
+        html.toggleAttribute('data-contrast', this.contrast);
 
         // Tailwind's base font and `font-sans` both read --font-sans.
         if (this.font && this.font !== 'system') {
