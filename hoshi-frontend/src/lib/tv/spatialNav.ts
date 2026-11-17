@@ -118,7 +118,7 @@ function findNext(direction: 'up' | 'down' | 'left' | 'right'): HTMLElement | nu
 function remembered(target: HTMLElement | null, from: HTMLElement): HTMLElement | null {
     const group = target?.closest<HTMLElement>('[data-sn-remember]');
     if (!group || group.contains(from)) return target;
-    return group.querySelector<HTMLElement>('[data-sn][aria-current="true"]') ?? target;
+    return group.querySelector<HTMLElement>('[data-sn][aria-current]:not([aria-current="false"])') ?? target;
 }
 
 function nearestTo(rect: DOMRect | null, candidates: HTMLElement[]): HTMLElement | null {

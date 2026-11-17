@@ -22,12 +22,6 @@
     const shouldBlur = $derived(current ? getCardShouldBlur(current) : false);
     const score = $derived(current ? getCardScore(current) : null);
 
-    $effect(() => {
-        if (items.length <= 1) return;
-        const t = setInterval(() => (index = (index + 1) % items.length), DURATION);
-        return () => clearInterval(t);
-    });
-
     // Bring the whole hero back into view when its button gets focus.
     function revealTop(e: FocusEvent) {
         const main = (e.currentTarget as HTMLElement).closest('main');

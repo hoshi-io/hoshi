@@ -44,7 +44,7 @@
 
     const row =
         'flex h-12 w-full items-center gap-3 rounded-md px-4 text-left text-base font-medium outline-none ' +
-        'transition-colors duration-150 focus:bg-primary focus:text-primary-foreground focus:ring-2 focus:ring-primary/60';
+        'focus:bg-primary focus:text-primary-foreground focus:ring-2 focus:ring-primary/60';
     const rowActive = 'bg-primary/10 text-primary';
     const rowIdle = 'text-foreground/80';
 

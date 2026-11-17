@@ -17,7 +17,7 @@
 
     const item =
         'relative flex h-12 w-full items-center gap-4 rounded-md px-4 outline-none ' +
-        'transition-colors duration-150 text-muted-foreground ' +
+        'text-muted-foreground ' +
         'focus:bg-primary focus:text-primary-foreground focus:ring-2 focus:ring-primary/60';
     const itemActive = 'text-primary bg-primary/10';
 
@@ -30,6 +30,7 @@
 <!-- Overlays the content (absolute) so expanding never reflows the page behind it. -->
 <aside
         data-tv-sidebar
+        data-sn-remember
         class="group/rail absolute top-0 left-0 z-50 flex h-full w-20 flex-col justify-between
            border-r border-border/10 bg-background pt-8 pb-6
            transition-[width] duration-200 ease-out

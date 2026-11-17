@@ -125,6 +125,13 @@ class HomeState {
     }
 
     private setLayout(layout: HomeLayout) {
+        // Created here, outside any reaction: Svelte doesn't track state created inside the
+        // $derived that reads it, which left the TV hero empty on a cold start.
+        for (const tab of layout.tabs) {
+            for (const s of tab.sections) {
+                if (s.source.kind === 'search') this.feed(s.source.query);
+            }
+        }
         this.layout = layout;
         if (!layout.tabs.some(t => t.id === this.activeTabId)) {
             this.activeTabId = layout.tabs[0]?.id ?? null;

@@ -3,6 +3,7 @@
     import type { UiConfig } from '@/api/config/types.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { themeManager } from '@/stores/theme.svelte.js';
+    import { viewPrefs, type ViewPrefs } from '@/stores/viewPrefs.svelte';
     import TvSettingRow from '@/tv/components/TvSettingRow.svelte';
     import TvSegmented from '@/tv/components/TvSegmented.svelte';
     import TvColorSwatches from '@/tv/components/TvColorSwatches.svelte';
@@ -31,6 +32,22 @@
         { value: 'native', label: i18n.t('settings.ui_section.title_language_native') },
         { value: 'chinese', label: i18n.t('settings.ui_section.title_language_chinese') }
     ]);
+
+    const startPageItems = $derived([
+        { value: 'home', label: i18n.t('layout.home') },
+        { value: 'list', label: i18n.t('layout.list') },
+        { value: 'schedule', label: i18n.t('layout.schedule') },
+        { value: 'search', label: i18n.t('layout.search') }
+    ]);
+
+    const daysAheadItems = $derived(
+        [3, 7, 14].map((n) => ({ value: String(n), label: i18n.t('schedule.days', { num: n }) }))
+    );
+
+    const timeFormatItems = [
+        { value: '24h', label: '24h' },
+        { value: '12h', label: '12h' }
+    ];
 </script>
 
 <div>
@@ -93,6 +110,45 @@
                 bind:value={config.titleLanguage}
                 options={titleLanguageItems}
                 onchange={() => onSave()}
+        />
+    </TvSettingRow>
+
+    <TvSettingRow
+            stacked
+            label={i18n.t('settings.ui_section.start_page')}
+            description={i18n.t('settings.ui_section.start_page_desc')}
+    >
+        <TvSegmented
+                label={i18n.t('settings.ui_section.start_page')}
+                bind:value={config.startPage}
+                options={startPageItems}
+                onchange={() => onSave()}
+        />
+    </TvSettingRow>
+
+    <TvSettingRow
+            stacked
+            label={i18n.t('schedule.days_ahead')}
+            description={i18n.t('settings.ui_section.days_ahead_desc')}
+    >
+        <TvSegmented
+                label={i18n.t('schedule.days_ahead')}
+                value={String(viewPrefs.data.scheduleDaysAhead)}
+                options={daysAheadItems}
+                onchange={(v) => viewPrefs.set({ scheduleDaysAhead: Number(v) as ViewPrefs['scheduleDaysAhead'] })}
+        />
+    </TvSettingRow>
+
+    <TvSettingRow
+            stacked
+            label={i18n.t('schedule.time_format')}
+            description={i18n.t('settings.ui_section.time_format_desc')}
+    >
+        <TvSegmented
+                label={i18n.t('schedule.time_format')}
+                value={viewPrefs.data.timeFormat}
+                options={timeFormatItems}
+                onchange={(v) => viewPrefs.set({ timeFormat: v as ViewPrefs['timeFormat'] })}
         />
     </TvSettingRow>
 </div>

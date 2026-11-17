@@ -42,14 +42,16 @@ export async function initApp(setTouchDevice: (v: boolean) => void) {
         listStore.loadData();
         listStore.initSync();
         scheduleStore.load();
-        openStartPage();
     }
 }
 
-function openStartPage() {
+// Call once the Android TV check is done, so a TV opens /tv/<page> instead of the desktop one.
+export function openStartPage() {
     const start = appConfig.data?.ui?.startPage;
-    if (!start || start === 'home' || location.pathname !== '/') return;
-    goto(`/${start}`, { replaceState: true });
+    if (!auth.isAuthenticated || !start || start === 'home') return;
+    const root = layoutState.isAndroidTv || location.pathname.startsWith('/tv') ? '/tv' : '';
+    if (location.pathname !== (root || '/')) return;
+    goto(`${root}/${start}`, { replaceState: true });
 }
 
 export function handleNavigation(pathname: string) {

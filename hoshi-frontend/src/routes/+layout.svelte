@@ -7,7 +7,7 @@
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { check } from '@smbcloud/tauri-plugin-android-tv-check-api';
 
-    import { initApp, handleNavigation } from '$lib/app/app';
+    import { initApp, handleNavigation, openStartPage } from '$lib/app/app';
     import { setupImportListener } from '@/stores/importStatus.svelte';
     import { layoutState } from '@/stores/layout.svelte';
     import { Toaster } from '$lib/components/ui/sonner';
@@ -42,7 +42,7 @@
     });
 
     async function boot() {
-        initApp((v) => (layoutState.isTouchDevice = v));
+        const appInit = initApp((v) => (layoutState.isTouchDevice = v));
         setupImportListener();
 
         try {
@@ -55,6 +55,8 @@
             // plugin not available (desktop / iOS): not a TV
         }
         ready = true;
+        await appInit;
+        openStartPage();
     }
 
     // Wait for `ready` so isAndroidTv is known before any setup/login redirect decides /setup vs /tv/setup.

@@ -63,7 +63,7 @@
                 onclick={toggleMyList}
                 aria-pressed={scheduleStore.myListOnly}
                 class="flex h-12 shrink-0 items-center gap-3 rounded-lg border-2 border-transparent px-5 text-base font-bold
-                       outline-none transition-colors
+                       outline-none
                        focus:border-primary focus:ring-4 focus:ring-primary/40
                        {scheduleStore.myListOnly ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground'}"
         >
