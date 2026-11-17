@@ -87,6 +87,7 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .with(tracing_subscriber::fmt::layer())
         .with(memory_layer)
         .init();
+    hoshi_core::logs::install_panic_hook();
 
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::new().build())

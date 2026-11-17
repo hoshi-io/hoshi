@@ -53,6 +53,23 @@ fn cleanup_old_logs(logs_dir: &PathBuf) {
     }
 }
 
+/// Release builds abort on panic, so without this a crash leaves nothing in the log file.
+pub fn install_panic_hook() {
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        let payload = info.payload();
+        let message = payload.downcast_ref::<&str>().copied()
+            .or_else(|| payload.downcast_ref::<String>().map(String::as_str))
+            .unwrap_or("(no message)");
+        let location = info.location()
+            .map(|l| format!("{}:{}", l.file(), l.line()))
+            .unwrap_or_else(|| "unknown location".into());
+        let thread = std::thread::current();
+        tracing::error!("PANIC in thread '{}' at {}: {}", thread.name().unwrap_or("unnamed"), location, message);
+        default_hook(info);
+    }));
+}
+
 pub fn init_log_file(logs_dir: &PathBuf) {
     cleanup_old_logs(logs_dir);
 
