@@ -410,6 +410,54 @@ jobs:
           (cd ipa && zip -qry "../final-ipa/hoshi-ios-${{ github.ref_name }}.ipa" Payload)
           ls -la final-ipa
 
+      # AltStore source, served at releases/latest/download/altstore.json.
+      # The version must match the IPA's Info.plist or AltStore rejects the install.
+      - name: Generate AltStore source
+        env:
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          PLIST=$(find ipa/Payload -maxdepth 2 -name Info.plist | head -n1)
+          python3 - "$PLIST" <<'EOF'
+          import json, os, plistlib, sys, datetime
+          info = plistlib.load(open(sys.argv[1], "rb"))
+          tag, repo = os.environ["TAG"], os.environ["REPO"]
+          ipa = f"final-ipa/hoshi-ios-{tag}.ipa"
+          raw = f"https://raw.githubusercontent.com/{repo}/master/assets"
+          source = {
+              "name": "Hoshi",
+              "identifier": info["CFBundleIdentifier"],
+              "subtitle": "Anime, manga and light novel tracker",
+              "iconURL": f"{raw}/icon-2.png",
+              "website": f"https://github.com/{repo}",
+              "tintColor": "#2a2a2a",
+              "apps": [{
+                  "name": "Hoshi",
+                  "bundleIdentifier": info["CFBundleIdentifier"],
+                  "developerName": "hoshi-io",
+                  "subtitle": "Anime, manga and light novel tracker",
+                  "localizedDescription": "A clean, lightweight tracker for anime, manga, and light novels.",
+                  "iconURL": f"{raw}/icon-2.png",
+                  "tintColor": "#2a2a2a",
+                  "category": "entertainment",
+                  "screenshots": [f"{raw}/mobile.png"],
+                  "versions": [{
+                      "version": info["CFBundleShortVersionString"],
+                      "buildVersion": info.get("CFBundleVersion", info["CFBundleShortVersionString"]),
+                      "date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                      "localizedDescription": f"https://github.com/{repo}/releases/tag/{tag}",
+                      "downloadURL": f"https://github.com/{repo}/releases/download/{tag}/hoshi-ios-{tag}.ipa",
+                      "size": os.path.getsize(ipa),
+                      "minOSVersion": info.get("MinimumOSVersion", "15.0"),
+                  }],
+                  "appPermissions": {"entitlements": [], "privacy": {}},
+              }],
+              "news": [],
+          }
+          json.dump(source, open("final-ipa/altstore.json", "w"), indent=2)
+          EOF
+          cat final-ipa/altstore.json
+
       - name: Upload iOS IPA artifact
         uses: actions/upload-artifact@v4
         with:
