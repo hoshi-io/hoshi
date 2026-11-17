@@ -107,12 +107,9 @@ globalThis.fetch = async function(url, options) {
     return {
         ok:     raw.ok,
         status: raw.status,
-        url:    url,
+        url:    raw.url || url,
         cookies: raw.cookies,
-        headers: {
-            get: (_name) => null,
-            has: (_name) => false,
-        },
+        headers: __makeHeaders(raw.headers),
         text: async function() { return responseBody; },
         json: async function() {
             try {
@@ -154,9 +151,24 @@ globalThis.fetchSync = function(url, options) {
         text: raw.body,
         status: raw.status,
         ok: raw.ok,
+        url: raw.url || url,
         cookies: raw.cookies ?? {},
+        headers: __makeHeaders(raw.headers),
     };
 };
+
+// Header names arrive lowercased; repeated headers are joined with ", ".
+function __makeHeaders(map) {
+    const h = map || {};
+    return {
+        get:     (name) => h[String(name).toLowerCase()] ?? null,
+        has:     (name) => String(name).toLowerCase() in h,
+        keys:    () => Object.keys(h)[Symbol.iterator](),
+        entries: () => Object.entries(h)[Symbol.iterator](),
+        forEach: (fn) => Object.entries(h).forEach(([k, v]) => fn(v, k)),
+        [Symbol.iterator]() { return Object.entries(h)[Symbol.iterator](); },
+    };
+}
 
 globalThis.URL = class URL {
     constructor(input, base) {
@@ -370,9 +382,6 @@ globalThis.headless = {
         }
 
         const opts = {
-            method:     options.method     || "GET",
-            headers:    options.headers    || {},
-            body:       options.body       ?? null,
             wait_for:   _normalizeWaitFor(options.waitFor ?? options.wait_for),
             javascript: options.javascript ?? null,
             block:      _normalizeBlock(options.block  || []),

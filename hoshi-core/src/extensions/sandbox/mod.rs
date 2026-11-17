@@ -91,6 +91,14 @@ impl NativeBridge {
                 Ok(resp) => {
                     let status = resp.status().as_u16();
                     let ok = resp.status().is_success();
+                    let final_url = resp.url().to_string();
+                    let mut headers_out: HashMap<String, String> = HashMap::new();
+                    for (name, value) in resp.headers() {
+                        let Ok(value) = value.to_str() else { continue };
+                        headers_out.entry(name.as_str().to_string())
+                            .and_modify(|v| { v.push_str(", "); v.push_str(value); })
+                            .or_insert_with(|| value.to_string());
+                    }
                     let cookies: HashMap<String, String> = resp.headers()
                         .get_all("set-cookie")
                         .iter()
@@ -111,6 +119,8 @@ impl NativeBridge {
                             "status": status,
                             "body": text,
                             "cookies": cookies,
+                            "headers": headers_out,
+                            "url": final_url,
                         }).to_string(),
                     }
                 }

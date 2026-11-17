@@ -28,12 +28,6 @@ impl Default for WaitFor {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct HeadlessOptions {
-    #[serde(default = "default_method")]
-    pub method: String,
-    #[serde(default)]
-    pub headers: std::collections::HashMap<String, String>,
-    #[serde(default)]
-    pub body: Option<String>,
     #[serde(default)]
     pub wait_for: WaitFor,
     #[serde(default)]
@@ -46,7 +40,6 @@ pub struct HeadlessOptions {
     pub timeout_ms: u64,
 }
 
-fn default_method() -> String { "GET".to_string() }
 fn default_timeout_ms() -> u64 { 15_000 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

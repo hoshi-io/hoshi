@@ -1,6 +1,18 @@
 class Torrent extends Base {
     getFilters() { return {}; }
 
+    async search(_)    { throw new Error("search not implemented"); }
+    async getMagnet(_) { throw new Error("getMagnet not implemented"); }
+
+    async _search(query, filters, page) {
+        const results = await this.search(query, filters, page);
+        return this._validateTorrentResults(results);
+    }
+
+    async _getMagnet(id) {
+        return this._validateMagnet(await this.getMagnet(id));
+    }
+
     _validateTorrentResult(item, index) {
         const ctx = `torrent result[${index}]`;
         if (typeof item !== "object" || item === null)
