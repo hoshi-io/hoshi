@@ -26,6 +26,9 @@ use crate::{
 #[cfg(target_os = "android")]
 use crate::auth_webview::auth_webview::init as auth_webview_init;
 
+#[cfg(target_os = "android")]
+mod android_tls;
+
 #[derive(Default)]
 pub struct TauriSession {
     pub user_id: RwLock<Option<String>>,
@@ -120,6 +123,9 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let app = builder
         .register_asynchronous_uri_scheme_protocol("proxy", proxy_protocol::handle_async)
         .setup(move |app| {
+            #[cfg(target_os = "android")]
+            android_tls::init();
+
             let base_dir = app.path().app_data_dir()
                 .map_err(|e| format!("Failed to obtain app_data_dir: {e}"))?;
 

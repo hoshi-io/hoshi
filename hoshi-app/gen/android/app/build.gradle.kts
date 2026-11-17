@@ -1,3 +1,4 @@
+import groovy.json.JsonSlurper
 import java.util.Properties
 
 plugins {
@@ -71,7 +72,32 @@ rust {
     rootDirRel = "../../../"
 }
 
+// rustls-platform-verifier (HTTPS through Android's trust store) ships its Kotlin half as a
+// local Maven repo inside its crate; find it with cargo metadata.
+fun rustlsPlatformVerifierMaven(): String {
+    val json = providers.exec {
+        workingDir = rootProject.file("../..")
+        commandLine(
+            "cargo", "metadata", "--format-version", "1",
+            "--filter-platform", "aarch64-linux-android",
+            "--manifest-path", rootProject.file("../../Cargo.toml").path
+        )
+    }.standardOutput.asText.get()
+    @Suppress("UNCHECKED_CAST")
+    val packages = (JsonSlurper().parseText(json) as Map<String, Any>)["packages"] as List<Map<String, Any>>
+    val manifest = packages.first { it["name"] == "rustls-platform-verifier-android" }["manifest_path"] as String
+    return File(File(manifest).parentFile, "maven").path
+}
+
+repositories {
+    maven {
+        url = uri(rustlsPlatformVerifierMaven())
+        metadataSources.artifact()
+    }
+}
+
 dependencies {
+    implementation("rustls:rustls-platform-verifier:latest.release")
     implementation("androidx.webkit:webkit:1.14.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.activity:activity-ktx:1.10.1")

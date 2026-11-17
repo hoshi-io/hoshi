@@ -18,6 +18,9 @@
     native <methods>;
 }
 
+# rustls-platform-verifier calls its Kotlin verifier from Rust by name.
+-keep, includedescriptorclasses class org.rustls.platformverifier.** { *; }
+
 # Move every renamed (non-kept) class into one package: smaller dex.
 # Kept classes, including everything JNI and Tauri look up by name, stay put.
 -repackageclasses
