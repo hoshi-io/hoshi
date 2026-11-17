@@ -9,6 +9,8 @@
     import Settings2 from 'phosphor-svelte/lib/SlidersIcon';
     import Trash2 from 'phosphor-svelte/lib/TrashIcon';
     import * as DropdownMenu from '@/components/ui/dropdown-menu';
+    import * as Drawer from '@/components/ui/drawer';
+    import { layoutState } from '@/stores/layout.svelte.js';
     import SegmentedControl from '@/components/settings/parts/SegmentedControl.svelte';
     import { homeEditor } from '@/app/home-editor.svelte.js';
     import { labelText } from '@/app/home.svelte.js';
@@ -56,6 +58,7 @@
         return parts.join(' · ');
     });
 
+    let menuOpen = $state(false);
     let renaming = $state(false);
     let name = $state('');
     let input = $state<HTMLInputElement | null>(null);
@@ -70,6 +73,22 @@
         if (name.trim() && name.trim() !== labelText(section.title)) homeEditor.renameSection(tab.id, section.id, name);
         renaming = false;
     }
+
+    // Closing a menu hands focus back to its trigger, which would blur (and end) a rename just started from it.
+    function keepRenameFocus(e: Event) {
+        if (!renaming) return;
+        e.preventDefault();
+        input?.focus();
+        input?.select();
+    }
+
+    function drawerAction(fn: () => void) {
+        menuOpen = false;
+        fn();
+    }
+
+    const drawerItem =
+        'flex h-12 w-full items-center gap-3 rounded-md px-3 text-left text-base font-medium transition-colors active:bg-muted disabled:opacity-40';
 </script>
 
 <div class="section-row flex items-center gap-3 border-b border-border/40 bg-background py-4 last:border-b-0">
@@ -143,6 +162,49 @@
         <Trash2 class="size-4" />
     </button>
 
+    {#if layoutState.isMobile}
+        <button type="button" aria-label={i18n.t('home.edit.more')} onclick={() => (menuOpen = true)}
+                class="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+            <MoreHorizontal class="size-4" />
+        </button>
+
+        <Drawer.Root bind:open={menuOpen}>
+            <Drawer.Content onCloseAutoFocus={keepRenameFocus}>
+                <Drawer.Header class="text-left">
+                    <Drawer.Title class="truncate text-lg font-bold">{labelText(section.title)}</Drawer.Title>
+                    <Drawer.Description class="truncate">{meta}</Drawer.Description>
+                </Drawer.Header>
+
+                <div class="space-y-4 px-4 pb-safe pb-6">
+                    {#if !fixedLayout}
+                        <div class="space-y-2">
+                            <p class="text-sm text-muted-foreground">{i18n.t('home.edit.layout')}</p>
+                            <SegmentedControl
+                                    value={section.layout}
+                                    options={layoutOptions}
+                                    label={i18n.t('home.edit.layout')}
+                                    onValueChange={(v) => homeEditor.setLayout(tab.id, section.id, v as SectionLayout)}
+                            />
+                        </div>
+                    {/if}
+
+                    <div class="space-y-1">
+                        <button type="button" class={drawerItem} onclick={() => drawerAction(startRename)}>
+                            <Pencil class="size-5" />{i18n.t('home.edit.rename')}
+                        </button>
+                        <button type="button" class={drawerItem} disabled={index === 0}
+                                onclick={() => drawerAction(() => homeEditor.moveSection(tab.id, index, index - 1))}>
+                            <ArrowUp class="size-5" />{i18n.t('home.edit.move_up')}
+                        </button>
+                        <button type="button" class={drawerItem} disabled={index === tab.sections.length - 1}
+                                onclick={() => drawerAction(() => homeEditor.moveSection(tab.id, index, index + 1))}>
+                            <ArrowDown class="size-5" />{i18n.t('home.edit.move_down')}
+                        </button>
+                    </div>
+                </div>
+            </Drawer.Content>
+        </Drawer.Root>
+    {:else}
     <DropdownMenu.DropdownMenu>
         <DropdownMenu.DropdownMenuTrigger>
             {#snippet child({ props })}
@@ -152,16 +214,10 @@
                 </button>
             {/snippet}
         </DropdownMenu.DropdownMenuTrigger>
-        <!-- Closing the menu hands focus back to its trigger, which would blur (and end) a rename just started from it. -->
         <DropdownMenu.DropdownMenuContent
                 align="end"
                 class="w-48"
-                onCloseAutoFocus={(e) => {
-                    if (!renaming) return;
-                    e.preventDefault();
-                    input?.focus();
-                    input?.select();
-                }}
+                onCloseAutoFocus={keepRenameFocus}
         >
             <DropdownMenu.DropdownMenuItem onclick={startRename}>
                 <Pencil />{i18n.t('home.edit.rename')}
@@ -189,6 +245,7 @@
             </DropdownMenu.DropdownMenuItem>
         </DropdownMenu.DropdownMenuContent>
     </DropdownMenu.DropdownMenu>
+    {/if}
 </div>
 
 {#if extensionQuery}
