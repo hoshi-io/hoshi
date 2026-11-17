@@ -59,6 +59,8 @@ export interface EnrichedListEntry extends ListEntry {
     contentType: string;
     nsfw: boolean;
     totalUnits?: number | null;
+    /** The content's own score, not the user's. */
+    rating?: number | null;
     trackerIds: Record<string, string>;
     externalIds: unknown;
     hasExtensionSource: boolean;

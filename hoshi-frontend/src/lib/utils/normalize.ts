@@ -55,8 +55,9 @@ export function getCardTrailerUrl(card: NormalizedCard): string | null {
     return card.trailerUrlRaw;
 }
 
+// Trackers report an unscored entry as 0.
 export function getCardScore(card: NormalizedCard): string | null {
-    if (card.score === null) return null;
+    if (!card.score || card.score <= 0) return null;
     const format = appConfig.data?.content?.scoreFormat;
 
     switch (format) {
@@ -73,7 +74,7 @@ export function getCardScore(card: NormalizedCard): string | null {
 }
 
 export function formatScore(rating: number | null): string | null {
-    if (rating === null || rating === undefined) return null;
+    if (!rating || rating <= 0) return null;
     const format = appConfig.data?.content?.scoreFormat;
 
     switch (format) {

@@ -51,7 +51,8 @@
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
-            return shuffled.slice(0, LIMIT).map(r => r.card);
+            // Planning picks are unscored by the user, so show the title's own score.
+            return shuffled.slice(0, LIMIT).map(r => ({ ...r.card, score: r.original.rating ?? null }));
         }
         const key = sort === 'ended'
             ? (r: typeof rows[number]) => time(r.original.endDate) || time(r.original.updatedAt)

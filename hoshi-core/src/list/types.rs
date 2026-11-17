@@ -79,6 +79,8 @@ pub struct EnrichedListEntry {
     pub content_type: String,
     pub nsfw: bool,
     pub total_units: Option<i32>,
+    /// The content's own score (not the user's).
+    pub rating: Option<f32>,
     pub tracker_ids: Value,
     pub external_ids: Value,
     pub has_extension_source: bool,
