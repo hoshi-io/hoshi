@@ -18,6 +18,10 @@
     native <methods>;
 }
 
+-keep class com.ninelfx.hoshi.MainActivity {
+    native <methods>;
+}
+
 # rustls-platform-verifier calls its Kotlin verifier from Rust by name.
 -keep, includedescriptorclasses class org.rustls.platformverifier.** { *; }
 

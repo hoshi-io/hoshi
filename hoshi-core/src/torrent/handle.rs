@@ -112,7 +112,19 @@ impl TorrentHandle {
 
     async fn ensure_session(&self) -> CoreResult<&Arc<librqbit::Session>> {
         self.0.session.get_or_try_init(|| async {
-            let session = librqbit::Session::new(self.0.data_dir.clone())
+            // librqbit's default DHT state path needs an OS config dir, which Android doesn't have.
+            let dht_file = self.0.data_dir.parent().unwrap_or(&self.0.data_dir).join("dht.json");
+            let opts = librqbit::SessionOptions {
+                dht: Some(librqbit::DhtSessionConfig {
+                    persistence: Some(librqbit::dht::DhtPersistenceConfig {
+                        config_filename: Some(dht_file),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            };
+            let session = librqbit::Session::new_with_opts(self.0.data_dir.clone(), opts)
                 .await
                 .map_err(|e| core_err!(Internal, "error.torrent.session_init_failed", e))?;
             Self::apply_limits(&session, &*self.0.config.read().await);

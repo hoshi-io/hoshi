@@ -2355,7 +2355,6 @@ dependencies = [
  "jni",
  "libc",
  "libmpv2",
- "ndk-context",
  "objc2",
  "objc2-foundation",
  "rustls-platform-verifier",

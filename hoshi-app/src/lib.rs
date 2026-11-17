@@ -123,15 +123,14 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let app = builder
         .register_asynchronous_uri_scheme_protocol("proxy", proxy_protocol::handle_async)
         .setup(move |app| {
-            #[cfg(target_os = "android")]
-            android_tls::init();
-
             let base_dir = app.path().app_data_dir()
                 .map_err(|e| format!("Failed to obtain app_data_dir: {e}"))?;
 
             let paths = hoshi_core::paths::AppPaths::from_base(base_dir);
             let headless = std::sync::Arc::new(headless::headless::TauriHeadless::new(app.handle().clone()));
             hoshi_core::logs::init_log_file(&paths.logs_path);
+            #[cfg(target_os = "android")]
+            android_tls::log_status();
 
             #[cfg(any(windows, target_os = "linux"))]
             {
