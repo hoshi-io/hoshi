@@ -148,10 +148,11 @@ class ListStore {
                 if (supported && !supported.includes(item.card.contentType.toUpperCase())) {
                     matchesMissingTracker = false;
                 } else {
+                    // Only entries Hoshi can push: no list entry there yet, but a known ID on it.
                     const sources = item.original.sources || [];
-                    matchesMissingTracker = !sources.some(
-                        s => s.tracker === this.missingOn
-                    );
+                    matchesMissingTracker =
+                        !!item.original.trackerIds?.[this.missingOn] &&
+                        !sources.some(s => s.tracker === this.missingOn);
                 }
             }
 
