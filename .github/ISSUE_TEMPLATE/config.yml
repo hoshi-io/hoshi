@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: FAQ and docs
+    url: https://hoshi-io.github.io/docs/guide/faq
+    about: Common questions, platform differences and known limitations.
+  - name: Extension development
+    url: https://hoshi-io.github.io/docs/extensions/getting-started
+    about: How to write, test and share extensions.

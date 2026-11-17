@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest an idea or an improvement.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it help you?
+      description: The problem it solves or how you'd use it.
+
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: Which platforms is it for?
+      multiple: true
+      options:
+        - Desktop
+        - Android
+        - Android TV
+        - iOS
+        - All

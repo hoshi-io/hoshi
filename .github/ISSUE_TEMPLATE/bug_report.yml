@@ -1,0 +1,70 @@
+name: Bug report
+description: Something doesn't work or crashes.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! If the problem is a single source not loading (search, episodes, chapters), it's probably the extension, not Hoshi. Please report it to the extension's author.
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Android
+        - Android TV
+        - iOS
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Hoshi version
+      description: Shown in Settings.
+      placeholder: "1.3.0"
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device / OS version
+      placeholder: "Pixel 8, Android 15 / Windows 11 / Arch Linux"
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Tap ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Open **Settings → Logs** and copy the log from the session where the problem happened. If the app crashed or closed by itself, pick the **previous** log file, since the crash is recorded there.
+      render: text
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots, the extension you were using, the tracker you have connected, etc.
