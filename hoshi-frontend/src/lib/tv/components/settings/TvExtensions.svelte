@@ -106,6 +106,14 @@
         el?.focus();
     }
 
+    // The empty-state button disappears with the tab switch, so focus would drop to <body>.
+    let exploreTab = $state<HTMLElement | null>(null);
+    async function openExplore() {
+        tab = 'explore';
+        await tick();
+        exploreTab?.focus();
+    }
+
     let managing = $state(false);
     let stremioUrl = $state('');
 
@@ -243,6 +251,7 @@
                 type="button"
                 role="radio"
                 aria-checked={tab === 'explore'}
+                bind:this={exploreTab}
                 data-sn
                 class={chipClass(tab === 'explore')}
                 onclick={() => (tab = 'explore')}
@@ -267,7 +276,7 @@
                     title={i18n.t('settings.extension_section.no_installed')}
                     description={i18n.t('settings.extension_section.no_installed_desc')}
             >
-                <button type="button" data-sn class={outlineBtn} onclick={() => (tab = 'explore')}>
+                <button type="button" data-sn class={outlineBtn} onclick={openExplore}>
                     <Store class="size-5" />
                     {i18n.t('marketplace.title')}
                 </button>

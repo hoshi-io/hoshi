@@ -1,4 +1,5 @@
 let enabled = false;
+let lastRect: DOMRect | null = null;
 
 // When a [data-sn-trap] container exists (modal, side panel), navigation is limited to it.
 function scopeRoot(): ParentNode {
@@ -68,11 +69,9 @@ function findNext(direction: 'up' | 'down' | 'left' | 'right'): HTMLElement | nu
 
     const current = active?.closest<HTMLElement>('[data-sn]') ?? null;
 
-    if (!current) {
-        return candidates[0] ?? null;
-    }
-    if (!candidates.includes(current)) {
-        return candidates[0] ?? null;
+    // Focus was lost (the focused element was removed): resume next to where it was.
+    if (!current || !candidates.includes(current)) {
+        return nearestTo(lastRect, candidates) ?? candidates[0] ?? null;
     }
 
     const rowsScope = current.closest<HTMLElement>('[data-sn-rows]');
@@ -111,7 +110,37 @@ function findNext(direction: 'up' | 'down' | 'left' | 'right'): HTMLElement | nu
         }
     }
 
+    return remembered(best, current);
+}
+
+// Entering a [data-sn-remember] group from outside lands on its aria-current item (e.g. the
+// selected settings section) instead of whichever item happens to be closest.
+function remembered(target: HTMLElement | null, from: HTMLElement): HTMLElement | null {
+    const group = target?.closest<HTMLElement>('[data-sn-remember]');
+    if (!group || group.contains(from)) return target;
+    return group.querySelector<HTMLElement>('[data-sn][aria-current="true"]') ?? target;
+}
+
+function nearestTo(rect: DOMRect | null, candidates: HTMLElement[]): HTMLElement | null {
+    if (!rect) return null;
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    let best: HTMLElement | null = null;
+    let bestDist = Infinity;
+    for (const el of candidates) {
+        const c = center(el);
+        const d = Math.hypot(c.x - x, c.y - y);
+        if (d < bestDist) {
+            bestDist = d;
+            best = el;
+        }
+    }
     return best;
+}
+
+function onFocusIn(e: FocusEvent) {
+    const el = (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-sn]');
+    if (el) lastRect = el.getBoundingClientRect();
 }
 
 const TEXT_INPUT_TYPES = new Set(['text', 'password', 'search', 'email', 'url', 'tel']);
@@ -153,11 +182,13 @@ export function enableSpatialNav() {
     if (enabled) return;
     enabled = true;
     window.addEventListener('keydown', onKeydown, true);
+    window.addEventListener('focusin', onFocusIn, true);
 }
 
 export function disableSpatialNav() {
     enabled = false;
     window.removeEventListener('keydown', onKeydown, true);
+    window.removeEventListener('focusin', onFocusIn, true);
 }
 
 export function focusFirstIn(container: HTMLElement | Document = document) {

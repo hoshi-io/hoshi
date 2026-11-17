@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import { onMount, tick } from 'svelte';
     import { fade } from 'svelte/transition';
     import { toast } from 'svelte-sonner';
     import Globe from 'phosphor-svelte/lib/GlobeIcon';
@@ -38,6 +38,8 @@
     ]);
 
     let active = $state<SectionId>('account');
+    // Mounting a section is heavy, so moving through the menu only renders the one you stop on.
+    let shown = $state<SectionId>('account');
     let navEl = $state<HTMLElement | null>(null);
     let contentEl = $state<HTMLElement | null>(null);
     let appVersion = $state('');
@@ -50,7 +52,13 @@
     });
 
     $effect(() => {
-        void active;
+        const id = active;
+        const t = setTimeout(() => (shown = id), 150);
+        return () => clearTimeout(t);
+    });
+
+    $effect(() => {
+        void shown;
         contentEl?.closest('main')?.scrollTo({ top: 0 });
     });
 
@@ -61,7 +69,11 @@
         }
     }
 
-    function enterContent() {
+    async function enterContent() {
+        if (shown !== active) {
+            shown = active;
+            await tick();
+        }
         contentEl?.querySelector<HTMLElement>('[data-sn]')?.focus();
     }
 
@@ -101,7 +113,7 @@
     {:else}
         <div class="flex items-start gap-8" in:fade={{ duration: 200 }}>
             <!-- Section menu. Focusing an entry previews it; OK moves into its controls. -->
-            <nav bind:this={navEl} use:focusNavOnMount class="sticky top-8 flex w-52 shrink-0 flex-col gap-2 self-start">
+            <nav bind:this={navEl} use:focusNavOnMount data-sn-remember class="sticky top-8 flex w-52 shrink-0 flex-col gap-2 self-start">
                 {#each sections as section (section.id)}
                     <button
                             type="button"
@@ -109,7 +121,7 @@
                             aria-current={active === section.id}
                             onfocus={() => (active = section.id)}
                             onclick={enterContent}
-                            class="flex h-14 items-center gap-3 rounded-lg px-4 text-lg font-bold outline-none transition-colors
+                            class="flex h-14 items-center gap-3 rounded-lg px-4 text-lg font-bold outline-none
                                    focus:bg-primary focus:text-primary-foreground focus:ring-4 focus:ring-primary/40
                                    {active === section.id ? 'bg-primary/15 text-foreground' : 'text-muted-foreground'}"
                     >
@@ -127,29 +139,29 @@
 
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div bind:this={contentEl} onkeydown={onContentKeydown} data-sn-rows class="min-w-0 flex-1">
-                {#key active}
+                {#key shown}
                     <div in:fade={{ duration: 120 }}>
-                        {#if active === 'account' && auth.user}
+                        {#if shown === 'account' && auth.user}
                             <TvAccount user={auth.user} onUpdate={() => auth.restore(true)} onDeleted={() => showSwitchProfile = true}/>
-                        {:else if active === 'general'}
+                        {:else if shown === 'general'}
                             <TvGeneral
                                     bind:config={appConfig.data.general}
                                     bind:contentConfig={appConfig.data.content}
                                     onSave={handleSaveConfig}
                             />
-                        {:else if active === 'ui'}
+                        {:else if shown === 'ui'}
                             <TvUi bind:config={appConfig.data.ui} onSave={handleSaveConfig} />
-                        {:else if active === 'player'}
+                        {:else if shown === 'player'}
                             <TvPlayer
                                     bind:playerConfig={appConfig.data.player}
                                     bind:subConfig={appConfig.data.subtitles}
                                     onSave={handleSaveConfig}
                             />
-                        {:else if active === 'tracking'}
+                        {:else if shown === 'tracking'}
                             <TvTracker bind:config={appConfig.data.list} onSave={handleSaveConfig} />
-                        {:else if active === 'extensions'}
+                        {:else if shown === 'extensions'}
                             <TvExtensions bind:config={appConfig.data.extensions} onSave={handleSaveConfig} />
-                        {:else if active === 'torrent'}
+                        {:else if shown === 'torrent'}
                             <TvTorrent bind:torrentConfig={appConfig.data.torrent} onSave={handleSaveConfig} />
                         {/if}
                     </div>
