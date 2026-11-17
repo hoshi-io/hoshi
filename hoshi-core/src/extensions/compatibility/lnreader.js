@@ -396,6 +396,7 @@
                     anilist_id:       null,
                     mal_id:           null,
                     external_ids:     {},
+                    url:              /^https?:\/\//i.test(id) ? id : (plugin.site ? plugin.site + id : null),
                     _totalPages:      raw.totalPages || 1,
                     _path:            id,
                 };

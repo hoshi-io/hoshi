@@ -187,6 +187,8 @@ pub struct ExtensionSource {
     pub extension_id: String,
     pub nsfw: bool,
     pub language: Option<String>,
+    #[serde(default)]
+    pub url: Option<String>,
     pub created_at: i64,
     pub updated_at: i64,
 }

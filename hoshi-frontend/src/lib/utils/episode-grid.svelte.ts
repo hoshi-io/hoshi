@@ -197,6 +197,7 @@ export function useEpisodeList(opts: Options) {
         get selectedArc() { return selectedArc; },
         set selectedArc(i: number) { selectedArc = i; },
         get resumeEpisode() { return resumeEpisode; },
+        get resumeHref() { return watchHref(resumeEpisode, progressMap.get(resumeEpisode)); },
         progressFor: (ep: number) => progressMap.get(ep),
         watchHref
     };

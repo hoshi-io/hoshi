@@ -268,7 +268,7 @@ impl ContentResolverService {
     ) -> CoreResult<()> {
         if Self::matches_by_tracker_ids(pool, cid, ext_meta, content_type).await? {
             debug!(cid = %cid, ext = %ext_name, "Resolved via tracker ID");
-            return Self::link(pool, cid, ext_name, ext_id, ext_nsfw).await;
+            return Self::link(pool, cid, ext_name, ext_id, ext_nsfw, ext_meta.url.as_deref()).await;
         }
 
         let (plain_ext_title, _) = split_year_suffix(&ext_meta.title);
@@ -277,7 +277,7 @@ impl ContentResolverService {
         ).await? {
             if matched.cid == cid {
                 debug!(cid = %cid, ext = %ext_name, "Resolved via fuzzy title match");
-                return Self::link(pool, cid, ext_name, ext_id, ext_nsfw).await;
+                return Self::link(pool, cid, ext_name, ext_id, ext_nsfw, ext_meta.url.as_deref()).await;
             }
             warn!(expected = %cid, matched = %matched.cid, "Fuzzy matched a different CID — rejecting");
         }
@@ -307,7 +307,7 @@ impl ContentResolverService {
             full.content.cid
         };
 
-        Self::link(&state.pool, &cid, ext_name, ext_id, ext_nsfw).await?;
+        Self::link(&state.pool, &cid, ext_name, ext_id, ext_nsfw, None).await?;
 
         Ok(Some(Self::load_full_content(state, &cid).await?))
     }
@@ -401,7 +401,7 @@ impl ContentResolverService {
             &state.pool, &ext_meta.title, Some(content_type.clone()), ext_meta.year,
         ).await? {
             info!(cid = %matched.cid, ext = %ext_name, title = %ext_meta.title, "Found existing entry in local DB, linking");
-            Self::link(&state.pool, &matched.cid, ext_name, ext_id, ext_nsfw).await?;
+            Self::link(&state.pool, &matched.cid, ext_name, ext_id, ext_nsfw, ext_meta.url.as_deref()).await?;
             ExtensionService::save_extension_metadata(state, &matched.cid, ext_name, ext_id).await;
             return Self::load_full_content(state, &matched.cid).await;
         }
@@ -544,7 +544,7 @@ impl ContentResolverService {
     ) -> CoreResult<String> {
         for (tracker, id) in Self::tracker_ids_from_ext_meta(ext_meta, content_type) {
             if let Ok(Some(cid)) = TrackerRepository::find_cid_by_tracker(&state.pool, tracker, &id).await {
-                Self::link(&state.pool, &cid, ext_name, ext_id, ext_nsfw).await?;
+                Self::link(&state.pool, &cid, ext_name, ext_id, ext_nsfw, ext_meta.url.as_deref()).await?;
                 return Ok(cid);
             }
         }
@@ -553,7 +553,7 @@ impl ContentResolverService {
         let now = Utc::now().timestamp();
         let meta = Self::ext_meta_to_metadata(&cid, ext_name, ext_id, ext_meta, now);
         ContentRepository::create_with_type(&state.pool, content_type, ext_nsfw, meta).await?;
-        Self::link(&state.pool, &cid, ext_name, ext_id, ext_nsfw).await?;
+        Self::link(&state.pool, &cid, ext_name, ext_id, ext_nsfw, ext_meta.url.as_deref()).await?;
         Ok(cid)
     }
 
@@ -634,7 +634,7 @@ impl ContentResolverService {
         Ok(false)
     }
 
-    pub async fn link(pool: &SqlitePool, cid: &str, ext_name: &str, ext_id: &str, nsfw: bool) -> CoreResult<()> {
+    pub async fn link(pool: &SqlitePool, cid: &str, ext_name: &str, ext_id: &str, nsfw: bool, url: Option<&str>) -> CoreResult<()> {
         let now = Utc::now().timestamp();
         ExtensionRepository::add_source(pool, &ExtensionSource {
             id: None,
@@ -643,6 +643,7 @@ impl ContentResolverService {
             extension_id: ext_id.to_string(),
             nsfw,
             language: None,
+            url: url.map(str::to_string),
             created_at: now,
             updated_at: now,
         }).await?;

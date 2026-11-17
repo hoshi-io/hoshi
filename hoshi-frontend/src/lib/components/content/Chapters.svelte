@@ -10,6 +10,7 @@
     import type { CoreError } from "@/api/client";
     import type { ChapterProgress } from "@/api/progress/types";
     import ResponsiveSelect from "$lib/components/ResponsiveSelect.svelte";
+    import type { ResumeTarget } from "@/app/content.svelte";
     import {
         ALL, chapterFacets, chapterHref, chapterNum, filterChapters, scanlatorLabel, type ChapterLike,
     } from "@/app/chapterVariants";
@@ -19,13 +20,15 @@
         contentType,
         progress = [],
         isDerived,
-        source
+        source,
+        resume = $bindable(null)
     }: {
         cid: string,
         contentType: string,
         progress?: ChapterProgress[],
         isDerived: boolean,
-        source: string
+        source: string,
+        resume?: ResumeTarget | null
     } = $props();
 
     const ARC_SIZE = 24;
@@ -82,6 +85,15 @@
     const resumeChapter = $derived(
         chapters.length === 0 ? 1 : (firstUnread?.number ?? firstUnread?.unitNumber) ?? 1
     );
+
+    // The hero's Continue button reads with whichever extension this list is showing.
+    $effect(() => {
+        const started = progress.length > 0;
+        const target = firstUnread ?? (started ? chapters[chapters.length - 1] : chapters[0]);
+        resume = selectedExtensionName && target
+            ? { number: chapterNum(target), href: chapterHref(basePath, cid, selectedExtensionName, target, rawChapters), started }
+            : null;
+    });
 
     const arcs = $derived.by(() => {
         if (numbers.length <= ARC_SIZE) return null;

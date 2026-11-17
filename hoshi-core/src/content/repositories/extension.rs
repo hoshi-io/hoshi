@@ -7,7 +7,7 @@ use crate::content::models::ExtensionSource;
 use crate::content::repositories::{placeholders, IN_CHUNK};
 use crate::error::CoreResult;
 
-type ExtensionSourceRow = (i64, String, String, String, i32, Option<String>, i64, i64);
+type ExtensionSourceRow = (i64, String, String, String, i32, Option<String>, Option<String>, i64, i64);
 pub struct ExtensionRepository;
 
 impl ExtensionRepository {
@@ -18,11 +18,12 @@ impl ExtensionRepository {
         let result = sqlx::query(
             r#"
             INSERT INTO extension_sources
-                (cid, extension_name, extension_id, nsfw, language, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+                (cid, extension_name, extension_id, nsfw, language, url, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(extension_name, extension_id) DO UPDATE SET
                 nsfw       = excluded.nsfw,
                 language   = excluded.language,
+                url        = COALESCE(excluded.url, extension_sources.url),
                 updated_at = excluded.updated_at
             "#,
         )
@@ -31,12 +32,23 @@ impl ExtensionRepository {
             .bind(&source.extension_id)
             .bind(source.nsfw)
             .bind(&source.language)
+            .bind(&source.url)
             .bind(now)
             .bind(now)
             .execute(pool)
             .await?;
 
         Ok(result.last_insert_rowid())
+    }
+
+    pub async fn set_url(pool: &SqlitePool, ext_name: &str, ext_id: &str, url: &str) -> CoreResult<()> {
+        sqlx::query("UPDATE extension_sources SET url = ? WHERE extension_name = ? AND extension_id = ?")
+            .bind(url)
+            .bind(ext_name)
+            .bind(ext_id)
+            .execute(pool)
+            .await?;
+        Ok(())
     }
 
     pub async fn update_source(pool: &SqlitePool, id: i64, ext_id: &str) -> CoreResult<()> {
@@ -99,7 +111,7 @@ impl ExtensionRepository {
         let mut out: HashMap<String, Vec<ExtensionSource>> = HashMap::new();
         for chunk in cids.chunks(IN_CHUNK) {
             let sql = format!(
-                "SELECT id, cid, extension_name, extension_id, nsfw, language, created_at, updated_at \
+                "SELECT id, cid, extension_name, extension_id, nsfw, language, url, created_at, updated_at \
                  FROM extension_sources WHERE cid IN ({})",
                 placeholders(chunk.len()),
             );
@@ -107,7 +119,7 @@ impl ExtensionRepository {
             for cid in chunk {
                 q = q.bind(*cid);
             }
-            for (id, cid, extension_name, extension_id, nsfw, language, created_at, updated_at) in q.fetch_all(pool).await? {
+            for (id, cid, extension_name, extension_id, nsfw, language, url, created_at, updated_at) in q.fetch_all(pool).await? {
                 out.entry(cid.clone()).or_default().push(ExtensionSource {
                     id: Some(id),
                     cid,
@@ -115,6 +127,7 @@ impl ExtensionRepository {
                     extension_id,
                     nsfw: nsfw == 1,
                     language,
+                    url,
                     created_at,
                     updated_at,
                 });

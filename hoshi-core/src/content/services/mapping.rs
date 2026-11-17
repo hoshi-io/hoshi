@@ -87,7 +87,7 @@ impl MappingService {
             ExtensionRepository::add_source(&state.pool, &ExtensionSource {
                 id: None, cid: cid.to_string(), extension_name: ext_name.to_string(),
                 extension_id: ext_id.to_string(), nsfw: ext_nsfw,
-                language: None, created_at: now, updated_at: now,
+                language: None, url: None, created_at: now, updated_at: now,
             }).await?;
         }
 

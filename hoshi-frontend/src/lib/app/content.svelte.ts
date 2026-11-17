@@ -10,6 +10,9 @@ import { appConfig } from "@/stores/config.svelte.js";
 import {type NormalizedRelation, normalizeRelationCard} from "@/utils/normalize";
 import {historyStore} from "@/stores/history.svelte";
 
+/** Where the details page's Continue button goes: the next episode/chapter to watch or read. */
+export type ResumeTarget = { number: number; href: string; started: boolean };
+
 export class ContentDetailState {
     isLoading = $state(true);
     error = $state<any>(null);
@@ -99,6 +102,7 @@ export class ContentDetailState {
         layoutState.title = i18n.t('error.generic');
     }
 
+    /** Movies have no episode list, so they always start at 1. */
     watchNow() {
         if (this.fullContent?.content.contentType === 'anime') {
             goto(`/watch/${this.cid}/1`);

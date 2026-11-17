@@ -15,7 +15,7 @@
     import { Spinner } from "@/components/ui/spinner";
     import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
 
-    import { ContentDetailState } from "@/app/content.svelte";
+    import { ContentDetailState, type ResumeTarget } from "@/app/content.svelte";
     import { layoutState } from "@/stores/layout.svelte";
     import ContentHero from "@/components/hero/ContentHero.svelte";
     import ListEditorButton from "@/components/ListEditorButton.svelte";
@@ -32,6 +32,7 @@
     let animeProgress = $state<AnimeProgress[]>([]);
     let chapterProgress = $state<ChapterProgress[]>([]);
     let progressLoaded = $state(false);
+    let resume = $state<ResumeTarget | null>(null);
 
     $effect(() => {
         layoutState.showBack = true;
@@ -122,12 +123,13 @@
                 bind:showMergeModal
                 onWatchNow={() => detail.watchNow()}
                 headers={detail.headers}
+                {resume}
         />
 
         <div class="relative z-10 w-full max-w-[1800px] mx-auto px-4 md:px-8 lg:pl-32 lg:pr-12 mt-10 pb-24 space-y-10" in:fade={{ delay: 250, duration: 400 }}>
 
             {#if !isMovie}
-                <section class="space-y-4">
+                <section id="units" class="space-y-4 scroll-mt-24">
                     {#if isAnime}
                         <Episodes
                                 cid={detail.fullContent.content.cid}
@@ -135,6 +137,7 @@
                                 contentUnits={detail.fullContent.contentUnits}
                                 duration={meta?.episodeDuration}
                                 progress={animeProgress}
+                                bind:resume
                         />
                     {:else}
                         <Chapters
@@ -143,6 +146,7 @@
                                 progress={chapterProgress}
                                 isDerived={detail.isDerived}
                                 source={detail.source || detail.fullContent.metadata[0].sourceName}
+                                bind:resume
                         />
                     {/if}
                 </section>

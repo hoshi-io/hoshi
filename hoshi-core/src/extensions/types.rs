@@ -122,6 +122,9 @@ pub struct ExtensionMetadata {
    pub anilist_id: Option<Value>,
    pub mal_id: Option<Value>,
    pub external_ids: Option<Value>,
+   /// The content's page on the extension's site.
+   #[serde(default)]
+   pub url: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

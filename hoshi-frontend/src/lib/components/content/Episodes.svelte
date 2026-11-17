@@ -5,13 +5,16 @@
     import ResponsiveSelect from "$lib/components/ResponsiveSelect.svelte";
     import {scrollIfResume, useEpisodeList} from "@/utils/episode-grid.svelte.js";
     import EpisodeCard from "@/components/card/EpisodeCard.svelte";
+    import Check from 'phosphor-svelte/lib/CheckIcon';
+    import type { ResumeTarget } from "@/app/content.svelte";
 
-    let { cid, epsOrChapters, contentUnits = [], duration, progress = [] }: {
+    let { cid, epsOrChapters, contentUnits = [], duration, progress = [], resume = $bindable(null) }: {
         cid: string,
         epsOrChapters?: number | null,
         contentUnits?: ContentUnit[],
         duration?: number | null,
         progress?: AnimeProgress[],
+        resume?: ResumeTarget | null,
     } = $props();
 
     const list = useEpisodeList({
@@ -20,6 +23,15 @@
         total: () => epsOrChapters,
         duration: () => duration,
         progress: () => progress
+    });
+
+    // Without thumbnails (most extension-only shows) the cards would be empty boxes.
+    const compact = $derived(!list.episodes.some(ep => ep.thumbnail));
+
+    $effect(() => {
+        resume = list.episodes.length
+            ? { number: list.resumeEpisode, href: list.resumeHref, started: progress.length > 0 }
+            : null;
     });
 
     const arcItems = $derived(
@@ -46,6 +58,33 @@
         {/if}
     </div>
 
+    {#if compact}
+    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+        {#each list.visible as row (row.number)}
+            <a
+                    href={row.href}
+                    use:scrollIfResume={row.isResume}
+                    title={row.title ?? row.label}
+                    class="relative flex h-16 flex-col justify-center overflow-hidden rounded-md border px-3 transition-colors hover:bg-muted/50
+                           {row.isResume ? 'border-primary/60 bg-primary/10' : 'border-border/40 bg-muted/20'}
+                           {row.completed ? 'opacity-50' : ''}"
+            >
+                <span class="flex items-center gap-1.5 text-sm font-bold tabular-nums">
+                    {row.number}
+                    {#if row.completed}<Check class="size-3.5 text-primary" weight="bold" />{/if}
+                </span>
+                {#if row.title}
+                    <span class="truncate text-xs text-muted-foreground">{row.title}</span>
+                {:else if row.tag}
+                    <span class="truncate text-xs font-semibold text-primary">{row.tag}</span>
+                {/if}
+                {#if row.pct}
+                    <span class="absolute inset-x-0 bottom-0 h-0.5 bg-primary" style="width: {row.pct}%"></span>
+                {/if}
+            </a>
+        {/each}
+    </div>
+    {:else}
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-3 gap-y-6">
         {#each list.visible as row (row.number)}
             <div use:scrollIfResume={row.isResume}>
@@ -69,4 +108,5 @@
             </div>
         {/each}
     </div>
+    {/if}
 </div>

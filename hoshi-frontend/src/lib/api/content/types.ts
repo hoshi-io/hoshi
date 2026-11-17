@@ -76,6 +76,7 @@ export interface ExtensionSource {
     extensionId: string;
     nsfw: boolean;
     language?: string | null;
+    url?: string | null;
     createdAt: number;
     updatedAt: number;
 }

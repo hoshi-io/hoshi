@@ -34,6 +34,12 @@ impl ExtensionService {
             }
         };
 
+        if let Some(url) = ext_meta.url.as_deref() {
+            if let Err(e) = ExtensionRepository::set_url(&state.pool, ext_name, ext_id, url).await {
+                warn!(ext = %ext_name, error = ?e, "Failed to save extension page URL");
+            }
+        }
+
         let now = chrono::Utc::now().timestamp();
         let meta = ContentResolverService::ext_meta_to_metadata(cid, ext_name, ext_id, &ext_meta, now);
 

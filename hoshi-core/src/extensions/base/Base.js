@@ -65,6 +65,11 @@ class Base {
             throw new Error(`[${this.constructor.name}] metadata.nsfw must be a boolean`);
         }
 
+        if (meta.url !== undefined && meta.url !== null) {
+            if (typeof meta.url !== "string" || !/^https?:\/\//i.test(meta.url))
+                throw new Error(`[${this.constructor.name}] metadata.url must be an http(s) URL`);
+        }
+
         const trustedIds = ["anilist_id", "mal_id"];
         for (const field of trustedIds) {
             const val = meta[field];

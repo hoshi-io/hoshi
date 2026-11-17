@@ -16,6 +16,11 @@
     import ChevronUp from 'phosphor-svelte/lib/CaretUpIcon';
     import Clock from 'phosphor-svelte/lib/ClockIcon';
     import GitMerge from 'phosphor-svelte/lib/GitMergeIcon';
+    import FilmStrip from 'phosphor-svelte/lib/FilmStripIcon';
+    import { openUrl } from '@tauri-apps/plugin-opener';
+    import { listStore } from "@/app/list.svelte.js";
+    import { extensions } from "@/stores/extensions.svelte.js";
+    import type { ResumeTarget } from "@/app/content.svelte";
     import ListEditorButton from "@/components/ListEditorButton.svelte";
     import SmartImage from "@/components/SmartImage.svelte";
     import { formatScore } from "@/utils/normalize";
@@ -31,7 +36,8 @@
         showExtensionModal = $bindable(),
         showMergeModal = $bindable(),
         onWatchNow,
-        headers
+        headers,
+        resume = null
     } = $props<{
         fullContent: any;
         meta: any;
@@ -41,8 +47,39 @@
         showExtensionModal: boolean;
         showMergeModal: boolean;
         onWatchNow: () => void;
-        headers?: any
+        headers?: any;
+        resume?: ResumeTarget | null
     }>();
+
+    const GENRES_LIMIT = 5;
+    let genresExpanded = $state(false);
+    const genres = $derived<string[]>(meta?.genres ?? []);
+    const visibleGenres = $derived(genresExpanded ? genres : genres.slice(0, GENRES_LIMIT));
+
+    const STATUS_LABEL: Record<string, string> = {
+        CURRENT: 'list.current', COMPLETED: 'list.completed', PLANNING: 'list.planning',
+        PAUSED: 'list.paused', DROPPED: 'list.dropped', REPEATING: 'list.repeating',
+    };
+    const listEntry = $derived(listStore.entries.find(e => e.cid === fullContent.content.cid));
+    const listTotal = $derived(meta?.epsOrChapters || listEntry?.totalUnits || null);
+    const listScore = $derived(listEntry?.score ? formatScore(listEntry.score) : null);
+
+    const extName = (id: string) => extensions.installed.find(e => e.id === id)?.name ?? id;
+    const extIcon = (id: string) => extensions.installed.find(e => e.id === id)?.icon ?? null;
+    const extSources = $derived<any[]>(fullContent.extensionSources ?? []);
+    const linkedExtSources = $derived(extSources.filter(s => s.url));
+
+    const primaryLabel = $derived(
+        resume?.started
+            ? i18n.t(isAnime ? 'content.continue_ep' : 'content.continue_ch', { num: resume.number })
+            : i18n.t(isAnime ? 'content.watch_now' : 'content.read_now')
+    );
+
+    // No episode/chapter list to resume from (movies, or no extension picked yet).
+    function startWithoutResume() {
+        if (isAnime) onWatchNow();
+        else document.getElementById('units')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 
     let trackersExpanded = $state(false);
     const TRACKERS_LIMIT = 6;
@@ -161,6 +198,13 @@
             </h1>
 
             <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 text-xs text-muted-foreground font-semibold">
+                {#if listEntry}
+                    <span class="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-md font-bold shadow-sm">
+                        {STATUS_LABEL[listEntry.status] ? i18n.t(STATUS_LABEL[listEntry.status]) : listEntry.status}
+                        <span class="font-mono text-primary/80">· {listEntry.progress}{listTotal ? `/${listTotal}` : ''}</span>
+                        {#if listScore}<span class="text-primary/80">· ★ {listScore}</span>{/if}
+                    </span>
+                {/if}
                 {#if score}
                     <span class="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md font-bold shadow-sm">
                         <Star class="w-3 h-3 fill-current" weight="fill" /> {score}
@@ -187,6 +231,11 @@
                         {meta.epsOrChapters} {isAnime ? i18n.t('content.eps_short') : i18n.t('content.ch_short')}
                     </span>
                 {/if}
+                {#if trackers.length === 0 && extSources.length > 0}
+                    <span class="flex items-center gap-1.5 text-foreground/70">
+                        <Plug class="w-3 h-3 text-muted-foreground/60" />{i18n.t('content.via', { name: extName(extSources[0].extensionName) })}
+                    </span>
+                {/if}
                 {#if meta?.studio}
                     <span class="flex items-center gap-1.5 text-foreground/80">
                         <Building2 class="w-3 h-3 text-muted-foreground/60" />{meta.studio}
@@ -194,23 +243,32 @@
                 {/if}
             </div>
 
-            {#if meta?.genres?.length}
+            {#if genres.length}
                 <div class="flex flex-wrap justify-center sm:justify-start gap-1.5">
-                    {#each meta.genres.slice(0, 5) as genre}
+                    {#each visibleGenres as genre}
                         <span class="text-[10px] font-bold tracking-wide uppercase px-2.5 py-0.5 rounded-md bg-muted/40 text-foreground/70 border border-border/20 backdrop-blur-sm">
                             {genre}
                         </span>
                     {/each}
+                    {#if genres.length > GENRES_LIMIT}
+                        <button
+                                onclick={() => genresExpanded = !genresExpanded}
+                                class="text-[10px] font-bold px-2.5 py-0.5 rounded-md text-primary/80 hover:text-primary hover:bg-muted/40 transition-colors"
+                        >
+                            {genresExpanded ? '−' : `+${genres.length - GENRES_LIMIT}`}
+                        </button>
+                    {/if}
                 </div>
             {/if}
 
             <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-2">
-                <Button onclick={onWatchNow} class="rounded-sm px-6 h-10 font-bold shadow-lg gap-2">
+                <Button href={resume?.href} onclick={resume ? undefined : startWithoutResume} class="rounded-sm px-6 h-10 font-bold shadow-lg gap-2">
                     {#if isAnime}
-                        <Play class="w-4 h-4 fill-current" weight="fill" />{i18n.t('content.watch_now')}
+                        <Play class="w-4 h-4 fill-current" weight="fill" />
                     {:else}
-                        <BookOpen class="w-4 h-4 fill-current" weight="fill" />{i18n.t('content.read_now')}
+                        <BookOpen class="w-4 h-4 fill-current" weight="fill" />
                     {/if}
+                    {primaryLabel}
                 </Button>
                 <div class="flex items-center bg-muted/20 p-1 rounded-md border border-border/10 backdrop-blur-md gap-1">
                     <ListEditorButton
@@ -234,6 +292,11 @@
                         <GitMerge class="w-4 h-4" />
                     </Button>
                     <RelationTreeDialog cid={cid} />
+                    {#if meta?.trailerUrl}
+                        <Button size="icon" variant="ghost" class="rounded-sm w-8 h-8 hover:bg-muted/40 text-muted-foreground hover:text-foreground" onclick={() => openUrl(meta.trailerUrl)} title={i18n.t('content.trailer')}>
+                            <FilmStrip class="w-4 h-4" />
+                        </Button>
+                    {/if}
                 </div>
 
                 {#if trackers.length > 0}
@@ -262,6 +325,25 @@
                                 {trackersExpanded ? '−' : `+`}
                             </button>
                         {/if}
+                    </div>
+                {/if}
+
+                {#if linkedExtSources.length > 0}
+                    <div class="flex items-center gap-1.5 bg-muted/10 px-2 py-1 rounded-md border border-border/5">
+                        {#each linkedExtSources as src (src.extensionName + src.extensionId)}
+                            {@const icon = extIcon(src.extensionName)}
+                            <button
+                                    onclick={() => openUrl(src.url)}
+                                    class="group flex items-center justify-center w-6 h-6 rounded-md hover:bg-muted/50 transition-all"
+                                    title={i18n.t('content.open_on', { name: extName(src.extensionName) })}
+                            >
+                                {#if icon}
+                                    <img src={icon} alt="" class="w-4 h-4 rounded-sm opacity-60 group-hover:opacity-100 transition-opacity" />
+                                {:else}
+                                    <Plug class="w-4 h-4 text-muted-foreground opacity-60 group-hover:opacity-100 transition-opacity" />
+                                {/if}
+                            </button>
+                        {/each}
                     </div>
                 {/if}
             </div>
