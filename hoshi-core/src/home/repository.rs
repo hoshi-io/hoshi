@@ -59,7 +59,14 @@ impl HomeRepository {
             r#"
             SELECT COALESCE(r.target_cid, tm.cid) AS target_cid,
                    r.target_tracker_name, r.target_tracker_id,
-                   r.target_title, r.target_cover_image
+                   r.target_title, r.target_cover_image,
+                   -- Imported sequels have their own metadata; others only the score saved with the relation.
+                   COALESCE(
+                       (SELECT m.rating FROM metadata m
+                         WHERE m.cid = COALESCE(r.target_cid, tm.cid) AND m.rating IS NOT NULL
+                         ORDER BY m.source_name = 'anilist' DESC LIMIT 1),
+                       MAX(r.target_rating)
+                   ) AS target_rating
               FROM ListEntry le
               JOIN content c ON c.cid = le.cid
               JOIN content_relations r ON r.source_cid = le.cid AND r.relation_type = 'sequel'

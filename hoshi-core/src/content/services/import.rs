@@ -126,8 +126,8 @@ impl ImportService {
             let rel_type = Self::map_relation_type(&rel.relation_type);
             kept.push((rel.media.tracker_id.as_str(), rel_type.as_str()));
 
-            let target_cid = TrackerRepository::find_cid_by_tracker(
-                pool, tracker_name, &rel.media.tracker_id,
+            let target_cid = TrackerRepository::find_cid_by_tracker_of_kind(
+                pool, tracker_name, &rel.media.tracker_id, &rel.media.content_type,
             ).await.unwrap_or(None);
 
             if let Err(e) = RelationRepository::upsert(pool, &Relation {
@@ -139,6 +139,7 @@ impl ImportService {
                 relation_type: rel_type,
                 target_title: rel.media.title.clone(),
                 target_cover_image: rel.media.cover_image.clone(),
+                target_rating: rel.media.rating,
                 source_name: tracker_name.to_string(),
                 created_at: chrono::Utc::now().timestamp(),
             }).await {

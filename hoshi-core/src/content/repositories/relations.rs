@@ -6,7 +6,7 @@ use crate::content::models::{Relation, RelationType};
 use crate::content::repositories::{placeholders, IN_CHUNK};
 use crate::error::CoreResult;
 
-type RelationRow = (i64, String, Option<String>, String, String, String, String, Option<String>, String, i64);
+type RelationRow = (i64, String, Option<String>, String, String, String, String, Option<String>, Option<f64>, String, i64);
 
 pub struct RelationRepository;
 
@@ -20,7 +20,7 @@ impl RelationRepository {
         for chunk in source_cids.chunks(IN_CHUNK) {
             let sql = format!(
                 "SELECT id, source_cid, target_cid, target_tracker_name, target_tracker_id, \
-                        relation_type, target_title, target_cover_image, source_name, created_at \
+                        relation_type, target_title, target_cover_image, target_rating, source_name, created_at \
                  FROM content_relations WHERE source_cid IN ({})",
                 placeholders(chunk.len()),
             );
@@ -29,7 +29,7 @@ impl RelationRepository {
                 q = q.bind(*cid);
             }
             for (id, source_cid, target_cid, target_tracker_name, target_tracker_id,
-                 type_raw, target_title, target_cover_image, source_name, created_at) in q.fetch_all(pool).await? {
+                 type_raw, target_title, target_cover_image, target_rating, source_name, created_at) in q.fetch_all(pool).await? {
                 let relation_type = serde_json::from_value(serde_json::Value::String(type_raw))
                     .unwrap_or(RelationType::Other);
                 out.entry(source_cid.clone()).or_default().push(Relation {
@@ -41,6 +41,7 @@ impl RelationRepository {
                     relation_type,
                     target_title,
                     target_cover_image,
+                    target_rating: target_rating.map(|r| r as f32),
                     source_name,
                     created_at,
                 });
@@ -54,14 +55,15 @@ impl RelationRepository {
             r#"
                 INSERT INTO content_relations (
                     source_cid, target_cid, target_tracker_name, target_tracker_id,
-                    relation_type, target_title, target_cover_image, source_name, created_at
+                    relation_type, target_title, target_cover_image, target_rating, source_name, created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(source_cid, target_tracker_name, target_tracker_id, relation_type)
                 DO UPDATE SET
                     target_cid = excluded.target_cid,
                     target_title = excluded.target_title,
-                    target_cover_image = excluded.target_cover_image
+                    target_cover_image = excluded.target_cover_image,
+                    target_rating = COALESCE(excluded.target_rating, content_relations.target_rating)
             "#,
         )
             .bind(&relation.source_cid)
@@ -71,6 +73,7 @@ impl RelationRepository {
             .bind(relation.relation_type.as_str())
             .bind(&relation.target_title)
             .bind(&relation.target_cover_image)
+            .bind(relation.target_rating)
             .bind(&relation.source_name)
             .bind(relation.created_at)
             .execute(pool)

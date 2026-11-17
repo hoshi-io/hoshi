@@ -42,6 +42,7 @@ export interface Relation {
     relationType: RelationType;
     targetTitle: string;
     targetCoverImage?: string | null;
+    targetRating?: number | null;
     sourceName: string;
     createdAt: number;
 }

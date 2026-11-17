@@ -71,4 +71,5 @@ export interface SequelCard {
     targetTrackerId: string;
     targetTitle: string;
     targetCoverImage: string | null;
+    targetRating: number | null;
 }

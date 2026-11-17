@@ -81,4 +81,5 @@ pub struct SequelCard {
     pub target_tracker_id: String,
     pub target_title: String,
     pub target_cover_image: Option<String>,
+    pub target_rating: Option<f64>,
 }

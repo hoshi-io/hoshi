@@ -267,8 +267,8 @@ impl MergeService {
         tracker_name: &str,
         entry: &UserListEntry,
     ) -> CoreResult<bool> {
-        let cid = match TrackerRepository::find_cid_by_tracker(
-            &state.pool, tracker_name, &entry.tracker_media_id,
+        let cid = match TrackerRepository::find_cid_by_tracker_of_kind(
+            &state.pool, tracker_name, &entry.tracker_media_id, &entry.content_type,
         ).await? {
             Some(cid) => cid,
             None => {

@@ -62,7 +62,7 @@ impl EnrichmentService {
             if SHOW_LEVEL_KEYS.contains(&cross_tracker.as_str()) {
                 continue;
             }
-            if let Ok(Some(cid)) = TrackerRepository::find_cid_by_tracker(&state.pool, cross_tracker, cross_id).await {
+            if let Ok(Some(cid)) = TrackerRepository::find_cid_by_tracker_of_kind(&state.pool, cross_tracker, cross_id, c_type).await {
                 debug!(cid = %cid, via = %cross_tracker, "Resolved cross-ID matches existing CID, linking instead of importing");
                 Self::persist_mappings(&state.pool, &cid, &cross_ids, now).await;
                 return Self::link_tracker_and_load(state, &cid, tracker, id).await?
@@ -112,7 +112,7 @@ impl EnrichmentService {
         tracker: &str,
         id: &str,
     ) -> CoreResult<Option<FullContent>> {
-        if let Ok(Some(cid)) = TrackerRepository::find_cid_by_tracker(&state.pool, tracker, id).await {
+        if let Ok(Some(cid)) = TrackerRepository::find_cid_by_tracker_of_kind(&state.pool, tracker, id, &media.content_type).await {
             debug!(cid = %cid, tracker = %tracker, id = %id, "Found existing CID via direct mapping");
             return Self::link_tracker_and_load(state, &cid, tracker, id).await;
         }
@@ -126,7 +126,7 @@ impl EnrichmentService {
             .map(|(cross_tracker, cross_id)| {
                 let pool = &state.pool;
                 async move {
-                    let result = TrackerRepository::find_cid_by_tracker(pool, cross_tracker, cross_id).await;
+                    let result = TrackerRepository::find_cid_by_tracker_of_kind(pool, cross_tracker, cross_id, &media.content_type).await;
                     (cross_tracker.clone(), result)
                 }
             });

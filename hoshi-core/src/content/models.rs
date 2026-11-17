@@ -204,6 +204,8 @@ pub struct Relation {
     pub relation_type: RelationType,
     pub target_title: String,
     pub target_cover_image: Option<String>,
+    #[serde(default)]
+    pub target_rating: Option<f32>,
     pub source_name: String,
     pub created_at: i64,
 }

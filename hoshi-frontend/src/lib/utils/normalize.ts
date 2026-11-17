@@ -219,6 +219,7 @@ export function normalizeRelationCard(relation: {
     targetTrackerId: string;
     targetTitle: string;
     targetCoverImage?: string | null;
+    targetRating?: number | null;
 }): NormalizedCard {
     const href = relation.targetCid
         ? `${contentBase()}/${relation.targetCid}`
@@ -231,7 +232,7 @@ export function normalizeRelationCard(relation: {
         titleI18n: {},
         titleDefault: relation.targetTitle,
         cover: relation.targetCoverImage ?? "",
-        score: null,
+        score: relation.targetRating ?? null,
         year: null,
         nsfw: false,
         hasAdultGenre: false,

@@ -303,6 +303,29 @@ impl TrackerRepository {
         Ok(row.map(|(tracker_id,)| tracker_id))
     }
 
+    /// Like `find_cid_by_tracker`, but only matches content of the same kind (anime vs
+    /// manga/novel). Some trackers use one ID or slug for both an anime and its manga
+    /// (Anime-Planet, Shikimori), which used to link a manga list entry to the anime.
+    pub async fn find_cid_by_tracker_of_kind(
+        pool: &SqlitePool,
+        tracker_name: &str,
+        tracker_id: &str,
+        content_type: &crate::content::models::ContentType,
+    ) -> CoreResult<Option<String>> {
+        let is_anime = matches!(content_type, crate::content::models::ContentType::Anime);
+        let row: Option<(String,)> = sqlx::query_as(
+            "SELECT tm.cid FROM tracker_mappings tm JOIN content c ON c.cid = tm.cid \
+             WHERE tm.tracker_name = ? AND tm.tracker_id = ? AND (c.type = 'anime') = ?",
+        )
+            .bind(tracker_name)
+            .bind(tracker_id)
+            .bind(is_anime)
+            .fetch_optional(pool)
+            .await?;
+
+        Ok(row.map(|(cid,)| cid))
+    }
+
     pub async fn find_cid_by_tracker(
         pool: &SqlitePool,
         tracker_name: &str,

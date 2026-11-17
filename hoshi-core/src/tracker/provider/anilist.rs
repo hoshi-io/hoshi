@@ -31,7 +31,7 @@ fragment mediaFields on Media {
       edges {
         relationType(version: 2)
         node {
-          id idMal type
+          id idMal type format averageScore
           title { romaji english }
           coverImage { large }
         }
