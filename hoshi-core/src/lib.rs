@@ -16,6 +16,7 @@ pub mod proxy;
 pub mod progress;
 pub mod discord;
 pub mod logs;
+pub mod diagnostics;
 pub mod playback;
 pub mod torrent;
 pub mod thumbnail;

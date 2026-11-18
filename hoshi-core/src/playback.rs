@@ -177,6 +177,7 @@ impl PlaybackHandle {
         let hooks = self.protocol_hooks.clone();
         let mpv = tokio::task::spawn_blocking(move || -> libmpv2::Result<Mpv> {
             let mpv = build_mpv(target)?;
+            crate::diagnostics::log_mpv_once(&mpv);
             for hook in hooks.lock().unwrap().iter() {
                 hook(&mpv)?;
             }

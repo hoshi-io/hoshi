@@ -114,6 +114,10 @@ impl ExtensionManager {
         })
     }
 
+    pub fn headless_available(&self) -> bool {
+        self.headless.is_available()
+    }
+
     pub fn set_headless(&mut self, headless: HeadlessHandle) {
         self.headless = headless;
     }

@@ -45,6 +45,7 @@ librqbit = { version = "9.0.1", default-features = false, features = ["rust-tls"
 fs2 = "0.4.3"
 dashmap = "6.2.1"
 lru = "0.19.0"
+sysinfo = { version = "0.40.4", default-features = false, features = ["system"] }
 
 # rquickjs ships no pregenerated bindings for android/ios
 [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]

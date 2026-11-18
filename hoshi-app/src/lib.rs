@@ -156,6 +156,17 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                         e
                     })?;
 
+                hoshi_core::diagnostics::log_startup(&state, &[
+                    ("app", format!(
+                        "Hoshi {} ({}, {}, {})",
+                        app.package_info().version,
+                        env!("HOSHI_APP_COMMIT"),
+                        if cfg!(debug_assertions) { "debug" } else { "release" },
+                        env!("HOSHI_APP_TARGET"),
+                    )),
+                    ("webview", tauri::webview_version().unwrap_or_else(|_| "unknown".into())),
+                ]);
+
                 app.manage(state);
                 app.manage(TauriSession::default());
 

@@ -1,4 +1,38 @@
+fn git(args: &[&str]) -> Option<String> {
+    let out = std::process::Command::new("git").args(args).output().ok()?;
+    out.status.success().then(|| String::from_utf8_lossy(&out.stdout).trim().to_string())
+}
+
+/// Commit + target for the startup diagnostics. `-dirty` covers this crate only (hoshi-core
+/// reports its own; the frontend is bundled separately).
+fn version_info() {
+    let commit = match git(&["rev-parse", "--short=10", "HEAD"]) {
+        Some(hash) => {
+            let dirty = git(&["status", "--porcelain", "--untracked-files=no", "--", "."]).is_some_and(|s| !s.is_empty());
+            if dirty { format!("{hash}-dirty") } else { hash }
+        }
+        None => "unknown".into(),
+    };
+    println!("cargo:rustc-env=HOSHI_APP_COMMIT={commit}");
+    println!("cargo:rustc-env=HOSHI_APP_TARGET={}", std::env::var("TARGET").unwrap());
+
+    // Rerun on a new commit/checkout, and on edits (which recompile the crate anyway).
+    if let Some(git_dir) = git(&["rev-parse", "--absolute-git-dir"]) {
+        let mut watch = vec![format!("{git_dir}/HEAD"), format!("{git_dir}/packed-refs")];
+        if let Some(head_ref) = git(&["symbolic-ref", "-q", "HEAD"]) {
+            watch.push(format!("{git_dir}/{head_ref}"));
+        }
+        for path in watch.iter().filter(|p| std::path::Path::new(p).exists()) {
+            println!("cargo:rerun-if-changed={path}");
+        }
+    }
+    for path in ["build.rs", "Cargo.toml", "src"] {
+        println!("cargo:rerun-if-changed={path}");
+    }
+}
+
 fn main() {
+    version_info();
     tauri_build::build();
 
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {
