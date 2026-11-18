@@ -124,9 +124,14 @@ impl ListService {
 
         let is_new        = prev_entry.is_none();
         let prev_progress = prev_entry.as_ref().map(|e| e.progress).unwrap_or(0);
-        let new_progress  = body.progress.unwrap_or(prev_progress);
+        // Progress never goes past the last episode/chapter (a "+1" on a finished entry).
+        // An entry already stored past it is compared at the cap, so it can come back down.
+        let cap = total_units.filter(|t| *t > 0);
+        let requested    = body.progress.unwrap_or(prev_progress);
+        let new_progress = cap.map_or(requested, |t| requested.min(t));
+        let prev_capped  = cap.map_or(prev_progress, |t| prev_progress.min(t));
 
-        if !is_new && body.progress.is_some() && new_progress < prev_progress {
+        if !is_new && body.progress.is_some() && new_progress < prev_capped {
             warn!(prev = prev_progress, new = new_progress, "Ignoring progress downgrade for user");
             return Ok(UpsertOutcome { changes: 0, is_new: false, written: false });
         }

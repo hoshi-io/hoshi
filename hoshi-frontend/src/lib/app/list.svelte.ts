@@ -30,6 +30,9 @@ const TRACKER_TYPES: Record<string, string[]> = {
     mangaupdates: ["MANGA", "NOVEL"],
 };
 
+/** Already at the last episode/chapter: "+1" has nothing to add (core caps progress anyway). */
+const atLastUnit = (e: EnrichedListEntry) => !!e.totalUnits && (e.progress || 0) >= e.totalUnits;
+
 export const trackerLabel = (tracker: string) => TRACKER_LABELS[tracker] ?? tracker;
 
 /** What started a batch, so the sync panel can label it. */
@@ -232,7 +235,7 @@ class ListStore {
     /** Bump progress by one for every selected entry (one batch, so it syncs coalesced). */
     async incrementSelected() {
         const bodies: UpsertEntryBody[] = this.entries
-            .filter(e => this.selected.has(e.cid))
+            .filter(e => this.selected.has(e.cid) && !atLastUnit(e))
             .map(e => ({
                 cid: e.cid,
                 status: e.status,
@@ -323,6 +326,7 @@ class ListStore {
     }
 
     async incrementProgress(entry: EnrichedListEntry) {
+        if (atLastUnit(entry)) return;
         const nextProgress = (entry.progress || 0) + 1;
         const body: UpsertEntryBody = {
             cid: entry.cid,
