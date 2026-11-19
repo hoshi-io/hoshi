@@ -14,7 +14,7 @@
     import type { ResumeTarget } from "@/app/content.svelte";
     import {
         ALL, chapterFacets, chapterHref, chapterNum, filterChapters, scanlatorLabel, type ChapterLike,
-    } from "@/app/chapterVariants";
+    } from "@/utils/chapterVariants.ts";
 
     let {
         cid,

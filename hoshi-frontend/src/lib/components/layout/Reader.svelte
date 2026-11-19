@@ -17,7 +17,7 @@
     import { discordApi } from "@/api/discord/discord";
     import type { BaseReaderState } from "@/app/reader.svelte";
     import {layoutState} from "@/stores/layout.svelte";
-    import { scanlatorLabel } from "@/app/chapterVariants";
+    import { scanlatorLabel } from "@/utils/chapterVariants.ts";
 
     let {
         readerState,

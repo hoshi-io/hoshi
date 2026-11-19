@@ -4,7 +4,7 @@
     import { Button } from '@/components/ui/button';
     import ResponsiveSelect from '@/components/ResponsiveSelect.svelte';
     import SettingRow from '@/components/settings/parts/SettingRow.svelte';
-    import { homeEditor } from '@/app/home-editor.svelte.js';
+    import { homeEditor } from '@/utils/home-editor.svelte.js';
     import { labelText } from '@/app/home.svelte.js';
     import { TAB_ICONS, tabIcon, type TabIcon } from '@/components/home/icons';
     import { i18n } from '@/stores/i18n.svelte.js';

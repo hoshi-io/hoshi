@@ -1,6 +1,6 @@
 import { toast } from 'svelte-sonner';
-import type { CoreError } from '@/api/client';
-import type { HomeLayout, HomeSection, HomeTab, SectionLayout } from '@/api/home/types';
+import type { CoreError } from '@/api/client.ts';
+import type { HomeLayout, HomeSection, HomeTab, SectionLayout } from '@/api/home/types.ts';
 import { homeState } from '@/app/home.svelte.js';
 import { i18n } from '@/stores/i18n.svelte.js';
 

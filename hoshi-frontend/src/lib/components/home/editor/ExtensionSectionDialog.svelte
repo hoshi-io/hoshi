@@ -7,7 +7,7 @@
     import { Spinner } from '@/components/ui/spinner';
     import ExtensionFilterFields from '@/components/search/ExtensionFilterFields.svelte';
     import { extensionsApi } from '@/api/extensions/extensions';
-    import { homeEditor } from '@/app/home-editor.svelte.js';
+    import { homeEditor } from '@/utils/home-editor.svelte.js';
     import { labelText } from '@/app/home.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import type { HomeSection, HomeTab } from '@/api/home/types';

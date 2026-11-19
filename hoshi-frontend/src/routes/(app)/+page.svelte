@@ -10,7 +10,7 @@
     import { i18n } from '@/stores/i18n.svelte.js';
     import { auth } from '@/stores/auth.svelte.js';
     import { homeState, labelText, sectionVisible } from '@/app/home.svelte.js';
-    import { homeEditor } from '@/app/home-editor.svelte.js';
+    import { homeEditor } from '@/utils/home-editor.svelte.js';
     import HomeEditView from '@/components/home/editor/HomeEditView.svelte';
     import Pencil from 'phosphor-svelte/lib/PencilSimpleIcon';
     import { beforeNavigate } from '$app/navigation';

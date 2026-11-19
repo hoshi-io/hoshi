@@ -8,7 +8,7 @@ import { progressApi } from "@/api/progress/progress";
 import type { CoreError } from "@/api/client";
 import {listStore} from "@/app/list.svelte";
 import {invoke} from "@tauri-apps/api/core";
-import { chapterHref, chapterNum, collapseByNumber, type ChapterLike } from "@/app/chapterVariants";
+import { chapterHref, chapterNum, collapseByNumber, type ChapterLike } from "@/utils/chapterVariants.ts";
 
 export type ChapterItem = ChapterLike;
 

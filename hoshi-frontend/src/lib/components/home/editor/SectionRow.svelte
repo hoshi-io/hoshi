@@ -12,7 +12,7 @@
     import * as Drawer from '@/components/ui/drawer';
     import { layoutState } from '@/stores/layout.svelte.js';
     import SegmentedControl from '@/components/settings/parts/SegmentedControl.svelte';
-    import { homeEditor } from '@/app/home-editor.svelte.js';
+    import { homeEditor } from '@/utils/home-editor.svelte.js';
     import { labelText } from '@/app/home.svelte.js';
     import { extensions } from '@/stores/extensions.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';

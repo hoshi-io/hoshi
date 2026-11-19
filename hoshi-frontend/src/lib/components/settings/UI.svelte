@@ -10,7 +10,7 @@
     import { goto } from "$app/navigation";
     import { Button } from "$lib/components/ui/button";
     import { homeState } from "@/app/home.svelte.js";
-    import { homeEditor } from "@/app/home-editor.svelte.js";
+    import { homeEditor } from "@/utils/home-editor.svelte.js";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
     import SettingRow from "@/components/settings/parts/SettingRow.svelte";
