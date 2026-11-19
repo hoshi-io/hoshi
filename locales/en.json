@@ -1735,6 +1735,9 @@
     }
   },
   "history": {
-    "title": "History"
+    "title": "History",
+    "clear": "Clear",
+    "remove": "Remove",
+    "empty": "No history yet"
   }
 }

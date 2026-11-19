@@ -36,16 +36,17 @@
         <Popover.Content
                 side="right"
                 align="start"
-                sideOffset={12}
+                sideOffset={16}
                 collisionPadding={16}
+                onOpenAutoFocus={(e) => e.preventDefault()}
                 class={cn(
-                'flex flex-col p-0 rounded-sm border border-border bg-popover shadow-xl',
-                'w-[min(26rem,calc(100vw-6rem))] h-[min(36rem,calc(100dvh-2rem))]',
+                'flex flex-col overflow-hidden p-0 rounded-sm border border-border/50 bg-popover shadow-xl',
+                'w-72 max-h-[min(30rem,calc(100dvh-2rem))]',
                 'data-[state=open]:duration-200 data-[state=closed]:duration-150',
                 'data-[side=right]:slide-in-from-left-2'
             )}
         >
-            <HistoryList onNavigate={() => (open = false)} />
+            <HistoryList compact onNavigate={() => (open = false)} />
         </Popover.Content>
     </Popover.Root>
 {/if}

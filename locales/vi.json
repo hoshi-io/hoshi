@@ -1709,6 +1709,9 @@
     }
   },
   "history": {
-    "title": "Lịch sử"
+    "title": "Lịch sử",
+    "clear": "Xóa hết",
+    "remove": "Gỡ",
+    "empty": "Chưa có lịch sử"
   }
 }

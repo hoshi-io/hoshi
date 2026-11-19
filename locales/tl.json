@@ -1709,6 +1709,9 @@
     }
   },
   "history": {
-    "title": "History"
+    "title": "History",
+    "clear": "I-clear",
+    "remove": "Alisin",
+    "empty": "Wala pang history"
   }
 }
