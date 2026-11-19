@@ -51,7 +51,17 @@ pub async fn build(paths: AppPaths, headless: HeadlessHandle, log_store: logs::L
         .read_timeout(Duration::from_secs(45))
         .connect_timeout(Duration::from_secs(10))
         .pool_idle_timeout(Duration::from_secs(90))
-        .pool_max_idle_per_host(10)
+        .pool_max_idle_per_host(10);
+    // Android's verifier (rustls-platform-verifier, reqwest 0.13's default) reports any revocation
+    // check failure as "revoked", and some builds fail it for certs without OCSP (Let's Encrypt),
+    // so no request worked there. Verify against the bundled Mozilla roots instead, like 1.2.4.
+    #[cfg(target_os = "android")]
+    let http_client = http_client.tls_certs_only(
+        webpki_root_certs::TLS_SERVER_ROOT_CERTS
+            .iter()
+            .filter_map(|der| reqwest::Certificate::from_der(der).ok()),
+    );
+    let http_client = http_client
         .build()
         .map_err(|e| core_err!(Internal, "error.system.http_client_failed", e))?;
 

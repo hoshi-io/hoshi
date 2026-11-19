@@ -51,6 +51,7 @@ sysinfo = { version = "0.40.4", default-features = false, features = ["system"] 
 [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
 rquickjs = { version = "0.14.0", features = ["futures", "bindgen"] }
 [target.'cfg(target_os = "android")'.dependencies]
+webpki-root-certs = "1"
 image = { version = "0.25", default-features = false, features = ["jpeg"] }
 libmpv2-sys = "4.0.1"
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]

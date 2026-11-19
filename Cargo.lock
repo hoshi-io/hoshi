@@ -2420,6 +2420,7 @@ dependencies = [
  "tracing-subscriber",
  "url",
  "uuid 1.21.0",
+ "webpki-root-certs",
 ]
 
 [[package]]
