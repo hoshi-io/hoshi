@@ -59,30 +59,51 @@ impl DatabaseManager {
 /// TrackerSyncJob table were added in place; they now live in 0010 and 0008). Databases
 /// created by those builds recorded the edited checksums, so point them back at the
 /// released files, which sqlx would otherwise reject as "modified".
+/// Each edit is listed with its LF and CRLF (Windows CI checkout) checksum.
 const EDITED_CHECKSUMS: &[(i64, &str)] = &[
     (4, "c3325a4ba1270d9cd7456efd0ef5b8faabd228327204159604db7066821ef0d59198a886cf84b88a594dc29535f0ed80"),
+    (4, "016d61a64fd1043a094394fc4fe34c8c14dee2336bd1a5ca46bf1ddf93166e85759cc14733d152a293d0ba2fdf3bce3f"),
     (6, "3d3fe3f3e74c4fb19b78070d624242405594657fb468db14d918a78e12d08547a2f5823fee5ac7af212f9a1f02e68294"),
+    (6, "7e22557d87e7c0dc1770dcf660146b5a99c108afc65a5fda254b7c1efeea7e42fc9cc5f766e14c2e1f65090fa41d2d32"),
     // Dev builds after v1.2.4 ran 0008 before TrackerSyncJob was created at its top.
     (8, "d52b9a698db3a8e690ff2915d99856bab86a039826461b29cb74794a404071e98716602810e4c9b7279e2bcd3b6146f9"),
+    (8, "8bbf484f579206d097b719e34e2f7d8144e43a66d533e32a9eff451cfce02b892ce4f9f1cf9225d337da0171ec105a48"),
 ];
+
+/// Builds before `*.sql eol=lf` embedded CRLF migrations on Windows, so the same file has
+/// two checksums depending on where the build ran. Accept either line-ending variant.
+fn line_ending_variants(sql: &str) -> [Vec<u8>; 2] {
+    use sha2::{Digest, Sha384};
+    let lf = sql.replace("\r\n", "\n");
+    let crlf = lf.replace('\n', "\r\n");
+    [Sha384::digest(lf.as_bytes()).to_vec(), Sha384::digest(crlf.as_bytes()).to_vec()]
+}
 
 async fn repair_edited_checksums(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     if !table_exists(pool, "_sqlx_migrations").await? {
         return Ok(());
     }
-    for (version, edited_hex) in EDITED_CHECKSUMS {
-        let Some(current) = MIGRATOR.iter().find(|m| m.version == *version) else { continue };
-        let edited = hex_decode(edited_hex);
-        let fixed = sqlx::query("UPDATE _sqlx_migrations SET checksum = ? WHERE version = ? AND checksum = ?")
+    let applied = sqlx::query("SELECT version, checksum FROM _sqlx_migrations")
+        .fetch_all(pool)
+        .await?;
+    for row in applied {
+        let version: i64 = row.try_get("version")?;
+        let stored: Vec<u8> = row.try_get("checksum")?;
+        let Some(current) = MIGRATOR.iter().find(|m| m.version == version) else { continue };
+        if stored == current.checksum.as_ref() {
+            continue;
+        }
+        let known = line_ending_variants(&current.sql).contains(&stored)
+            || EDITED_CHECKSUMS.iter().any(|(v, hex)| *v == version && hex_decode(hex) == stored);
+        if !known {
+            continue;
+        }
+        sqlx::query("UPDATE _sqlx_migrations SET checksum = ? WHERE version = ?")
             .bind(current.checksum.as_ref())
             .bind(version)
-            .bind(edited)
             .execute(pool)
-            .await?
-            .rows_affected();
-        if fixed > 0 {
-            info!(version, "Repaired checksum of an in-place edited migration");
-        }
+            .await?;
+        info!(version, "Repaired checksum of a migration built with other line endings or edited in place");
     }
     Ok(())
 }
