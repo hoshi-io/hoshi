@@ -392,6 +392,8 @@ jobs:
         run: |
           python3 -c 'import pathlib; p = pathlib.Path("project.yml"); s = p.read_text(); k = "        ENABLE_BITCODE: false\n"; assert k in s; p.write_text(s.replace(k, k + "        CODE_SIGNING_ALLOWED: NO\n        CODE_SIGNING_REQUIRED: NO\n        CODE_SIGN_IDENTITY: \"\"\n", 1))'
           grep -q "CODE_SIGNING_ALLOWED: NO" project.yml
+          # Gitignored, filled by the Tauri build later; XcodeGen only needs them to exist.
+          mkdir -p Externals assets
           xcodegen generate --spec project.yml
 
       # The archive step works unsigned; the signed export after it can't, so it's allowed to fail.
