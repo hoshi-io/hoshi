@@ -753,7 +753,9 @@
     "merge_success": "エントリを正常に統合しました",
     "confirm_merge": "統合を確認",
     "chapter": "章",
-    "confirm_delete_mapping": "このトラッカーの紐付けを削除しますか？"
+    "confirm_delete_mapping": "このトラッカーの紐付けを削除しますか？",
+    "show_all": "すべて表示",
+    "show_less": "表示を減らす"
   },
   "discord": {
     "browsing": "アプリ内"

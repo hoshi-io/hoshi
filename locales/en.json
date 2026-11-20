@@ -768,7 +768,9 @@
     "merge_success": "Entries merged successfully",
     "confirm_merge": "Confirm Merge",
     "chapter": "Chapter",
-    "confirm_delete_mapping": "Remove this tracker mapping?"
+    "confirm_delete_mapping": "Remove this tracker mapping?",
+    "show_all": "Show all",
+    "show_less": "Show less"
   },
 
   "discord": {

@@ -753,7 +753,9 @@
     "merge_success": "Đã gộp các mục thành công",
     "confirm_merge": "Xác nhận gộp",
     "chapter": "Chương",
-    "confirm_delete_mapping": "Xóa liên kết tracker này?"
+    "confirm_delete_mapping": "Xóa liên kết tracker này?",
+    "show_all": "Xem tất cả",
+    "show_less": "Thu gọn"
   },
   "discord": {
     "browsing": "Trong ứng dụng"

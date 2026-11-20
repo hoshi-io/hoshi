@@ -753,7 +753,9 @@
     "merge_success": "Wpisy zostały pomyślnie scalone",
     "confirm_merge": "Potwierdź scalanie",
     "chapter": "Rozdział",
-    "confirm_delete_mapping": "Usunąć to powiązanie z trackerem?"
+    "confirm_delete_mapping": "Usunąć to powiązanie z trackerem?",
+    "show_all": "Pokaż wszystko",
+    "show_less": "Pokaż mniej"
   },
   "discord": {
     "browsing": "W aplikacji"

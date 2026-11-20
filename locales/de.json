@@ -753,7 +753,9 @@
     "merge_success": "Einträge erfolgreich zusammengeführt",
     "confirm_merge": "Zusammenführung bestätigen",
     "chapter": "Kapitel",
-    "confirm_delete_mapping": "Diese Tracker-Zuordnung entfernen?"
+    "confirm_delete_mapping": "Diese Tracker-Zuordnung entfernen?",
+    "show_all": "Alle anzeigen",
+    "show_less": "Weniger anzeigen"
   },
   "discord": {
     "browsing": "In der App"

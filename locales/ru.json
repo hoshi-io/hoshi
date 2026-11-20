@@ -753,7 +753,9 @@
     "merge_success": "Записи успешно объединены",
     "confirm_merge": "Подтвердить объединение",
     "chapter": "Глава",
-    "confirm_delete_mapping": "Удалить эту привязку к трекеру?"
+    "confirm_delete_mapping": "Удалить эту привязку к трекеру?",
+    "show_all": "Показать все",
+    "show_less": "Свернуть"
   },
   "discord": {
     "browsing": "В приложении"

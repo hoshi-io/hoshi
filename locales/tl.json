@@ -753,7 +753,9 @@
     "merge_success": "Matagumpay na napagsama ang mga entry",
     "confirm_merge": "Kumpirmahin ang Pagsasama",
     "chapter": "Kabanata",
-    "confirm_delete_mapping": "Alisin ang tracker mapping na ito?"
+    "confirm_delete_mapping": "Alisin ang tracker mapping na ito?",
+    "show_all": "Ipakita lahat",
+    "show_less": "Ipakita nang mas kaunti"
   },
   "discord": {
     "browsing": "Nasa App"

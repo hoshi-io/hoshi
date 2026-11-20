@@ -103,9 +103,9 @@ impl ContentRepository {
                 end_date        = excluded.end_date,
                 rating          = COALESCE(excluded.rating, metadata.rating),
                 trailer_url     = COALESCE(excluded.trailer_url, metadata.trailer_url),
-                characters      = excluded.characters,
+                characters      = CASE WHEN excluded.characters = '[]' THEN metadata.characters ELSE excluded.characters END,
                 studio          = excluded.studio,
-                staff           = excluded.staff,
+                staff           = CASE WHEN excluded.staff = '[]' THEN metadata.staff ELSE excluded.staff END,
                 external_ids    = excluded.external_ids,
                 episode_duration = COALESCE(excluded.episode_duration, metadata.episode_duration),
                 updated_at      = excluded.updated_at

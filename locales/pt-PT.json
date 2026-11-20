@@ -753,7 +753,9 @@
     "merge_success": "Entradas fundidas com sucesso",
     "confirm_merge": "Confirmar fusão",
     "chapter": "Capítulo",
-    "confirm_delete_mapping": "Remover este mapeamento do tracker?"
+    "confirm_delete_mapping": "Remover este mapeamento do tracker?",
+    "show_all": "Mostrar tudo",
+    "show_less": "Mostrar menos"
   },
   "discord": {
     "browsing": "Na Aplicação"

@@ -753,7 +753,9 @@
     "merge_success": "Elementi uniti con successo",
     "confirm_merge": "Conferma unione",
     "chapter": "Capitolo",
-    "confirm_delete_mapping": "Rimuovere questa associazione del tracker?"
+    "confirm_delete_mapping": "Rimuovere questa associazione del tracker?",
+    "show_all": "Mostra tutto",
+    "show_less": "Mostra meno"
   },
   "discord": {
     "browsing": "Nell'App"

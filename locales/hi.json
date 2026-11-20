@@ -753,7 +753,9 @@
     "merge_success": "एंट्री सफलतापूर्वक मर्ज की गईं",
     "confirm_merge": "मर्ज की पुष्टि करें",
     "chapter": "अध्याय",
-    "confirm_delete_mapping": "यह ट्रैकर मैपिंग हटाएँ?"
+    "confirm_delete_mapping": "यह ट्रैकर मैपिंग हटाएँ?",
+    "show_all": "सभी दिखाएँ",
+    "show_less": "कम दिखाएँ"
   },
   "discord": {
     "browsing": "ऐप में"

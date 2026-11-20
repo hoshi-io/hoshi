@@ -753,7 +753,9 @@
     "merge_success": "تم دمج الإدخالات بنجاح",
     "confirm_merge": "تأكيد الدمج",
     "chapter": "الفصل",
-    "confirm_delete_mapping": "إزالة ربط المتتبع هذا؟"
+    "confirm_delete_mapping": "إزالة ربط المتتبع هذا؟",
+    "show_all": "عرض الكل",
+    "show_less": "عرض أقل"
   },
   "discord": {
     "browsing": "في التطبيق"

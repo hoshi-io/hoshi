@@ -2,10 +2,9 @@
     import type { Character, StaffMember } from "@/api/content/types";
     import Mic2 from 'phosphor-svelte/lib/MicrophoneIcon';
     import User from 'phosphor-svelte/lib/UserIcon';
-    import ChevronDown from 'phosphor-svelte/lib/CaretDownIcon';
-    import ChevronUp from 'phosphor-svelte/lib/CaretUpIcon';
     import { i18n } from "@/stores/i18n.svelte.js";
-    import { Button } from "@/components/ui/button";
+    import { layoutState } from "@/stores/layout.svelte.js";
+    import ShowMoreToggle from "@/components/common/ShowMoreToggle.svelte";
 
     const formatRole = (role: string | undefined | null) => {
         if (!role) return '';
@@ -18,7 +17,8 @@
 
     let { characters, staff }: { characters: Character[], staff: StaffMember[] } = $props();
 
-    const CHAR_LIMIT = 12;
+    /** One row of the grid: 3 columns on mobile, 8 on desktop. */
+    const CHAR_LIMIT = $derived(layoutState.isMobile ? 3 : 8);
 
     let showAllChars = $state(false);
 
@@ -28,9 +28,14 @@
 <div class="space-y-8">
     {#if characters && characters.length > 0}
         <section class="space-y-3">
-            <h3 class="text-base md:text-lg font-bold tracking-tight">
-                {i18n.t('content.characters')}
-            </h3>
+            <div class="flex items-center justify-between gap-3">
+                <h3 class="text-base md:text-lg font-bold tracking-tight">
+                    {i18n.t('content.characters')}
+                </h3>
+                {#if characters.length > CHAR_LIMIT}
+                    <ShowMoreToggle bind:expanded={showAllChars} total={characters.length} />
+                {/if}
+            </div>
 
             <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
                 {#each visibleCharacters as char}
@@ -62,24 +67,6 @@
                     </div>
                 {/each}
             </div>
-
-            {#if characters.length > CHAR_LIMIT}
-                <div class="flex justify-center pt-1">
-                    <Button
-                            variant="outline"
-                            size="sm"
-                            class="rounded-sm px-5 text-xs font-semibold bg-muted/20 hover:bg-muted/50 transition-colors"
-                            onclick={() => showAllChars = !showAllChars}
-                    >
-                        {#if showAllChars}
-                            <ChevronUp class="w-3.5 h-3.5 mr-1.5" />
-                        {:else}
-                            <ChevronDown class="w-3.5 h-3.5 mr-1.5" />
-                            ({characters.length - CHAR_LIMIT})
-                        {/if}
-                    </Button>
-                </div>
-            {/if}
         </section>
     {/if}
 </div>

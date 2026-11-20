@@ -753,7 +753,9 @@
     "merge_success": "項目合併成功",
     "confirm_merge": "確認合併",
     "chapter": "章節",
-    "confirm_delete_mapping": "要移除此追蹤器對應嗎？"
+    "confirm_delete_mapping": "要移除此追蹤器對應嗎？",
+    "show_all": "顯示全部",
+    "show_less": "收合"
   },
   "discord": {
     "browsing": "應用程式中"

@@ -37,7 +37,15 @@ fragment mediaFields on Media {
         }
       }
     }
-  characters(role: MAIN, perPage: 6) {
+  studios(isMain: true) { nodes { name } }
+}
+"#;
+
+/// Cast is only fetched for a single title: on list/search pages it multiplies the
+/// response size (and AniList's query cost) by every entry.
+const CAST_FRAGMENT: &str = r#"
+fragment castFields on Media {
+  characters(sort: [ROLE, RELEVANCE, ID], perPage: 25) {
     edges {
       role
       node {
@@ -62,7 +70,6 @@ fragment mediaFields on Media {
       }
     }
   }
-  studios(isMain: true) { nodes { name } }
 }
 "#;
 
@@ -635,8 +642,8 @@ impl TrackerProvider for AniListProvider {
     }
 
     async fn get_by_id(&self, tracker_id: &str) -> CoreResult<Option<TrackerMedia>> {
-        let query      = r#"query ($id: Int) { Media(id: $id) { ...mediaFields } } "#;
-        let full_query = format!("{}\n{}", query, MEDIA_FRAGMENT);
+        let query      = r#"query ($id: Int) { Media(id: $id) { ...mediaFields ...castFields } } "#;
+        let full_query = format!("{}\n{}\n{}", query, MEDIA_FRAGMENT, CAST_FRAGMENT);
 
         let res = self.graphql(None, &json!({
             "query":     full_query,

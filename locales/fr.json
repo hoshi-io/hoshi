@@ -753,7 +753,9 @@
     "merge_success": "Entrées fusionnées avec succès",
     "confirm_merge": "Confirmer la fusion",
     "chapter": "Chapitre",
-    "confirm_delete_mapping": "Supprimer cette correspondance de tracker ?"
+    "confirm_delete_mapping": "Supprimer cette correspondance de tracker ?",
+    "show_all": "Tout afficher",
+    "show_less": "Afficher moins"
   },
   "discord": {
     "browsing": "Dans l'application"

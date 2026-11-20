@@ -753,7 +753,9 @@
     "merge_success": "条目合并成功",
     "confirm_merge": "确认合并",
     "chapter": "章节",
-    "confirm_delete_mapping": "要移除此追踪器映射吗？"
+    "confirm_delete_mapping": "要移除此追踪器映射吗？",
+    "show_all": "显示全部",
+    "show_less": "收起"
   },
   "discord": {
     "browsing": "应用中"

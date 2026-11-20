@@ -753,7 +753,9 @@
     "merge_success": "Entri berhasil digabungkan",
     "confirm_merge": "Konfirmasi Penggabungan",
     "chapter": "Bab",
-    "confirm_delete_mapping": "Hapus pemetaan tracker ini?"
+    "confirm_delete_mapping": "Hapus pemetaan tracker ini?",
+    "show_all": "Tampilkan semua",
+    "show_less": "Tampilkan lebih sedikit"
   },
   "discord": {
     "browsing": "Dalam Aplikasi"

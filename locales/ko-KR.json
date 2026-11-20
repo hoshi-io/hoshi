@@ -753,7 +753,9 @@
     "merge_success": "항목이 성공적으로 병합되었습니다",
     "confirm_merge": "병합 확인",
     "chapter": "챕터",
-    "confirm_delete_mapping": "이 트래커 연결을 삭제할까요?"
+    "confirm_delete_mapping": "이 트래커 연결을 삭제할까요?",
+    "show_all": "모두 보기",
+    "show_less": "간략히 보기"
   },
   "discord": {
     "browsing": "앱 시청 중"

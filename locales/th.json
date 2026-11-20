@@ -753,7 +753,9 @@
     "merge_success": "รวมรายการเรียบร้อยแล้ว",
     "confirm_merge": "ยืนยันการรวม",
     "chapter": "ตอน",
-    "confirm_delete_mapping": "ลบการเชื่อมโยงตัวติดตามนี้หรือไม่?"
+    "confirm_delete_mapping": "ลบการเชื่อมโยงตัวติดตามนี้หรือไม่?",
+    "show_all": "แสดงทั้งหมด",
+    "show_less": "แสดงน้อยลง"
   },
   "discord": {
     "browsing": "ในแอป"

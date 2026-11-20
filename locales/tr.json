@@ -753,7 +753,9 @@
     "merge_success": "Kayıtlar başarıyla birleştirildi",
     "confirm_merge": "Birleştirmeyi Onayla",
     "chapter": "Bölüm",
-    "confirm_delete_mapping": "Bu takip eşlemesi kaldırılsın mı?"
+    "confirm_delete_mapping": "Bu takip eşlemesi kaldırılsın mı?",
+    "show_all": "Tümünü göster",
+    "show_less": "Daha az göster"
   },
   "discord": {
     "browsing": "Uygulamada"

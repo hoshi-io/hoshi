@@ -2,9 +2,8 @@
     import { Skeleton } from "@/components/ui/skeleton";
     import { i18n } from "@/stores/i18n.svelte.js";
     import CardWrapper from "@/components/card/CardWrapper.svelte";
-    import { Button } from "@/components/ui/button";
-    import ChevronDown from 'phosphor-svelte/lib/CaretDownIcon';
-    import ChevronUp from 'phosphor-svelte/lib/CaretUpIcon';
+    import { layoutState } from "@/stores/layout.svelte.js";
+    import ShowMoreToggle from "@/components/common/ShowMoreToggle.svelte";
     import type {NormalizedRelation} from "@/utils/normalize";
 
     let { relations, loading = false }: {
@@ -13,7 +12,8 @@
     } = $props();
 
     let showAll = $state(false);
-    const INITIAL_LIMIT = 7;
+    /** One row of the grid: 3 columns on mobile, 7 on desktop. */
+    const INITIAL_LIMIT = $derived(layoutState.isMobile ? 3 : 7);
 
     const visibleRelations = $derived(showAll ? relations : relations.slice(0, INITIAL_LIMIT));
 
@@ -33,7 +33,12 @@
 </script>
 
 <div class="space-y-6">
-    <h3 class="text-xl md:text-2xl font-bold tracking-tight">{i18n.t('content.related')}</h3>
+    <div class="flex items-center justify-between gap-3">
+        <h3 class="text-xl md:text-2xl font-bold tracking-tight">{i18n.t('content.related')}</h3>
+        {#if !loading && relations.length > INITIAL_LIMIT}
+            <ShowMoreToggle bind:expanded={showAll} total={relations.length} />
+        {/if}
+    </div>
 
     {#if loading}
         <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-6">
@@ -67,22 +72,5 @@
                 </div>
             {/each}
         </div>
-
-        {#if relations.length > INITIAL_LIMIT}
-            <div class="flex justify-center pt-2">
-                <Button
-                        variant="outline"
-                        class="rounded-full px-6 font-semibold bg-muted/20 hover:bg-muted/50 transition-colors"
-                        onclick={() => showAll = !showAll}
-                >
-                    {#if showAll}
-                        <ChevronUp class="w-4 h-4 mr-2" />
-                    {:else}
-                        <ChevronDown class="w-4 h-4 mr-2" />
-                        ({relations.length - INITIAL_LIMIT})
-                    {/if}
-                </Button>
-            </div>
-        {/if}
     {/if}
 </div>
