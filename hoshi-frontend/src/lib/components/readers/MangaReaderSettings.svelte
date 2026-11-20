@@ -75,16 +75,16 @@
     <div class="space-y-5 pt-4 border-t border-border/40">
         <div>
             <div class="flex items-center justify-between mb-3">
-                <Label class="text-xs font-bold uppercase tracking-widest text-muted-foreground">{i18n.t("reader.gap_x")}</Label>
-                <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-sm">{readerState.gapX}px</span>
+                <span class="text-sm font-medium">{i18n.t("reader.gap_x")}</span>
+                <span class="font-mono text-sm font-semibold tabular-nums text-muted-foreground">{readerState.gapX}px</span>
             </div>
             <Slider type="single" value={readerState.gapX} onValueChange={(v) => readerState.updateMangaConfig({ gapX: v })} max={100} step={2} class="w-full" />
         </div>
         {#if readerState.layout === "scroll"}
             <div>
                 <div class="flex items-center justify-between mb-3">
-                    <Label class="text-xs font-bold uppercase tracking-widest text-muted-foreground">{i18n.t("reader.gap_y")}</Label>
-                    <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-sm">{readerState.gapY}px</span>
+                    <span class="text-sm font-medium">{i18n.t("reader.gap_y")}</span>
+                    <span class="font-mono text-sm font-semibold tabular-nums text-muted-foreground">{readerState.gapY}px</span>
                 </div>
                 <Slider type="single" value={readerState.gapY} onValueChange={(v) => readerState.updateMangaConfig({ gapY: v })} max={100} step={2} class="w-full" />
             </div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { commonReaderShortcuts, type Shortcut } from "@/app/readerShortcuts";
     import { Label } from "$lib/components/ui/label";
     import SettingSlider from "@/components/settings/parts/SettingSlider.svelte";
     import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
@@ -77,15 +78,18 @@
         onSave();
     }
 
-    const readerShortcuts = $derived([
+    const readerShortcuts = $derived<Shortcut[]>([
         {
             label: i18n.t('reader.next_page'),
-            key: config.direction === 'rtl' ? "ArrowLeft" : "ArrowRight"
+            keys: [config.direction === 'rtl' ? "←" : "→", "Space"],
+            hint: `${config.direction.toUpperCase()} Mode`
         },
         {
             label: i18n.t('reader.prev_page'),
-            key: config.direction === 'rtl' ? "ArrowRight" : "ArrowLeft"
-        }
+            keys: [config.direction === 'rtl' ? "→" : "←", "Shift + Space"],
+            hint: `${config.direction.toUpperCase()} Mode`
+        },
+        ...commonReaderShortcuts()
     ]);
 </script>
 
@@ -247,12 +251,17 @@
                 <div class="flex items-center justify-between py-4 border-b border-border/40">
                     <div class="flex flex-col gap-0.5">
                         <span class="text-sm font-medium">{shortcut.label}</span>
-                        <span class="text-[10px] text-muted-foreground uppercase tracking-wider">
-                            {config.direction.toUpperCase()} Mode
-                        </span>
+                        {#if shortcut.hint}
+                            <span class="text-[10px] text-muted-foreground uppercase tracking-wider">{shortcut.hint}</span>
+                        {/if}
                     </div>
                     <Kbd.Group>
-                        <Kbd.Root>{shortcut.key}</Kbd.Root>
+                        {#each shortcut.keys as key, i}
+                            <Kbd.Root>{key}</Kbd.Root>
+                            {#if i < shortcut.keys.length - 1}
+                                <span class="text-xs text-muted-foreground/50 mx-1">/</span>
+                            {/if}
+                        {/each}
                     </Kbd.Group>
                 </div>
             {/each}

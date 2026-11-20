@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { slide } from "svelte/transition";
     import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
     import { NOVEL_THEMES } from "@/app/novel.svelte";
     import { Slider } from "@/components/ui/slider";
@@ -7,11 +8,10 @@
     import AlignLeft from 'phosphor-svelte/lib/TextAlignLeftIcon';
     import AlignJustify from 'phosphor-svelte/lib/TextAlignJustifyIcon';
     import Palette from 'phosphor-svelte/lib/PaletteIcon';
-    import Expand from 'phosphor-svelte/lib/ArrowsOutIcon';
-    import Baseline from 'phosphor-svelte/lib/TextUnderlineIcon';
-    import Space from 'phosphor-svelte/lib/ArrowsOutLineHorizontalIcon';
-    import Rows from 'phosphor-svelte/lib/RowsIcon';
     import BookOpen from 'phosphor-svelte/lib/BookOpenIcon';
+    import CaretDown from 'phosphor-svelte/lib/CaretDownIcon';
+    import Ruler from 'phosphor-svelte/lib/RulerIcon';
+    import Stepper from "@/components/settings/parts/Stepper.svelte";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { FONTS, READER_FONTS } from "@/fonts";
     import type { NovelReaderState } from "@/app/novel.svelte";
@@ -26,17 +26,34 @@
     const customBg = $derived(readerState.themeColors.bg);
     const customText = $derived(readerState.themeColors.text);
 
+    let advancedOpen = $state(false);
+
+    type NumKey = "fontSize" | "lineHeight" | "paragraphSpacing" | "letterSpacing" | "wordSpacing";
+    const STEPS: Record<NumKey, { min: number; max: number; step: number }> = {
+        fontSize:         { min: 12,    max: 32,  step: 1 },
+        lineHeight:       { min: 1,     max: 3,   step: 0.1 },
+        paragraphSpacing: { min: 0.5,   max: 4,   step: 0.1 },
+        letterSpacing:    { min: -0.05, max: 0.2, step: 0.01 },
+        wordSpacing:      { min: 0,     max: 0.5, step: 0.02 },
+    };
+
+    function stepper(key: NumKey) {
+        return { ...STEPS[key], value: readerState[key], onChange: (v: number) => (readerState[key] = v) };
+    }
+
+    /** Spacing in em reads better as a signed percentage ("+4%", "0%"). */
+    const percent = (v: number) => `${v > 0 ? "+" : ""}${Math.round(v * 100)}%`;
+
     function setCustom(key: "customBg" | "customText", value: string) {
         readerState.updateNovelConfig({ theme: "custom", [key]: value });
     }
 </script>
 
-{#snippet slider(label: string, icon: any, value: string, children: any)}
-    {@const Icon = icon}
-    <div>
-        <div class="flex items-center justify-between mb-3">
-            <Label class="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5"><Icon class="size-3.5"/> {label}</Label>
-            <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-sm">{value}</span>
+{#snippet range(label: string, display: string, children: any)}
+    <div class="space-y-3">
+        <div class="flex items-center justify-between gap-3">
+            <span class="text-sm font-medium">{label}</span>
+            <span class="font-mono text-sm font-semibold tabular-nums text-muted-foreground">{display}</span>
         </div>
         {@render children()}
     </div>
@@ -135,26 +152,41 @@
         />
     </div>
 
-    <div class="space-y-5 pt-4 border-t border-border/40">
-        {#snippet fontSizeSlider()}<Slider type="single" bind:value={readerState.fontSize} min={12} max={32} step={1} class="w-full" />{/snippet}
-        {@render slider(i18n.t("reader.font_size"), Type, `${readerState.fontSize}px`, fontSizeSlider)}
+    <div class="space-y-3 border-t border-border/40 pt-5">
+        <Label class="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <Type class="size-4"/> {i18n.t("reader.text")}
+        </Label>
+        <Stepper label={i18n.t("reader.font_size")} {...stepper("fontSize")} />
+        <Stepper label={i18n.t("reader.line_height")} {...stepper("lineHeight")} format={(v) => v.toFixed(1)} />
+        <Stepper label={i18n.t("reader.paragraph_spacing")} {...stepper("paragraphSpacing")} format={(v) => v.toFixed(1)} />
+    </div>
 
-        {#snippet lineSlider()}<Slider type="single" bind:value={readerState.lineHeight} min={1} max={3} step={0.1} class="w-full" />{/snippet}
-        {@render slider(i18n.t("reader.line_height"), Baseline, `${readerState.lineHeight}`, lineSlider)}
-
-        {#snippet paragraphSlider()}<Slider type="single" bind:value={readerState.paragraphSpacing} min={0.5} max={4} step={0.1} class="w-full" />{/snippet}
-        {@render slider(i18n.t("reader.paragraph_spacing"), Rows, `${readerState.paragraphSpacing}em`, paragraphSlider)}
-
-        {#snippet letterSlider()}<Slider type="single" bind:value={readerState.letterSpacing} min={-0.05} max={0.2} step={0.01} class="w-full" />{/snippet}
-        {@render slider(i18n.t("reader.letter_spacing"), Space, `${readerState.letterSpacing.toFixed(2)}em`, letterSlider)}
-
-        {#snippet wordSlider()}<Slider type="single" bind:value={readerState.wordSpacing} min={0} max={0.5} step={0.02} class="w-full" />{/snippet}
-        {@render slider(i18n.t("reader.word_spacing"), Space, `${readerState.wordSpacing.toFixed(2)}em`, wordSlider)}
-
+    <div class="space-y-5 border-t border-border/40 pt-5">
+        <Label class="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <Ruler class="size-4"/> {i18n.t("reader.page_size")}
+        </Label>
         {#snippet widthSlider()}<Slider type="single" bind:value={readerState.maxWidth} min={400} max={1200} step={50} class="w-full" />{/snippet}
-        {@render slider(i18n.t("reader.content_width"), Expand, `${readerState.maxWidth}px`, widthSlider)}
+        {@render range(i18n.t("reader.content_width"), `${readerState.maxWidth}px`, widthSlider)}
 
         {#snippet marginSlider()}<Slider type="single" bind:value={readerState.margin} min={0} max={96} step={4} class="w-full" />{/snippet}
-        {@render slider(i18n.t("reader.margins"), Expand, `${readerState.margin}px`, marginSlider)}
+        {@render range(i18n.t("reader.margins"), `${readerState.margin}px`, marginSlider)}
+    </div>
+
+    <div class="border-t border-border/40 pt-3">
+        <button
+                type="button"
+                class="flex w-full items-center justify-between rounded-sm py-2 text-xs font-black uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+                aria-expanded={advancedOpen}
+                onclick={() => (advancedOpen = !advancedOpen)}
+        >
+            {i18n.t("reader.advanced")}
+            <CaretDown class="size-4 transition-transform duration-200 {advancedOpen ? 'rotate-180' : ''}" />
+        </button>
+        {#if advancedOpen}
+            <div class="space-y-3 pt-2" transition:slide={{ duration: 200 }}>
+                <Stepper label={i18n.t("reader.letter_spacing")} {...stepper("letterSpacing")} format={percent} />
+                <Stepper label={i18n.t("reader.word_spacing")} {...stepper("wordSpacing")} format={percent} />
+            </div>
+        {/if}
     </div>
 </div>

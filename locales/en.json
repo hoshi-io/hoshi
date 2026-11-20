@@ -465,7 +465,14 @@
     "chapters": "Chapters",
     "search_chapters": "Search chapters",
     "sort_newest": "Newest first",
-    "sort_oldest": "Oldest first"
+    "sort_oldest": "Oldest first",
+    "text": "Text",
+    "page_size": "Page",
+    "advanced": "Advanced",
+    "shortcut_prev_chapter": "Previous chapter",
+    "shortcut_next_chapter": "Next chapter",
+    "shortcut_fullscreen": "Toggle fullscreen",
+    "desktop_only": "Desktop only"
   },
   "schedule": {
     "title": "Schedule",

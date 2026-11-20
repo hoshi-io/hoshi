@@ -1,19 +1,18 @@
 <script lang="ts">
-    import { Button } from "$lib/components/ui/button";
+    import { commonReaderShortcuts } from "@/app/readerShortcuts";
     import { Label } from "$lib/components/ui/label";
     import SettingSlider from "@/components/settings/parts/SettingSlider.svelte";
     import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
+    import Stepper from "@/components/settings/parts/Stepper.svelte";
+    import Ruler from 'phosphor-svelte/lib/RulerIcon';
+    import Sliders from 'phosphor-svelte/lib/SlidersHorizontalIcon';
     import * as Kbd from "$lib/components/ui/kbd/index.js";
     import Type from 'phosphor-svelte/lib/TextTIcon';
     import AlignLeft from 'phosphor-svelte/lib/TextAlignLeftIcon';
     import AlignJustify from 'phosphor-svelte/lib/TextAlignJustifyIcon';
     import Palette from 'phosphor-svelte/lib/PaletteIcon';
-    import Expand from 'phosphor-svelte/lib/ArrowsOutIcon';
     import Monitor from 'phosphor-svelte/lib/MonitorIcon';
     import Info from 'phosphor-svelte/lib/InfoIcon';
-    import ALargeSmall from 'phosphor-svelte/lib/TextAaIcon';
-    import Baseline from 'phosphor-svelte/lib/TextUnderlineIcon';
-    import Space from 'phosphor-svelte/lib/ArrowsOutLineHorizontalIcon';
     import type { NovelConfig, NovelTheme, FontFamily } from "@/api/config/types";
     import { i18n } from '@/stores/i18n.svelte.js';
     import { NOVEL_THEMES, novelThemeColors } from "@/app/novel.svelte";
@@ -46,15 +45,18 @@
     });
 
     const colors = $derived(novelThemeColors(config));
+    /** Spacing in em reads better as a signed percentage ("+4%", "0%"). */
+    const percent = (v: number) => `${v > 0 ? "+" : ""}${Math.round(v * 100)}%`;
 
 
-    const novelShortcuts = [
+    const novelShortcuts: { label: string; keys: string[]; hint?: string }[] = [
         { label: i18n.t('reader.scroll_down'), keys: ["↓"] },
         { label: i18n.t('reader.scroll_up'), keys: ["↑"] },
         { label: i18n.t('reader.page_scroll'), keys: ["Space"]},
         { label: i18n.t('reader.turn_page'), keys: ["←", "→"] },
         { label: i18n.t('reader.increase_font'), keys: ["+", "="] },
         { label: i18n.t('reader.decrease_font'), keys: ["-"] },
+        ...commonReaderShortcuts(),
     ];
 
 
@@ -154,25 +156,27 @@
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {#each Object.entries(NOVEL_THEMES) as [t, swatch]}
-                        <Button
-                                variant={config.theme === t ? 'default' : 'outline'}
-                                class="h-12 rounded-sm flex flex-col gap-0.5 relative overflow-hidden transition-colors"
-                                style="background-color: {config.theme === t ? '' : swatch.bg}; color: {config.theme === t ? '' : swatch.text};"
+                        <button
+                                type="button"
+                                aria-pressed={config.theme === t}
+                                class="h-12 rounded-sm border text-xs font-bold capitalize transition-shadow
+                                       {config.theme === t ? 'border-primary ring-2 ring-primary' : 'border-border/50'}"
+                                style="background-color: {swatch.bg}; color: {swatch.text};"
                                 onclick={() => { config.theme = t as NovelTheme; onSave(); }}
                         >
-                            <span class="text-xs font-bold capitalize">{t}</span>
-                        </Button>
+                            {t}
+                        </button>
                     {/each}
                 </div>
-                <div class="flex flex-wrap items-center gap-4 rounded-sm border-2 px-3 py-2 {config.theme === 'custom' ? 'border-primary' : 'border-border/50'}">
+                <div class="flex flex-wrap items-center gap-4 rounded-sm border px-3 py-2 {config.theme === 'custom' ? 'border-primary ring-2 ring-primary' : 'border-border/50'}">
                     <span class="text-sm font-bold flex-1">{i18n.t('reader.theme_custom')}</span>
                     <label class="flex items-center gap-2 text-xs text-muted-foreground">
                         {i18n.t('reader.background')}
-                        <input type="color" value={config.customBg ?? '#1e1e24'} onchange={(e) => setCustom('customBg', e.currentTarget.value)} class="size-8 cursor-pointer rounded border-0 bg-transparent p-0" />
+                        <input type="color" value={config.customBg ?? '#1e1e24'} onchange={(e) => setCustom('customBg', e.currentTarget.value)} class="size-8 cursor-pointer rounded-sm border-0 bg-transparent p-0" />
                     </label>
                     <label class="flex items-center gap-2 text-xs text-muted-foreground">
                         {i18n.t('reader.text_color')}
-                        <input type="color" value={config.customText ?? '#e4e4e7'} onchange={(e) => setCustom('customText', e.currentTarget.value)} class="size-8 cursor-pointer rounded border-0 bg-transparent p-0" />
+                        <input type="color" value={config.customText ?? '#e4e4e7'} onchange={(e) => setCustom('customText', e.currentTarget.value)} class="size-8 cursor-pointer rounded-sm border-0 bg-transparent p-0" />
                     </label>
                 </div>
             </div>
@@ -207,82 +211,50 @@
                     </div>
                 </div>
 
-                <div class="space-y-4">
-                    <Label class="font-bold flex items-center gap-2">{i18n.t('reader.alignment')}</Label>
-                    <div>
-                        <SegmentedControl
-                                fluid
-                                label={i18n.t('reader.alignment')}
-                                value={config.textAlign}
-                                options={alignOptions}
-                                onValueChange={changeAlign}
-                        />
+                <div class="space-y-8">
+                    <div class="space-y-4">
+                        <Label class="font-bold flex items-center gap-2">{i18n.t('reader.alignment')}</Label>
+                        <SegmentedControl fluid label={i18n.t('reader.alignment')} value={config.textAlign} options={alignOptions} onValueChange={changeAlign} />
+                    </div>
+                    <div class="space-y-4">
+                        <Label class="font-bold flex items-center gap-2"><Type class="size-4 text-primary"/> {i18n.t('reader.text')}</Label>
+                        <div class="space-y-3 rounded-sm border border-border/50 bg-muted/20 p-4">
+                            <Stepper label={i18n.t('reader.font_size')} value={localSize} min={12} max={32} step={1} onChange={(v) => { localSize = v; handleCommitSize(v); }} />
+                            <Stepper label={i18n.t('reader.line_height')} value={localLine} min={1} max={3} step={0.1} format={(v) => v.toFixed(1)} onChange={(v) => { localLine = v; handleCommitLine(v); }} />
+                            <Stepper label={i18n.t('reader.paragraph_spacing')} value={localSpacing} min={0.5} max={4} step={0.1} format={(v) => v.toFixed(1)} onChange={(v) => { localSpacing = v; handleCommitSpacing(v); }} />
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-muted/30 rounded-2xl p-6 border border-border/50 space-y-10">
-
+            <div class="grid gap-8 sm:grid-cols-2">
                 <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-2">
-                            <ALargeSmall class="size-4 text-primary"/>
-                            <Label class="font-bold text-sm">{i18n.t('reader.font_size')}</Label>
-                        </div>
-                        <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{localSize}px</span>
-                    </div>
-                    <SettingSlider fluid showValue={false} bind:value={localSize} min={12} max={32} step={1} oncommit={handleCommitSize} />
-                </div>
-
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-2">
-                            <Baseline class="size-4 text-primary"/>
-                            <Label class="font-bold text-sm">{i18n.t('reader.line_height')}</Label>
-                        </div>
-                        <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{localLine}</span>
-                    </div>
-                    <SettingSlider fluid showValue={false} bind:value={localLine} min={1} max={3} step={0.1} oncommit={handleCommitLine} />
-                </div>
-
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-2">
-                            <Space class="size-4 text-primary"/>
-                            <Label class="font-bold text-sm">{i18n.t('reader.paragraph_spacing')}</Label>
-                        </div>
-                        <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{localSpacing}em</span>
-                    </div>
-                    <SettingSlider fluid showValue={false} bind:value={localSpacing} min={0.5} max={4} step={0.1} oncommit={handleCommitSpacing} />
-                </div>
-
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-2">
-                            <Expand class="size-4 text-primary"/>
-                            <Label class="font-bold text-sm">{i18n.t('reader.content_width')}</Label>
-                        </div>
-                        <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{localWidth}px</span>
-                    </div>
-                    <SettingSlider fluid showValue={false} bind:value={localWidth} min={400} max={1200} step={50} oncommit={handleCommitWidth} />
-                </div>
-
-                {#each [
-                    { label: i18n.t('reader.margins'), unit: 'px', get: () => localMargin, set: (v: number) => (localMargin = v), min: 0, max: 96, step: 4, commit: handleCommitMargin, fmt: (v: number) => `${v}` },
-                    { label: i18n.t('reader.letter_spacing'), unit: 'em', get: () => localLetter, set: (v: number) => (localLetter = v), min: -0.05, max: 0.2, step: 0.01, commit: handleCommitLetter, fmt: (v: number) => v.toFixed(2) },
-                    { label: i18n.t('reader.word_spacing'), unit: 'em', get: () => localWord, set: (v: number) => (localWord = v), min: 0, max: 0.5, step: 0.02, commit: handleCommitWord, fmt: (v: number) => v.toFixed(2) },
-                ] as row (row.label)}
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2">
-                                <Space class="size-4 text-primary"/>
-                                <Label class="font-bold text-sm">{row.label}</Label>
+                    <Label class="font-bold flex items-center gap-2"><Ruler class="size-4 text-primary"/> {i18n.t('reader.page_size')}</Label>
+                    <div class="space-y-5 rounded-sm border border-border/50 bg-muted/20 p-4">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="text-sm font-medium">{i18n.t('reader.content_width')}</span>
+                                <span class="font-mono text-sm font-semibold tabular-nums text-muted-foreground">{localWidth}px</span>
                             </div>
-                            <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{row.fmt(row.get())}{row.unit}</span>
+                            <SettingSlider fluid showValue={false} bind:value={localWidth} min={400} max={1200} step={50} oncommit={handleCommitWidth} />
                         </div>
-                        <SettingSlider fluid showValue={false} bind:value={row.get, row.set} min={row.min} max={row.max} step={row.step} oncommit={row.commit} />
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="text-sm font-medium">{i18n.t('reader.margins')}</span>
+                                <span class="font-mono text-sm font-semibold tabular-nums text-muted-foreground">{localMargin}px</span>
+                            </div>
+                            <SettingSlider fluid showValue={false} bind:value={localMargin} min={0} max={96} step={4} oncommit={handleCommitMargin} />
+                        </div>
                     </div>
-                {/each}
+                </div>
+
+                <div class="space-y-4">
+                    <Label class="font-bold flex items-center gap-2"><Sliders class="size-4 text-primary"/> {i18n.t('reader.advanced')}</Label>
+                    <div class="space-y-3 rounded-sm border border-border/50 bg-muted/20 p-4">
+                        <Stepper label={i18n.t('reader.letter_spacing')} value={localLetter} min={-0.05} max={0.2} step={0.01} format={percent} onChange={(v) => { localLetter = v; handleCommitLetter(v); }} />
+                        <Stepper label={i18n.t('reader.word_spacing')} value={localWord} min={0} max={0.5} step={0.02} format={percent} onChange={(v) => { localWord = v; handleCommitWord(v); }} />
+                    </div>
+                </div>
             </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 border-t border-border/40">
@@ -290,6 +262,9 @@
                 <div class="flex items-center justify-between py-4 border-b border-border/40">
                     <div class="flex flex-col gap-0.5">
                         <span class="text-sm font-medium">{shortcut.label}</span>
+                        {#if shortcut.hint}
+                            <span class="text-[10px] text-muted-foreground uppercase tracking-wider">{shortcut.hint}</span>
+                        {/if}
                     </div>
 
                     <Kbd.Group>
