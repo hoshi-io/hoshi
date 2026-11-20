@@ -85,28 +85,25 @@ export function useEpisodeList(opts: Options) {
     const episodes = $derived.by((): BaseEpisode[] => {
         if (opts.enabled && !opts.enabled()) return [];
 
-        const enriched = (opts.units() ?? [])
-            .filter((u) => u.contentType === 'episode' && u.title)
-            .sort((a, b) => a.unitNumber - b.unitNumber);
-
-        if (enriched.length > 0) {
-            const duration = opts.duration() ?? null;
-            return enriched.map((u) => ({
-                number: u.unitNumber,
-                title: u.title ?? null,
-                thumbnail: wideImage(u.thumbnailUrl),
-                duration
-            }));
-        }
-
+        // Per-episode data (Simkl) can lag behind the metadata's episode count, or be a
+        // single placeholder for a show that's already airing: enriched episodes keep
+        // their data, the rest of the count is filled with generic ones.
+        const units = new Map(
+            (opts.units() ?? [])
+                .filter((u) => u.contentType === 'episode')
+                .map((u) => [u.unitNumber, u] as const)
+        );
         const total = opts.total();
-        const count = total && total > 0 ? total : 12;
-        return Array.from({ length: count }, (_, i) => ({
-            number: i + 1,
-            title: null,
-            thumbnail: null,
-            duration: null
-        }));
+        const count = Math.max(total && total > 0 ? total : 0, ...units.keys()) || 12;
+        const duration = opts.duration() ?? null;
+
+        const numbers = new Set([...Array.from({ length: count }, (_, i) => i + 1), ...units.keys()]);
+        return [...numbers].sort((a, b) => a - b).map((number) => {
+            const u = units.get(number);
+            return u
+                ? { number, title: u.title ?? null, thumbnail: wideImage(u.thumbnailUrl), duration }
+                : { number, title: null, thumbnail: null, duration: null };
+        });
     });
 
     const resumeEpisode = $derived.by(() => {
