@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { fade, slide } from "svelte/transition";
+    import { fade } from "svelte/transition";
     import Search from 'phosphor-svelte/lib/MagnifyingGlassIcon';
     import PackageOpen from 'phosphor-svelte/lib/PackageIcon';
     import SearchX from 'phosphor-svelte/lib/MagnifyingGlassIcon';
@@ -13,6 +13,9 @@
     import { Input } from "$lib/components/ui/input";
     import { Button } from "$lib/components/ui/button";
     import { Spinner } from "$lib/components/ui/spinner";
+    import * as Dialog from "$lib/components/ui/dialog";
+    import * as Drawer from "$lib/components/ui/drawer";
+    import { layoutState } from "@/stores/layout.svelte.js";
     import { i18n } from "@/stores/i18n.svelte.js";
     import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
     import {
@@ -29,6 +32,11 @@
 
     let managing = $state(false);
     let stremioUrl = $state("");
+    let newRepo = $state("");
+
+    function addRepo() {
+        if (market.addRepo(newRepo)) newRepo = "";
+    }
 
     function onVisible(node: HTMLElement, params: { key: unknown; cb: () => void }) {
         let current = params;
@@ -51,6 +59,121 @@
         };
     }
 </script>
+
+{#snippet manager()}
+    <div class="space-y-2">
+        {#each market.repos as url, i (i)}
+            {@const invalid = !isHttpUrl(url)}
+            <div class="flex items-center gap-2">
+                <button
+                        type="button"
+                        class="flex size-9 shrink-0 items-center justify-center rounded-md border font-mono text-xs font-bold transition-colors
+                               {i === market.activeIndex
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border/60 text-muted-foreground hover:bg-muted'}"
+                        aria-label={i18n.t('marketplace.use_repo')}
+                        aria-pressed={i === market.activeIndex}
+                        onclick={() => market.selectRepo(i)}
+                >
+                    {i + 1}
+                </button>
+
+                <div class="relative min-w-0 flex-1">
+                    <Link2 class="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                    <Input
+                            value={url}
+                            aria-invalid={invalid}
+                            class="h-9 rounded-lg bg-background pl-8 text-sm {invalid ? 'border-destructive focus-visible:ring-destructive/30' : 'border-border/50'}"
+                            onkeydown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                            onchange={(e) => market.editRepo(i, e.currentTarget.value)}
+                    />
+                </div>
+
+                <Button
+                        variant="ghost"
+                        size="sm"
+                        class="size-9 shrink-0 rounded-lg p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        aria-label={i18n.t('marketplace.remove_repo')}
+                        onclick={() => market.removeRepo(i)}
+                >
+                    <Trash2 class="size-4" />
+                </Button>
+            </div>
+        {/each}
+
+        <form class="flex items-center gap-2" onsubmit={(e) => { e.preventDefault(); addRepo(); }}>
+            <div class="relative min-w-0 flex-1">
+                <Plus class="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                <Input
+                        bind:value={newRepo}
+                        placeholder="https://example.com/index.json"
+                        class="h-9 rounded-lg border-border/50 bg-background pl-8 text-sm"
+                />
+            </div>
+            <Button type="submit" variant="outline" size="sm" class="h-9 shrink-0 gap-1.5 rounded-lg text-xs font-bold" disabled={!newRepo.trim()}>
+                <Plus class="size-3.5" />
+                {i18n.t('marketplace.add_repo')}
+            </Button>
+        </form>
+    </div>
+
+    <div class="space-y-2 border-t border-border/50 pt-4">
+        <div>
+            <h4 class="text-sm font-bold">{i18n.t('marketplace.stremio_title')}</h4>
+            <p class="text-xs text-muted-foreground">{i18n.t('marketplace.stremio_desc')}</p>
+        </div>
+        <form
+                class="flex items-center gap-2"
+                onsubmit={async (e) => {
+                    e.preventDefault();
+                    if (await market.installStremio(stremioUrl)) stremioUrl = "";
+                }}
+        >
+            <div class="relative min-w-0 flex-1">
+                <Link2 class="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                <Input
+                        bind:value={stremioUrl}
+                        placeholder="https://addon.example.com/manifest.json"
+                        class="h-9 rounded-lg border-border/50 bg-background pl-8 text-sm"
+                />
+            </div>
+            <Button type="submit" variant="outline" size="sm" class="h-9 shrink-0 gap-1.5 rounded-lg text-xs font-bold" disabled={market.stremioBusy || !stremioUrl.trim()}>
+                {#if market.stremioBusy}
+                    <Spinner class="size-3.5 animate-spin" />
+                {:else}
+                    <Plus class="size-3.5" />
+                {/if}
+                {i18n.t('marketplace.install')}
+            </Button>
+        </form>
+    </div>
+{/snippet}
+
+{#if layoutState.isMobile}
+    <Drawer.Root bind:open={managing}>
+        <Drawer.Content class="max-h-[90dvh]">
+            <Drawer.Header class="text-left">
+                <Drawer.Title class="text-xl font-bold tracking-tight">{i18n.t('marketplace.repositories')}</Drawer.Title>
+                <Drawer.Description>{i18n.t('marketplace.repositories_desc')}</Drawer.Description>
+            </Drawer.Header>
+            <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-4 pb-safe">
+                {@render manager()}
+            </div>
+        </Drawer.Content>
+    </Drawer.Root>
+{:else}
+    <Dialog.Root bind:open={managing}>
+        <Dialog.Content class="flex max-h-[85vh] w-[95vw] flex-col gap-0 p-0 sm:max-w-xl">
+            <Dialog.Header class="border-b border-border/40 p-6 pb-4">
+                <Dialog.Title class="text-xl font-bold tracking-tight">{i18n.t('marketplace.repositories')}</Dialog.Title>
+                <Dialog.Description>{i18n.t('marketplace.repositories_desc')}</Dialog.Description>
+            </Dialog.Header>
+            <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
+                {@render manager()}
+            </div>
+        </Dialog.Content>
+    </Dialog.Root>
+{/if}
 
 <div class="space-y-6">
     <!-- Toolbar -->
@@ -75,6 +198,7 @@
                 />
             </div>
 
+            {#if market.repos.length > 0}
             <div class="relative flex h-9 min-w-0 flex-1 lg:w-56 lg:flex-none">
                 <Server class="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground/70" />
                 <ResponsiveSelect
@@ -87,109 +211,19 @@
                     <Spinner class="pointer-events-none absolute right-9 top-1/2 z-10 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
                 {/if}
             </div>
+            {/if}
 
             <Button
                     variant={managing ? "secondary" : "outline"}
                     size="sm"
                     class="size-9 shrink-0 rounded-md p-0"
                     aria-label={i18n.t('marketplace.manage_repos')}
-                    aria-expanded={managing}
                     onclick={() => (managing = !managing)}
             >
                 <Settings class="size-4 transition-transform duration-300 {managing ? 'rotate-90 text-primary' : 'text-muted-foreground'}" />
             </Button>
         </div>
     </div>
-
-    <!-- Repository manager -->
-    {#if managing}
-        <div class="space-y-3 rounded-xl border border-border/60 bg-muted/20 p-4" transition:slide={{ duration: 250 }}>
-            <div class="flex items-start justify-between gap-3">
-                <div>
-                    <h4 class="text-sm font-bold">{i18n.t('marketplace.repositories')}</h4>
-                    <p class="text-xs text-muted-foreground">
-                        {i18n.t('marketplace.repositories_desc')}
-                    </p>
-                </div>
-                <Button variant="outline" size="sm" class="h-8 shrink-0 gap-1.5 rounded-lg text-xs font-bold" onclick={market.addRepo}>
-                    <Plus class="size-3.5" />
-                    {i18n.t('marketplace.add_repo')}
-                </Button>
-            </div>
-
-            <div class="max-h-52 space-y-2 overflow-y-auto pr-1">
-                {#each market.repos as url, i (i)}
-                    {@const invalid = url.trim() !== "" && !isHttpUrl(url.trim())}
-                    <div class="flex items-center gap-2">
-                        <button
-                                type="button"
-                                class="flex size-8 shrink-0 items-center justify-center rounded-md border font-mono text-xs font-bold transition-colors
-                                       {i === market.activeIndex
-                                    ? 'border-primary bg-primary/10 text-primary'
-                                    : 'border-border/60 text-muted-foreground hover:bg-muted'}"
-                                aria-label={i18n.t('marketplace.use_repo')}
-                                aria-pressed={i === market.activeIndex}
-                                onclick={() => market.selectRepo(i)}
-                        >
-                            {i + 1}
-                        </button>
-
-                        <div class="relative flex-1">
-                            <Link2 class="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
-                            <Input
-                                    bind:value={market.repos[i]}
-                                    placeholder="https://example.com/index.json"
-                                    aria-invalid={invalid}
-                                    class="h-9 rounded-lg bg-background pl-8 text-sm {invalid ? 'border-destructive focus-visible:ring-destructive/30' : 'border-border/50'}"
-                                    onchange={market.commitRepos}
-                            />
-                        </div>
-
-                        <Button
-                                variant="ghost"
-                                size="sm"
-                                class="size-8 shrink-0 rounded-lg p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                aria-label={i18n.t('marketplace.remove_repo')}
-                                onclick={() => market.removeRepo(i)}
-                        >
-                            <Trash2 class="size-4" />
-                        </Button>
-                    </div>
-                {/each}
-            </div>
-
-            <div class="space-y-2 border-t border-border/50 pt-3">
-                <div>
-                    <h4 class="text-sm font-bold">{i18n.t('marketplace.stremio_title')}</h4>
-                    <p class="text-xs text-muted-foreground">{i18n.t('marketplace.stremio_desc')}</p>
-                </div>
-                <form
-                        class="flex items-center gap-2"
-                        onsubmit={async (e) => {
-                            e.preventDefault();
-                            if (await market.installStremio(stremioUrl)) stremioUrl = "";
-                        }}
-                >
-                    <div class="relative flex-1">
-                        <Link2 class="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
-                        <Input
-                                bind:value={stremioUrl}
-                                placeholder="https://addon.example.com/manifest.json"
-                                class="h-9 rounded-lg border-border/50 bg-background pl-8 text-sm"
-                        />
-                    </div>
-                    <Button type="submit" variant="outline" size="sm" class="h-9 shrink-0 gap-1.5 rounded-lg text-xs font-bold" disabled={market.stremioBusy || !stremioUrl.trim()}>
-                        {#if market.stremioBusy}
-                            <Spinner class="size-3.5 animate-spin" />
-                        {:else}
-                            <Plus class="size-3.5" />
-                        {/if}
-                        {i18n.t('marketplace.install')}
-                    </Button>
-                </form>
-            </div>
-        </div>
-    {/if}
 
     <!-- Results -->
     {#if market.view === "noRepo"}

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
+    import { slide } from "svelte/transition";
     import { Badge } from "$lib/components/ui/badge";
     import { Button } from "$lib/components/ui/button";
     import * as Drawer from "$lib/components/ui/drawer";
@@ -270,7 +271,7 @@
     </div>
 
     {#if expanded && draftReady}
-        <div class="hidden border-t border-border/40 bg-muted/10 p-4 md:block">
+        <div class="hidden border-t border-border/40 bg-muted/10 p-4 md:block" transition:slide={{ duration: 200 }}>
             <Form {ext} bind:settings={draft} isSaving={saving} onChange={handleChange} />
         </div>
     {/if}

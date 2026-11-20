@@ -117,51 +117,27 @@
     let managing = $state(false);
     let stremioUrl = $state('');
 
+    let newRepo = $state(RAW_GITHUB_PREFIX);
+
     async function openManager() {
         managing = true;
-        await tick();
-
-        if (!market.repos.length) {
-            await addRepo();
-            return;
-        }
-
-        let first = -1;
-        market.repos.forEach((url, i) => {
-            if (!url?.trim()) {
-                market.repos[i] = RAW_GITHUB_PREFIX;
-                if (first < 0) first = i;
-            }
-        });
-        if (first < 0) return;
-
+        if (market.repos.length) return;
         await tick();
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-        const input = document.querySelector<HTMLInputElement>(`[data-repo="${first}"]`);
+        const input = document.querySelector<HTMLInputElement>('[data-repo="new"]');
         if (!input) return;
         input.focus();
         input.setSelectionRange(input.value.length, input.value.length);
     }
 
     function closeManager() {
-        // A row left as just the prefix is not a real repo: put it back to empty.
-        market.repos.forEach((url, i) => {
-            if (url?.trim() === RAW_GITHUB_PREFIX) market.repos[i] = '';
-        });
+        newRepo = RAW_GITHUB_PREFIX;
         managing = false;
     }
 
-    async function addRepo() {
-        market.addRepo();
-        await tick();
-        const last = market.repos.length - 1;
-        if (last < 0) return;
-        if (!market.repos[last]?.trim()) market.repos[last] = RAW_GITHUB_PREFIX;
-        await tick();
-        const input = document.querySelector<HTMLInputElement>(`[data-repo="${last}"]`);
-        if (!input) return;
-        input.focus();
-        input.setSelectionRange(input.value.length, input.value.length);
+    function addRepo() {
+        if (newRepo.trim() === RAW_GITHUB_PREFIX) return;
+        if (market.addRepo(newRepo)) newRepo = RAW_GITHUB_PREFIX;
     }
 
     // ---- Infinite scroll (observer + a focusable fallback for the D-pad) ----
@@ -471,7 +447,7 @@
     >
         <div class="space-y-3">
             {#each market.repos as url, i (i)}
-                {@const invalid = url.trim() !== '' && !isHttpUrl(url.trim())}
+                {@const invalid = !isHttpUrl(url)}
                 <div class="flex items-center gap-3">
                     <button
                             type="button"
@@ -490,10 +466,9 @@
                             data-repo={i}
                             type="url"
                             autocomplete="off"
-                            bind:value={market.repos[i]}
-                            placeholder="{RAW_GITHUB_PREFIX}user/repo/branch/index.json"
+                            value={url}
                             aria-invalid={invalid}
-                            onchange={market.commitRepos}
+                            onchange={(e) => market.editRepo(i, e.currentTarget.value)}
                             class="{inputClass} min-w-0 flex-1 {invalid ? 'border-destructive' : ''}"
                     />
 
@@ -508,6 +483,27 @@
                     </button>
                 </div>
             {/each}
+
+            <form class="flex items-center gap-3" onsubmit={(e) => { e.preventDefault(); addRepo(); }}>
+                <input
+                        data-sn
+                        data-repo="new"
+                        type="url"
+                        autocomplete="off"
+                        bind:value={newRepo}
+                        placeholder="{RAW_GITHUB_PREFIX}user/repo/branch/index.json"
+                        class="{inputClass} min-w-0 flex-1"
+                />
+                <button
+                        type="submit"
+                        data-sn
+                        disabled={!newRepo.trim() || newRepo.trim() === RAW_GITHUB_PREFIX}
+                        class="{outlineBtn} shrink-0 disabled:opacity-50"
+                >
+                    <Plus class="size-5" />
+                    {i18n.t('marketplace.add_repo')}
+                </button>
+            </form>
         </div>
 
         <div class="space-y-3 border-t-2 border-border/40 pt-4">
@@ -548,11 +544,7 @@
             </form>
         </div>
 
-        <div class="flex justify-between gap-3 pt-2">
-            <button type="button" data-sn class={outlineBtn} onclick={addRepo}>
-                <Plus class="size-5" />
-                {i18n.t('marketplace.add_repo')}
-            </button>
+        <div class="flex justify-end gap-3 pt-2">
             <button
                     type="button"
                     data-sn

@@ -275,7 +275,7 @@ export type MarketplaceGroup = { lang: string; items: AnyMarketplaceEntry[]; tot
 export function useMarketplace(opts: MarketplaceOptions) {
     const initial = opts.config().repoUrls as string[] | string | undefined;
     let repos = $state<string[]>(
-        Array.isArray(initial) && initial.length > 0 ? [...initial] : initial && !Array.isArray(initial) ? [initial] : ['']
+        (Array.isArray(initial) ? initial : initial ? [initial] : []).map((u) => u.trim()).filter((u) => u !== '')
     );
     let activeIndex = $state(0);
     const activeUrl = $derived(repos[activeIndex] ?? '');
@@ -394,32 +394,34 @@ export function useMarketplace(opts: MarketplaceOptions) {
         syncActive();
     }
 
-    function addRepo() {
-        repos = [...repos, ''];
-        activeIndex = repos.length - 1;
-        persist();
-        syncActive();
+    function addRepo(url: string): boolean {
+        const u = url.trim();
+        if (!u) return false;
+        const existing = repos.indexOf(u);
+        if (existing === -1) {
+            repos = [...repos, u];
+            persist();
+        }
+        selectRepo(existing === -1 ? repos.length - 1 : existing);
+        return true;
     }
 
     function removeRepo(index: number) {
-        if (repos.length <= 1) {
-            repos = [''];
-            activeIndex = 0;
-        } else {
-            repos = repos.filter((_, i) => i !== index);
-            if (index < activeIndex || activeIndex >= repos.length) {
-                activeIndex = Math.max(0, activeIndex - 1);
-            }
+        repos = repos.filter((_, i) => i !== index);
+        if (index < activeIndex || activeIndex >= repos.length) {
+            activeIndex = Math.max(0, activeIndex - 1);
         }
         persist();
         syncActive();
     }
 
-    /** Call when a URL input is committed (Enter / blur). */
-    function commitRepos() {
-        repos = repos.map((u) => u.trim());
+    function editRepo(index: number, url: string) {
+        const u = url.trim();
+        if (!u) return removeRepo(index);
+        if (u === repos[index]) return;
+        repos = repos.map((r, i) => (i === index ? u : r));
         persist();
-        syncActive();
+        if (index === activeIndex) syncActive();
     }
 
     function installedVersion(item: AnyMarketplaceEntry): string | null {
@@ -512,7 +514,7 @@ export function useMarketplace(opts: MarketplaceOptions) {
         selectRepo,
         addRepo,
         removeRepo,
-        commitRepos,
+        editRepo,
         reload,
         installStremio,
         get stremioBusy() { return stremioBusy; },
