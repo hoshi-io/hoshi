@@ -461,7 +461,11 @@
     "next_chapter": "Next",
     "reload": "Reload chapter",
     "close_settings": "Close settings",
-    "page": "Page"
+    "page": "Page",
+    "chapters": "Chapters",
+    "search_chapters": "Search chapters",
+    "sort_newest": "Newest first",
+    "sort_oldest": "Oldest first"
   },
   "schedule": {
     "title": "Schedule",

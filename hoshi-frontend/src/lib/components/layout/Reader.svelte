@@ -16,13 +16,11 @@
     import { goto } from "$app/navigation";
     import { Button } from "@/components/ui/button";
     import * as Drawer from "@/components/ui/drawer";
-    import * as Popover from "@/components/ui/popover";
     import { Spinner } from "@/components/ui/spinner";
     import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
     import ChevronLeft from 'phosphor-svelte/lib/CaretLeftIcon';
     import Settings2 from 'phosphor-svelte/lib/SlidersIcon';
     import ArrowLeft from 'phosphor-svelte/lib/ArrowLeftIcon';
-    import Check from 'phosphor-svelte/lib/CheckIcon';
     import ChevronsUpDown from 'phosphor-svelte/lib/CaretUpDownIcon';
     import ChevronRight from 'phosphor-svelte/lib/CaretRightIcon';
     import ListBullets from 'phosphor-svelte/lib/ListBulletsIcon';
@@ -31,6 +29,8 @@
     import Reload from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
     import X from 'phosphor-svelte/lib/XIcon';
     import { setWindowFullscreen, isWindowFullscreen } from "@/utils/fullscreen";
+    import { chapterLabel } from "@/utils/chapterTitle";
+    import ChapterList from "@/components/readers/ChapterList.svelte";
     import type { Snippet } from "svelte";
     import { i18n } from '@/stores/i18n.svelte.js';
     import { discordApi } from "@/api/discord/discord";
@@ -54,41 +54,26 @@
 
     let innerWidth = $state(0);
     let isMobile = $derived(innerWidth < 1024);
-    let chapterDropdownOpen = $state(false);
+    let showChapters = $state(false);
+
+    function toggleChapters() {
+        if (!showChapters) readerState.showSettings = false;
+        showChapters = !showChapters;
+    }
+
+    // One side panel at a time.
+    $effect(() => {
+        if (readerState.showSettings) showChapters = false;
+    });
 
     let sortedChapters = $derived(readerState.allChapters);
-    let currentIndex = $derived(
-        sortedChapters.findIndex(c => Number(c.number ?? c.unitNumber) === readerState.chapterNumber)
-    );
-    /** Every version (language/scanlator) of every chapter; novels have one per number. */
-    let dropdownChapters = $derived(readerState.rawChapters);
     let prevChapter = $derived(readerState.prevChapter);
     let nextChapter = $derived(readerState.nextChapter);
 
-    function getCleanTitle(chap: any, num: number | string): string | null {
-        const title = chap?.title?.trim();
-        if (!title) return null;
-        const numText = i18n.t('reader.chapter_number', { count: num }).trim();
-        if (title.toLowerCase() === numText.toLowerCase()) return null;
-        if (/^chapter\s+\d+(\.\d+)?$/i.test(title) && Number(title.replace(/[^\d.]/g, '')) === num) {
-            return null;
-        }
-        return title;
-    }
-
-    /** The extension's title already says which chapter it is ("Chapter 1 [Official]", "Ch. 1"). */
-    function mentionsNumber(title: string, num: number | string): boolean {
-        const n = String(num).replace(".", "\\.");
-        return new RegExp(`(^|[^\\d.])0*${n}(?![\\d]|\\.\\d)`).test(title);
-    }
-
     let displayChapterText = $derived.by(() => {
         if (readerState.isLoading) return i18n.t('reader.loading');
-        const chap = readerState.currentChapter;
-        const numText = i18n.t('reader.chapter_number', { count: readerState.chapterNumber });
-        const cleanTitle = getCleanTitle(chap, readerState.chapterNumber);
-        if (!cleanTitle) return numText;
-        return mentionsNumber(cleanTitle, readerState.chapterNumber) ? cleanTitle : `${cleanTitle} — ${numText}`;
+        const { title, subtitle } = chapterLabel(readerState.currentChapter, readerState.chapterNumber);
+        return subtitle ? `${title} — ${subtitle}` : title;
     });
 
     let immersive = $derived(contentType === "manga" && (readerState as any).layout === "paged");
@@ -160,7 +145,7 @@
     }
 
     const ready = $derived(!readerState.isLoading && !readerState.error && !readerState.isEmpty);
-    const headerShown = $derived(!ready || nearTop || hoveringHeader || chapterDropdownOpen);
+    const headerShown = $derived(!ready || nearTop || hoveringHeader);
     const toolsShown = $derived(!idle || hoveringTools);
 
     let rootEl = $state<HTMLDivElement>();
@@ -223,8 +208,14 @@
             case "S":
                 if (!readerState.isLoading && !readerState.error) readerState.showSettings = !readerState.showSettings;
                 break;
+            case "c":
+            case "C":
+                if (!readerState.isLoading && readerState.rawChapters.length) toggleChapters();
+                break;
             case "Escape":
-                if (!isMobile && readerState.showSettings) readerState.showSettings = false;
+                if (isMobile) return;
+                readerState.showSettings = false;
+                showChapters = false;
                 break;
             default:
                 return;
@@ -309,51 +300,6 @@
     const chapterGroup = $derived(readerState.currentChapter ? scanlatorLabel(readerState.currentChapter) : null);
 </script>
 
-{#snippet chapterDropdownContent(align: "start" | "center" | "end" = "center")}
-    <Popover.Content {align} class="w-[280px] sm:w-[320px] p-0 flex flex-col max-h-[60vh] shadow-xl border-border/50" collisionPadding={16}>
-        <div class="px-4 py-3 border-b border-border/40 bg-muted/30">
-            <h4 class="font-bold text-sm">{i18n.t('reader.select_chapter')}</h4>
-            <p class="text-xs text-muted-foreground">
-                {i18n.t('reader.chapters_available', { count: sortedChapters.length })}
-            </p>
-        </div>
-        <div class="flex-1 overflow-y-auto custom-scrollbar p-1 flex flex-col gap-0.5">
-            {#each dropdownChapters as chap}
-                {@const num = chap.number ?? chap.unitNumber ?? 1}
-                {@const isCurrent = chap === readerState.currentChapter}
-                {@const cleanTitle = getCleanTitle(chap, num)}
-                {@const group = scanlatorLabel(chap)}
-                <a
-                        href={getChapterUrl(chap)}
-                        onclick={() => (chapterDropdownOpen = false)}
-                        class="flex flex-col items-start px-3 py-2 text-sm rounded-sm transition-colors {isCurrent ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-muted'}"
-                >
-                    <div class="flex items-center justify-between w-full">
-                        <span class="truncate pr-2">
-                            {#if cleanTitle && mentionsNumber(cleanTitle, num)}
-                                {cleanTitle}
-                            {:else if cleanTitle}
-                                {cleanTitle}
-                                <span class="opacity-70 text-xs ml-1">
-                                    • {i18n.t('reader.chapter_number', { count: num })}
-                                </span>
-                            {:else}
-                                {i18n.t('reader.chapter_number', { count: num })}
-                            {/if}
-                        </span>
-                        {#if isCurrent}<Check class="size-4 shrink-0" />{/if}
-                    </div>
-                    {#if chap.language || group}
-                        <span class="text-[10px] font-normal text-muted-foreground truncate max-w-full">
-                            {#if chap.language}<span class="font-bold uppercase">{chap.language}</span>{#if group} · {/if}{/if}{group ?? ''}
-                        </span>
-                    {/if}
-                </a>
-            {/each}
-        </div>
-    </Popover.Content>
-{/snippet}
-
 <svelte:window bind:innerWidth onkeydown={onKeyDown} onmousemove={handleMouseMove} />
 
 <div
@@ -369,23 +315,23 @@
                     <ChevronLeft class="size-5" />
                 </Button>
 
-                <Popover.Root bind:open={chapterDropdownOpen}>
-                    <Popover.Trigger
-                            class="flex flex-col items-start justify-center h-auto py-1 px-2.5 rounded-lg hover:bg-muted/50 transition-colors w-full max-w-[200px] sm:max-w-[300px] outline-none"
-                            disabled={readerState.isLoading || !!readerState.error}
-                    >
-                        <span class="font-bold text-[13px] sm:text-sm leading-tight truncate w-full text-left">
+                <button
+                        type="button"
+                        onclick={toggleChapters}
+                        class="flex min-w-0 flex-1 items-center gap-2 rounded-sm px-2.5 py-1 text-left outline-none transition-colors hover:bg-muted/50"
+                        disabled={readerState.isLoading || !!readerState.error}
+                        aria-label={i18n.t('reader.select_chapter')}
+                >
+                    <span class="min-w-0 flex-1">
+                        <span class="block truncate text-[13px] font-bold leading-tight sm:text-sm">
                             {readerState.title || i18n.t('reader.loading')}
                         </span>
-                        <div class="flex items-center gap-1 mt-0.5 w-full">
-                            <span class="text-[11px] sm:text-xs text-muted-foreground truncate text-left">
-                                {displayChapterText}
-                            </span>
-                            <ChevronsUpDown class="size-3 text-muted-foreground shrink-0 opacity-50" />
-                        </div>
-                    </Popover.Trigger>
-                    {@render chapterDropdownContent()}
-                </Popover.Root>
+                        <span class="mt-0.5 block truncate text-[11px] text-muted-foreground sm:text-xs">
+                            {displayChapterText}
+                        </span>
+                    </span>
+                    <ChevronsUpDown class="size-4 shrink-0 text-muted-foreground" />
+                </button>
             </div>
 
             <div class="flex items-center gap-1 sm:gap-2 shrink-0">
@@ -454,16 +400,17 @@
                         </div>
 
                         <div class="flex items-center justify-end gap-2">
-                            <Popover.Root bind:open={chapterDropdownOpen}>
-                                <Popover.Trigger disabled={readerState.isLoading || sortedChapters.length === 0}>
-                                    {#snippet child({ props })}
-                                        <Button {...props} variant={chapterDropdownOpen ? "secondary" : "ghost"} size="icon" class="size-9 rounded-sm" aria-label={i18n.t('reader.select_chapter')}>
-                                            <ListBullets class="size-4" />
-                                        </Button>
-                                    {/snippet}
-                                </Popover.Trigger>
-                                {@render chapterDropdownContent("end")}
-                            </Popover.Root>
+                            <Button
+                                    variant={showChapters ? "secondary" : "ghost"}
+                                    size="icon"
+                                    class="size-9 rounded-sm"
+                                    disabled={readerState.isLoading || sortedChapters.length === 0}
+                                    title="{i18n.t('reader.select_chapter')} (C)"
+                                    aria-label={i18n.t('reader.select_chapter')}
+                                    onclick={toggleChapters}
+                            >
+                                <ListBullets class="size-4" />
+                            </Button>
                             {#if nextChapter}
                                 <Button variant="secondary" href={getChapterUrl(nextChapter)} class="h-9 gap-1 rounded-sm px-3.5 text-sm font-semibold">
                                     {i18n.t('reader.next_chapter')}
@@ -555,18 +502,30 @@
             {/if}
         </div>
 
-        {#if !isMobile && readerState.showSettings && !readerState.isLoading && !readerState.error}
+        {#if !isMobile && (readerState.showSettings || (showChapters && !readerState.isLoading))}
             <aside
                     class="z-40 flex w-[380px] shrink-0 flex-col overflow-hidden border-l border-border/50 bg-card pt-8"
                     transition:slide={{ axis: 'x', duration: 220 }}
             >
                 <div class="flex h-14 shrink-0 items-center justify-between border-b border-border/40 px-5">
-                    <h2 class="text-base font-semibold">{i18n.t('reader.settings')}</h2>
-                    <Button variant="ghost" size="icon" class="size-8 rounded-sm" aria-label={i18n.t('reader.close_settings')} onclick={() => (readerState.showSettings = false)}>
+                    <h2 class="text-base font-semibold">{i18n.t(showChapters ? 'reader.chapters' : 'reader.settings')}</h2>
+                    <Button
+                            variant="ghost"
+                            size="icon"
+                            class="size-8 rounded-sm"
+                            aria-label={i18n.t('reader.close_settings')}
+                            onclick={() => { readerState.showSettings = false; showChapters = false; }}
+                    >
                         <X class="size-4" />
                     </Button>
                 </div>
-                <div class="min-h-0 flex-1 overflow-y-auto px-5 py-6">{@render settings()}</div>
+                {#if showChapters}
+                    <div class="flex min-h-0 flex-1 flex-col px-4 pt-4">
+                        <ChapterList {readerState} />
+                    </div>
+                {:else}
+                    <div class="min-h-0 flex-1 overflow-y-auto px-5 py-6">{@render settings()}</div>
+                {/if}
             </aside>
         {/if}
     </div>
@@ -619,6 +578,19 @@
                 <ChevronRight class="size-5" />
             </Button>
         </div>
+    {/if}
+
+    {#if isMobile && !readerState.isLoading}
+        <Drawer.Root bind:open={showChapters}>
+            <Drawer.Content class="h-[80dvh] border-border/50 bg-background">
+                <Drawer.Header class="text-left">
+                    <Drawer.Title>{i18n.t('reader.chapters')}</Drawer.Title>
+                </Drawer.Header>
+                <div class="flex min-h-0 flex-1 flex-col px-4 pb-[max(env(safe-area-inset-bottom),1rem)]">
+                    <ChapterList {readerState} onSelect={() => (showChapters = false)} />
+                </div>
+            </Drawer.Content>
+        </Drawer.Root>
     {/if}
 
     {#if isMobile && !readerState.isLoading && !readerState.error}
