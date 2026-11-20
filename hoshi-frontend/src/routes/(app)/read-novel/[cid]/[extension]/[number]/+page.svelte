@@ -40,6 +40,8 @@
     const available = $derived(Math.max(0, mainW - readerState.margin * 2));
     const columns = $derived(readerState.pagesPerView >= 2 && available >= MIN_COLUMN * 2 + gap ? 2 : 1);
     const spreadWidth = $derived(Math.min(available, columns * readerState.maxWidth + (columns - 1) * gap));
+    /** An explicit width keeps one-column mode paginated: WebKit drops multicol for `column-count: 1`. */
+    const columnWidth = $derived(Math.max(1, (spreadWidth - (columns - 1) * gap) / columns));
     const pageHeight = $derived(Math.max(120, mainH - PAD_Y - padBottom));
 
     const typography = $derived(`
@@ -136,8 +138,9 @@
                     style="top: {PAD_Y}px; height: {pageHeight}px; width: {spreadWidth}px;"
             >
                 <article
+                        id="novel-article"
                         class="novel-content novel-paged prose max-w-none h-full"
-                        style="{typography} column-count: {columns}; column-gap: {gap}px; column-fill: auto; --page-height: {pageHeight}px;"
+                        style="{typography} column-count: {columns}; column-width: {columnWidth}px; column-gap: {gap}px; column-fill: auto; --page-height: {pageHeight}px; transform: translateX(-{readerState.pageOffset}px);"
                 >
                     {@html readerState.contentHtml}
                 </article>

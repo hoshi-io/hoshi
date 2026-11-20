@@ -62,6 +62,9 @@ export class NovelReaderState extends BaseReaderState {
     pageCount = $state(1);
     /** Width of one spread plus the gutter: how far one page turn moves. */
     private pageStep = 0;
+    /** How far the text is shifted left (px). A transform, not scrolling: clipped
+     *  containers don't scroll reliably in mobile webviews, and smooth scroll slides the text. */
+    pageOffset = $state(0);
 
     constructor() {
         super();
@@ -120,6 +123,10 @@ export class NovelReaderState extends BaseReaderState {
         return document.getElementById("novel-pager");
     }
 
+    private get article() {
+        return document.getElementById("novel-article");
+    }
+
     scrollToPercentage(percent: number) {
         if (this.paged) {
             this.goToPage(Math.round((percent / 100) * (this.pageCount - 1)));
@@ -131,12 +138,12 @@ export class NovelReaderState extends BaseReaderState {
 
     /** Re-measures pages after anything that reflows the text, keeping the reading position. */
     relayout(spreadWidth: number, gap: number, columns: number) {
-        const pager = this.pager;
-        if (!pager || spreadWidth <= 0) return;
+        const article = this.article;
+        if (!article || spreadWidth <= 0) return;
 
         const fraction = this.pageCount > 1 ? this.page / (this.pageCount - 1) : 0;
         const columnWidth = (spreadWidth - (columns - 1) * gap) / columns;
-        const totalColumns = Math.max(1, Math.round((pager.scrollWidth + gap) / (columnWidth + gap)));
+        const totalColumns = Math.max(1, Math.round((article.scrollWidth + gap) / (columnWidth + gap)));
 
         this.pageStep = spreadWidth + gap;
         this.pageCount = Math.max(1, Math.ceil(totalColumns / columns));
@@ -146,8 +153,14 @@ export class NovelReaderState extends BaseReaderState {
     goToPage(target: number, smooth = true) {
         const page = Math.min(Math.max(0, target), this.pageCount - 1);
         this.page = page;
+        const moved = this.pageOffset !== page * this.pageStep;
+        this.pageOffset = page * this.pageStep;
+        // Text selection can still scroll the clipped pager; keep it pinned.
+        if (this.pager) this.pager.scrollLeft = 0;
         const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-        this.pager?.scrollTo({ left: page * this.pageStep, behavior: smooth && !reduce ? "smooth" : "auto" });
+        if (smooth && moved && !reduce) {
+            this.article?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, easing: "ease-out" });
+        }
 
         // An empty or still-loading chapter measures as one page: that isn't progress.
         if (this.isLoading || !this.contentHtml) return;
@@ -224,7 +237,7 @@ export class NovelReaderState extends BaseReaderState {
 
         const container = this.container;
         if (container) container.scrollTop = 0;
-        this.pager?.scrollTo({ left: 0 });
+        this.pageOffset = 0;
 
         try {
             const [, playRes] = await Promise.all([
