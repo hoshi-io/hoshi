@@ -4,6 +4,7 @@
     import Reader from "@/components/layout/Reader.svelte";
     import NovelReaderSettings from "@/components/readers/NovelReaderSettings.svelte";
     import { fontStack } from "@/fonts";
+    import { chapterLabel } from "@/utils/chapterTitle";
 
     const readerState = new NovelReaderState();
 
@@ -28,7 +29,12 @@
     const PAD_BOTTOM_MOBILE = 88;
 
     let innerWidth = $state(0);
+    /** Desktop: the auto-hiding header (titlebar 32 + bar 56) gets its own strip, so it never covers text. */
+    const PAD_TOP_DESKTOP = 88 + 24;
     const padBottom = $derived(innerWidth < 1024 ? PAD_BOTTOM_MOBILE : PAD_Y);
+    const padTop = $derived(innerWidth < 1024 ? PAD_Y : PAD_TOP_DESKTOP);
+    const desktop = $derived(innerWidth >= 1024);
+    const runningTitle = $derived(chapterLabel(readerState.currentChapter, readerState.chapterNumber).title);
 
 
     // ---- paged geometry ----
@@ -42,7 +48,7 @@
     const spreadWidth = $derived(Math.min(available, columns * readerState.maxWidth + (columns - 1) * gap));
     /** An explicit width keeps one-column mode paginated: WebKit drops multicol for `column-count: 1`. */
     const columnWidth = $derived(Math.max(1, (spreadWidth - (columns - 1) * gap) / columns));
-    const pageHeight = $derived(Math.max(120, mainH - PAD_Y - padBottom));
+    const pageHeight = $derived(Math.max(120, mainH - padTop - padBottom));
 
     const typography = $derived(`
         font-family: ${fontStack(readerState.fontFamily)};
@@ -135,7 +141,7 @@
             <div
                     id="novel-pager"
                     class="absolute left-1/2 -translate-x-1/2 overflow-hidden"
-                    style="top: {PAD_Y}px; height: {pageHeight}px; width: {spreadWidth}px;"
+                    style="top: {padTop}px; height: {pageHeight}px; width: {spreadWidth}px;"
             >
                 <article
                         id="novel-article"
@@ -146,10 +152,27 @@
                 </article>
             </div>
 
+            {#if desktop}
+                <!-- Book-style running header and folio: the strip above the page belongs to the reader's top bar. -->
+                <div
+                        class="pointer-events-none absolute left-1/2 flex -translate-x-1/2 items-center justify-center gap-2 truncate text-xs tracking-wide opacity-45"
+                        style="top: 32px; height: {padTop - 32}px; width: {spreadWidth}px;"
+                >
+                    <span class="min-w-0 truncate">{readerState.title}</span>
+                    {#if runningTitle}<span class="opacity-60">·</span><span class="shrink-0">{runningTitle}</span>{/if}
+                </div>
+                <div
+                        class="pointer-events-none absolute bottom-0 left-1/2 flex -translate-x-1/2 items-center justify-center font-mono text-xs tabular-nums opacity-45"
+                        style="height: {padBottom}px; width: {spreadWidth}px;"
+                >
+                    {readerState.page + 1} / {readerState.pageCount}
+                </div>
+            {/if}
+
             {#if columns === 2}
                 <div
                         class="pointer-events-none absolute left-1/2 w-px -translate-x-1/2 opacity-10"
-                        style="top: {PAD_Y}px; height: {pageHeight}px; background-color: {readerState.themeColors.text};"
+                        style="top: {padTop}px; height: {pageHeight}px; background-color: {readerState.themeColors.text};"
                 ></div>
             {/if}
         </main>
