@@ -170,10 +170,11 @@
             alt={""}
             {shouldBlur}
             imageHeaders={headers}
-            class="w-full h-full object-cover opacity-35 dark:opacity-30 scale-[1.01]"
+            class="w-full h-full object-cover scale-[1.01]"
     />
     <div class="absolute inset-0 bg-gradient-to-b from-background/5 via-background/40 to-background"></div>
     <div class="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-background/70 to-transparent"></div>
+    <div class="absolute inset-0 hidden sm:block bg-gradient-to-r from-background/50 via-background/45 via-40% to-transparent to-75%"></div>
 </div>
 
 <div class="relative z-10 w-full max-w-[1800px] mx-auto px-4 md:px-8 lg:pl-32 lg:pr-12 pt-40 md:pt-48 lg:pt-52" in:fade={{ delay: 100, duration: 400 }}>
@@ -199,45 +200,45 @@
 
             <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 text-xs text-muted-foreground font-semibold">
                 {#if listEntry}
-                    <span class="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-md font-bold shadow-sm">
+                    <span class="flex items-center gap-1.5 bg-background/60 backdrop-blur-sm text-primary border border-primary/30 px-2 py-0.5 rounded-sm font-bold shadow-sm">
                         {STATUS_LABEL[listEntry.status] ? i18n.t(STATUS_LABEL[listEntry.status]) : listEntry.status}
                         <span class="font-mono text-primary/80">· {listEntry.progress}{listTotal ? `/${listTotal}` : ''}</span>
                         {#if listScore}<span class="text-primary/80">· ★ {listScore}</span>{/if}
                     </span>
                 {/if}
                 {#if score}
-                    <span class="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md font-bold shadow-sm">
+                    <span class="flex items-center gap-1 bg-background/60 backdrop-blur-sm text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-sm font-bold shadow-sm">
                         <Star class="w-3 h-3 fill-current" weight="fill" /> {score}
                     </span>
                 {/if}
                 {#if airingEntry && countdownText}
-                    <span class="flex items-center gap-1 bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-sm font-bold shadow-sm">
+                    <span class="flex items-center gap-1 bg-background/60 backdrop-blur-sm text-primary border border-primary/30 px-2 py-0.5 rounded-sm font-bold shadow-sm">
                         <Clock class="w-3 h-3" /> {i18n.t("content.episode_in", { num: airingEntry.episode, time: countdownText})}
                     </span>
                 {/if}
                 {#if meta?.releaseDate}
-                    <span class="flex items-center gap-1.5 bg-muted/30 px-2 py-0.5 rounded-md border border-border/10">
+                    <span class="flex items-center gap-1.5 bg-background/60 backdrop-blur-sm px-2 py-0.5 rounded-sm border border-border/30">
                         <Calendar class="w-3 h-3 text-primary/70" />{formatDate(meta.releaseDate)}
                     </span>
                 {/if}
                 {#if meta?.subtype}
-                    <span class="flex items-center gap-1.5 bg-muted/30 px-2 py-0.5 rounded-md border border-border/10 uppercase text-[10px] tracking-wider">
+                    <span class="flex items-center gap-1.5 bg-background/60 backdrop-blur-sm px-2 py-0.5 rounded-sm border border-border/30 uppercase text-[10px] tracking-wider">
                         <Tv class="w-3 h-3 text-primary/70" />{meta.subtype}
                     </span>
                 {/if}
                 {#if meta?.epsOrChapters > 1}
-                    <span class="flex items-center gap-1.5 bg-muted/30 px-2 py-0.5 rounded-md border border-border/10">
+                    <span class="flex items-center gap-1.5 bg-background/60 backdrop-blur-sm px-2 py-0.5 rounded-sm border border-border/30">
                         <BookMarked class="w-3 h-3 text-primary/70" />
                         {meta.epsOrChapters} {isAnime ? i18n.t('content.eps_short') : i18n.t('content.ch_short')}
                     </span>
                 {/if}
                 {#if trackers.length === 0 && extSources.length > 0}
-                    <span class="flex items-center gap-1.5 text-foreground/70">
+                    <span class="flex items-center gap-1.5 bg-background/60 backdrop-blur-sm px-2 py-0.5 rounded-sm border border-border/30 text-foreground/70">
                         <Plug class="w-3 h-3 text-muted-foreground/60" />{i18n.t('content.via', { name: extName(extSources[0].extensionName) })}
                     </span>
                 {/if}
                 {#if meta?.studio}
-                    <span class="flex items-center gap-1.5 text-foreground/80">
+                    <span class="flex items-center gap-1.5 bg-background/60 backdrop-blur-sm px-2 py-0.5 rounded-sm border border-border/30 text-foreground/80">
                         <Building2 class="w-3 h-3 text-muted-foreground/60" />{meta.studio}
                     </span>
                 {/if}
@@ -246,7 +247,7 @@
             {#if genres.length}
                 <div class="flex flex-wrap justify-center sm:justify-start gap-1.5">
                     {#each visibleGenres as genre}
-                        <span class="text-[10px] font-bold tracking-wide uppercase px-2.5 py-0.5 rounded-md bg-muted/40 text-foreground/70 border border-border/20 backdrop-blur-sm">
+                        <span class="text-[10px] font-bold tracking-wide uppercase px-2.5 py-0.5 rounded-sm bg-background/60 text-foreground/75 border border-border/30 backdrop-blur-sm">
                             {genre}
                         </span>
                     {/each}
@@ -352,7 +353,7 @@
                 <div class="max-w-7xl space-y-1.5 mx-auto sm:mx-0 text-justify">
                     <p
                             bind:this={synopsisElement}
-                            class="text-sm text-muted-foreground leading-relaxed {synopsisExpanded ? '' : 'line-clamp-3'}"
+                            class="text-sm text-foreground/80 leading-relaxed {synopsisExpanded ? '' : 'line-clamp-3'}"
                     >
                         {@html meta.synopsis.replace(/<[^>]*>?/gm, '')}
                     </p>
