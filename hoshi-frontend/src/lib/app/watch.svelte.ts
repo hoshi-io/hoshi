@@ -270,6 +270,9 @@ export class WatchState {
             register<void>("player://eof", () => this.handleEof()),
             register<boolean>("player://pause-changed", (p) => { this.isPaused = p; }),
             register<string>("player://error", (p) => this.handlePlayerError(p)),
+            // OS media keys / media flyout
+            register<void>("player://next", () => { if (this.hasNext) this.goToEpisode(this.epNumber + 1); }),
+            register<void>("player://previous", () => { if (this.hasPrev) this.goToEpisode(this.epNumber - 1); }),
         ]);
     }
 

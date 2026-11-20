@@ -191,6 +191,35 @@ pub fn run_inner() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 async_runtime::spawn(hoshi_core::discord::run_activity_bridge(state));
             }
 
+            // OS media controls (MPRIS / Windows flyout / Now Playing). Next/previous
+            // episode go to the frontend, which owns the episode list.
+            #[cfg(not(target_os = "android"))]
+            {
+                use hoshi_core::player::media_controls::{run_media_controls, MediaRequest};
+
+                let state = app.state::<std::sync::Arc<hoshi_core::AppState>>().inner().clone();
+                #[cfg(target_os = "windows")]
+                let hwnd = app.get_webview_window("main").and_then(|w| w.hwnd().ok()).map(|h| h.0 as usize);
+                #[cfg(not(target_os = "windows"))]
+                let hwnd = None;
+
+                let (tx, mut rx) = tokio::sync::broadcast::channel(8);
+                async_runtime::spawn(run_media_controls(state.playback.clone(), hwnd, tx));
+
+                let app_handle = app.handle().clone();
+                async_runtime::spawn(async move {
+                    while let Ok(request) = rx.recv().await {
+                        let event = match request {
+                            MediaRequest::Next => "player://next",
+                            MediaRequest::Previous => "player://previous",
+                        };
+                        if let Err(e) = app_handle.emit(event, ()) {
+                            error!(error = ?e, "failed to emit media control request");
+                        }
+                    }
+                });
+            }
+
             // Needed for libmpv integration on linux webview
             #[cfg(target_os = "linux")]
             {
