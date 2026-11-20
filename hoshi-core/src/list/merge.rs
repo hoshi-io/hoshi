@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use tracing::warn;
-use crate::config::model::MergeStrategy;
+use crate::config::types::MergeStrategy;
 use crate::config::repository::ConfigRepository;
 use crate::content::services::enrichment::EnrichmentService;
 use crate::diff_field;

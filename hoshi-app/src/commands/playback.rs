@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use hoshi_core::error::CoreError;
-use hoshi_core::playback::{Chapter, EpisodeChapter, ExternalSubtitle, LoadMode, LoadSpec, NowPlaying, Track};
+use hoshi_core::player::playback::{Chapter, EpisodeChapter, ExternalSubtitle, LoadMode, LoadSpec, NowPlaying, Track};
 #[cfg(not(mobile))]
-use hoshi_core::playback::RenderTarget;
+use hoshi_core::player::playback::RenderTarget;
 use hoshi_core::AppState;
 use serde::Deserialize;
 use tauri::ipc::Response;

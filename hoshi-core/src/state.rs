@@ -5,10 +5,10 @@ use std::sync::Arc;
 use crate::extensions::ExtensionManager;
 use crate::logs::LogStore;
 use crate::paths::AppPaths;
-use crate::playback::PlaybackHandle;
+use crate::player::playback::PlaybackHandle;
 use crate::tracker::provider::TrackerRegistry;
 use crate::torrent::TorrentHandle;
-use crate::thumbnail::ThumbnailService;
+use crate::player::thumbnail::ThumbnailService;
 
 #[cfg(feature = "discord-rpc")]
 use crate::discord::DiscordRpcService;

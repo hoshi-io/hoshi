@@ -11,7 +11,7 @@ use librqbit::AddTorrentResponse;
 use tokio::sync::{Mutex, Notify, RwLock};
 use tracing::{info, warn};
 
-use crate::config::model::TorrentConfig;
+use crate::config::types::TorrentConfig;
 use crate::core_err;
 use crate::error::{CoreError, CoreResult};
 use crate::torrent::parser::files::{is_pack, select_file, select_file_in_pack, TorrentFile};

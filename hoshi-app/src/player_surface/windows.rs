@@ -8,7 +8,7 @@
 //! initialized. The only job `attach()` has is capturing the window's
 //! HWND *before* the frontend ever calls `initialize_player`, since mpv
 //! needs `wid` set prior to `mpv_initialize()` (see
-//! `hoshi_core::playback::build_mpv`).
+//! `hoshi_core::player::playback::build_mpv`).
 
 use tauri::Manager;
 use tracing::info;

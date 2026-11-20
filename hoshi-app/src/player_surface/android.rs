@@ -5,7 +5,7 @@ use jni::JNIEnv;
 use tauri::{AppHandle, Manager, Wry};
 use tracing::{error, info, warn};
 
-use hoshi_core::playback::RenderTarget;
+use hoshi_core::player::playback::RenderTarget;
 
 static APP_HANDLE: OnceLock<AppHandle<Wry>> = OnceLock::new();
 

@@ -32,7 +32,7 @@ const KNOWN_SOURCES: &[&str] = &["lnreader", "stremio"];
 
 static LNREADER_ARC: OnceLock<Arc<str>> = OnceLock::new();
 static STREMIO_ARC: OnceLock<Arc<str>> = OnceLock::new();
-const SANDBOX_BOOTSTRAP: &str = include_str!("sandbox_bootstrap.js");
+const SANDBOX_BOOTSTRAP: &str = include_str!("sandbox/bootstrap.js");
 
 pub struct ExtensionManager {
     extensions: RwLock<HashMap<String, Extension>>,

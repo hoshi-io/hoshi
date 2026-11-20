@@ -7,7 +7,7 @@ use std::sync::{Mutex, OnceLock};
 use tauri::{AppHandle, Manager, Wry};
 use tracing::{error, info, warn};
 
-use hoshi_core::playback::RenderTarget;
+use hoshi_core::player::playback::RenderTarget;
 
 const GPU_CONTEXT: &str = "moltenvk";
 

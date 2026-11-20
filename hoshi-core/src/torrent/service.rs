@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use serde_json::Value;
 use tracing::{debug, info, warn};
-use crate::config::model::TorrentConfig;
+use crate::config::types::TorrentConfig;
 use crate::config::service::ConfigService;
 use crate::content::models::{EpisodeData, Metadata};
 use crate::content::repositories::content::ContentRepository;

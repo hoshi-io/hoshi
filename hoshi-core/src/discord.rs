@@ -12,7 +12,7 @@ use tracing::{warn, error, debug, instrument};
 #[cfg(feature = "discord-rpc")]
 use crate::config::repository::ConfigRepository;
 #[cfg(feature = "discord-rpc")]
-use crate::playback::PlaybackEvent;
+use crate::player::playback::PlaybackEvent;
 #[cfg(feature = "discord-rpc")]
 use crate::state::AppState;
 

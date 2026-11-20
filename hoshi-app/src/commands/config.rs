@@ -1,6 +1,6 @@
 use crate::{require_auth, TauriSession};
 use hoshi_core::{
-    config::model::UserConfig,
+    config::types::UserConfig,
     config::service::ConfigService,
     error::CoreError,
     state::AppState,

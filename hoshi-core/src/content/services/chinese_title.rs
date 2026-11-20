@@ -5,7 +5,7 @@ use serde::Deserialize;
 use sqlx::SqlitePool;
 use tokio::sync::RwLock;
 use tracing::{info, warn};
-use crate::config::model::TitleLanguage;
+use crate::config::types::TitleLanguage;
 use crate::config::repository::ConfigRepository;
 use crate::error::{CoreError, CoreResult};
 

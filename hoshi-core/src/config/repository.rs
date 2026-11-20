@@ -5,7 +5,7 @@ use sqlx::SqlitePool;
 use tracing::{error, warn};
 
 use crate::auth::repository::AuthRepository;
-use crate::config::model::UserConfig;
+use crate::config::types::UserConfig;
 use crate::error::{CoreError, CoreResult};
 
 pub struct ConfigRepository;

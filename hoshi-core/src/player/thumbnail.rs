@@ -10,8 +10,8 @@ use lru::LruCache;
 use tokio::sync::oneshot;
 use tracing::{debug, warn};
 
-use crate::config::model::PlayerConfig;
-use crate::playback::{LoadSpec, ProtocolHook};
+use crate::config::types::PlayerConfig;
+use crate::player::playback::{LoadSpec, ProtocolHook};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SourceKind { File, Hls, Torrent }

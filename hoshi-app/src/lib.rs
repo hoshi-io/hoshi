@@ -58,11 +58,11 @@ fn spawn_player_event_listener(app_handle: tauri::AppHandle, state: std::sync::A
             };
 
             let emit_result = match event {
-                hoshi_core::playback::PlaybackEvent::Position(pos) => app_handle.emit("player://position", pos),
-                hoshi_core::playback::PlaybackEvent::Eof => app_handle.emit("player://eof", ()),
-                hoshi_core::playback::PlaybackEvent::PauseChanged(paused) => app_handle.emit("player://pause-changed", paused),
-                hoshi_core::playback::PlaybackEvent::Error(msg) => app_handle.emit("player://error", msg),
-                hoshi_core::playback::PlaybackEvent::Buffered(t) => app_handle.emit("player://buffered", t),
+                hoshi_core::player::playback::PlaybackEvent::Position(pos) => app_handle.emit("player://position", pos),
+                hoshi_core::player::playback::PlaybackEvent::Eof => app_handle.emit("player://eof", ()),
+                hoshi_core::player::playback::PlaybackEvent::PauseChanged(paused) => app_handle.emit("player://pause-changed", paused),
+                hoshi_core::player::playback::PlaybackEvent::Error(msg) => app_handle.emit("player://error", msg),
+                hoshi_core::player::playback::PlaybackEvent::Buffered(t) => app_handle.emit("player://buffered", t),
             };
 
             if let Err(e) = emit_result {

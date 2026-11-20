@@ -1,6 +1,6 @@
 use serde_json::Value;
 use tracing::{instrument, warn, debug};
-use crate::config::model::UserConfig;
+use crate::config::types::UserConfig;
 use crate::config::repository::ConfigRepository;
 use crate::error::{CoreError, CoreResult};
 use crate::state::AppState;
