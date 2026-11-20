@@ -455,7 +455,13 @@
     "content_width": "Content Width",
     "align_left": "Left",
     "align_justify": "Justify",
-    "no_content": "This chapter has no content."
+    "no_content": "This chapter has no content.",
+    "back": "Back",
+    "prev_chapter": "Prev",
+    "next_chapter": "Next",
+    "reload": "Reload chapter",
+    "close_settings": "Close settings",
+    "page": "Page"
   },
   "schedule": {
     "title": "Schedule",

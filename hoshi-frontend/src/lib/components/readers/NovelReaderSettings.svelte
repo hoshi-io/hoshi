@@ -1,6 +1,6 @@
 <script lang="ts">
+    import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
     import { NOVEL_THEMES } from "@/app/novel.svelte";
-    import { Button } from "@/components/ui/button";
     import { Slider } from "@/components/ui/slider";
     import { Label } from "@/components/ui/label";
     import Type from 'phosphor-svelte/lib/TextTIcon';
@@ -15,7 +15,7 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { FONTS, READER_FONTS } from "@/fonts";
     import type { NovelReaderState } from "@/app/novel.svelte";
-    import type { NovelTheme } from "@/api/config/types";
+    import type { NovelLayout, NovelTheme, TextAlign } from "@/api/config/types";
 
     interface Props {
         readerState: NovelReaderState;
@@ -36,7 +36,7 @@
     <div>
         <div class="flex items-center justify-between mb-3">
             <Label class="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5"><Icon class="size-3.5"/> {label}</Label>
-            <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">{value}</span>
+            <span class="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-sm">{value}</span>
         </div>
         {@render children()}
     </div>
@@ -47,15 +47,25 @@
         <Label class="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
             <BookOpen class="size-4"/> {i18n.t("reader.layout")}
         </Label>
-        <div class="grid grid-cols-2 gap-2 bg-muted/50 p-1 rounded-xl">
-            <Button variant={readerState.layout === "scroll" ? "secondary" : "ghost"} class="text-sm h-9 font-bold" onclick={() => readerState.updateNovelConfig({ layout: "scroll" })}>{i18n.t("reader.scroll")}</Button>
-            <Button variant={readerState.layout === "paged" ? "secondary" : "ghost"} class="text-sm h-9 font-bold" onclick={() => readerState.updateNovelConfig({ layout: "paged" })}>{i18n.t("reader.paged")}</Button>
-        </div>
+        <SegmentedControl
+                fluid
+                value={readerState.layout}
+                options={[
+                    { value: "scroll", label: i18n.t("reader.scroll") },
+                    { value: "paged", label: i18n.t("reader.paged") },
+                ]}
+                onValueChange={(v) => readerState.updateNovelConfig({ layout: v as NovelLayout })}
+        />
         {#if readerState.paged}
-            <div class="grid grid-cols-2 gap-2 bg-muted/50 p-1 rounded-xl">
-                <Button variant={readerState.pagesPerView === 1 ? "secondary" : "ghost"} class="text-sm h-9 font-bold" onclick={() => readerState.updateNovelConfig({ pagesPerView: 1 })}>{i18n.t("reader.single_page")}</Button>
-                <Button variant={readerState.pagesPerView >= 2 ? "secondary" : "ghost"} class="text-sm h-9 font-bold" onclick={() => readerState.updateNovelConfig({ pagesPerView: 2 })}>{i18n.t("reader.double_page")}</Button>
-            </div>
+            <SegmentedControl
+                fluid
+                    value={readerState.pagesPerView >= 2 ? "2" : "1"}
+                    options={[
+                        { value: "1", label: i18n.t("reader.single_page") },
+                        { value: "2", label: i18n.t("reader.double_page") },
+                    ]}
+                    onValueChange={(v) => readerState.updateNovelConfig({ pagesPerView: Number(v) })}
+            />
         {/if}
     </div>
 
@@ -65,25 +75,27 @@
         </Label>
         <div class="grid grid-cols-2 gap-2">
             {#each Object.entries(NOVEL_THEMES) as [t, colors]}
-                <Button
-                        variant={readerState.theme === t ? "default" : "outline"}
-                        class="text-sm h-10 font-bold border-border/50 relative overflow-hidden"
-                        style="background-color: {readerState.theme === t ? '' : colors.bg}; color: {readerState.theme === t ? '' : colors.text};"
+                <button
+                        type="button"
+                        aria-pressed={readerState.theme === t}
+                        class="h-10 rounded-sm border text-sm font-bold transition-shadow
+                               {readerState.theme === t ? 'border-primary ring-2 ring-primary' : 'border-border/50'}"
+                        style="background-color: {colors.bg}; color: {colors.text};"
                         onclick={() => readerState.updateNovelConfig({ theme: t as NovelTheme })}
                 >
                     <span class="capitalize">{t}</span>
-                </Button>
+                </button>
             {/each}
         </div>
-        <div class="flex items-center gap-3 rounded-xl border p-2 {readerState.theme === 'custom' ? 'border-primary' : 'border-border/50'}">
+        <div class="flex items-center gap-3 rounded-sm border p-2 {readerState.theme === 'custom' ? 'border-primary ring-2 ring-primary' : 'border-border/50'}">
             <span class="text-sm font-bold flex-1 px-1">{i18n.t("reader.theme_custom")}</span>
             <label class="flex items-center gap-1.5 text-xs text-muted-foreground">
                 {i18n.t("reader.background")}
-                <input type="color" value={customBg} onchange={(e) => setCustom("customBg", e.currentTarget.value)} class="size-8 cursor-pointer rounded border-0 bg-transparent p-0" />
+                <input type="color" value={customBg} onchange={(e) => setCustom("customBg", e.currentTarget.value)} class="size-8 cursor-pointer rounded-sm border-0 bg-transparent p-0" />
             </label>
             <label class="flex items-center gap-1.5 text-xs text-muted-foreground">
                 {i18n.t("reader.text_color")}
-                <input type="color" value={customText} onchange={(e) => setCustom("customText", e.currentTarget.value)} class="size-8 cursor-pointer rounded border-0 bg-transparent p-0" />
+                <input type="color" value={customText} onchange={(e) => setCustom("customText", e.currentTarget.value)} class="size-8 cursor-pointer rounded-sm border-0 bg-transparent p-0" />
             </label>
         </div>
     </div>
@@ -98,7 +110,7 @@
                         type="button"
                         aria-pressed={readerState.fontFamily === id}
                         onclick={() => readerState.updateNovelConfig({ fontFamily: id })}
-                        class="h-10 truncate rounded-lg border px-3 text-left text-sm transition-colors
+                        class="h-10 truncate rounded-sm border px-3 text-left text-sm transition-colors
                                {readerState.fontFamily === id ? 'border-primary bg-primary/10 font-semibold' : 'border-border/50 hover:bg-muted/50'}"
                         style="font-family: {FONTS[id].stack}"
                 >
@@ -112,10 +124,15 @@
         <Label class="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
             {i18n.t("reader.alignment")}
         </Label>
-        <div class="grid grid-cols-2 gap-2 bg-muted/50 p-1 rounded-xl">
-            <Button variant={readerState.textAlign === "left" ? "secondary" : "ghost"} class="text-sm h-9 font-bold" onclick={() => readerState.updateNovelConfig({ textAlign: "left" })}><AlignLeft class="size-4 mr-2"/> {i18n.t("reader.align_left")}</Button>
-            <Button variant={readerState.textAlign === "justify" ? "secondary" : "ghost"} class="text-sm h-9 font-bold" onclick={() => readerState.updateNovelConfig({ textAlign: "justify" })}><AlignJustify class="size-4 mr-2"/> {i18n.t("reader.align_justify")}</Button>
-        </div>
+        <SegmentedControl
+                fluid
+                value={readerState.textAlign}
+                options={[
+                    { value: "left", label: i18n.t("reader.align_left"), icon: AlignLeft },
+                    { value: "justify", label: i18n.t("reader.align_justify"), icon: AlignJustify },
+                ]}
+                onValueChange={(v) => readerState.updateNovelConfig({ textAlign: v as TextAlign })}
+        />
     </div>
 
     <div class="space-y-5 pt-4 border-t border-border/40">

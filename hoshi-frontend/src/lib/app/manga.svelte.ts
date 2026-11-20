@@ -21,6 +21,8 @@ export class MangaReaderState extends BaseReaderState {
     animDir           = $state(1);
     skipAnimation     = $state(false);
     showOverlay       = $state(false);
+    /** Scroll layout: the row at the middle of the viewport. */
+    scrollRow         = $state(0);
 
     touchStartX = $state(0);
     touchStartY = $state(0);
@@ -91,7 +93,16 @@ export class MangaReaderState extends BaseReaderState {
     private handleKeyDown(e: KeyboardEvent) {
         if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+
         switch (e.key) {
+            case " ":
+            case "PageDown":
+            case "PageUp":
+                if (this.layout !== "paged") return;
+                e.preventDefault();
+                this.turnPage(e.key === "PageUp" || (e.key === " " && e.shiftKey) ? "prev" : "next");
+                break;
             case "ArrowRight":
                 e.preventDefault();
                 this.turnPage(this.direction === "rtl" ? "prev" : "next");
@@ -111,6 +122,7 @@ export class MangaReaderState extends BaseReaderState {
         this.error = null;
         this.skipAnimation = true;
         this.currentGroupIndex = 0;
+        this.scrollRow = 0;
         this.animDir = 1;
         this.imageStatus = {};
         this.images = [];
@@ -218,7 +230,16 @@ export class MangaReaderState extends BaseReaderState {
         this.scrollRaf = requestAnimationFrame(() => {
             const rows = container.querySelectorAll<HTMLElement>(".scroll-row");
             if (rows.length === 0) return;
-            const viewBottom = container.getBoundingClientRect().bottom;
+            const view = container.getBoundingClientRect();
+            const viewBottom = view.bottom;
+            const viewMiddle = view.top + view.height / 2;
+
+            let row = 0;
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i].getBoundingClientRect().top > viewMiddle) break;
+                row = i;
+            }
+            this.scrollRow = row;
 
             let seen = 0;
             for (let i = 0; i < rows.length; i++) {
@@ -272,6 +293,18 @@ export class MangaReaderState extends BaseReaderState {
             e.stopPropagation();
             this.showOverlay = !this.showOverlay;
         }
+    }
+
+    /** Jump to a page (row in scroll layout) from the progress rail. */
+    seekPage(index: number) {
+        const i = Math.min(Math.max(0, index), this.groupedImages.length - 1);
+        if (this.layout === "paged") {
+            this.skipAnimation = false;
+            this.updatePageWithDir(i);
+            return;
+        }
+        const rows = document.querySelectorAll<HTMLElement>("#reader-main-container .scroll-row");
+        rows[i]?.scrollIntoView({ block: "start" });
     }
 
     updatePageWithDir(newIndex: number) {

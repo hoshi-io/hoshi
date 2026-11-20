@@ -7,11 +7,29 @@
 
     const readerState = new NovelReaderState();
 
+    const progress = $derived(
+        readerState.paged
+            ? {
+                value: (readerState.page + 1) / readerState.pageCount,
+                label: `${readerState.page + 1} / ${readerState.pageCount}`,
+                pages: readerState.pageCount,
+                seek: (r: number) => readerState.goToPage(Math.floor(r * readerState.pageCount)),
+            }
+            : {
+                value: (readerState.scrollProgress ?? 0) / 100,
+                label: `${Math.round(readerState.scrollProgress ?? 0)}%`,
+                seek: (r: number) => readerState.scrollToPercentage(r * 100),
+            }
+    );
+
     const MIN_COLUMN = 320;
     const PAD_Y = 40;
+    /** Mobile: room for the floating page bar. */
+    const PAD_BOTTOM_MOBILE = 88;
 
-    let trackEl: HTMLDivElement;
-    let isDragging = $state(false);
+    let innerWidth = $state(0);
+    const padBottom = $derived(innerWidth < 1024 ? PAD_BOTTOM_MOBILE : PAD_Y);
+
 
     // ---- paged geometry ----
     let mainW = $state(0);
@@ -22,7 +40,7 @@
     const available = $derived(Math.max(0, mainW - readerState.margin * 2));
     const columns = $derived(readerState.pagesPerView >= 2 && available >= MIN_COLUMN * 2 + gap ? 2 : 1);
     const spreadWidth = $derived(Math.min(available, columns * readerState.maxWidth + (columns - 1) * gap));
-    const pageHeight = $derived(Math.max(120, mainH - PAD_Y * 2));
+    const pageHeight = $derived(Math.max(120, mainH - PAD_Y - padBottom));
 
     const typography = $derived(`
         font-family: ${fontStack(readerState.fontFamily)};
@@ -86,36 +104,15 @@
         delta > 0 ? readerState.nextPage() : readerState.prevPage();
     }
 
-    // ---- side slider ----
-    function getProgressFromPointer(e: PointerEvent): number {
-        const rect = trackEl.getBoundingClientRect();
-        const ratio = (e.clientY - rect.top) / rect.height;
-        return Math.min(100, Math.max(0, ratio * 100));
-    }
-
-    function onPointerDown(e: PointerEvent) {
-        e.preventDefault();
-        isDragging = true;
-        trackEl.setPointerCapture(e.pointerId);
-        readerState.scrollToPercentage(getProgressFromPointer(e));
-    }
-
-    function onPointerMove(e: PointerEvent) {
-        if (!isDragging) return;
-        readerState.scrollToPercentage(getProgressFromPointer(e));
-    }
-
-    function onPointerUp(e: PointerEvent) {
-        isDragging = false;
-        trackEl.releasePointerCapture(e.pointerId);
-    }
 </script>
 
 <svelte:head>
     <title>{readerState.chapterTitle} - {readerState.title}</title>
 </svelte:head>
 
-<Reader {readerState} contentType="novel">
+<svelte:window bind:innerWidth />
+
+<Reader {readerState} contentType="novel" {progress}>
     {#snippet settings()}
         <NovelReaderSettings {readerState} />
     {/snippet}
@@ -161,7 +158,7 @@
                 onscroll={(e) => readerState.onScroll(e)}
         >
             <article
-                    class="mx-auto py-8 md:py-12 transition-all duration-300"
+                    class="mx-auto py-8 md:py-12 lg:pt-28 transition-all duration-300"
                     style="{typography} max-width: {readerState.maxWidth + readerState.margin * 2}px; padding-left: {readerState.margin}px; padding-right: {readerState.margin}px;"
             >
                 <div class="prose max-w-none novel-content">
@@ -172,47 +169,6 @@
         </main>
     {/if}
 
-    {#if !readerState.isLoading && !readerState.error}
-        <div class="fixed right-3 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-3 select-none">
-            <div
-                    bind:this={trackEl}
-                    class="relative flex items-center justify-center cursor-pointer"
-                    style="width: 28px; height: 220px;"
-                    onpointerdown={onPointerDown}
-                    onpointermove={onPointerMove}
-                    onpointerup={onPointerUp}
-                    onpointercancel={onPointerUp}
-                    role="slider"
-                    aria-valuenow={Math.round(readerState.scrollProgress ?? 0)}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    tabindex="0"
-                    onkeydown={(e) => {
-                    const step = e.shiftKey ? 10 : 2;
-                    if (e.key === 'ArrowDown') readerState.scrollToPercentage(Math.min(100, (readerState.scrollProgress ?? 0) + step));
-                    if (e.key === 'ArrowUp') readerState.scrollToPercentage(Math.max(0, (readerState.scrollProgress ?? 0) - step));
-                }}
-            >
-                <div class="absolute inset-x-0 mx-auto rounded-full bg-foreground/15" style="width: 6px; height: 100%;"></div>
-                <div
-                        class="absolute top-0 inset-x-0 mx-auto rounded-full bg-primary/60 transition-[height] duration-100 pointer-events-none"
-                        style="width: 6px; height: {readerState.scrollProgress ?? 0}%;"
-                ></div>
-                <div
-                        class="absolute inset-x-0 mx-auto rounded-full bg-primary shadow-lg border-2 border-background pointer-events-none transition-[top] duration-100"
-                        class:scale-125={isDragging}
-                        style="width: 18px; height: 18px; top: calc({readerState.scrollProgress ?? 0}% - 9px);"
-                ></div>
-            </div>
-            <span class="text-xs font-mono font-semibold tabular-nums" style="color: {readerState.themeColors.text}; opacity: 0.5;">
-                {#if readerState.paged}
-                    {readerState.page + 1}/{readerState.pageCount}
-                {:else}
-                    {Math.round(readerState.scrollProgress ?? 0)}%
-                {/if}
-            </span>
-        </div>
-    {/if}
 </Reader>
 
 <style>

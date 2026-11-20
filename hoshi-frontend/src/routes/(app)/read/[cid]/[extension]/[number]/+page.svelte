@@ -1,14 +1,24 @@
 <script lang="ts">
     import { MangaReaderState } from "@/app/manga.svelte";
     import Reader from "@/components/layout/Reader.svelte";
-    import { Slider } from "@/components/ui/slider";
     import { fly } from "svelte/transition";
     import ReaderImage from "@/components/readers/ReaderImage.svelte";
     import MangaReaderSettings from "@/components/readers/MangaReaderSettings.svelte";
-    import {cubicOut} from "svelte/easing";
-    import {layoutState} from "@/stores/layout.svelte";
 
     const readerState = new MangaReaderState();
+
+    const progress = $derived.by(() => {
+        const pages = readerState.groupedImages.length;
+        if (pages === 0) return null;
+        const index = readerState.layout === "paged" ? readerState.currentGroupIndex : readerState.scrollRow;
+        return {
+            value: (index + 1) / pages,
+            label: `${index + 1} / ${pages}`,
+            pages,
+            rtl: readerState.layout === "paged" && readerState.direction === "rtl",
+            seek: (r: number) => readerState.seekPage(Math.floor(r * pages)),
+        };
+    });
 </script>
 
 <svelte:head>
@@ -18,7 +28,7 @@
 <Reader
         {readerState}
         contentType="manga"
-        currentProgress={readerState.layout === "paged" ? readerState.currentProgress : null}
+        {progress}
 >
     {#snippet settings()}
         <MangaReaderSettings {readerState} />
@@ -40,7 +50,7 @@
     >
         {#if readerState.layout === "scroll"}
             <div
-                    class="flex flex-col items-center w-full py-4 pb-24"
+                    class="flex flex-col items-center w-full py-4 pb-24 lg:pt-24"
                     style="row-gap: {readerState.gapY}px;"
             >
                 {#each readerState.groupedImages as group}
@@ -88,40 +98,6 @@
         {/if}
     </main>
 
-    {#if readerState.layout === "paged" && readerState.showOverlay && readerState.groupedImages.length > 0 && layoutState.isMobile && !readerState.showSettings}
-        <div
-                class="fixed bottom-6 left-6 right-6 md:left-1/2 md:right-auto md:w-[420px] md:-translate-x-1/2 z-[100] pb-[env(safe-area-inset-bottom)]"
-                transition:fly={{ y: 24, duration: 280, easing: cubicOut }}
-                role="presentation"
-                onclick={(e) => e.stopPropagation()}
-                onkeydown={(e) => e.stopPropagation()}
-        >
-            <div class="bg-background/40 backdrop-blur-xl shadow-none border-none rounded-3xl p-4 flex flex-col gap-4">
-                <div class="flex justify-center">
-                    <span class="text-foreground/80 bg-foreground/5 backdrop-blur-md px-3 py-1 rounded-full font-mono text-xs font-bold">
-                        {readerState.currentGroupIndex + 1}
-                        <span class="opacity-30 mx-0.5">/</span>
-                        {readerState.groupedImages.length}
-                    </span>
-                </div>
-                    <div class="px-2">
-                        <Slider
-                                type="multiple"
-                                value={[readerState.currentGroupIndex]}
-                                min={0}
-                                max={readerState.groupedImages.length - 1}
-                                step={1}
-                                dir={readerState.direction}
-                                onValueChange={(v: number[]) => {
-                                    readerState.skipAnimation = false;
-                                    readerState.updatePageWithDir(v[0]);
-                                }}
-                                class="w-full"
-                        />
-                    </div>
-            </div>
-        </div>
-    {/if}
 </Reader>
 
 <style>

@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
-    import { getCurrentWindow } from "@tauri-apps/api/window";
     import * as Drawer from "$lib/components/ui/drawer";
     import { WatchState } from "@/app/watch.svelte.js";
     import { appConfig } from "@/stores/config.svelte.js";
@@ -17,7 +16,7 @@
     import { layoutState } from "@/stores/layout.svelte.js";
     import TorrentBanner from "@/components/player/TorrentBanner.svelte";
     import TorrentPickerDialog from "@/components/player/TorrentPickerDialog.svelte";
-    import { type as OsType } from "@tauri-apps/plugin-os";
+    import { setWindowFullscreen, isWindowFullscreen } from "@/utils/fullscreen";
     import EpisodeList from "@/components/player/EpisodeList.svelte";
     import { fly } from "svelte/transition";
     import ExtensionManager from "@/components/modals/ExtensionManager.svelte";
@@ -306,29 +305,8 @@
         };
     });
 
-    const IS_WINDOWS = OsType() === 'windows';
-    let wasMaximized = false;
-
     async function toggleFullscreen() {
-        try {
-            const win = getCurrentWindow();
-
-            if (!(await win.isFullscreen())) {
-                if (IS_WINDOWS) {
-                    wasMaximized = await win.isMaximized();
-                    if (wasMaximized) await win.unmaximize();
-                }
-                await win.setFullscreen(true);
-            } else {
-                await win.setFullscreen(false);
-                if (IS_WINDOWS && wasMaximized) {
-                    await win.maximize();
-                    wasMaximized = false;
-                }
-            }
-        } catch (e) {
-            console.error("Failed to toggle fullscreen", e);
-        }
+        await setWindowFullscreen(!(await isWindowFullscreen()));
     }
 
     function formatTime(seconds: number) {
