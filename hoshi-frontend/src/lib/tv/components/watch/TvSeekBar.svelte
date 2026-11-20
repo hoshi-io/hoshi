@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from 'svelte';
     import type { WatchState } from '@/app/watch.svelte.js';
-    import { buildSegments, createThumbnails, formatTime, segmentFill } from '@/utils/SeekBar.svelte.js';
+    import { buildSegments, createThumbnails, formatTime, segmentFill } from '@/components/player/seekBar.svelte.js';
     import { appConfig } from '@/stores/config.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
 

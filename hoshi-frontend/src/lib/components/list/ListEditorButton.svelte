@@ -1,15 +1,15 @@
 <script lang="ts">
-    import { listStore } from "@/app/list.svelte";
+    import { listStore } from "@/app/list.svelte.js";
     import { Button } from "@/components/ui/button";
     import { Spinner } from "@/components/ui/spinner";
     import Check from 'phosphor-svelte/lib/CheckIcon';
     import BookmarkPlus from 'phosphor-svelte/lib/BookmarkSimpleIcon';
-    import {cn} from "@/utils";
-    import { layoutState, openListEditor } from "@/stores/layout.svelte";
+    import {cn} from "@/utils/cn";
+    import { layoutState, openListEditor } from "@/stores/layout.svelte.js";
     import { contentApi } from "@/api/content/content";
     import type { CardSource } from "@/utils/normalize";
     import { toast } from "svelte-sonner";
-    import { i18n } from "@/stores/i18n.svelte";
+    import { i18n } from "@/stores/i18n.svelte.js";
 
     let {
         cid,

@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { Skeleton } from "$lib/components/ui/skeleton";
+    import { Skeleton } from "@/components/ui/skeleton";
     import { i18n } from "@/stores/i18n.svelte.js";
     import CardWrapper from "@/components/card/CardWrapper.svelte";
-    import { Button } from "$lib/components/ui/button";
+    import { Button } from "@/components/ui/button";
     import ChevronDown from 'phosphor-svelte/lib/CaretDownIcon';
     import ChevronUp from 'phosphor-svelte/lib/CaretUpIcon';
     import type {NormalizedRelation} from "@/utils/normalize";

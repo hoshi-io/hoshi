@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
     import { slide } from "svelte/transition";
-    import { Badge } from "$lib/components/ui/badge";
-    import { Button } from "$lib/components/ui/button";
-    import * as Drawer from "$lib/components/ui/drawer";
+    import { Badge } from "@/components/ui/badge";
+    import { Button } from "@/components/ui/button";
+    import * as Drawer from "@/components/ui/drawer";
     import { Spinner } from "@/components/ui/spinner";
     import Settings2 from 'phosphor-svelte/lib/SlidersIcon';
     import X from 'phosphor-svelte/lib/XIcon';

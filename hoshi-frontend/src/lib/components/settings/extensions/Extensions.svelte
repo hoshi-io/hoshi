@@ -2,14 +2,14 @@
     import { onMount } from "svelte";
     import Puzzle from 'phosphor-svelte/lib/PuzzlePieceIcon';
     import Store from 'phosphor-svelte/lib/StorefrontIcon';
-    import * as Tabs from "$lib/components/ui/tabs";
+    import * as Tabs from "@/components/ui/tabs";
     import { extensions } from "@/stores/extensions.svelte.js";
     import { i18n } from "@/stores/i18n.svelte.js";
     import type { ExtensionsConfig } from "@/api/config/types";
     import { useInstalled, useMarketplace } from "@/app/marketplace.svelte.js";
 
-    import InstalledExtensions from "$lib/components/settings/extensions/Installed.svelte";
-    import ExtensionMarketplace from "$lib/components/settings/extensions/Marketplace.svelte";
+    import InstalledExtensions from "@/components/settings/extensions/Installed.svelte";
+    import ExtensionMarketplace from "@/components/settings/extensions/Marketplace.svelte";
 
     let {
         config = $bindable(),

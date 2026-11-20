@@ -1,7 +1,7 @@
 <script lang="ts" generics="T extends string = string">
     import { untrack } from "svelte";
-    import * as Select from "$lib/components/ui/select";
-    import { cn } from "$lib/utils";
+    import * as Select from "@/components/ui/select";
+    import { cn } from "@/utils/cn";
 
     interface Item {
         value: string;

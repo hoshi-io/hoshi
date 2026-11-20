@@ -1,4 +1,3 @@
-//! Bakes the git commit into the binary for the startup diagnostics.
 use std::path::Path;
 use std::process::Command;
 

@@ -12,11 +12,11 @@
     import * as Drawer from '@/components/ui/drawer';
     import { layoutState } from '@/stores/layout.svelte.js';
     import SegmentedControl from '@/components/settings/parts/SegmentedControl.svelte';
-    import { homeEditor } from '@/utils/home-editor.svelte.js';
+    import { homeEditor } from '@/app/homeEditor.svelte.js';
     import { labelText } from '@/app/home.svelte.js';
     import { extensions } from '@/stores/extensions.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
-    import { cn } from '@/utils';
+    import { cn } from '@/utils/cn';
     import type { HomeSection, HomeTab, SectionLayout } from '@/api/home/types';
     import { TRACKER_NAMES } from './presets';
     import ExtensionSectionDialog from './ExtensionSectionDialog.svelte';

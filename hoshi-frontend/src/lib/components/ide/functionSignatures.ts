@@ -1,4 +1,3 @@
-// src/routes/ide/function-signatures.ts
 
 export type ParamType = 'string' | 'number' | 'boolean' | 'json';
 

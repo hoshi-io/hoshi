@@ -22,11 +22,11 @@
     import { appConfig } from '@/stores/config.svelte';
     import { formatScore } from '@/utils/normalize';
     import { Spinner } from '@/components/ui/spinner';
-    import SmartImage from '@/components/SmartImage.svelte';
+    import SmartImage from '@/components/common/SmartImage.svelte';
     import TvCard from '@/tv/components/card/TvCard.svelte';
     import TvEpisodeCard from '@/tv/components/card/TvEpisodeCard.svelte';
-    import ListEditorButton from "@/components/ListEditorButton.svelte";
-    import {isInProgress, useEpisodeList} from "@/utils/episode-grid.svelte.js";
+    import ListEditorButton from "@/components/list/ListEditorButton.svelte";
+    import {isInProgress, useEpisodeList} from "@/components/content/episodeGrid.svelte.js";
 
     const detail = new ContentDetailState();
 

@@ -18,7 +18,7 @@
     import Clock from 'phosphor-svelte/lib/ClockIcon';
     import GitMerge from 'phosphor-svelte/lib/GitMergeIcon';
     import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
-    import { Spinner } from "$lib/components/ui/spinner";
+    import { Spinner } from "@/components/ui/spinner";
     import { onMount } from "svelte";
     import {
         CalendarDate,
@@ -26,14 +26,14 @@
         getLocalTimeZone,
         parseDate
     } from "@internationalized/date";
-    import { cn } from "@/utils";
+    import { cn } from "@/utils/cn";
     import { i18n } from "@/stores/i18n.svelte.js";
     import type { CoreError } from "@/api/client";
 
     import { listStore } from "@/app/list.svelte.js";
-    import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
-    import SmartImage from "@/components/SmartImage.svelte";
-    import {appConfig} from "@/stores/config.svelte";
+    import ResponsiveSelect from "@/components/common/ResponsiveSelect.svelte";
+    import SmartImage from "@/components/common/SmartImage.svelte";
+    import {appConfig} from "@/stores/config.svelte.js";
     import type {ScoreFormat} from "@/api/config/types";
     import { layoutState } from "@/stores/layout.svelte.js";
     import TvDialog from "@/tv/components/TvDialog.svelte";

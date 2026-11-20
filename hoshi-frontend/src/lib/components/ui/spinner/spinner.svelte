@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { cn } from "$lib/utils.js";
+	import { cn } from "@/utils/cn";
 	import Loader2Icon from 'phosphor-svelte/lib/CircleNotchIcon';
 	import type { SVGAttributes } from "svelte/elements";
 

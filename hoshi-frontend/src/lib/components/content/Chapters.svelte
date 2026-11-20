@@ -1,8 +1,8 @@
 <script lang="ts">
-    import EmptyState from "$lib/components/EmptyState.svelte";
-    import { contentApi } from "$lib/api/content/content";
+    import EmptyState from "@/components/common/EmptyState.svelte";
+    import { contentApi } from "@/api/content/content";
     import { extensions } from "@/stores/extensions.svelte.js";
-    import { Skeleton } from "$lib/components/ui/skeleton";
+    import { Skeleton } from "@/components/ui/skeleton";
     import BookOpen from 'phosphor-svelte/lib/BookOpenIcon';
     import SearchX from 'phosphor-svelte/lib/MagnifyingGlassIcon';
     import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
@@ -10,11 +10,11 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import type { CoreError } from "@/api/client";
     import type { ChapterProgress } from "@/api/progress/types";
-    import ResponsiveSelect from "$lib/components/ResponsiveSelect.svelte";
+    import ResponsiveSelect from "@/components/common/ResponsiveSelect.svelte";
     import type { ResumeTarget } from "@/app/content.svelte";
     import {
         ALL, chapterFacets, chapterHref, chapterNum, filterChapters, scanlatorLabel, type ChapterLike,
-    } from "@/utils/chapterVariants.ts";
+    } from "@/utils/chapterVariants";
 
     let {
         cid,

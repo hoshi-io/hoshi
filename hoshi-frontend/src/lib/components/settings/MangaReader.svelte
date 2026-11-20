@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { commonReaderShortcuts, type Shortcut } from "@/app/readerShortcuts";
-    import { Label } from "$lib/components/ui/label";
+    import { commonReaderShortcuts, type Shortcut } from "@/utils/readerShortcuts";
+    import { Label } from "@/components/ui/label";
     import SettingSlider from "@/components/settings/parts/SettingSlider.svelte";
     import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
     import { fade } from "svelte/transition";
@@ -12,7 +12,7 @@
     import ChevronRight from 'phosphor-svelte/lib/CaretRightIcon';
     import Monitor from 'phosphor-svelte/lib/MonitorIcon';
     import Info from 'phosphor-svelte/lib/InfoIcon';
-    import * as Kbd from "$lib/components/ui/kbd";
+    import * as Kbd from "@/components/ui/kbd";
     import type { MangaConfig, MangaLayout } from "@/api/config/types";
     import { i18n } from "@/stores/i18n.svelte.js";
 

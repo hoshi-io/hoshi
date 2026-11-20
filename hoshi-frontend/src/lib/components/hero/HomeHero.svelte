@@ -9,7 +9,7 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { scheduleStore } from "@/app/schedule.svelte.js";
     import { appConfig } from "@/stores/config.svelte.js";
-    import ListEditorButton from "@/components/ListEditorButton.svelte";
+    import ListEditorButton from "@/components/list/ListEditorButton.svelte";
 
     const YOUTUBE_REGEXP = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
 

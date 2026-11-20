@@ -3,9 +3,9 @@
     // Desktop uses the inline SyncCard in the sidebar instead.
     import { listStore } from "@/app/list.svelte.js";
     import { i18n } from "@/stores/i18n.svelte.js";
-    import * as Drawer from "$lib/components/ui/drawer";
-    import { buttonVariants } from "$lib/components/ui/button";
-    import { cn } from "$lib/utils";
+    import * as Drawer from "@/components/ui/drawer";
+    import { buttonVariants } from "@/components/ui/button";
+    import { cn } from "@/utils/cn";
     import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
     import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
     import CloudOff from 'phosphor-svelte/lib/CloudSlashIcon';

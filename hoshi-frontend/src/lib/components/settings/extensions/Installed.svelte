@@ -4,14 +4,14 @@
     import SearchX from 'phosphor-svelte/lib/MagnifyingGlassIcon';
     import PackageOpen from 'phosphor-svelte/lib/PackageIcon';
     import Store from 'phosphor-svelte/lib/StorefrontIcon';
-    import { Input } from "$lib/components/ui/input";
-    import { Button } from "$lib/components/ui/button";
+    import { Input } from "@/components/ui/input";
+    import { Button } from "@/components/ui/button";
     import { i18n } from "@/stores/i18n.svelte.js";
-    import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import ResponsiveSelect from "@/components/common/ResponsiveSelect.svelte";
     import { sourceFilterItems, sourceOfId, type InstalledState } from "@/app/marketplace.svelte.js";
     import Card from "./Card.svelte";
     import Group from "./Group.svelte";
-    import EmptyState from "$lib/components/EmptyState.svelte";
+    import EmptyState from "@/components/common/EmptyState.svelte";
 
     let {
         installed,

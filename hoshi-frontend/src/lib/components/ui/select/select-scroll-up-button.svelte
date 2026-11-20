@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ChevronUpIcon from 'phosphor-svelte/lib/CaretUpIcon';
 	import { Select as SelectPrimitive } from "bits-ui";
-	import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
+	import { cn, type WithoutChildrenOrChild } from "@/utils/cn";
 
 	let {
 		ref = $bindable(null),

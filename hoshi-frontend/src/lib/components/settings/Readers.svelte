@@ -1,5 +1,5 @@
 <script lang="ts">
-    import * as Tabs from "$lib/components/ui/tabs";
+    import * as Tabs from "@/components/ui/tabs";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { fly } from "svelte/transition";
     import { cubicOut } from "svelte/easing";

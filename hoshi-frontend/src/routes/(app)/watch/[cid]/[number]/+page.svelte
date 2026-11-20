@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
-    import * as Drawer from "$lib/components/ui/drawer";
+    import * as Drawer from "@/components/ui/drawer";
     import { WatchState } from "@/app/watch.svelte.js";
     import { appConfig } from "@/stores/config.svelte.js";
 
@@ -19,7 +19,7 @@
     import { setWindowFullscreen, isWindowFullscreen } from "@/utils/fullscreen";
     import EpisodeList from "@/components/player/EpisodeList.svelte";
     import { fly } from "svelte/transition";
-    import ExtensionManager from "@/components/modals/ExtensionManager.svelte";
+    import ExtensionManager from "@/components/settings/ExtensionManager.svelte";
     import { primaryMetadata } from "@/api/content/types";
 
     const pageState = new WatchState();

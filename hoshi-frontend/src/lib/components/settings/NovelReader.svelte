@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { commonReaderShortcuts } from "@/app/readerShortcuts";
-    import { Label } from "$lib/components/ui/label";
+    import { commonReaderShortcuts } from "@/utils/readerShortcuts";
+    import { Label } from "@/components/ui/label";
     import SettingSlider from "@/components/settings/parts/SettingSlider.svelte";
     import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
     import Stepper from "@/components/settings/parts/Stepper.svelte";
     import Ruler from 'phosphor-svelte/lib/RulerIcon';
     import Sliders from 'phosphor-svelte/lib/SlidersHorizontalIcon';
-    import * as Kbd from "$lib/components/ui/kbd/index.js";
+    import * as Kbd from "@/components/ui/kbd/index";
     import Type from 'phosphor-svelte/lib/TextTIcon';
     import AlignLeft from 'phosphor-svelte/lib/TextAlignLeftIcon';
     import AlignJustify from 'phosphor-svelte/lib/TextAlignJustifyIcon';
@@ -16,7 +16,7 @@
     import type { NovelConfig, NovelTheme, FontFamily } from "@/api/config/types";
     import { i18n } from '@/stores/i18n.svelte.js';
     import { NOVEL_THEMES, novelThemeColors } from "@/app/novel.svelte";
-    import { FONTS, READER_FONTS, fontStack } from "@/fonts";
+    import { FONTS, READER_FONTS, fontStack } from "@/utils/fonts";
 
     let {
         config = $bindable(),

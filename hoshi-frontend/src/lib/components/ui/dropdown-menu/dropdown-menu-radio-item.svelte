@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
 	import CircleIcon from 'phosphor-svelte/lib/CircleIcon';
-	import { cn, type WithoutChild } from "$lib/utils.js";
+	import { cn, type WithoutChild } from "@/utils/cn";
 
 	let {
 		ref = $bindable(null),

@@ -7,8 +7,8 @@
     import Chapters from "@/components/content/Chapters.svelte";
     import CastAndStaff from "@/components/content/CastAndStaff.svelte";
     import Relations from "@/components/content/Relations.svelte";
-    import TrackerManager from "@/components/modals/TrackerManager.svelte";
-    import ExtensionManager from '@/components/modals/ExtensionManager.svelte';
+    import TrackerManager from "@/components/settings/TrackerManager.svelte";
+    import ExtensionManager from '@/components/settings/ExtensionManager.svelte';
     import { appConfig } from "@/stores/config.svelte";
 
     import { Button } from "@/components/ui/button";
@@ -18,10 +18,10 @@
     import { ContentDetailState, type ResumeTarget } from "@/app/content.svelte";
     import { layoutState } from "@/stores/layout.svelte";
     import ContentHero from "@/components/hero/ContentHero.svelte";
-    import ListEditorButton from "@/components/ListEditorButton.svelte";
+    import ListEditorButton from "@/components/list/ListEditorButton.svelte";
     import { progressApi } from "@/api/progress/progress";
     import type { AnimeProgress, ChapterProgress } from "@/api/progress/types";
-    import MergeContent from "@/components/modals/MergeContent.svelte";
+    import MergeContent from "@/components/content/MergeContent.svelte";
 
     const detail = new ContentDetailState();
 

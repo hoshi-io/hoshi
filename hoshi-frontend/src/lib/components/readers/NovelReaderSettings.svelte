@@ -13,7 +13,7 @@
     import Ruler from 'phosphor-svelte/lib/RulerIcon';
     import Stepper from "@/components/settings/parts/Stepper.svelte";
     import { i18n } from "@/stores/i18n.svelte.js";
-    import { FONTS, READER_FONTS } from "@/fonts";
+    import { FONTS, READER_FONTS } from "@/utils/fonts";
     import type { NovelReaderState } from "@/app/novel.svelte";
     import type { NovelLayout, NovelTheme, TextAlign } from "@/api/config/types";
 

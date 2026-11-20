@@ -14,7 +14,7 @@
     import { fade } from 'svelte/transition';
     import type {SearchResult} from "@/api/content/types";
     import {goto} from "$app/navigation";
-    import {listStore} from "@/app/list.svelte";
+    import {listStore} from "@/app/list.svelte.js";
 
     let {
         open = $bindable(false),

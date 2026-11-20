@@ -1,9 +1,9 @@
 <script lang="ts">
-    import * as Dialog from '$lib/components/ui/dialog';
-    import * as Select from '$lib/components/ui/select';
-    import { Button } from '$lib/components/ui/button';
-    import { Input } from '$lib/components/ui/input';
-    import { Label } from '$lib/components/ui/label';
+    import * as Dialog from '@/components/ui/dialog';
+    import * as Select from '@/components/ui/select';
+    import { Button } from '@/components/ui/button';
+    import { Input } from '@/components/ui/input';
+    import { Label } from '@/components/ui/label';
     import {ideState} from "@/app/ide.svelte.js";
 
     let { open = $bindable(false) }: { open: boolean } = $props();

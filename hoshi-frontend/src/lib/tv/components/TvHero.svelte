@@ -9,7 +9,7 @@
         getCardScore,
         type NormalizedCard
     } from '@/utils/normalize';
-    import ListEditorButton from "@/components/ListEditorButton.svelte";
+    import ListEditorButton from "@/components/list/ListEditorButton.svelte";
 
     let { items = [] }: { items: NormalizedCard[] } = $props();
 

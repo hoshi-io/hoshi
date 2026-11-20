@@ -1,19 +1,19 @@
 <script lang="ts">
     import './layout.css';
-    import '$lib/fonts';
+    import '@/utils/fonts';
     import { untrack } from 'svelte';
     import { goto } from '$app/navigation';
     import { page } from '$app/state';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { check } from '@smbcloud/tauri-plugin-android-tv-check-api';
 
-    import { initApp, handleNavigation, openStartPage } from '$lib/app/app';
+    import { initApp, handleNavigation, openStartPage } from '@/app/app';
     import { setupImportListener } from '@/stores/importStatus.svelte';
     import { layoutState } from '@/stores/layout.svelte';
-    import { Toaster } from '$lib/components/ui/sonner';
-    import ImportStatus from '@/components/ImportStatus.svelte';
-    import SwitchProfile from '@/components/modals/SwitchProfile.svelte';
-    import ListEditor from '@/components/modals/ListEditor.svelte';
+    import { Toaster } from '@/components/ui/sonner';
+    import ImportStatus from '@/components/layout/ImportStatus.svelte';
+    import SwitchProfile from '@/components/layout/SwitchProfile.svelte';
+    import ListEditor from '@/components/list/ListEditor.svelte';
     import IconContext from 'phosphor-svelte/lib/IconContext';
 
     let { children } = $props();

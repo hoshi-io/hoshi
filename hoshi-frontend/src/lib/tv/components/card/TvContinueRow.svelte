@@ -11,7 +11,7 @@
         shouldBlurNsfw,
         useContinueItems,
         wideImage
-    } from '@/utils/episode-rows.svelte.js';
+    } from '@/utils/episodeRows.svelte.js';
 
     let { items }: { items: ContinueItem[] } = $props();
 

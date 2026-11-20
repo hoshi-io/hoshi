@@ -2,8 +2,8 @@
 	import ArrowLeftIcon from 'phosphor-svelte/lib/ArrowLeftIcon';
 	import type { WithoutChildren } from "bits-ui";
 	import { getEmblaContext } from "./context.js";
-	import { cn } from "$lib/utils.js";
-	import { Button, type Props } from "$lib/components/ui/button/index.js";
+	import { cn } from "@/utils/cn";
+	import { Button, type Props } from "@/components/ui/button/index";
 
 	let {
 		ref = $bindable(null),

@@ -10,14 +10,14 @@
     import Link2 from 'phosphor-svelte/lib/LinkSimpleIcon';
     import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
     import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
-    import { Input } from "$lib/components/ui/input";
-    import { Button } from "$lib/components/ui/button";
-    import { Spinner } from "$lib/components/ui/spinner";
-    import * as Dialog from "$lib/components/ui/dialog";
-    import * as Drawer from "$lib/components/ui/drawer";
+    import { Input } from "@/components/ui/input";
+    import { Button } from "@/components/ui/button";
+    import { Spinner } from "@/components/ui/spinner";
+    import * as Dialog from "@/components/ui/dialog";
+    import * as Drawer from "@/components/ui/drawer";
     import { layoutState } from "@/stores/layout.svelte.js";
     import { i18n } from "@/stores/i18n.svelte.js";
-    import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import ResponsiveSelect from "@/components/common/ResponsiveSelect.svelte";
     import {
         isHttpUrl,
         sourceOfEntry,
@@ -26,7 +26,7 @@
     } from "@/app/marketplace.svelte.js";
     import Card from "./Card.svelte";
     import Group from "./Group.svelte";
-    import EmptyState from "$lib/components/EmptyState.svelte";
+    import EmptyState from "@/components/common/EmptyState.svelte";
 
     let { market }: { market: MarketplaceState } = $props();
 

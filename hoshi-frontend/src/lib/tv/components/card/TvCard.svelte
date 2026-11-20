@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
     import Star from 'phosphor-svelte/lib/StarIcon';
-    import SmartImage from '@/components/SmartImage.svelte';
+    import SmartImage from '@/components/common/SmartImage.svelte';
     import {
         getCardTitle,
         getCardShouldBlur,

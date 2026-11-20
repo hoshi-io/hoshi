@@ -1,6 +1,6 @@
 <script lang="ts">
     import * as Carousel from '@/components/ui/carousel';
-    import SmartImage from '@/components/SmartImage.svelte';
+    import SmartImage from '@/components/common/SmartImage.svelte';
     import { Skeleton } from '@/components/ui/skeleton';
     import type { Snippet } from 'svelte';
     import { getCardContentTypeLabel, getCardScore, getCardShouldBlur, getCardTitle, type NormalizedCard } from '@/utils/normalize';

@@ -1,11 +1,11 @@
 <script lang="ts">
-    import EmptyState from "$lib/components/EmptyState.svelte";
+    import EmptyState from "@/components/common/EmptyState.svelte";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { scheduleStore } from "@/app/schedule.svelte.js";
     import { untrack } from "svelte";
 
-    import { Skeleton } from "$lib/components/ui/skeleton";
-    import { Badge } from "$lib/components/ui/badge";
+    import { Skeleton } from "@/components/ui/skeleton";
+    import { Badge } from "@/components/ui/badge";
     import CalendarIcon from 'phosphor-svelte/lib/CalendarBlankIcon';
     import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
     import RefreshCw from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
@@ -13,10 +13,10 @@
     import { fade } from "svelte/transition";
     import { layoutState } from "@/stores/layout.svelte.js";
     import CardWrapper from "@/components/card/CardWrapper.svelte";
-    import {Button} from "$lib/components/ui/button";
-    import PageHeader from "@/components/PageHeader.svelte";
+    import {Button} from "@/components/ui/button";
+    import PageHeader from "@/components/common/PageHeader.svelte";
     import LazyCardGrid from "@/components/card/LazyCardGrid.svelte";
-    import SmartImage from "@/components/SmartImage.svelte";
+    import SmartImage from "@/components/common/SmartImage.svelte";
     import ListIcon from 'phosphor-svelte/lib/ListIcon';
     import { viewPrefs } from "@/stores/viewPrefs.svelte";
     import { getCardTitle, getCardShouldBlur, normalizeFullContent } from "@/utils/normalize";

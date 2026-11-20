@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button } from "$lib/components/ui/button";
+    import { Button } from "@/components/ui/button";
     import Minus from 'phosphor-svelte/lib/MinusIcon';
     import Plus from 'phosphor-svelte/lib/PlusIcon';
 

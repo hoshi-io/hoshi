@@ -2,9 +2,9 @@
     import Star from 'phosphor-svelte/lib/StarIcon';
     import Play from 'phosphor-svelte/lib/PlayIcon';
     import { fade } from 'svelte/transition';
-    import ListEditorButton from "@/components/ListEditorButton.svelte";
+    import ListEditorButton from "@/components/list/ListEditorButton.svelte";
     import {i18n} from "@/stores/i18n.svelte";
-    import SmartImage from "@/components/SmartImage.svelte";
+    import SmartImage from "@/components/common/SmartImage.svelte";
     import type { CardSource } from "@/utils/normalize";
 
     const YOUTUBE_REGEXP = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;

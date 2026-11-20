@@ -1,12 +1,12 @@
 <script lang="ts">
-    import EmptyState from "$lib/components/EmptyState.svelte";
+    import EmptyState from "@/components/common/EmptyState.svelte";
     import { onMount, tick, untrack } from 'svelte';
     import Search from 'phosphor-svelte/lib/MagnifyingGlassIcon';
     import SearchX from 'phosphor-svelte/lib/MagnifyingGlassIcon';
     import ListFilter from 'phosphor-svelte/lib/FunnelIcon';
     import X from 'phosphor-svelte/lib/XIcon';
     import Blocks from 'phosphor-svelte/lib/CubeIcon';
-    import { extensionsApi } from '$lib/api/extensions/extensions';
+    import { extensionsApi } from '@/api/extensions/extensions';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { searchState } from '@/app/search.svelte.js';
 

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Pagination as PaginationPrimitive } from "bits-ui";
 	import ChevronLeftIcon from 'phosphor-svelte/lib/CaretLeftIcon';
-	import { buttonVariants } from "$lib/components/ui/button/index.js";
-	import { cn } from "$lib/utils.js";
+	import { buttonVariants } from "@/components/ui/button/index";
+	import { cn } from "@/utils/cn";
 
 	let {
 		ref = $bindable(null),

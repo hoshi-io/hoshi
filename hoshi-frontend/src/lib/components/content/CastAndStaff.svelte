@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type { Character, StaffMember } from "$lib/api/content/types";
+    import type { Character, StaffMember } from "@/api/content/types";
     import Mic2 from 'phosphor-svelte/lib/MicrophoneIcon';
     import User from 'phosphor-svelte/lib/UserIcon';
     import ChevronDown from 'phosphor-svelte/lib/CaretDownIcon';
     import ChevronUp from 'phosphor-svelte/lib/CaretUpIcon';
     import { i18n } from "@/stores/i18n.svelte.js";
-    import { Button } from "$lib/components/ui/button";
+    import { Button } from "@/components/ui/button";
 
     const formatRole = (role: string | undefined | null) => {
         if (!role) return '';

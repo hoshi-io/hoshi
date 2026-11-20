@@ -2,9 +2,9 @@
     import { onDestroy } from "svelte";
     import { fly } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
-    import * as Tabs from "$lib/components/ui/tabs";
-    import { Switch } from "$lib/components/ui/switch";
-    import { Input } from "$lib/components/ui/input";
+    import * as Tabs from "@/components/ui/tabs";
+    import { Switch } from "@/components/ui/switch";
+    import { Input } from "@/components/ui/input";
     import type { TorrentConfig } from "@/api/config/types";
     import type { TorrentCacheEntry, TorrentStorageStats } from "@/api/torrent/types";
     import { torrentApi } from "@/api/torrent/torrent";
@@ -15,7 +15,7 @@
     import ChevronRight from 'phosphor-svelte/lib/CaretRightIcon';
     import { platform } from "@tauri-apps/plugin-os";
     import { openPath } from "@tauri-apps/plugin-opener";
-    import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import ResponsiveSelect from "@/components/common/ResponsiveSelect.svelte";
     import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
     import SettingRow from "@/components/settings/parts/SettingRow.svelte";
     import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";

@@ -2,7 +2,7 @@
 	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
 	import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
 	import MinusIcon from 'phosphor-svelte/lib/MinusIcon';
-	import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
+	import { cn, type WithoutChildrenOrChild } from "@/utils/cn";
 	import type { Snippet } from "svelte";
 
 	let {

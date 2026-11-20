@@ -2,7 +2,7 @@
     import { listStore, trackerLabel, type BatchMeta } from "@/app/list.svelte.js";
     import { listApi } from "@/api/list/list";
     import { i18n } from "@/stores/i18n.svelte.js";
-    import { Button } from "$lib/components/ui/button";
+    import { Button } from "@/components/ui/button";
     import Loader2 from 'phosphor-svelte/lib/CircleNotchIcon';
     import WifiOff from 'phosphor-svelte/lib/WifiSlashIcon';
     import KeyRound from 'phosphor-svelte/lib/KeyIcon';

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { WatchState } from "@/app/watch.svelte.js";
-    import { buildSegments, createThumbnails, formatTime, segmentFill } from "@/utils/SeekBar.svelte.js";
+    import { buildSegments, createThumbnails, formatTime, segmentFill } from "@/components/player/seekBar.svelte.js";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { onDestroy } from "svelte";
 

@@ -5,7 +5,7 @@
     import type { ContentType } from '@/api/content/types';
     import { i18n } from "@/stores/i18n.svelte.js";
     import * as Carousel from "@/components/ui/carousel";
-    import SmartImage from "@/components/SmartImage.svelte";
+    import SmartImage from "@/components/common/SmartImage.svelte";
     import EpisodeCard from "@/components/card/EpisodeCard.svelte";
     import {
         continueProgress,
@@ -15,7 +15,7 @@
         shouldBlurNsfw,
         useContinueItems,
         wideImage
-    } from "@/utils/episode-rows.svelte.js";
+    } from "@/utils/episodeRows.svelte.js";
 
     let {
         items,

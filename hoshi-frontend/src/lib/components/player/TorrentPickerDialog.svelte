@@ -1,7 +1,7 @@
 <script lang="ts">
     import { untrack } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
-    import * as Dialog from "$lib/components/ui/dialog";
+    import * as Dialog from "@/components/ui/dialog";
     import { i18n } from "@/stores/i18n.svelte";
     import type { WatchState } from "@/app/watch.svelte.js";
 

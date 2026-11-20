@@ -1,9 +1,9 @@
 <script lang="ts">
     import { tick } from "svelte";
     import { NovelReaderState } from "@/app/novel.svelte";
-    import Reader from "@/components/layout/Reader.svelte";
+    import Reader from "@/components/readers/Reader.svelte";
     import NovelReaderSettings from "@/components/readers/NovelReaderSettings.svelte";
-    import { fontStack } from "@/fonts";
+    import { fontStack } from "@/utils/fonts";
     import { chapterLabel } from "@/utils/chapterTitle";
 
     const readerState = new NovelReaderState();

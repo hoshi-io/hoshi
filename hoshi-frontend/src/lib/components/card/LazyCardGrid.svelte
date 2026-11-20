@@ -4,7 +4,7 @@
     import { cubicOut } from "svelte/easing";
     import type { Snippet } from "svelte";
     import { tick } from "svelte";
-    import { Skeleton } from "$lib/components/ui/skeleton";
+    import { Skeleton } from "@/components/ui/skeleton";
     import Check from 'phosphor-svelte/lib/CheckIcon';
 
     let {

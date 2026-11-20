@@ -2,7 +2,7 @@
     import {i18n} from "@/stores/i18n.svelte.js";
     import {invoke} from "@tauri-apps/api/core";
     import {toast} from "svelte-sonner";
-    import {Button} from "$lib/components/ui/button";
+    import {Button} from "@/components/ui/button";
     import ArrowLeft from 'phosphor-svelte/lib/ArrowLeftIcon';
     import Check from 'phosphor-svelte/lib/CheckIcon';
     import Copy from 'phosphor-svelte/lib/CopyIcon';
@@ -15,7 +15,7 @@
     import {onMount} from "svelte";
     import {fly} from "svelte/transition";
     import {cubicOut} from "svelte/easing";
-    import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import ResponsiveSelect from "@/components/common/ResponsiveSelect.svelte";
 
     interface LogEntry {
         timestamp: number;

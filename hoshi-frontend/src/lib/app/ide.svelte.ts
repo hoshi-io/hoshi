@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import type {Extension} from "@/api/extensions/types.js";
-import {type FunctionDef, FUNCTIONS_BY_TYPE} from "../components/ide/function-signatures.ts";
-import {STARTER_TEMPLATES} from "@/components/ide/starter-templates.js";
+import {type FunctionDef, FUNCTIONS_BY_TYPE} from "../components/ide/functionSignatures";
+import {STARTER_TEMPLATES} from "@/components/ide/starterTemplates";
 
 function errMessage(e: unknown): string {
     if (e && typeof e === 'object' && 'message' in e) {

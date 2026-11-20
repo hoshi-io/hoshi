@@ -4,12 +4,12 @@
     import { cubicOut } from 'svelte/easing';
     import GripVertical from 'phosphor-svelte/lib/DotsSixVerticalIcon';
     import Plus from 'phosphor-svelte/lib/PlusIcon';
-    import { homeEditor, MAX_TABS } from '@/utils/home-editor.svelte.js';
+    import { homeEditor, MAX_TABS } from '@/app/homeEditor.svelte.js';
     import { labelText } from '@/app/home.svelte.js';
     import { tabIcon } from '@/components/home/icons';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { sortable } from '@/utils/sortable';
-    import { cn } from '@/utils';
+    import { cn } from '@/utils/cn';
 
     let { activeTabId = $bindable() }: { activeTabId: string | null } = $props();
 

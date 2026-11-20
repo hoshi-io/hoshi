@@ -1,14 +1,14 @@
 <script lang="ts">
-    import EmptyState from "$lib/components/EmptyState.svelte";
+    import EmptyState from "@/components/common/EmptyState.svelte";
     import { listStore, trackerLabel, type NormalizedListEntry } from "@/app/list.svelte.js";
     import SelectionBar from "@/components/list/SelectionBar.svelte";
     import CardWrapper from "@/components/card/CardWrapper.svelte";
-    import ListEditor from "@/components/modals/ListEditor.svelte";
-    import * as Drawer from "$lib/components/ui/drawer";
-    import { Input } from "$lib/components/ui/input";
-    import { Label } from "$lib/components/ui/label";
-    import { Skeleton } from "$lib/components/ui/skeleton";
-    import { Button } from "$lib/components/ui/button";
+    import ListEditor from "@/components/list/ListEditor.svelte";
+    import * as Drawer from "@/components/ui/drawer";
+    import { Input } from "@/components/ui/input";
+    import { Label } from "@/components/ui/label";
+    import { Skeleton } from "@/components/ui/skeleton";
+    import { Button } from "@/components/ui/button";
     import Search from 'phosphor-svelte/lib/MagnifyingGlassIcon';
     import List from 'phosphor-svelte/lib/ListIcon';
     import AlertCircle from 'phosphor-svelte/lib/WarningCircleIcon';
@@ -24,12 +24,12 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import { layoutState } from '@/stores/layout.svelte.js';
     import { appConfig } from "@/stores/config.svelte.js";
-    import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import ResponsiveSelect from "@/components/common/ResponsiveSelect.svelte";
     import LazyCardGrid from "@/components/card/LazyCardGrid.svelte";
     import {getCardScore, getCardScoreIsStars, getCardTitle, getCardShouldBlur} from "@/utils/normalize";
-    import SmartImage from "@/components/SmartImage.svelte";
+    import SmartImage from "@/components/common/SmartImage.svelte";
     import { viewPrefs, type ViewPrefs } from "@/stores/viewPrefs.svelte";
-    import ResponsiveMenu from "@/components/ResponsiveMenu.svelte";
+    import ResponsiveMenu from "@/components/common/ResponsiveMenu.svelte";
     import { goto } from "$app/navigation";
     import SyncIndicator from "@/components/list/SyncIndicator.svelte";
     import SyncCard from "@/components/list/SyncCard.svelte";

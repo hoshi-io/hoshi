@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Calendar as CalendarPrimitive } from "bits-ui";
-	import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
+	import { cn, type WithoutChildrenOrChild } from "@/utils/cn";
 	import ChevronDownIcon from 'phosphor-svelte/lib/CaretDownIcon';
 
 	let {

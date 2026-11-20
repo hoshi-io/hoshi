@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18n } from "@/stores/i18n.svelte.js";
-    import { Switch } from "$lib/components/ui/switch";
+    import { Switch } from "@/components/ui/switch";
     import type { DiscordConfig } from "@/api/config/types";
     import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
     import SettingRow from "@/components/settings/parts/SettingRow.svelte";

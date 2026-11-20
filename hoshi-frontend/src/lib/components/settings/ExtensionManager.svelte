@@ -19,7 +19,7 @@
     import { Spinner } from "@/components/ui/spinner";
     import type { CoreError } from "@/api/client";
     import { slide, fade } from 'svelte/transition';
-    import SmartImage from "@/components/SmartImage.svelte";
+    import SmartImage from "@/components/common/SmartImage.svelte";
     import { untrack } from "svelte";
 
     let {

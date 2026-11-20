@@ -34,9 +34,9 @@
     import type { Snippet } from "svelte";
     import { i18n } from '@/stores/i18n.svelte.js';
     import { discordApi } from "@/api/discord/discord";
-    import type { BaseReaderState } from "@/app/reader.svelte";
-    import {layoutState} from "@/stores/layout.svelte";
-    import { scanlatorLabel } from "@/utils/chapterVariants.ts";
+    import type { BaseReaderState } from "@/app/reader.svelte.js";
+    import {layoutState} from "@/stores/layout.svelte.js";
+    import { scanlatorLabel } from "@/utils/chapterVariants";
 
     let {
         readerState,

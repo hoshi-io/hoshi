@@ -3,8 +3,8 @@
     import ChevronLeft from 'phosphor-svelte/lib/CaretLeftIcon';
     import { goto } from '$app/navigation';
     import { layoutState } from '@/stores/layout.svelte.js';
-    import * as Avatar from '$lib/components/ui/avatar';
-    import { Button } from '$lib/components/ui/button';
+    import * as Avatar from '@/components/ui/avatar';
+    import { Button } from '@/components/ui/button';
     import HistoryMenu from '@/components/history/HistoryMenu.svelte';
 
     let { showSwitchProfileModal = $bindable(false) } = $props();

@@ -1,4 +1,3 @@
-// @/components/ide/starter-templates.ts
 
 export const STARTER_TEMPLATES: Record<'anime' | 'manga' | 'novel' | 'torrent', string> = {
     anime: `class MyAnime extends Anime {

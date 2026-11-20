@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { importStatuses } from "@/stores/importStatus.svelte";
+    import { importStatuses } from "@/stores/importStatus.svelte.js";
     import AlertTriangle from 'phosphor-svelte/lib/WarningIcon';
     import CheckCircle2 from 'phosphor-svelte/lib/CheckCircleIcon';
     import Loader2 from 'phosphor-svelte/lib/CircleNotchIcon';

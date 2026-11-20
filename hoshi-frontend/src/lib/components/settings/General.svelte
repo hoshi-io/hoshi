@@ -3,9 +3,9 @@
     import { ALL_CONTENT_TYPES } from "@/utils/contentTypes";
     import { i18n } from "@/stores/i18n.svelte.js";
 
-    import { Switch } from "$lib/components/ui/switch";
+    import { Switch } from "@/components/ui/switch";
     import type { ContentConfig, GeneralConfig } from "@/api/config/types";
-    import LanguageSelector from "@/components/LanguageSelector.svelte";
+    import LanguageSelector from "@/components/settings/LanguageSelector.svelte";
     import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
     import SettingRow from "@/components/settings/parts/SettingRow.svelte";
     import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";

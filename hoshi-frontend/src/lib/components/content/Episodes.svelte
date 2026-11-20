@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type { ContentUnit } from "$lib/api/content/types";
+    import type { ContentUnit } from "@/api/content/types";
     import type { AnimeProgress } from "@/api/progress/types";
     import { i18n } from "@/stores/i18n.svelte.js";
-    import ResponsiveSelect from "$lib/components/ResponsiveSelect.svelte";
-    import {scrollIfResume, useEpisodeList} from "@/utils/episode-grid.svelte.js";
+    import ResponsiveSelect from "@/components/common/ResponsiveSelect.svelte";
+    import {scrollIfResume, useEpisodeList} from "@/components/content/episodeGrid.svelte.js";
     import EpisodeCard from "@/components/card/EpisodeCard.svelte";
     import Check from 'phosphor-svelte/lib/CheckIcon';
     import type { ResumeTarget } from "@/app/content.svelte";

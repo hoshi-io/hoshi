@@ -1,4 +1,4 @@
-import type { ContinueItem } from '@/api/progress/types.js';
+import type { ContinueItem } from '@/api/progress/types';
 import { scheduleStore, type RecentlyAiredItem } from '@/app/schedule.svelte.js';
 import { appConfig } from '@/stores/config.svelte.js';
 import { i18n } from '@/stores/i18n.svelte.js';

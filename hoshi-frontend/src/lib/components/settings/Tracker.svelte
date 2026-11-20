@@ -16,15 +16,15 @@
     import Settings2 from 'phosphor-svelte/lib/SlidersIcon';
     import BarChart2 from 'phosphor-svelte/lib/ChartBarIcon';
     import Calendar from 'phosphor-svelte/lib/CalendarBlankIcon';
-    import * as AlertDialog from "$lib/components/ui/alert-dialog";
-    import * as Dialog from "$lib/components/ui/dialog";
-    import { Button } from "$lib/components/ui/button";
-    import { Input } from "$lib/components/ui/input";
-    import { Label } from "$lib/components/ui/label";
-    import { Switch } from "$lib/components/ui/switch";
-    import { Spinner } from "$lib/components/ui/spinner";
+    import * as AlertDialog from "@/components/ui/alert-dialog";
+    import * as Dialog from "@/components/ui/dialog";
+    import { Button } from "@/components/ui/button";
+    import { Input } from "@/components/ui/input";
+    import { Label } from "@/components/ui/label";
+    import { Switch } from "@/components/ui/switch";
+    import { Spinner } from "@/components/ui/spinner";
     import type { ListConfig, MergeStrategy } from "@/api/config/types";
-    import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import ResponsiveSelect from "@/components/common/ResponsiveSelect.svelte";
     import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
     import SettingRow from "@/components/settings/parts/SettingRow.svelte";
 

@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { Label } from "$lib/components/ui/label";
-    import { Button } from "$lib/components/ui/button";
-    import { Switch } from "$lib/components/ui/switch";
+    import { Label } from "@/components/ui/label";
+    import { Button } from "@/components/ui/button";
+    import { Switch } from "@/components/ui/switch";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { searchState } from "@/app/search.svelte.js";
-    import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import ResponsiveSelect from "@/components/common/ResponsiveSelect.svelte";
     import {ANIME_FORMATS, MANGA_FORMATS, TRACKER_FILTERS} from "@/utils/search.js";
     import ExtensionFilterFields from "@/components/search/ExtensionFilterFields.svelte";
 

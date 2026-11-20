@@ -1,19 +1,19 @@
 <script lang="ts">
-    import EmptyState from "$lib/components/EmptyState.svelte";
+    import EmptyState from "@/components/common/EmptyState.svelte";
     import { untrack } from "svelte";
     import type { ContentType } from "@/api/content/types";
     import { enabledContentTypes } from "@/utils/contentTypes";
-    import { extensionsApi } from "$lib/api/extensions/extensions";
+    import { extensionsApi } from "@/api/extensions/extensions";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { fade } from "svelte/transition";
     import { layoutState } from '@/stores/layout.svelte.js';
     import { searchState } from '@/app/search.svelte.js';
 
-    import SearchFilters from "$lib/components/search/SearchFilters.svelte";
-    import SearchSourceGrid from "$lib/components/search/SearchSourceGrid.svelte";
-    import * as Drawer from "$lib/components/ui/drawer";
-    import { Input } from "$lib/components/ui/input";
-    import { Button } from "$lib/components/ui/button";
+    import SearchFilters from "@/components/search/SearchFilters.svelte";
+    import SearchSourceGrid from "@/components/search/SearchSourceGrid.svelte";
+    import * as Drawer from "@/components/ui/drawer";
+    import { Input } from "@/components/ui/input";
+    import { Button } from "@/components/ui/button";
     import Search from 'phosphor-svelte/lib/MagnifyingGlassIcon';
     import SearchX from 'phosphor-svelte/lib/MagnifyingGlassIcon';
     import ListFilter from 'phosphor-svelte/lib/FunnelIcon';

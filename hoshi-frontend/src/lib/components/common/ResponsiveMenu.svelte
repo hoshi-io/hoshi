@@ -1,8 +1,8 @@
 <script lang="ts">
-    import * as ContextMenu from "$lib/components/ui/context-menu";
-    import * as Drawer from "$lib/components/ui/drawer";
+    import * as ContextMenu from "@/components/ui/context-menu";
+    import * as Drawer from "@/components/ui/drawer";
     import type { Snippet } from "svelte";
-    import {layoutState} from "@/stores/layout.svelte";
+    import {layoutState} from "@/stores/layout.svelte.js";
     import Info from 'phosphor-svelte/lib/InfoIcon';
     import Plus from 'phosphor-svelte/lib/PlusIcon';
     import Trash2 from 'phosphor-svelte/lib/TrashIcon';

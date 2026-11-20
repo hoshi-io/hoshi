@@ -1,6 +1,6 @@
 <script lang="ts">
     import CheckCircle2 from 'phosphor-svelte/lib/CheckCircleIcon';
-    import SmartImage from '@/components/SmartImage.svelte';
+    import SmartImage from '@/components/common/SmartImage.svelte';
 
     let {
         href,

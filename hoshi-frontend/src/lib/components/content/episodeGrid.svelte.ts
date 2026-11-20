@@ -1,7 +1,7 @@
-import type { ContentUnit } from '@/api/content/types.js';
-import type { AnimeProgress } from '@/api/progress/types.js';
+import type { ContentUnit } from '@/api/content/types';
+import type { AnimeProgress } from '@/api/progress/types';
 import { i18n } from '@/stores/i18n.svelte.js';
-import {wideImage} from "@/utils/episode-rows.svelte.js";
+import {wideImage} from "@/utils/episodeRows.svelte.js";
 
 
 export function isInProgress(p?: AnimeProgress | null): p is AnimeProgress {

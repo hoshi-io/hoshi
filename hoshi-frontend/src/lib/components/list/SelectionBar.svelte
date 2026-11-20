@@ -3,7 +3,7 @@
     import { listStore, trackerLabel } from "@/app/list.svelte.js";
     import { layoutState } from "@/stores/layout.svelte.js";
     import { i18n } from "@/stores/i18n.svelte.js";
-    import { Button } from "$lib/components/ui/button";
+    import { Button } from "@/components/ui/button";
     import { goto } from "$app/navigation";
     import X from 'phosphor-svelte/lib/XIcon';
     import Trash2 from 'phosphor-svelte/lib/TrashIcon';

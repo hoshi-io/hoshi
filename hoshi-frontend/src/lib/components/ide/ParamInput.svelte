@@ -2,7 +2,7 @@
     import { Input } from '@/components/ui/input';
     import { Checkbox } from '@/components/ui/checkbox';
     import { Label } from '@/components/ui/label';
-    import type { ParamDef } from './function-signatures.ts';
+    import type { ParamDef } from './functionSignatures';
 
     let { def, value = $bindable() }: { def: ParamDef; value: unknown } = $props();
 </script>

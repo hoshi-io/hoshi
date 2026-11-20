@@ -1,11 +1,11 @@
 <script lang="ts">
     import ClockCounterClockwiseIcon from 'phosphor-svelte/lib/ClockCounterClockwiseIcon';
-    import * as Popover from '$lib/components/ui/popover/index.js';
-    import * as Drawer from '$lib/components/ui/drawer/index.js';
+    import * as Popover from '@/components/ui/popover/index';
+    import * as Drawer from '@/components/ui/drawer/index';
     import { layoutState } from '@/stores/layout.svelte.js';
-    import { buttonVariants } from '$lib/components/ui/button';
+    import { buttonVariants } from '@/components/ui/button';
     import { i18n } from '@/stores/i18n.svelte.js';
-    import { cn } from '$lib/utils.js';
+    import { cn } from '@/utils/cn';
     import HistoryList from './HistoryList.svelte';
 
     let open = $state(false);

@@ -10,7 +10,7 @@
     import { homeApi } from '@/api/home/home';
     import type { BuiltinSection, HomeSection } from '@/api/home/types';
     import { normalizeFullContent, normalizeRelationCard, type NormalizedCard } from '@/utils/normalize';
-    import { shouldHideNsfw } from '@/utils/episode-rows.svelte.js';
+    import { shouldHideNsfw } from '@/utils/episodeRows.svelte.js';
 
     const LIMIT = 20;
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
 	import ChevronRightIcon from 'phosphor-svelte/lib/CaretRightIcon';
-	import { cn } from "$lib/utils.js";
+	import { cn } from "@/utils/cn";
 
 	let {
 		ref = $bindable(null),

@@ -3,11 +3,11 @@
     import Check from 'phosphor-svelte/lib/CheckIcon';
     import Plus from 'phosphor-svelte/lib/PlusIcon';
     import SegmentedControl from '@/components/settings/parts/SegmentedControl.svelte';
-    import { homeEditor, MAX_SECTIONS } from '@/utils/home-editor.svelte.js';
+    import { homeEditor, MAX_SECTIONS } from '@/app/homeEditor.svelte.js';
     import { labelText } from '@/app/home.svelte.js';
     import { extensions } from '@/stores/extensions.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
-    import { cn } from '@/utils';
+    import { cn } from '@/utils/cn';
     import { enabledContentTypes } from '@/utils/contentTypes';
     import type { ContentType } from '@/api/content/types';
     import type { HomeTab } from '@/api/home/types';

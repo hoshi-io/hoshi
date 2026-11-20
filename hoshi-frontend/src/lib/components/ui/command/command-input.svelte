@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Command as CommandPrimitive } from "bits-ui";
 	import SearchIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
-	import { cn } from "$lib/utils.js";
+	import { cn } from "@/utils/cn";
 
 	let {
 		ref = $bindable(null),

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Calendar as CalendarPrimitive } from "bits-ui";
 	import ChevronLeftIcon from 'phosphor-svelte/lib/CaretLeftIcon';
-	import { buttonVariants, type ButtonVariant } from "$lib/components/ui/button/index.js";
-	import { cn } from "$lib/utils.js";
+	import { buttonVariants, type ButtonVariant } from "@/components/ui/button/index";
+	import { cn } from "@/utils/cn";
 
 	let {
 		ref = $bindable(null),

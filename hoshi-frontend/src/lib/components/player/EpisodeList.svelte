@@ -10,7 +10,7 @@
     import { appConfig } from "@/stores/config.svelte.js";
     import { layoutState } from "@/stores/layout.svelte.js";
     import * as Carousel from "@/components/ui/carousel";
-    import SmartImage from "@/components/SmartImage.svelte";
+    import SmartImage from "@/components/common/SmartImage.svelte";
 
     let {
         pageState,

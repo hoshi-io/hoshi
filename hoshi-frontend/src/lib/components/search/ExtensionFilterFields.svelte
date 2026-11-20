@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { Label } from '$lib/components/ui/label';
-    import { Switch } from '$lib/components/ui/switch';
-    import ResponsiveSelect from '@/components/ResponsiveSelect.svelte';
+    import { Label } from '@/components/ui/label';
+    import { Switch } from '@/components/ui/switch';
+    import ResponsiveSelect from '@/components/common/ResponsiveSelect.svelte';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { formatLabel } from '@/utils/search.js';
 

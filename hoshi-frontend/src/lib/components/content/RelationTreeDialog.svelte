@@ -1,6 +1,6 @@
 <script lang="ts">
-    import * as Dialog from '$lib/components/ui/dialog/index.js';
-    import { Button } from '$lib/components/ui/button';
+    import * as Dialog from '@/components/ui/dialog/index';
+    import { Button } from '@/components/ui/button';
     import Network from 'phosphor-svelte/lib/TreeStructureIcon';
     import Loader2 from 'phosphor-svelte/lib/CircleNotchIcon';
     import type { RelationGraph } from "@/api/content/types";

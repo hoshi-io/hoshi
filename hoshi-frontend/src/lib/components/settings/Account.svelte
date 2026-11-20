@@ -4,12 +4,12 @@
     import { toast } from "svelte-sonner";
     import { i18n } from "@/stores/i18n.svelte.js";
 
-    import * as Avatar from "$lib/components/ui/avatar";
-    import * as AlertDialog from "$lib/components/ui/alert-dialog";
-    import { Button } from "$lib/components/ui/button";
-    import { Input } from "$lib/components/ui/input";
-    import { Label } from "$lib/components/ui/label";
-    import { Spinner } from "$lib/components/ui/spinner";
+    import * as Avatar from "@/components/ui/avatar";
+    import * as AlertDialog from "@/components/ui/alert-dialog";
+    import { Button } from "@/components/ui/button";
+    import { Input } from "@/components/ui/input";
+    import { Label } from "@/components/ui/label";
+    import { Spinner } from "@/components/ui/spinner";
     import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
     import SettingRow from "@/components/settings/parts/SettingRow.svelte";
 

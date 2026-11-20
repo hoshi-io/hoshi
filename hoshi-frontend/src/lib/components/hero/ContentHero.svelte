@@ -21,8 +21,8 @@
     import { listStore } from "@/app/list.svelte.js";
     import { extensions } from "@/stores/extensions.svelte.js";
     import type { ResumeTarget } from "@/app/content.svelte";
-    import ListEditorButton from "@/components/ListEditorButton.svelte";
-    import SmartImage from "@/components/SmartImage.svelte";
+    import ListEditorButton from "@/components/list/ListEditorButton.svelte";
+    import SmartImage from "@/components/common/SmartImage.svelte";
     import { formatScore } from "@/utils/normalize";
     import RelationTreeDialog from "@/components/content/RelationTreeDialog.svelte";
     import { scheduleStore } from "@/app/schedule.svelte.js";

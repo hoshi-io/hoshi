@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18n } from '@/stores/i18n.svelte.js';
     import type { ContentConfig, GeneralConfig } from '@/api/config/types.js';
-    import LanguageSelector from '@/components/LanguageSelector.svelte';
+    import LanguageSelector from '@/components/settings/LanguageSelector.svelte';
     import TvSettingRow from '@/tv/components/TvSettingRow.svelte';
     import TvSwitch from '@/tv/components/TvSwitch.svelte';
     import TvSegmented from '@/tv/components/TvSegmented.svelte';

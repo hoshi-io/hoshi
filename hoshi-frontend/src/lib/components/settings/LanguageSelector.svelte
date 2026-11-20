@@ -2,10 +2,10 @@
     import { i18n } from "@/stores/i18n.svelte.js";
     import type { Language } from "@/stores/i18n.svelte.js";
     import { layoutState } from "@/stores/layout.svelte.js";
-    import * as Command from "$lib/components/ui/command";
-    import * as Popover from "$lib/components/ui/popover";
-    import * as Drawer from "$lib/components/ui/drawer";
-    import { Button } from "$lib/components/ui/button";
+    import * as Command from "@/components/ui/command";
+    import * as Popover from "@/components/ui/popover";
+    import * as Drawer from "@/components/ui/drawer";
+    import { Button } from "@/components/ui/button";
     import Check from 'phosphor-svelte/lib/CheckIcon';
     import ChevronDown from 'phosphor-svelte/lib/CaretDownIcon';
     import ChevronUp from 'phosphor-svelte/lib/CaretUpIcon';

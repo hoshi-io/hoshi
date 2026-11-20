@@ -14,14 +14,14 @@
     import { auth } from '@/stores/auth.svelte.js';
     import { appConfig } from '@/stores/config.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
-    import { Spinner } from '$lib/components/ui/spinner';
+    import { Spinner } from '@/components/ui/spinner';
     import TvAccount from '@/tv/components/settings/TvAccount.svelte';
     import TvGeneral from '@/tv/components/settings/TvGeneral.svelte';
     import TvUi from '@/tv/components/settings/TvUi.svelte';
     import TvPlayer from '@/tv/components/settings/TvPlayer.svelte';
     import TvTracker from "@/tv/components/settings/TvTracker.svelte";
     import TvTorrent from "@/tv/components/settings/TvTorrent.svelte";
-    import SwitchProfile from "@/components/modals/SwitchProfile.svelte";
+    import SwitchProfile from "@/components/layout/SwitchProfile.svelte";
     import Account from "@/components/settings/Account.svelte";
     import TvExtensions from "@/tv/components/settings/TvExtensions.svelte";
 

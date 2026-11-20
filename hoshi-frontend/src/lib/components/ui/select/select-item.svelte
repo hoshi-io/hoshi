@@ -1,7 +1,7 @@
 <script lang="ts">
 	import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
 	import { Select as SelectPrimitive } from "bits-ui";
-	import { cn, type WithoutChild } from "$lib/utils.js";
+	import { cn, type WithoutChild } from "@/utils/cn";
 
 	let {
 		ref = $bindable(null),

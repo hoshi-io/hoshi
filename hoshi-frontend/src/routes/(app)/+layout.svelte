@@ -8,13 +8,13 @@
     import CalendarBlankIcon from 'phosphor-svelte/lib/CalendarBlankIcon';
     import GearSixIcon from 'phosphor-svelte/lib/GearSixIcon';
 
-    import { handleDiscordActivity } from '$lib/app/app';
+    import { handleDiscordActivity } from '@/app/app';
     import { auth } from '@/stores/auth.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { layoutState } from '@/stores/layout.svelte';
 
     import DesktopTitlebar from '@/components/layout/DesktopTitlebar.svelte';
-    import DesktopSidebar from '$lib/components/layout/DesktopSidebar.svelte';
+    import DesktopSidebar from '@/components/layout/DesktopSidebar.svelte';
     import MobileTop from '@/components/layout/MobileTop.svelte';
     import MobileBottom from '@/components/layout/MobileBottom.svelte';
 

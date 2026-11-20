@@ -1,7 +1,7 @@
 <script lang="ts">
     import { AspectRatio } from '@/components/ui/aspect-ratio';
     import Star from 'phosphor-svelte/lib/StarIcon';
-    import SmartImage from "@/components/SmartImage.svelte";
+    import SmartImage from "@/components/common/SmartImage.svelte";
 
     let {
         title,

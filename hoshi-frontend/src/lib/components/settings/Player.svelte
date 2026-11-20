@@ -1,19 +1,19 @@
 <script lang="ts">
-    import * as Tabs from "$lib/components/ui/tabs";
-    import { Switch } from "$lib/components/ui/switch";
-    import { Input } from "$lib/components/ui/input";
+    import * as Tabs from "@/components/ui/tabs";
+    import { Switch } from "@/components/ui/switch";
+    import { Input } from "@/components/ui/input";
     import type { PlayerConfig, SubtitleConfig } from "@/api/config/types";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { fly } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
     import { platform } from "@tauri-apps/plugin-os";
-    import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import ResponsiveSelect from "@/components/common/ResponsiveSelect.svelte";
     import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
     import SettingRow from "@/components/settings/parts/SettingRow.svelte";
     import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
     import SettingSlider from "@/components/settings/parts/SettingSlider.svelte";
     import ColorInput from "@/components/settings/parts/ColorInput.svelte";
-    import * as Kbd from "$lib/components/ui/kbd";
+    import * as Kbd from "@/components/ui/kbd";
     import {openUrl} from "@tauri-apps/plugin-opener";
 
     let {

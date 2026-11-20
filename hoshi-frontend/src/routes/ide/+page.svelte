@@ -1,11 +1,11 @@
 <script lang="ts">
-    import * as Resizable from '$lib/components/ui/resizable';
-    import * as Tabs from '$lib/components/ui/tabs';
-    import * as Select from '$lib/components/ui/select';
-    import * as Avatar from '$lib/components/ui/avatar';
-    import * as AlertDialog from '$lib/components/ui/alert-dialog';
-    import { Button } from '$lib/components/ui/button';
-    import { ScrollArea } from '$lib/components/ui/scroll-area';
+    import * as Resizable from '@/components/ui/resizable';
+    import * as Tabs from '@/components/ui/tabs';
+    import * as Select from '@/components/ui/select';
+    import * as Avatar from '@/components/ui/avatar';
+    import * as AlertDialog from '@/components/ui/alert-dialog';
+    import { Button } from '@/components/ui/button';
+    import { ScrollArea } from '@/components/ui/scroll-area';
     import Plus from 'phosphor-svelte/lib/PlusIcon';
     import Play from 'phosphor-svelte/lib/PlayIcon';
     import Trash2 from 'phosphor-svelte/lib/TrashIcon';
@@ -17,8 +17,8 @@
     import CodeEditor from '@/components/ide/CodeEditor.svelte';
     import ParamInput from '@/components/ide/ParamInput.svelte';
     import NewExtensionDialog from '@/components/ide/NewExtensionDialog.svelte';
-    import { sortedFunctions } from '@/components/ide/function-signatures';
-    import Card from '$lib/components/settings/extensions/Card.svelte';
+    import { sortedFunctions } from '@/components/ide/functionSignatures';
+    import Card from '@/components/settings/extensions/Card.svelte';
     import {ideState} from "@/app/ide.svelte.js";
 
     let newExtOpen = $state(false);

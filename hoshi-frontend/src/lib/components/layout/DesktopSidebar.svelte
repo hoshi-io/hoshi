@@ -2,8 +2,8 @@
     import { auth } from '@/stores/auth.svelte.js';
     import UsersIcon from 'phosphor-svelte/lib/UsersIcon';
     import CodeIcon from 'phosphor-svelte/lib/CodeIcon';
-    import { Button } from '$lib/components/ui/button';
-    import * as Avatar from '$lib/components/ui/avatar';
+    import { Button } from '@/components/ui/button';
+    import * as Avatar from '@/components/ui/avatar';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { page } from "$app/state";
     import HistoryMenu from "@/components/history/HistoryMenu.svelte";

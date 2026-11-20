@@ -1,20 +1,20 @@
 <script lang="ts">
     import { scale } from "svelte/transition";
-    import { Switch } from "$lib/components/ui/switch";
-    import { Label } from "$lib/components/ui/label";
+    import { Switch } from "@/components/ui/switch";
+    import { Label } from "@/components/ui/label";
     import type { UiConfig } from "@/api/config/types";
     import { i18n } from "@/stores/i18n.svelte.js";
     import { themeManager } from "@/stores/theme.svelte";
     import Check from 'phosphor-svelte/lib/CheckIcon';
     import Pencil from 'phosphor-svelte/lib/PencilSimpleIcon';
     import { goto } from "$app/navigation";
-    import { Button } from "$lib/components/ui/button";
+    import { Button } from "@/components/ui/button";
     import { homeState } from "@/app/home.svelte.js";
-    import { homeEditor } from "@/utils/home-editor.svelte.js";
-    import ResponsiveSelect from "@/components/ResponsiveSelect.svelte";
+    import { homeEditor } from "@/app/homeEditor.svelte.js";
+    import ResponsiveSelect from "@/components/common/ResponsiveSelect.svelte";
     import SettingsSection from "@/components/settings/parts/SettingsSection.svelte";
     import SettingRow from "@/components/settings/parts/SettingRow.svelte";
-    import { APP_FONTS, FONTS } from "@/fonts";
+    import { APP_FONTS, FONTS } from "@/utils/fonts";
     import SegmentedControl from "@/components/settings/parts/SegmentedControl.svelte";
     import { viewPrefs, type ViewPrefs } from "@/stores/viewPrefs.svelte";
 

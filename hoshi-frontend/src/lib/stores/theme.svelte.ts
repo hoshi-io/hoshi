@@ -1,4 +1,4 @@
-import { fontStack } from '@/fonts';
+import { fontStack } from '@/utils/fonts';
 
 async function loadSavedValue(key: string): Promise<string | null> {
     try {

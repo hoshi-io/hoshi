@@ -1,6 +1,6 @@
 <script lang="ts">
 	import EllipsisIcon from 'phosphor-svelte/lib/DotsThreeIcon';
-	import { cn, type WithElementRef, type WithoutChildren } from "$lib/utils.js";
+	import { cn, type WithElementRef, type WithoutChildren } from "@/utils/cn";
 	import type { HTMLAttributes } from "svelte/elements";
 
 	let {

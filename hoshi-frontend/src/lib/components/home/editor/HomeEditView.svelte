@@ -8,7 +8,7 @@
     import { Spinner } from '@/components/ui/spinner';
     import * as AlertDialog from '@/components/ui/alert-dialog';
     import SettingsSection from '@/components/settings/parts/SettingsSection.svelte';
-    import { homeEditor, MAX_SECTIONS } from '@/utils/home-editor.svelte.js';
+    import { homeEditor, MAX_SECTIONS } from '@/app/homeEditor.svelte.js';
     import { homeState, labelText } from '@/app/home.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
     import { sortable } from '@/utils/sortable';

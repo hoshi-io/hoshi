@@ -2,13 +2,13 @@
     import * as Popover from '@/components/ui/popover';
     import * as AlertDialog from '@/components/ui/alert-dialog';
     import { Button } from '@/components/ui/button';
-    import ResponsiveSelect from '@/components/ResponsiveSelect.svelte';
+    import ResponsiveSelect from '@/components/common/ResponsiveSelect.svelte';
     import SettingRow from '@/components/settings/parts/SettingRow.svelte';
-    import { homeEditor } from '@/utils/home-editor.svelte.js';
+    import { homeEditor } from '@/app/homeEditor.svelte.js';
     import { labelText } from '@/app/home.svelte.js';
     import { TAB_ICONS, tabIcon, type TabIcon } from '@/components/home/icons';
     import { i18n } from '@/stores/i18n.svelte.js';
-    import { cn } from '@/utils';
+    import { cn } from '@/utils/cn';
     import type { HomeTab } from '@/api/home/types';
 
     const NO_HERO = '__none__';

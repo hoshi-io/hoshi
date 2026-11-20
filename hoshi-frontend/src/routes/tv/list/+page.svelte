@@ -1,5 +1,5 @@
 <script lang="ts">
-    import EmptyState from "$lib/components/EmptyState.svelte";
+    import EmptyState from "@/components/common/EmptyState.svelte";
     import { onMount } from 'svelte';
     import { fade } from 'svelte/transition';
     import { goto } from '$app/navigation';
@@ -12,7 +12,7 @@
 
     import { listStore } from '@/app/list.svelte.js';
     import { i18n } from '@/stores/i18n.svelte.js';
-    import { Skeleton } from '$lib/components/ui/skeleton';
+    import { Skeleton } from '@/components/ui/skeleton';
     import LazyCardGrid from '@/components/card/LazyCardGrid.svelte';
     import TvCard from '@/tv/components/card/TvCard.svelte';
     import {openListEditor} from "@/stores/layout.svelte";

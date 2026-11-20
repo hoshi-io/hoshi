@@ -10,7 +10,7 @@
         useRecentlyAired,
         watchUrl,
         wideImage
-    } from '@/utils/episode-rows.svelte.js';
+    } from '@/utils/episodeRows.svelte.js';
 
     const rows = useRecentlyAired(TV_ROW_MAX);
 </script>

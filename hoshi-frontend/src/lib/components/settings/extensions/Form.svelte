@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { Input } from "$lib/components/ui/input";
-    import { Label } from "$lib/components/ui/label";
-    import { Switch } from "$lib/components/ui/switch";
-    import * as Select from "$lib/components/ui/select";
-    import { Spinner } from "$lib/components/ui/spinner";
+    import { Input } from "@/components/ui/input";
+    import { Label } from "@/components/ui/label";
+    import { Switch } from "@/components/ui/switch";
+    import * as Select from "@/components/ui/select";
+    import { Spinner } from "@/components/ui/spinner";
 
     import type { CardExt } from "@/app/marketplace.svelte.js";
     import { i18n } from "@/stores/i18n.svelte.js";
